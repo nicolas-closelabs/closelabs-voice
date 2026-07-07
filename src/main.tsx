@@ -3,6 +3,10 @@ import ReactDOM from "react-dom/client";
 import { platform } from "@tauri-apps/plugin-os";
 import App from "./App";
 
+// CloseLabs brand fonts (empaquetadas local, sin CDN → funciona offline)
+import "@fontsource-variable/inter";
+import "@fontsource-variable/plus-jakarta-sans";
+
 // Set platform before render so CSS can scope per-platform (e.g. scrollbar styles)
 document.documentElement.dataset.platform = platform();
 

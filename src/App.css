@@ -11,6 +11,19 @@
   --color-logo-stroke: var(--color-logo-stroke);
   --color-text-stroke: var(--color-text-stroke);
   --color-mid-gray: var(--color-mid-gray);
+
+  /* CloseLabs brand tokens (utilities: bg-brand-accent, text-brand-secondary, …) */
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-secondary: var(--brand-accent-secondary);
+  --color-brand-text-secondary: var(--brand-text-secondary);
+  --color-brand-text-muted: var(--brand-text-muted);
+  --color-brand-bg-secondary: var(--brand-bg-secondary);
+  --color-brand-bg-tertiary: var(--brand-bg-tertiary);
+  --color-brand-border: var(--brand-border);
+
+  /* Fonts (utilities: font-heading, font-body) */
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
 :root {
@@ -41,6 +54,19 @@
   /* Apply colors */
   color: var(--color-text);
   background-color: var(--color-background);
+
+  /* Body typography (CloseLabs) */
+  font-family: var(--font-body);
+}
+
+/* Headings use Inter (CloseLabs) */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }
 
 .container {

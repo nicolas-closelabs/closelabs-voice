@@ -1,20 +1,57 @@
-/* Handy Colors */
+/* CloseLabs Voice — Brand tokens
+   Fuente de verdad de color/tipografía. Toda la UI referencia estos tokens.
+   Paleta del Brand Guideline de CloseLabs (modo por defecto: Light, lila). */
 
 :root {
-  --color-text: #0f0f0f;
-  --color-background: #fbfbfb;
-  --color-background-ui: #da5893;
-  --color-logo-primary: #faa2ca;
-  --color-logo-stroke: #382731;
-  --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #808080;
+  /* ---- Tokens que consume el UI heredado de Handy (mapeados a la marca) ---- */
+  --color-text: #1a1620; /* Texto primario */
+  --color-background: #f5edff; /* Fondo primario (lila muy claro) */
+  --color-background-ui: #a439ff; /* Acento primario (botones/interactivo) */
+  --color-logo-primary: #a439ff; /* Acento del logo/isotipo */
+  --color-logo-stroke: #201020; /* Trazo oscuro */
+  --color-text-stroke: #f5edff;
+  --color-mid-gray: #6f677e; /* Texto secundario */
+
+  /* ---- Paleta CloseLabs completa (para uso futuro/consistencia) ---- */
+  --brand-bg-primary: #f5edff;
+  --brand-bg-secondary: #f0e6ff;
+  --brand-bg-tertiary: #ebe0ff;
+  --brand-bg-inverted: #201020;
+
+  --brand-text-primary: #1a1620;
+  --brand-text-secondary: #6f677e;
+  --brand-text-muted: #a39aaa;
+  --brand-text-inverted: #f5edff;
+  --brand-text-on-accent: #ffffff;
+
+  --brand-accent: #a439ff;
+  --brand-accent-secondary: #8b2ff3;
+
+  --brand-border: rgba(163, 154, 170, 0.7); /* #A39AAA @70% */
+  --brand-border-subtle: rgba(212, 204, 224, 0.3); /* #D4CCE0 @30% */
+  --brand-border-focus: #a439ff;
+
+  /* ---- Tipografía ---- */
+  --font-heading: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-body:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
+/* Dark mode: el Brand Guideline solo define Light; usamos la paleta invertida
+   de la marca como base coherente hasta definir un dark oficial. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-text: #fbfbfb;
-    --color-background: #2c2b29;
-    --color-logo-primary: #f28cbb;
-    --color-logo-stroke: #fad1ed;
+    --color-text: #f5edff;
+    --color-background: #201020;
+    --color-background-ui: #a439ff;
+    --color-logo-primary: #a439ff;
+    --color-logo-stroke: #f5edff;
+    --color-mid-gray: #a39aaa;
+
+    --brand-bg-primary: #201020;
+    --brand-bg-secondary: #2a1730;
+    --brand-bg-tertiary: #341d3c;
+    --brand-text-primary: #f5edff;
+    --brand-text-secondary: #a39aaa;
   }
 }
