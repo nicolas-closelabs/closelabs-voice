@@ -290,12 +290,33 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
     {
         Ok(Some(content)) => {
             let content = strip_invisible_chars(&content);
+            let trimmed = content.trim();
+
+            // Guarda anti-alucinación (CloseLabs): en notas médicas es inaceptable que
+            // el refine invente o agregue texto. Si el modelo devolvió vacío, o un texto
+            // desproporcionadamente más largo que la entrada (preámbulos tipo "Aquí está
+            // el texto...", contenido inventado), lo descartamos y caemos a la
+            // transcripción CRUDA (retornar None hace que se use el texto original).
+            if trimmed.is_empty() {
+                error!("Refine devolvió vacío; se usa la transcripción cruda");
+                return None;
+            }
+            let input_len = transcription.chars().count();
+            let output_len = trimmed.chars().count();
+            if input_len > 0 && output_len > input_len * 3 + 40 {
+                error!(
+                    "Refine descartado por posible alucinación (entrada {} vs salida {} chars); se usa la cruda",
+                    input_len, output_len
+                );
+                return None;
+            }
+
             debug!(
                 "LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
-                content.len()
+                trimmed.len()
             );
-            Some(content)
+            Some(trimmed.to_string())
         }
         Ok(None) => {
             error!("LLM API response has no content");

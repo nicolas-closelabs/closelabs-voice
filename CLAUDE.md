@@ -86,12 +86,23 @@ alucinar).
 
 ```bash
 bun install            # instalar deps del frontend
-bun tauri dev          # correr la app en desarrollo (requiere Rust + Bun)
+bun tauri dev          # correr la app en desarrollo (requiere Rust + Bun + cmake)
 bun tauri build        # compilar instaladores (.dmg / .exe/.msi)
 bun run lint           # eslint
 bun tauri icon <png>   # generar íconos desde un PNG 1024x1024
 ```
-Requiere toolchain: **Rust (cargo)** + **Bun** + Xcode CLT (macOS).
+Requiere toolchain: **Rust (cargo)** + **Bun** + **cmake** (lo usa `transcribe-cpp-sys`,
+el motor GGML) + Xcode CLT (macOS). cmake se puede instalar con `brew install cmake` o
+`pip install --user cmake`.
+
+**Refine (Groq):** la API key se inyecta en build time por variable de entorno:
+```bash
+CLOSELABS_GROQ_API_KEY=gsk_... bun tauri build
+```
+Si no se define, el refine queda sin key (el usuario puede pegarla en Ajustes, o se migra
+a un proxy propio cambiando el `base_url` del proveedor Groq). El modelo por defecto es
+`llama-3.1-8b-instant` (económico) y el prompt es de limpieza médica en español; ambos
+son configurables. Offline el refine cae a texto crudo automáticamente.
 
 ## Estructura / archivos clave
 

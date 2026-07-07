@@ -400,7 +400,7 @@ pub struct AppSettings {
     pub post_process_models: HashMap<String, String>,
     #[serde(default = "default_post_process_prompts")]
     pub post_process_prompts: Vec<LLMPrompt>,
-    #[serde(default)]
+    #[serde(default = "default_post_process_selected_prompt_id")]
     pub post_process_selected_prompt_id: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
@@ -538,7 +538,9 @@ fn default_sound_theme() -> SoundTheme {
 }
 
 fn default_post_process_enabled() -> bool {
-    false
+    // CloseLabs Voice: el refine (limpieza del texto) va activado por defecto — es el
+    // valor central del producto. Online usa Groq; offline cae a texto crudo (raw).
+    true
 }
 
 fn default_app_language() -> String {
@@ -552,7 +554,18 @@ fn default_show_tray_icon() -> bool {
 }
 
 fn default_post_process_provider_id() -> String {
-    "openai".to_string()
+    // CloseLabs Voice: refine vía Groq por defecto (rápido y económico).
+    "groq".to_string()
+}
+
+/// API key de Groq embebida en build time para el refine.
+/// Inyéctala al compilar:  CLOSELABS_GROQ_API_KEY=gsk_...  (con LÍMITE DE GASTO en la
+/// cuenta de Groq). Si no está, queda vacía y el usuario puede pegarla en Ajustes, o se
+/// migra a un proxy propio cambiando el `base_url` del proveedor (endpoint configurable).
+fn embedded_groq_api_key() -> String {
+    option_env!("CLOSELABS_GROQ_API_KEY")
+        .unwrap_or("")
+        .to_string()
 }
 
 fn default_post_process_providers() -> Vec<PostProcessProvider> {
@@ -649,7 +662,13 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
 fn default_post_process_api_keys() -> SecretMap {
     let mut map = HashMap::new();
     for provider in default_post_process_providers() {
-        map.insert(provider.id, String::new());
+        // Groq usa la key embebida en build time; el resto arranca vacío.
+        let key = if provider.id == "groq" {
+            embedded_groq_api_key()
+        } else {
+            String::new()
+        };
+        map.insert(provider.id, key);
     }
     SecretMap(map)
 }
@@ -657,6 +676,11 @@ fn default_post_process_api_keys() -> SecretMap {
 fn default_model_for_provider(provider_id: &str) -> String {
     if provider_id == APPLE_INTELLIGENCE_PROVIDER_ID {
         return APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string();
+    }
+    // CloseLabs Voice: modelo económico por defecto para el refine en Groq.
+    // Intercambiable en Ajustes o subiendo a un modelo mayor (p.ej. llama-3.3-70b).
+    if provider_id == "groq" {
+        return "llama-3.1-8b-instant".to_string();
     }
     String::new()
 }
@@ -672,11 +696,17 @@ fn default_post_process_models() -> HashMap<String, String> {
     map
 }
 
+fn default_post_process_selected_prompt_id() -> Option<String> {
+    // CloseLabs Voice: selecciona por defecto el prompt de limpieza médica para que el
+    // refine corra sin configuración manual (junto con post_process_enabled = true).
+    Some("default_improve_transcriptions".to_string())
+}
+
 fn default_post_process_prompts() -> Vec<LLMPrompt> {
     vec![LLMPrompt {
         id: "default_improve_transcriptions".to_string(),
-        name: "Improve Transcriptions".to_string(),
-        prompt: "Clean this transcript:\n1. Fix spelling, capitalization, and punctuation errors\n2. Convert number words to digits (twenty-five → 25, ten percent → 10%, five dollars → $5)\n3. Replace spoken punctuation with symbols (period → ., comma → ,, question mark → ?)\n4. Remove filler words (um, uh, like as filler)\n5. Keep the language in the original version (if it was french, keep it in french for example)\n\nPreserve exact meaning and word order. Do not paraphrase or reorder content.\n\nReturn only the cleaned transcript.\n\nTranscript:\n${output}".to_string(),
+        name: "Limpiar transcripción médica".to_string(),
+        prompt: "Eres un asistente que limpia transcripciones de dictado médico por voz. Aplica SOLO estas correcciones al texto:\n1. Corrige ortografía, mayúsculas y puntuación.\n2. Elimina muletillas y titubeos (eh, em, este, o sea, mmm, y relleno similar).\n3. Convierte números y unidades dictados a dígitos (veinticinco → 25, diez por ciento → 10%, cinco miligramos → 5 mg).\n4. Aplica la puntuación dictada (punto → ., coma → ,, punto y aparte → salto de línea).\n5. Respeta EXACTAMENTE los términos médicos, nombres de medicamentos y dosis tal como se dictaron; ante la duda, no los cambies.\n6. Mantén el idioma original del texto.\n\nConserva el significado y el orden EXACTOS. No parafrasees, no reordenes, no agregues información ni inventes datos. Si el texto ya está limpio, devuélvelo igual.\n\nDevuelve ÚNICAMENTE la transcripción corregida, sin comentarios, sin explicaciones y sin comillas.\n\nTranscripción:\n${output}".to_string(),
     }]
 }
 
@@ -836,7 +866,7 @@ pub fn get_default_settings() -> AppSettings {
         post_process_api_keys: default_post_process_api_keys(),
         post_process_models: default_post_process_models(),
         post_process_prompts: default_post_process_prompts(),
-        post_process_selected_prompt_id: None,
+        post_process_selected_prompt_id: default_post_process_selected_prompt_id(),
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),

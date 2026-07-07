@@ -367,11 +367,19 @@ fn build_apple_intelligence_bridge() {
         Path::new(&sdk_path).join("System/Library/Frameworks/FoundationModels.framework");
     let has_foundation_models = framework_path.exists();
 
-    let source_file = if has_foundation_models {
+    // CloseLabs Voice: el refine se hace con Groq (nube), NO con Apple Intelligence.
+    // El .swift real de Apple Intelligence usa el macro @Generable (FoundationModelsMacros),
+    // cuyo plugin solo trae Xcode COMPLETO — falla con solo Command Line Tools (y en CI).
+    // Por eso, por defecto compilamos el STUB (build portable). Para habilitar Apple
+    // Intelligence en un equipo con Xcode completo: CLOSELABS_APPLE_INTELLIGENCE=1.
+    let opt_in_ai = env::var("CLOSELABS_APPLE_INTELLIGENCE").as_deref() == Ok("1");
+    let source_file = if has_foundation_models && opt_in_ai {
         println!("cargo:warning=Building with Apple Intelligence support.");
         REAL_SWIFT_FILE
     } else {
-        println!("cargo:warning=Apple Intelligence SDK not found. Building with stubs.");
+        println!(
+            "cargo:warning=Apple Intelligence deshabilitado (CloseLabs usa Groq); building with stubs."
+        );
         STUB_SWIFT_FILE
     };
 
