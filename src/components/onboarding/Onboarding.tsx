@@ -100,6 +100,27 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
     t,
   ]);
 
+  // CloseLabs Voice: hay un ÚNICO modelo. Automatizamos este paso — el médico no
+  // elige ni hace clic. Si ya está en disco, lo seleccionamos y continuamos; si no,
+  // arrancamos/observamos su descarga (modelStore también la dispara al iniciar) y la
+  // pantalla transiciona sola al completar. Muestra el progreso en la tarjeta.
+  useEffect(() => {
+    if (selectedModelId) return;
+    if (models.length === 0) return;
+    const downloaded = models.find((m: ModelInfo) => m.is_downloaded);
+    if (downloaded) {
+      setSelectedModelId(downloaded.id);
+      return;
+    }
+    const target =
+      models.find((m: ModelInfo) => m.is_recommended) ?? models[0];
+    if (!target) return;
+    setSelectedModelId(target.id);
+    if (!target.is_downloading && !(target.id in downloadingModels)) {
+      void downloadModel(target.id);
+    }
+  }, [models, selectedModelId, downloadingModels, downloadModel]);
+
   const handleDownloadModel = async (modelId: string) => {
     setSelectedModelId(modelId);
 

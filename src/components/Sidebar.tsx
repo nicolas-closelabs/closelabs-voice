@@ -1,14 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Cog,
-  FlaskConical,
-  History,
-  Info,
-  Sparkles,
-  Cpu,
-  Mic,
-} from "lucide-react";
+import { Cog, FlaskConical, History, Info, Sparkles, Mic } from "lucide-react";
 import Logo from "./icons/Logo";
 import { useSettings } from "../hooks/useSettings";
 import {
@@ -18,7 +10,6 @@ import {
   DebugSettings,
   AboutSettings,
   PostProcessingSettings,
-  ModelsSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -43,12 +34,6 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.general",
     icon: Mic,
     component: GeneralSettings,
-    enabled: () => true,
-  },
-  models: {
-    labelKey: "sidebar.models",
-    icon: Cpu,
-    component: ModelsSettings,
     enabled: () => true,
   },
   advanced: {

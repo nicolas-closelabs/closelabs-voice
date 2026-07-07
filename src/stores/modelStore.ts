@@ -425,6 +425,23 @@ export const useModelStore = create<ModelsStore>()(
         get().loadModels();
       });
 
+      // CloseLabs Voice: hay un único modelo (Parakeet). En el primer arranque se
+      // descarga AUTOMÁTICAMENTE en segundo plano, sin selector ni paso manual.
+      // El ModelSelector del footer muestra el progreso y auto-selecciona el modelo
+      // al completar la descarga (evento "model-download-complete").
+      {
+        const st = get();
+        const target = st.models.find((m) => m.is_recommended) ?? st.models[0];
+        if (
+          target &&
+          !target.is_downloaded &&
+          !target.is_downloading &&
+          !st.downloadingModels[target.id]
+        ) {
+          void st.downloadModel(target.id);
+        }
+      }
+
       set({ initialized: true });
     },
   })),

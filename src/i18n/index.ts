@@ -71,11 +71,11 @@ const getSupportedLanguage = (
   return supported ? supported.code : null;
 };
 
-// Initialize i18n with English as default
-// Language will be synced from settings after init
+// CloseLabs Voice: español por defecto (audiencia LatAm). Se puede sincronizar
+// desde settings (app_language) o el locale del sistema tras iniciar.
 i18n.use(initReactI18next).init({
   resources,
-  lng: "en",
+  lng: "es",
   fallbackLng: "en",
   interpolation: {
     escapeValue: false, // React already escapes values
