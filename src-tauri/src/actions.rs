@@ -614,7 +614,9 @@ impl ShortcutAction for TranscribeAction {
         let ah = app.clone();
         let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
         let tm = Arc::clone(&app.state::<Arc<TranscriptionManager>>());
-        let hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
+        // CloseLabs Voice: no se persiste historial ni audio; se conserva el binding por
+        // si el manager se reutiliza, pero no se invoca guardado.
+        let _hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
 
         change_tray_icon(app, TrayIconState::Transcribing);
         // Stop should give immediate visual feedback. Live streaming can keep
@@ -670,54 +672,15 @@ impl ShortcutAction for TranscribeAction {
                     utils::hide_recording_overlay(&ah);
                     change_tray_icon(&ah, TrayIconState::Idle);
                 } else {
-                    // Save WAV concurrently with transcription
-                    let sample_count = samples.len();
-                    let file_name = format!("handy-{}.wav", chrono::Utc::now().timestamp());
-                    let wav_path = hm.recordings_dir().join(&file_name);
-                    let wav_path_for_verify = wav_path.clone();
-                    let samples_for_wav = samples.clone();
-                    let wav_handle = tauri::async_runtime::spawn_blocking(move || {
-                        crate::audio_toolkit::save_wav_file(&wav_path, &samples_for_wav)
-                    });
-
-                    // Transcribe concurrently with WAV save. If a live stream was
-                    // running, finalize it and use its text (all audio was already
-                    // fed to the stream); otherwise batch-transcribe the samples.
+                    // CloseLabs Voice: NO se guarda el audio (.wav) ni el historial —
+                    // privacidad del paciente + no gastar memoria. Solo se transcribe y se
+                    // pega el texto. Si había un stream en vivo, se finaliza y se usa su
+                    // texto; si no, se transcribe el lote de samples.
                     let transcription_time = Instant::now();
                     let transcription_result = match tm.finalize_stream() {
-                        // A finalized stream with usable text wins. An empty result
-                        // (no active stream, produced nothing, or a finalize error
-                        // after the engine was returned) falls back to a full batch
-                        // transcription of the same audio. A finalize timeout is
-                        // surfaced instead — the worker may still hold the engine,
-                        // so a batch fallback would contend with it.
                         Ok(Some(text)) if !text.trim().is_empty() => Ok(text),
                         Ok(_) => tm.transcribe(samples),
                         Err(err) => Err(err),
-                    };
-
-                    // Await WAV save and verify
-                    let wav_saved = match wav_handle.await {
-                        Ok(Ok(())) => {
-                            match crate::audio_toolkit::verify_wav_file(
-                                &wav_path_for_verify,
-                                sample_count,
-                            ) {
-                                Ok(()) => true,
-                                Err(e) => {
-                                    error!("WAV verification failed: {}", e);
-                                    false
-                                }
-                            }
-                        }
-                        Ok(Err(e)) => {
-                            error!("Failed to save WAV file: {}", e);
-                            false
-                        }
-                        Err(e) => {
-                            error!("WAV save task panicked: {}", e);
-                            false
-                        }
                     };
 
                     if rm.was_cancelled_since(cancel_generation) {
@@ -753,18 +716,8 @@ impl ShortcutAction for TranscribeAction {
                                 return;
                             }
 
-                            // Save to history if WAV was saved
-                            if wav_saved {
-                                if let Err(err) = hm.save_entry(
-                                    file_name,
-                                    transcription,
-                                    post_process,
-                                    processed.post_processed_text.clone(),
-                                    processed.post_process_prompt.clone(),
-                                ) {
-                                    error!("Failed to save history entry: {}", err);
-                                }
-                            }
+                            // CloseLabs Voice: sin guardado de historial.
+                            let _ = &transcription;
 
                             if processed.final_text.is_empty() {
                                 utils::hide_recording_overlay(&ah);
@@ -816,18 +769,7 @@ impl ShortcutAction for TranscribeAction {
                             // Surface the failure to the UI (toast). The full
                             // message is also in handy.log via the line above.
                             let _ = ah.emit("transcription-error", err.to_string());
-                            // Save entry with empty text so user can retry
-                            if wav_saved {
-                                if let Err(save_err) = hm.save_entry(
-                                    file_name,
-                                    String::new(),
-                                    post_process,
-                                    None,
-                                    None,
-                                ) {
-                                    error!("Failed to save failed history entry: {}", save_err);
-                                }
-                            }
+                            // CloseLabs Voice: sin guardado de historial de fallos.
                             utils::hide_recording_overlay(&ah);
                             change_tray_icon(&ah, TrayIconState::Idle);
                         }

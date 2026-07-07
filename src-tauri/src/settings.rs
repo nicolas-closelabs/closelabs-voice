@@ -459,11 +459,13 @@ fn default_translate_to_english() -> bool {
 }
 
 fn default_start_hidden() -> bool {
-    false
+    // CloseLabs Voice: arranca oculta (vive en la bandeja).
+    true
 }
 
 fn default_autostart_enabled() -> bool {
-    false
+    // CloseLabs Voice: se inicia con el sistema.
+    true
 }
 
 fn default_update_checks_enabled() -> bool {
@@ -471,7 +473,8 @@ fn default_update_checks_enabled() -> bool {
 }
 
 fn default_show_whats_new_on_update() -> bool {
-    true
+    // CloseLabs Voice: sin modal de novedades.
+    false
 }
 
 fn default_whats_new_last_seen_version() -> String {
@@ -479,7 +482,9 @@ fn default_whats_new_last_seen_version() -> String {
 }
 
 fn default_selected_language() -> String {
-    "auto".to_string()
+    // CloseLabs Voice: español fijo (audiencia LatAm). Evita que el motor multilingüe
+    // autodetecte por segmento y mezcle idiomas (el "garabato").
+    "es".to_string()
 }
 
 fn default_overlay_position() -> OverlayPosition {
@@ -544,9 +549,8 @@ fn default_post_process_enabled() -> bool {
 }
 
 fn default_app_language() -> String {
-    tauri_plugin_os::locale()
-        .map(|l| l.replace('_', "-"))
-        .unwrap_or_else(|| "en".to_string())
+    // CloseLabs Voice: UI en español por defecto (no seguir el locale del sistema).
+    "es".to_string()
 }
 
 fn default_show_tray_icon() -> bool {
@@ -831,7 +835,8 @@ pub fn get_default_settings() -> AppSettings {
     AppSettings {
         settings_schema_version: default_settings_schema_version(),
         bindings,
-        push_to_talk: true,
+        // CloseLabs Voice: modo toggle (presiono→hablo→presiono para terminar), no hold.
+        push_to_talk: false,
         audio_feedback: false,
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),

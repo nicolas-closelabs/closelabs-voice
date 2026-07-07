@@ -1,15 +1,14 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Mic } from "lucide-react";
+import { Cog, FlaskConical, Info, Mic, BookMarked } from "lucide-react";
 import Logo from "./icons/Logo";
 import { useSettings } from "../hooks/useSettings";
 import {
   GeneralSettings,
   AdvancedSettings,
-  HistorySettings,
   DebugSettings,
   AboutSettings,
-  PostProcessingSettings,
+  DictionarySettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -36,23 +35,17 @@ export const SECTIONS_CONFIG = {
     component: GeneralSettings,
     enabled: () => true,
   },
+  dictionary: {
+    labelKey: "sidebar.dictionary",
+    icon: BookMarked,
+    component: DictionarySettings,
+    enabled: () => true,
+  },
   advanced: {
     labelKey: "sidebar.advanced",
     icon: Cog,
     component: AdvancedSettings,
     enabled: () => true,
-  },
-  history: {
-    labelKey: "sidebar.history",
-    icon: History,
-    component: HistorySettings,
-    enabled: () => true,
-  },
-  postprocessing: {
-    labelKey: "sidebar.postProcessing",
-    icon: Sparkles,
-    component: PostProcessingSettings,
-    enabled: (settings) => settings?.post_process_enabled ?? false,
   },
   debug: {
     labelKey: "sidebar.debug",

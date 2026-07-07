@@ -273,10 +273,14 @@ const RecordingOverlay: React.FC = () => {
       dir={direction}
       className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
     >
-      <div
-        className={`scard compact ${working && isVisible ? "cworking" : ""}`}
-      >
+      {/* CloseLabs Voice: card branded (logo + barras lila + tagline) */}
+      <div className={`scard cbrand ${working && isVisible ? "cworking" : ""}`}>
+        <div className="ovlogo">
+          <img src="/brand/closelabs-white.png" alt="CloseLabs Voice" />
+        </div>
         {working ? workingRow(workLabel, true) : listeningRow(false, true)}
+        {/* eslint-disable-next-line i18next/no-literal-string */}
+        <div className="ovtag">Dictado por voz · closelabs.co</div>
       </div>
     </div>
   );

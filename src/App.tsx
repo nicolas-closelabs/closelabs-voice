@@ -13,7 +13,6 @@ import AccessibilityPermissions from "./components/AccessibilityPermissions";
 import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
-import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
@@ -279,7 +278,6 @@ function App() {
           },
         }}
       />
-      <WhatsNewGate />
       {/* Main content area that takes remaining space */}
       <div className="flex-1 flex overflow-hidden">
         <Sidebar

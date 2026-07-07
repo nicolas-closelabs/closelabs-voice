@@ -4,13 +4,21 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.1.0)
+## Estado actual (v0.2.0)
 
-Code-complete y **compila** (backend + frontend). **Build de producción macOS listo**:
-`CloseLabs Voice_0.1.0_aarch64.dmg` (~18 MB, sin firma/notarización). Refine Groq con key
-embebida, Parakeet auto-descarga en 1er arranque, español por defecto. **Pendiente:** build
-de Windows (requiere máquina/CI Windows), prueba end-to-end real con micrófono, firma/
-notarización (roadmap), y regenerar los íconos de tray (aún usan glifos de Handy).
+Code-complete y compila (backend + frontend). Build de producción macOS `.dmg` (~18 MB, sin
+firma). Ajustes v0.2 tras prueba real:
+- **Español FORZADO** (UI + transcripción): `selected_language="es"` → arregla el garabato
+  multilingüe (el motor multilingüe autodetectaba y mezclaba idiomas).
+- **Modo toggle** (no push-to-talk); **arranca oculta + con el sistema** (autostart).
+- **Sin History ni guardado de audio** (`actions.rs` no escribe `.wav` ni historial).
+- **Post-process oculto** de la UI (el refine sigue activo por debajo).
+- **Sección "Diccionario"** propia (visible en el menú lateral).
+- **Overlay branded**: card oscura con logo CloseLabs + barras lila + tagline.
+- **About** sin donate/source/what's-new; **sin "Handy" visible** en ningún idioma.
+
+**Pendiente:** build Windows (CI), prueba end-to-end real con micrófono, firma/notarización
+(roadmap), íconos de tray (aún glifos de Handy), proxy de refine.
 
 ## Qué es
 
