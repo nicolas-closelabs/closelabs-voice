@@ -39,30 +39,41 @@ app **Tauri v2**.
 ## Arquitectura
 
 ```
-Atajo global → grabar audio
-   → [LOCAL] Transcripción con Parakeet TDT 0.6B v3 int8  → texto crudo
+Atajo global (toggle) → grabar audio
+   → [LOCAL] Transcripción con Parakeet TDT 0.6B v3 (GGUF Q5_K_M, español fijo) → texto crudo
    → diccionario/auto-corrección local (offline, siempre; términos médicos)
    → ¿hay internet?
-        sí → [NUBE] Refine con Groq (modelo económico 8B/Cerebras) → texto limpio
+        sí → [NUBE] Refine con Groq (llama-3.1-8b-instant) → texto limpio
         no → RAW (texto crudo + diccionario local)
    → pegar en la app activa
 ```
 
-- **Transcripción: SIEMPRE LOCAL** (Parakeet TDT 0.6B v3 int8, ONNX). El audio del paciente
-  **nunca sale**. Parakeet **no alucina** como Whisper (seguro para notas clínicas), es rápido
-  en CPU y liviano en RAM (ideal para PCs débiles). Multilingüe (español).
+- **Transcripción: SIEMPRE LOCAL** — Parakeet TDT 0.6B v3, **GGUF `Q5_K_M`**, vía el motor
+  **`transcribe-cpp`** (GGML/whisper-family). El audio del paciente **nunca sale**. Parakeet
+  **no alucina** como Whisper (seguro para notas clínicas), rápido en CPU y liviano en RAM. Es
+  multilingüe pero **se fuerza a español** (`selected_language="es"`) para que NO autodetecte y
+  mezcle idiomas (era el "garabato" de la v0.1).
+  - ⚠️ **Ojo (dos motores Parakeet):** `transcribe-cpp` (GGUF, multilingüe — **el nuestro**,
+    recibe `language`) vs `transcribe-rs` (ONNX int8, **inglés-only**, ignora idioma — **NO se
+    usa**). El catálogo fija `EngineType::TranscribeCpp`. La ruta de idioma está en
+    `transcription.rs` (`run_options.language`) + `effective_language()` (`model.rs`).
 - **Refine (limpieza: muletillas, puntuación, formato): EN LA NUBE vía Groq** cuando hay
-  internet; **offline cae a RAW** + diccionario local. Solo viaja **texto**, nunca audio.
-  CloseLabs asume el costo (unit economics: ~$0.10–$1.20/médico/mes cobrando $30 → margen ~97%).
-- **Entrega del modelo:** el instalador es liviano (el modelo NO va dentro). En el **1er
-  arranque la app descarga Parakeet automáticamente en segundo plano** (indicador de progreso
-  discreto, sin flujo manual). Fuente: `blob.handy.computer/parakeet-v3-int8.tar.gz` por ahora
-  (URL configurable → migrar a R2 propio en el futuro). **No hay selector de modelo.**
+  internet; **offline cae a RAW** + diccionario local. Solo viaja **texto**, nunca audio. Va
+  ACTIVADO por defecto pero su UI está **oculta** (config interna nuestra). CloseLabs asume el
+  costo (~$0.10–$1.20/médico/mes cobrando $30 → margen ~97%). Guarda anti-alucinación en
+  `actions.rs` (descarta salida vacía/desproporcionada → RAW).
+- **Entrega del modelo:** instalador liviano (~18 MB; el modelo NO va dentro). En el **1er
+  arranque la app lo descarga automáticamente** (el onboarding auto-inicia/observa la descarga;
+  sin flujo manual ni selector). Fuente: **HuggingFace `handy-computer/parakeet-tdt-0.6b-v3-gguf`**
+  (archivo `parakeet-tdt-0.6b-v3-Q5_K_M.gguf`, ~549 MB), cacheado en `~/.cache/huggingface`.
+  Catálogo reducido a esa única entrada en `src-tauri/src/catalog/catalog.json`.
 
 ## Stack técnico
 
 - **Tauri v2** (shell liviano; usa el webview del SO, no Chromium → app pequeña).
-- **Backend:** Rust (`src-tauri/`). Inferencia vía ONNX Runtime; VAD Silero; atajos `rdev`.
+- **Backend:** Rust (`src-tauri/`). Transcripción vía **`transcribe-cpp`** (GGML, para el
+  Parakeet GGUF; requiere **cmake** para compilar `transcribe-cpp-sys`); ONNX Runtime también
+  presente para otros motores; VAD Silero; atajos `rdev`.
 - **Frontend:** React 18 + TypeScript + **Tailwind CSS v4** (config en CSS con `@theme`, NO hay
   `tailwind.config.js`), Zustand (estado), i18next (i18n), lucide-react (íconos).
 - **Package manager:** **Bun** (`bun.lock`). Comandos abajo.
@@ -73,7 +84,7 @@ Atajo global → grabar audio
 |---|---|---|
 | Base | Fork de Handy (no aria, no desde cero) | Maduro/estable; MIT. aria tenía features incompletas |
 | Plataformas | macOS + Windows | Donde están los médicos |
-| Transcripción | Local Parakeet int8 (no Whisper, no nube) | Privacidad del paciente + no alucina + rápido en PC débil |
+| Transcripción | Local Parakeet GGUF Q5_K_M (transcribe-cpp), español fijo | Privacidad + no alucina + rápido; forzar `es` evita mezcla de idiomas |
 | Refine | Nube Groq, offline→raw | Cero RAM/peso local; costo trivial cobrando $30; potente |
 | API key refine | Embebida (v1), límite de gasto + endpoint configurable | Rápido de montar (como Aztec); migrar a proxy = solo cambiar URL |
 | Modelo | Descarga automática 1er arranque (no bundled) | Instalador liviano; UX sin fricción |
@@ -122,24 +133,29 @@ son configurables. Offline el refine cae a texto crudo automáticamente.
 
 ## Estructura / archivos clave
 
-- `src-tauri/tauri.conf.json` — identidad (productName, identifier), íconos, bundle, updater.
-- `src-tauri/icons/` — íconos (regenerar desde el isotipo CloseLabs).
-- `src-tauri/src/catalog/catalog.json` + `catalog/mod.rs` — catálogo de modelos (reducir a Parakeet).
-- `src-tauri/src/managers/{model,transcription}.rs`, `transcription_coordinator.rs`,
-  `src-tauri/src/commands/models.rs` — carga de modelo + descarga con progreso.
-- `src/components/model-selector/*`, `src/components/settings/models/*` — selector (quitar).
-- Refine (post-process): `src/components/settings/PostProcessingToggle.tsx` + comandos
-  `*_post_process_*` en backend — configurar Groq + prompt español.
-- `src/App.css` / `src/styles/` — tema Tailwind v4 (`@theme`) → paleta CloseLabs.
-- `src/i18n/locales/` — traducciones (español por defecto).
-- `src/branding.ts` — (a crear) fuente única de nombre/textos/logo.
+- `src-tauri/src/settings.rs` — **defaults del producto**: `selected_language="es"`,
+  `app_language="es"`, `push_to_talk=false` (toggle), `start_hidden=true`, `autostart=true`,
+  `show_whats_new=false`, `post_process_enabled=true` + proveedor Groq + modelo + prompt médico ES
+  + `post_process_selected_prompt_id` + key embebida (`option_env!("CLOSELABS_GROQ_API_KEY")`).
+- `src-tauri/src/actions.rs` — flujo transcribir→refinar→pegar; **NO guarda `.wav` ni historial**.
+- `src-tauri/src/catalog/catalog.json` — catálogo reducido a Parakeet v3 (default_quant `Q5_K_M`).
+- `src-tauri/src/managers/{model,transcription}.rs` — carga de modelo + idioma (`effective_language`).
+- `src-tauri/src/overlay.rs` (tamaño ventana) + `src/overlay/RecordingOverlay.{tsx,css}` —
+  overlay branded (card oscura + logo `public/brand/closelabs-white.png` + barras lila + tagline).
+- `src-tauri/build.rs` — stub de Apple Intelligence (evita Xcode completo); `rerun-if-env-changed`.
+- `src-tauri/tauri.conf.json` — identidad, íconos, bundle, updater (deshabilitado). `src-tauri/icons/`.
+- `src/components/Sidebar.tsx` — secciones (General, **Diccionario**, Avanzado, About; sin History
+  ni Post-process ni selector de modelo).
+- `src/components/settings/dictionary/DictionarySettings.tsx` (+ `CustomWords.tsx`) — diccionario.
+- `src/App.css` / `src/styles/theme.css` — tema Tailwind v4 (`@theme`) → paleta CloseLabs.
+- `src/branding.ts` — fuente única de nombre/textos/logo. `src/i18n/locales/*` — todo ES/limpio.
 
-## Prerrequisitos pendientes del cliente
+## Entregado por el cliente (ya integrado)
 
-1. **Logos en alta:** `CloseLabs_-_Black.png`, `CloseLabs_-_White.png`, e **isotipo 1024×1024
-   fondo transparente** (para generar íconos).
-2. **API key de Groq** (con límite de gasto configurado). — *cliente la está creando.*
-3. Confirmar el **prompt de limpieza** en español médico.
+- ✅ **Logos** en `public/brand/` (`closelabs-black/white.png` + isotipo). Ícono de app generado.
+- ✅ **API key de Groq** integrada en build-time (`CLOSELABS_GROQ_API_KEY`). ⚠️ **Poner límite de
+  gasto** en la cuenta de Groq (la key es extraíble del binario hasta migrar al proxy).
+- ✅ **Prompt** de limpieza médica en español (en `settings.rs`).
 
 ## Roadmap (fuera del v1)
 
@@ -148,7 +164,10 @@ son configurables. Offline el refine cae a texto crudo automáticamente.
 - Proxy propio de refine (sacar la key del binario, medir uso, gating de suscripción).
 - Capa de cuentas/suscripción (estilo Aztec/Supabase) para cobrar.
 - Opción de Whisper turbo local para equipos potentes.
-- Hospedar el modelo en R2 propio (dejar de depender de `blob.handy.computer`).
+- Hospedar el modelo en repo/CDN propio (hoy se baja de la HF cache pública `handy-computer`).
+- Íconos de tray propios (aún usan glifos de Handy).
+- Reset de ajustes en updates: los defaults nuevos solo aplican si NO hay `settings_store.json`
+  previo (tauri-plugin-store solo persiste tras cambios del usuario).
 
 ## Atribución
 
