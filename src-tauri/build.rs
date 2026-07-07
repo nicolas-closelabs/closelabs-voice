@@ -1,4 +1,9 @@
 fn main() {
+    // CloseLabs: la API key de Groq del refine se lee con option_env! en settings.rs.
+    // Sin esto, cambiar la key entre builds no recompila (Cargo no rastrea option_env!).
+    println!("cargo:rerun-if-env-changed=CLOSELABS_GROQ_API_KEY");
+    println!("cargo:rerun-if-env-changed=CLOSELABS_APPLE_INTELLIGENCE");
+
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     build_apple_intelligence_bridge();
 

@@ -4,6 +4,14 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
+## Estado actual (v0.1.0)
+
+Code-complete y **compila** (backend + frontend). **Build de producción macOS listo**:
+`CloseLabs Voice_0.1.0_aarch64.dmg` (~18 MB, sin firma/notarización). Refine Groq con key
+embebida, Parakeet auto-descarga en 1er arranque, español por defecto. **Pendiente:** build
+de Windows (requiere máquina/CI Windows), prueba end-to-end real con micrófono, firma/
+notarización (roadmap), y regenerar los íconos de tray (aún usan glifos de Handy).
+
 ## Qué es
 
 **CloseLabs Voice** es una app de escritorio de **dictado por voz para médicos**: el médico
