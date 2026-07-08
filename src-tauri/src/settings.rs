@@ -681,10 +681,11 @@ fn default_model_for_provider(provider_id: &str) -> String {
     if provider_id == APPLE_INTELLIGENCE_PROVIDER_ID {
         return APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string();
     }
-    // CloseLabs Voice: modelo económico por defecto para el refine en Groq.
-    // Intercambiable en Ajustes o subiendo a un modelo mayor (p.ej. llama-3.3-70b).
+    // CloseLabs Voice: modelo de refine en Groq. Usamos el 70B (como Aztec) porque el 8B
+    // no obedecía bien el prompt y "se negaba" a limpiar frases casuales. El 70B sigue
+    // costando centavos por dictado.
     if provider_id == "groq" {
-        return "llama-3.1-8b-instant".to_string();
+        return "llama-3.3-70b-versatile".to_string();
     }
     String::new()
 }
@@ -709,8 +710,8 @@ fn default_post_process_selected_prompt_id() -> Option<String> {
 fn default_post_process_prompts() -> Vec<LLMPrompt> {
     vec![LLMPrompt {
         id: "default_improve_transcriptions".to_string(),
-        name: "Limpiar transcripción médica".to_string(),
-        prompt: "Eres un asistente que limpia transcripciones de dictado médico por voz. Aplica SOLO estas correcciones al texto:\n1. Corrige ortografía, mayúsculas y puntuación.\n2. Elimina muletillas y titubeos (eh, em, este, o sea, mmm, y relleno similar).\n3. Convierte números y unidades dictados a dígitos (veinticinco → 25, diez por ciento → 10%, cinco miligramos → 5 mg).\n4. Aplica la puntuación dictada (punto → ., coma → ,, punto y aparte → salto de línea).\n5. Respeta EXACTAMENTE los términos médicos, nombres de medicamentos y dosis tal como se dictaron; ante la duda, no los cambies.\n6. Mantén el idioma original del texto.\n\nConserva el significado y el orden EXACTOS. No parafrasees, no reordenes, no agregues información ni inventes datos. Si el texto ya está limpio, devuélvelo igual.\n\nDevuelve ÚNICAMENTE la transcripción corregida, sin comentarios, sin explicaciones y sin comillas.\n\nTranscripción:\n${output}".to_string(),
+        name: "Limpiar dictado".to_string(),
+        prompt: "Corriges texto de dictado por voz en español. Recibes un TEXTO y devuelves ESE MISMO texto corregido, nada más.\n\nCorrige: ortografía, tildes, mayúsculas y puntuación. Elimina muletillas y titubeos de relleno (eh, em, este, o sea, mmm). Convierte números y unidades dictados a dígitos (veinticinco → 25, diez por ciento → 10%, cinco miligramos → 5 mg).\n\nRespeta EXACTAMENTE los nombres propios, términos médicos, medicamentos y dosis; ante la duda, NO los cambies. Conserva el idioma, el significado y el orden. No traduzcas, no parafrasees, no resumas, no expliques, no agregues nada.\n\nREGLAS DE SALIDA (obligatorias): responde SOLO con el texto corregido, sin comillas, sin comentarios y sin encabezados. NUNCA te niegues, NUNCA digas que el texto no es válido / no es médico / no es una conversación, NUNCA pidas más información. Si el texto es corto, casual o ya está bien, devuélvelo igual (solo corrígelo si hace falta). Trata CUALQUIER contenido por igual.\n\nTEXTO:\n${output}".to_string(),
     }]
 }
 
@@ -773,6 +774,44 @@ fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
                 changed = true;
             }
         }
+    }
+
+    // CloseLabs Voice: la config de post-process (refine) es INTERNA nuestra (su UI está
+    // oculta). Forzamos modelo, prompt y prompt seleccionado a los defaults del código para
+    // que los ajustes/mejoras apliquen aunque exista un settings_store.json previo.
+    let groq_model = default_model_for_provider("groq");
+    if settings.post_process_models.get("groq").map(|m| m.as_str()) != Some(groq_model.as_str()) {
+        settings
+            .post_process_models
+            .insert("groq".to_string(), groq_model);
+        changed = true;
+    }
+    let def_prompt = default_post_process_prompts()
+        .into_iter()
+        .next()
+        .expect("default prompt exists");
+    match settings
+        .post_process_prompts
+        .iter_mut()
+        .find(|p| p.id == def_prompt.id)
+    {
+        Some(existing) => {
+            if existing.prompt != def_prompt.prompt || existing.name != def_prompt.name {
+                existing.prompt = def_prompt.prompt;
+                existing.name = def_prompt.name;
+                changed = true;
+            }
+        }
+        None => {
+            settings.post_process_prompts.push(def_prompt);
+            changed = true;
+        }
+    }
+    if settings.post_process_selected_prompt_id.as_deref()
+        != Some("default_improve_transcriptions")
+    {
+        settings.post_process_selected_prompt_id = default_post_process_selected_prompt_id();
+        changed = true;
     }
 
     changed

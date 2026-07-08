@@ -301,11 +301,35 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
                 error!("Refine devolvió vacío; se usa la transcripción cruda");
                 return None;
             }
+
+            // Guarda anti-rechazo: si el modelo, en vez de limpiar el texto, respondió con
+            // una meta-frase (se negó, comentó, o pidió más info — ej. "esto no parece una
+            // conversación médica"), descartamos y usamos la cruda. Frases largas y muy
+            // específicas para no chocar con dictado real.
+            let low = trimmed.to_lowercase();
+            const REFUSAL_MARKERS: [&str; 9] = [
+                "no parece ser una",
+                "no parece una conversación",
+                "no es una transcrip",
+                "no es una conversación",
+                "proporciona una transcrip",
+                "proporciona un dictado",
+                "según las instrucciones",
+                "lo siento, pero",
+                "no puedo ayudarte",
+            ];
+            if REFUSAL_MARKERS.iter().any(|m| low.contains(m)) {
+                error!("Refine devolvió una meta-respuesta/rechazo; se usa la transcripción cruda");
+                return None;
+            }
+
+            // La limpieza normal no crece mucho (quita muletillas, ajusta puntuación). Un
+            // texto desproporcionadamente más largo = preámbulo/comentario/invención → cruda.
             let input_len = transcription.chars().count();
             let output_len = trimmed.chars().count();
-            if input_len > 0 && output_len > input_len * 3 + 40 {
+            if input_len > 0 && output_len > input_len * 2 + 30 {
                 error!(
-                    "Refine descartado por posible alucinación (entrada {} vs salida {} chars); se usa la cruda",
+                    "Refine descartado por desproporcionado (entrada {} vs salida {} chars); se usa la cruda",
                     input_len, output_len
                 );
                 return None;
