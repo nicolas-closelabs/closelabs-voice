@@ -280,7 +280,7 @@ const RecordingOverlay: React.FC = () => {
         </div>
         {working ? workingRow(workLabel, true) : listeningRow(false, true)}
         {/* eslint-disable-next-line i18next/no-literal-string */}
-        <div className="ovtag">Dictado por voz · closelabs.co</div>
+        <div className="ovtag">Automatiza tu consultorio con CloseLabs</div>
       </div>
     </div>
   );

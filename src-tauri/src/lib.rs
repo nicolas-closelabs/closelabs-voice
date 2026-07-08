@@ -192,15 +192,10 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     #[cfg(unix)]
     signal_handle::setup_signal_handler(app_handle.clone(), signals);
 
-    // Apply macOS Accessory policy if starting hidden and tray is available.
-    // If the tray icon is disabled, keep the dock icon so the user can reopen.
-    #[cfg(target_os = "macos")]
-    {
-        let settings = settings::get_settings(app_handle);
-        if settings.start_hidden && settings.show_tray_icon {
-            let _ = app_handle.set_activation_policy(tauri::ActivationPolicy::Accessory);
-        }
-    }
+    // CloseLabs Voice: mantenemos SIEMPRE el ícono del Dock (política Regular por defecto),
+    // aunque arranque oculta. Así un médico no técnico siempre puede hacer clic en el Dock
+    // (o en el tray) para abrir la ventana — antes, al arrancar oculta o al cerrar, la app
+    // pasaba a Accessory y desaparecía del Dock, y no encontraban el panel.
     // Get the current theme to set the appropriate initial icon
     let initial_theme = tray::get_current_theme(app_handle);
 
@@ -872,25 +867,11 @@ pub fn run(cli_args: CliArgs) {
         })
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
+                // CloseLabs Voice: cerrar solo oculta la ventana (la app sigue en el tray),
+                // pero MANTENEMOS el ícono del Dock para que el usuario pueda reabrir con un
+                // clic (el handler RunEvent::Reopen muestra la ventana). No pasamos a Accessory.
                 api.prevent_close();
                 let _res = window.hide();
-
-                #[cfg(target_os = "macos")]
-                {
-                    let settings = get_settings(window.app_handle());
-                    let tray_visible =
-                        settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
-                    if tray_visible {
-                        // Tray is available: hide the dock icon, app lives in the tray
-                        let res = window
-                            .app_handle()
-                            .set_activation_policy(tauri::ActivationPolicy::Accessory);
-                        if let Err(e) = res {
-                            log::error!("Failed to set activation policy: {}", e);
-                        }
-                    }
-                    // No tray: keep the dock icon visible so the user can reopen
-                }
             }
             tauri::WindowEvent::ThemeChanged(theme) => {
                 log::info!("Theme changed to: {:?}", theme);

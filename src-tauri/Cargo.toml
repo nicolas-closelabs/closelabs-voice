@@ -1,11 +1,11 @@
 [package]
-name = "handy"
-version = "0.2.0"
+name = "closelabs-voice"
+version = "0.3.0"
 description = "CloseLabs Voice"
-authors = ["cjpais"]
+authors = ["CloseLabs", "cjpais (Handy, MIT)"]
 edition = "2021"
 license = "MIT"
-default-run = "handy"
+default-run = "closelabs-voice"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
@@ -16,7 +16,7 @@ incremental = true # Compile your binary in smaller steps.
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "handy_app_lib"
+name = "closelabs_voice_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 # [[bin]]

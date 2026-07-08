@@ -22,8 +22,8 @@
     "subtitle": "Para comenzar, elige un modelo de transcripción",
     "existingModelsTitle": "Compatible Models",
     "downloadModelsTitle": "Available to Download",
-    "showAllModels": "Show all {{total}} models",
-    "showFewerModels": "Show fewer models",
+    "showAllModels": "Ver los {{total}} modelos",
+    "showFewerModels": "Ver menos modelos",
     "recommended": "Recomendado",
     "customModelDescription": "Sin soporte oficial",
     "modelCard": {
@@ -97,7 +97,7 @@
       }
     },
     "errors": {
-      "selectModel": "Failed to select model"
+      "selectModel": "No se pudo seleccionar el modelo"
     },
     "permissions": {
       "title": "Permisos Requeridos",
@@ -284,7 +284,7 @@
       "overlay": {
         "style": {
           "title": "Overlay",
-          "description": "Choose the recording overlay: None hides it, Minimal shows a compact pill, Live shows transcription in real time as you speak (streaming-capable models only — look for the Streaming badge in the model picker). On Linux 'None' is recommended.",
+          "description": "Elige la ventana de grabación mientras hablas: Ninguna la oculta, Minimal muestra una barra compacta, En vivo muestra la transcripción en tiempo real (solo modelos compatibles con streaming).",
           "options": {
             "none": "Ninguna",
             "minimal": "Minimal",

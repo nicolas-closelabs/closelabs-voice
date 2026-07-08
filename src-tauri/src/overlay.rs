@@ -43,8 +43,8 @@ tauri_panel! {
 // La card mide 240px de ancho y ~112px de alto (stack vertical); la ventana debe
 // caber la card con un poco de holgura. La card está anclada al borde inferior por
 // CSS, así que crece hacia arriba desde el OVERLAY_BOTTOM_OFFSET.
-const OVERLAY_WIDTH: f64 = 260.0;
-const OVERLAY_HEIGHT: f64 = 132.0;
+const OVERLAY_WIDTH: f64 = 264.0;
+const OVERLAY_HEIGHT: f64 = 146.0;
 
 // Actual is 394x118, just a little extra
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;

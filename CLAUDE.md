@@ -4,21 +4,25 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.2.0)
+## Estado actual (v0.3.0 — "v0.3a")
 
-Code-complete y compila (backend + frontend). Build de producción macOS `.dmg` (~18 MB, sin
-firma). Ajustes v0.2 tras prueba real:
-- **Español FORZADO** (UI + transcripción): `selected_language="es"` → arregla el garabato
-  multilingüe (el motor multilingüe autodetectaba y mezclaba idiomas).
-- **Modo toggle** (no push-to-talk); **arranca oculta + con el sistema** (autostart).
-- **Sin History ni guardado de audio** (`actions.rs` no escribe `.wav` ni historial).
-- **Post-process oculto** de la UI (el refine sigue activo por debajo).
-- **Sección "Diccionario"** propia (visible en el menú lateral).
-- **Overlay branded**: card oscura con logo CloseLabs + barras lila + tagline.
-- **About** sin donate/source/what's-new; **sin "Handy" visible** en ningún idioma.
+Compila (backend+frontend). Build macOS `.dmg` sin firma. Sobre la base v0.2 (español forzado,
+modo toggle, sin history, refine Groq oculto, sección Diccionario):
+- **Transcripción → Whisper Medium (GGUF Q5_K_M)**, español fijo. **CAMBIO CLAVE:** Parakeet
+  (transductor) NO respetaba el idioma forzado → mezclaba inglés/español (el "garabato").
+  Whisper **sí** respeta `language=es` y es excelente en español (lo que usa Aztec).
+- **Binario renombrado** `handy` → `closelabs-voice` (crate + lib `closelabs_voice_lib`) → la
+  notificación de Login Items ya no dice "handy".
+- **Íconos de tray** = isotipo CloseLabs; **ícono de app** = morado muy oscuro (`#1A0A2E`) +
+  isotipo blanco (limpio, no chillón).
+- **Overlay** oscuro neutro (`#17161C`, no morado chillón) + tagline "Automatiza tu consultorio
+  con CloseLabs".
+- **Dock siempre visible** (política Regular) para que un no-técnico reabra la app fácil.
+- Traducción español completada (huecos que quedaban en inglés).
 
-**Pendiente:** build Windows (CI), prueba end-to-end real con micrófono, firma/notarización
-(roadmap), íconos de tray (aún glifos de Handy), proxy de refine.
+**Siguiente (v0.3b):** rediseño limpio/minimalista tipo Aztec (tema blanco + acentos lila;
+sidebar Inicio/Diccionario/Configuración/Instrucciones/Ayuda; settings simplificados).
+**Pendiente:** build Windows (CI), prueba real con micrófono, firma/notarización, proxy de refine.
 
 ## Qué es
 
@@ -40,7 +44,7 @@ app **Tauri v2**.
 
 ```
 Atajo global (toggle) → grabar audio
-   → [LOCAL] Transcripción con Parakeet TDT 0.6B v3 (GGUF Q5_K_M, español fijo) → texto crudo
+   → [LOCAL] Transcripción con Whisper Medium (GGUF Q5_K_M, español fijo) → texto crudo
    → diccionario/auto-corrección local (offline, siempre; términos médicos)
    → ¿hay internet?
         sí → [NUBE] Refine con Groq (llama-3.1-8b-instant) → texto limpio
@@ -48,15 +52,17 @@ Atajo global (toggle) → grabar audio
    → pegar en la app activa
 ```
 
-- **Transcripción: SIEMPRE LOCAL** — Parakeet TDT 0.6B v3, **GGUF `Q5_K_M`**, vía el motor
-  **`transcribe-cpp`** (GGML/whisper-family). El audio del paciente **nunca sale**. Parakeet
-  **no alucina** como Whisper (seguro para notas clínicas), rápido en CPU y liviano en RAM. Es
-  multilingüe pero **se fuerza a español** (`selected_language="es"`) para que NO autodetecte y
-  mezcle idiomas (era el "garabato" de la v0.1).
-  - ⚠️ **Ojo (dos motores Parakeet):** `transcribe-cpp` (GGUF, multilingüe — **el nuestro**,
-    recibe `language`) vs `transcribe-rs` (ONNX int8, **inglés-only**, ignora idioma — **NO se
-    usa**). El catálogo fija `EngineType::TranscribeCpp`. La ruta de idioma está en
+- **Transcripción: SIEMPRE LOCAL** — **Whisper Medium**, GGUF `Q5_K_M` (~583 MB), vía el motor
+  **`transcribe-cpp`** (GGML). El audio del paciente **nunca sale**. **Se fuerza a español**
+  (`selected_language="es"`, en `settings.rs`); Whisper **respeta** ese idioma y transcribe
+  español excelente (incl. términos médicos en inglés).
+  - ⚠️ **Historia (por qué Whisper y no Parakeet):** la v0.1/v0.2 usaba **Parakeet TDT v3**
+    (transductor). Parakeet **no respeta bien el idioma forzado** → autodetectaba por segmento y
+    mezclaba inglés/español (el "garabato"). Se cambió a Whisper en v0.3 porque **sí** honra
+    `language=es` (por eso Aztec, que usa Whisper, transcribe bien). La ruta de idioma:
     `transcription.rs` (`run_options.language`) + `effective_language()` (`model.rs`).
+  - Nota: Whisper puede alucinar en silencios → mitigado con VAD (on) + guarda anti-alucinación
+    en `actions.rs`. Es más lento que Parakeet en CPU, pero la precisión en español manda.
 - **Refine (limpieza: muletillas, puntuación, formato): EN LA NUBE vía Groq** cuando hay
   internet; **offline cae a RAW** + diccionario local. Solo viaja **texto**, nunca audio. Va
   ACTIVADO por defecto pero su UI está **oculta** (config interna nuestra). CloseLabs asume el
@@ -84,7 +90,7 @@ Atajo global (toggle) → grabar audio
 |---|---|---|
 | Base | Fork de Handy (no aria, no desde cero) | Maduro/estable; MIT. aria tenía features incompletas |
 | Plataformas | macOS + Windows | Donde están los médicos |
-| Transcripción | Local Parakeet GGUF Q5_K_M (transcribe-cpp), español fijo | Privacidad + no alucina + rápido; forzar `es` evita mezcla de idiomas |
+| Transcripción | Local **Whisper Medium** GGUF Q5_K_M, español fijo | Whisper respeta `es` (Parakeet no) → español fiable; privado/offline |
 | Refine | Nube Groq, offline→raw | Cero RAM/peso local; costo trivial cobrando $30; potente |
 | API key refine | Embebida (v1), límite de gasto + endpoint configurable | Rápido de montar (como Aztec); migrar a proxy = solo cambiar URL |
 | Modelo | Descarga automática 1er arranque (no bundled) | Instalador liviano; UX sin fricción |
