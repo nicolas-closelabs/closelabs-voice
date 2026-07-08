@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "./styles/theme.css";
 
+/* CloseLabs Voice: forzar LIGHT mode. Hacemos que `dark:` sea class-based (solo aplica
+   bajo un ancestro .dark, que nunca añadimos) en vez de seguir el modo oscuro del SO.
+   Así la app se ve blanca/limpia SIEMPRE, aunque el Mac esté en modo oscuro. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Register the shared color tokens (src/styles/theme.css) as Tailwind
    utilities */
 @theme inline {
@@ -53,6 +58,9 @@
      viewer reads as a distinct console. In light mode this is a faint gray code
      block (matching other surfaces); the dark theme overrides it below. */
   --color-log-surface: color-mix(in srgb, var(--color-background), black 6%);
+
+  /* Force light for native controls/scrollbars even if the OS is in dark mode. */
+  color-scheme: light;
 
   /* Apply colors */
   color: var(--color-text);
