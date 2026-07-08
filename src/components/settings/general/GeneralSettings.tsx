@@ -10,6 +10,7 @@ import { AudioFeedback } from "../AudioFeedback";
 import { useSettings } from "../../../hooks/useSettings";
 import { VolumeSlider } from "../VolumeSlider";
 import { MuteWhileRecording } from "../MuteWhileRecording";
+import { PasteMethodSetting } from "../PasteMethod";
 
 export const GeneralSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -25,6 +26,9 @@ export const GeneralSettings: React.FC = () => {
         {!isLinux && !pushToTalk && (
           <ShortcutInput shortcutId="cancel" grouped={true} />
         )}
+      </SettingsGroup>
+      <SettingsGroup title={t("settings.advanced.groups.output")}>
+        <PasteMethodSetting descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
       <SettingsGroup title={t("settings.sound.title")}>
         <MicrophoneSelector descriptionMode="tooltip" grouped={true} />

@@ -21,26 +21,28 @@ export const PasteMethodSetting: React.FC<PasteMethodProps> = React.memo(
     const getPasteMethodOptions = (osType: string) => {
       const mod = osType === "macos" ? "Cmd" : "Ctrl";
 
+      // CloseLabs Voice: dos opciones claras para el usuario final —
+      // "Pegar automáticamente" o "Solo copiar (yo pego con Cmd/Ctrl+V)".
       const options = [
         {
           value: "ctrl_v",
-          label: t("settings.advanced.pasteMethod.options.clipboard", {
-            modifier: mod,
-          }),
-        },
-        {
-          value: "direct",
-          label: t("settings.advanced.pasteMethod.options.direct"),
+          label: t("settings.advanced.pasteMethod.options.autoPaste"),
         },
         {
           value: "none",
-          label: t("settings.advanced.pasteMethod.options.none"),
+          label: t("settings.advanced.pasteMethod.options.clipboardOnly", {
+            modifier: mod,
+          }),
         },
       ];
 
-      // Add Shift+Insert and Ctrl+Shift+V options for Windows and Linux only
+      // Opciones avanzadas solo en Linux/Windows (usuarios técnicos).
       if (osType === "windows" || osType === "linux") {
         options.push(
+          {
+            value: "direct",
+            label: t("settings.advanced.pasteMethod.options.direct"),
+          },
           {
             value: "ctrl_shift_v",
             label: t(
@@ -56,7 +58,6 @@ export const PasteMethodSetting: React.FC<PasteMethodProps> = React.memo(
         );
       }
 
-      // External script is only available on Linux
       if (osType === "linux") {
         options.push({
           value: "external_script",

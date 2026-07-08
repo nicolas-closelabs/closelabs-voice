@@ -301,15 +301,17 @@
         }
       },
       "pasteMethod": {
-        "title": "Método de Pegado",
-        "description": "Elige cómo se inserta el texto. Directo: simula escritura mediante entrada del sistema. Ninguno: omite el pegado, solo actualiza historial/portapapeles.",
+        "title": "Entrega del texto",
+        "description": "Elige qué pasa al terminar de dictar: pegar el texto automáticamente donde tengas el cursor, o solo copiarlo al portapapeles para que tú lo pegues.",
         "options": {
           "clipboard": "Portapapeles ({{modifier}}+V)",
           "clipboardCtrlShiftV": "Portapapeles (Ctrl+Shift+V)",
           "clipboardShiftInsert": "Portapapeles (Shift+Insert)",
           "direct": "Directo",
           "none": "Ninguno",
-          "externalScript": "Script externo"
+          "externalScript": "Script externo",
+          "autoPaste": "Pegar automáticamente",
+          "clipboardOnly": "Solo copiar (pego yo con {{modifier}}+V)"
         },
         "externalScriptPlaceholder": "/ruta/a/su/script.sh"
       },

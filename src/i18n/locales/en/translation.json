@@ -301,15 +301,17 @@
         }
       },
       "pasteMethod": {
-        "title": "Paste Method",
-        "description": "Choose how text is inserted. Direct: simulates typing via system input. None: skips paste, only updates history/clipboard.",
+        "title": "Text delivery",
+        "description": "Choose what happens when you finish dictating: paste the text automatically where your cursor is, or just copy it to the clipboard so you paste it yourself.",
         "options": {
           "clipboard": "Clipboard ({{modifier}}+V)",
           "clipboardCtrlShiftV": "Clipboard (Ctrl+Shift+V)",
           "clipboardShiftInsert": "Clipboard (Shift+Insert)",
           "direct": "Direct",
           "none": "None",
-          "externalScript": "External Script"
+          "externalScript": "External Script",
+          "autoPaste": "Paste automatically",
+          "clipboardOnly": "Copy only (I paste with {{modifier}}+V)"
         },
         "externalScriptPlaceholder": "/path/to/your/script.sh"
       },

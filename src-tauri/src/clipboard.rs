@@ -651,8 +651,12 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
         send_return_key(&mut enigo, settings.auto_submit_key)?;
     }
 
-    // After pasting, optionally copy to clipboard based on settings
-    if settings.clipboard_handling == ClipboardHandling::CopyToClipboard {
+    // Copiar al portapapeles si el usuario lo pidió, O si eligió "solo copiar"
+    // (PasteMethod::None): en ese modo NO se pega, así que el texto DEBE quedar en el
+    // portapapeles para poder pegarlo manualmente con Cmd+V (antes se perdía).
+    if settings.clipboard_handling == ClipboardHandling::CopyToClipboard
+        || paste_method == PasteMethod::None
+    {
         let clipboard = app_handle.clipboard();
         clipboard
             .write_text(&text)
