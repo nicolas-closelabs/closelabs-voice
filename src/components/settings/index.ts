@@ -5,6 +5,9 @@ export { DebugSettings } from "./debug/DebugSettings";
 export { HistorySettings } from "./history/HistorySettings";
 export { AboutSettings } from "./about/AboutSettings";
 export { DictionarySettings } from "./dictionary/DictionarySettings";
+export { HomeSettings } from "./home/HomeSettings";
+export { InstructionsSettings } from "./instructions/InstructionsSettings";
+export { HelpSettings } from "./help/HelpSettings";
 export { PostProcessingSettings } from "./post-processing/PostProcessingSettings";
 export { ModelsSettings } from "./models/ModelsSettings";
 

@@ -16,7 +16,11 @@
     "postProcessing": "Post Proceso",
     "history": "Historial",
     "debug": "Depuración",
-    "about": "Acerca de"
+    "about": "Acerca de",
+    "home": "Inicio",
+    "config": "Configuración",
+    "instructions": "Instrucciones",
+    "help": "Ayuda"
   },
   "onboarding": {
     "subtitle": "Para comenzar, elige un modelo de transcripción",

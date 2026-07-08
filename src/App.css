@@ -15,11 +15,14 @@
   /* CloseLabs brand tokens (utilities: bg-brand-accent, text-brand-secondary, …) */
   --color-brand-accent: var(--brand-accent);
   --color-brand-accent-secondary: var(--brand-accent-secondary);
+  --color-brand-accent-soft: var(--brand-accent-soft);
   --color-brand-text-secondary: var(--brand-text-secondary);
   --color-brand-text-muted: var(--brand-text-muted);
-  --color-brand-bg-secondary: var(--brand-bg-secondary);
-  --color-brand-bg-tertiary: var(--brand-bg-tertiary);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-surface-2: var(--brand-surface-2);
+  --color-brand-sidebar: var(--brand-sidebar);
   --color-brand-border: var(--brand-border);
+  --color-brand-border-strong: var(--brand-border-strong);
 
   /* Fonts (utilities: font-heading, font-body) */
   --font-heading: var(--font-heading);

@@ -1,36 +1,47 @@
+/* eslint-disable i18next/no-literal-string */
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { type } from "@tauri-apps/plugin-os";
-import { MicrophoneSelector } from "../MicrophoneSelector";
 import { ShortcutInput } from "../ShortcutInput";
 import { SettingsGroup } from "../../ui/SettingsGroup";
-import { OutputDeviceSelector } from "../OutputDeviceSelector";
 import { PushToTalk } from "../PushToTalk";
-import { AudioFeedback } from "../AudioFeedback";
-import { useSettings } from "../../../hooks/useSettings";
-import { VolumeSlider } from "../VolumeSlider";
-import { MuteWhileRecording } from "../MuteWhileRecording";
 import { PasteMethodSetting } from "../PasteMethod";
+import { MicrophoneSelector } from "../MicrophoneSelector";
+import { MuteWhileRecording } from "../MuteWhileRecording";
+import { AudioFeedback } from "../AudioFeedback";
+import { OutputDeviceSelector } from "../OutputDeviceSelector";
+import { VolumeSlider } from "../VolumeSlider";
+import { StartHidden } from "../StartHidden";
+import { AutostartToggle } from "../AutostartToggle";
+import { ShowTrayIcon } from "../ShowTrayIcon";
+import { useSettings } from "../../../hooks/useSettings";
 
+/**
+ * Configuración (CloseLabs Voice): una sola pantalla simple para el médico. Junta lo
+ * esencial de General + Avanzado en grupos claros y ESCONDE lo técnico (aceleración,
+ * VAD, keyboard impl, timeouts, experimental…), que se quedan con sus defaults.
+ */
 export const GeneralSettings: React.FC = () => {
-  const { t } = useTranslation();
   const { audioFeedbackEnabled, getSetting } = useSettings();
   const pushToTalk = getSetting("push_to_talk");
   const isLinux = type() === "linux";
+
   return (
-    <div className="max-w-3xl w-full mx-auto space-y-6">
-      <SettingsGroup title={t("settings.general.title")}>
+    <div className="max-w-3xl w-full mx-auto space-y-6 py-2">
+      <h1 className="font-heading font-bold text-2xl px-1">Configuración</h1>
+
+      <SettingsGroup title="General">
         <ShortcutInput shortcutId="transcribe" grouped={true} />
         <PushToTalk descriptionMode="tooltip" grouped={true} />
-        {/* Cancel shortcut is hidden with push-to-talk (release key cancels) and on Linux (dynamic shortcut instability) */}
         {!isLinux && !pushToTalk && (
           <ShortcutInput shortcutId="cancel" grouped={true} />
         )}
       </SettingsGroup>
-      <SettingsGroup title={t("settings.advanced.groups.output")}>
+
+      <SettingsGroup title="Entrega del texto">
         <PasteMethodSetting descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
-      <SettingsGroup title={t("settings.sound.title")}>
+
+      <SettingsGroup title="Sonido">
         <MicrophoneSelector descriptionMode="tooltip" grouped={true} />
         <MuteWhileRecording descriptionMode="tooltip" grouped={true} />
         <AudioFeedback descriptionMode="tooltip" grouped={true} />
@@ -40,6 +51,12 @@ export const GeneralSettings: React.FC = () => {
           disabled={!audioFeedbackEnabled}
         />
         <VolumeSlider disabled={!audioFeedbackEnabled} />
+      </SettingsGroup>
+
+      <SettingsGroup title="Aplicación">
+        <StartHidden descriptionMode="tooltip" grouped={true} />
+        <AutostartToggle descriptionMode="tooltip" grouped={true} />
+        <ShowTrayIcon descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
     </div>
   );

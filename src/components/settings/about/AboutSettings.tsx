@@ -1,61 +1,48 @@
+/* eslint-disable i18next/no-literal-string */
 import React, { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { getVersion } from "@tauri-apps/api/app";
-import { SettingsGroup } from "../../ui/SettingsGroup";
-import { SettingContainer } from "../../ui/SettingContainer";
-import { AppDataDirectory } from "../AppDataDirectory";
-import { AppLanguageSelector } from "../AppLanguageSelector";
-import { LogDirectory } from "../debug";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { ArrowUpRight } from "lucide-react";
+import Logo from "../../icons/Logo";
 
 export const AboutSettings: React.FC = () => {
-  const { t } = useTranslation();
   const [version, setVersion] = useState("");
 
   useEffect(() => {
-    const fetchVersion = async () => {
-      try {
-        const appVersion = await getVersion();
-        setVersion(appVersion);
-      } catch (error) {
-        console.error("Failed to get app version:", error);
-        setVersion("0.1.0");
-      }
-    };
-
-    fetchVersion();
+    getVersion()
+      .then(setVersion)
+      .catch(() => setVersion("0.4.0"));
   }, []);
 
-  // CloseLabs Voice: se quitaron Donate, Source Code y el toggle de "What's New"
-  // (no aplican a un producto propietario/de pago).
   return (
-    <div className="max-w-3xl w-full mx-auto space-y-6">
-      <SettingsGroup title={t("settings.about.title")}>
-        <AppLanguageSelector descriptionMode="tooltip" grouped={true} />
-        <SettingContainer
-          title={t("settings.about.version.title")}
-          description={t("settings.about.version.description")}
-          grouped={true}
-        >
-          {/* eslint-disable-next-line i18next/no-literal-string */}
-          <span className="text-sm font-mono">v{version}</span>
-        </SettingContainer>
+    <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 py-4">
+      <div className="rounded-3xl border border-brand-border bg-white shadow-[0_2px_10px_rgba(26,22,32,0.05)] p-8 flex flex-col items-center text-center gap-5">
+        <Logo width={200} />
 
-        <AppDataDirectory descriptionMode="tooltip" grouped={true} />
-        <LogDirectory grouped={true} />
-      </SettingsGroup>
+        <p className="text-brand-text-secondary max-w-md leading-relaxed">
+          CloseLabs Voice convierte tu voz en texto, al instante y en tu idioma.
+          Dictado privado y local para que dediques menos tiempo a escribir y más
+          a tus pacientes.
+        </p>
 
-      <SettingsGroup title={t("settings.about.acknowledgments.title")}>
-        <SettingContainer
-          title={t("settings.about.acknowledgments.ggml.title")}
-          description={t("settings.about.acknowledgments.ggml.description")}
-          grouped={true}
-          layout="stacked"
+        <div className="flex items-center gap-2 text-sm text-brand-text-muted">
+          <span className="px-2.5 py-1 rounded-full bg-brand-surface border border-brand-border font-heading font-medium tabular-nums">
+            v{version}
+          </span>
+        </div>
+
+        <button
+          onClick={() => openUrl("https://www.closelabs.co")}
+          className="inline-flex items-center gap-1 text-brand-accent font-medium hover:underline"
         >
-          <div className="text-sm text-mid-gray">
-            {t("settings.about.acknowledgments.ggml.details")}
-          </div>
-        </SettingContainer>
-      </SettingsGroup>
+          Automatiza tu consultorio con CloseLabs
+          <ArrowUpRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      <p className="text-center text-xs text-brand-text-muted">
+        Hecho por CloseLabs · closelabs.co
+      </p>
     </div>
   );
 };

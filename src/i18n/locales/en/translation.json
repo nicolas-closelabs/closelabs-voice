@@ -16,7 +16,11 @@
     "postProcessing": "Post Process",
     "history": "History",
     "debug": "Debug",
-    "about": "About"
+    "about": "About",
+    "home": "Home",
+    "config": "Settings",
+    "instructions": "Instructions",
+    "help": "Help"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",

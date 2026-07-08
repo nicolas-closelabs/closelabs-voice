@@ -1,14 +1,21 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, Info, Mic, BookMarked } from "lucide-react";
-import Logo from "./icons/Logo";
-import { useSettings } from "../hooks/useSettings";
 import {
-  GeneralSettings,
-  AdvancedSettings,
-  DebugSettings,
-  AboutSettings,
+  Home,
+  BookMarked,
+  Settings,
+  GraduationCap,
+  Info,
+  LifeBuoy,
+} from "lucide-react";
+import Logo from "./icons/Logo";
+import {
+  HomeSettings,
   DictionarySettings,
+  GeneralSettings,
+  InstructionsSettings,
+  AboutSettings,
+  HelpSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -28,11 +35,13 @@ interface SectionConfig {
   enabled: (settings: any) => boolean;
 }
 
+// CloseLabs Voice: menú tipo Aztec, limpio y para no-técnicos.
+// La clave `general` = pantalla "Configuración" (App usa `general` como fallback).
 export const SECTIONS_CONFIG = {
-  general: {
-    labelKey: "sidebar.general",
-    icon: Mic,
-    component: GeneralSettings,
+  home: {
+    labelKey: "sidebar.home",
+    icon: Home,
+    component: HomeSettings,
     enabled: () => true,
   },
   dictionary: {
@@ -41,22 +50,28 @@ export const SECTIONS_CONFIG = {
     component: DictionarySettings,
     enabled: () => true,
   },
-  advanced: {
-    labelKey: "sidebar.advanced",
-    icon: Cog,
-    component: AdvancedSettings,
+  general: {
+    labelKey: "sidebar.config",
+    icon: Settings,
+    component: GeneralSettings,
     enabled: () => true,
   },
-  debug: {
-    labelKey: "sidebar.debug",
-    icon: FlaskConical,
-    component: DebugSettings,
-    enabled: (settings) => settings?.debug_mode ?? false,
+  instructions: {
+    labelKey: "sidebar.instructions",
+    icon: GraduationCap,
+    component: InstructionsSettings,
+    enabled: () => true,
   },
   about: {
     labelKey: "sidebar.about",
     icon: Info,
     component: AboutSettings,
+    enabled: () => true,
+  },
+  help: {
+    labelKey: "sidebar.help",
+    icon: LifeBuoy,
+    component: HelpSettings,
     enabled: () => true,
   },
 } as const satisfies Record<string, SectionConfig>;
@@ -71,41 +86,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSectionChange,
 }) => {
   const { t } = useTranslation();
-  const { settings } = useSettings();
 
-  const availableSections = Object.entries(SECTIONS_CONFIG)
-    .filter(([_, config]) => config.enabled(settings))
-    .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
+  // Todas las secciones están siempre visibles (menú simple, sin condicionales).
+  const sections = Object.entries(SECTIONS_CONFIG).map(([id, config]) => ({
+    id: id as SidebarSection,
+    ...config,
+  }));
 
   return (
-    <div className="flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
-      <Logo width={120} className="m-4" />
-      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-mid-gray/20">
-        {availableSections.map((section) => {
+    <div className="flex flex-col w-48 h-full shrink-0 bg-brand-sidebar border-e border-brand-border px-3 pt-5 pb-3">
+      <div className="px-2 pb-5">
+        <Logo width={128} />
+      </div>
+      <nav className="flex flex-col gap-1">
+        {sections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
-
           return (
-            <div
+            <button
               key={section.id}
-              className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors ${
-                isActive
-                  ? "bg-logo-primary/80"
-                  : "hover:bg-mid-gray/20 hover:opacity-100 opacity-85"
-              }`}
               onClick={() => onSectionChange(section.id)}
+              className={`flex gap-2.5 items-center px-3 py-2.5 w-full rounded-xl text-[14px] transition-colors ${
+                isActive
+                  ? "bg-brand-accent-soft text-brand-accent font-semibold"
+                  : "text-brand-text-secondary hover:bg-brand-surface hover:text-text font-medium"
+              }`}
             >
-              <Icon width={24} height={24} className="shrink-0" />
-              <p
-                className="text-sm font-medium truncate"
-                title={t(section.labelKey)}
-              >
-                {t(section.labelKey)}
-              </p>
-            </div>
+              <Icon
+                width={18}
+                height={18}
+                className="shrink-0"
+                strokeWidth={isActive ? 2.4 : 2}
+              />
+              <span className="truncate">{t(section.labelKey)}</span>
+            </button>
           );
         })}
-      </div>
+      </nav>
     </div>
   );
 };
