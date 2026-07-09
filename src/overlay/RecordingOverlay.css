@@ -317,6 +317,7 @@
   height: 22px;
   border-radius: 50%;
   flex: none;
+  -webkit-app-region: no-drag; /* el botón de cancelar debe seguir clickeable */
   padding: 0;
   border: 0;
   -webkit-appearance: none;
@@ -388,6 +389,9 @@
   background: #17161c;
   border: 1px solid color-mix(in srgb, #a439ff 22%, transparent);
   color: #f4f2f7;
+  /* CloseLabs Voice: se puede arrastrar el overlay si tapa algo que quieres ver.
+     Por defecto queda centrado y se recoloca al centro en cada uso. */
+  -webkit-app-region: drag;
   /* keep the pop-in; no width morph needed (fixed width) */
   animation: scard-pop 460ms cubic-bezier(0.22, 1, 0.36, 1);
   transition: none;

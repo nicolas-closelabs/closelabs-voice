@@ -10,7 +10,6 @@ import { MuteWhileRecording } from "../MuteWhileRecording";
 import { AudioFeedback } from "../AudioFeedback";
 import { OutputDeviceSelector } from "../OutputDeviceSelector";
 import { VolumeSlider } from "../VolumeSlider";
-import { StartHidden } from "../StartHidden";
 import { AutostartToggle } from "../AutostartToggle";
 import { ShowTrayIcon } from "../ShowTrayIcon";
 import { useSettings } from "../../../hooks/useSettings";
@@ -54,7 +53,6 @@ export const GeneralSettings: React.FC = () => {
       </SettingsGroup>
 
       <SettingsGroup title="Aplicación">
-        <StartHidden descriptionMode="tooltip" grouped={true} />
         <AutostartToggle descriptionMode="tooltip" grouped={true} />
         <ShowTrayIcon descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>

@@ -4,24 +4,41 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.3.0 — "v0.3a")
+## Estado actual (v0.4.2)
 
-Compila (backend+frontend). Build macOS `.dmg` sin firma. Sobre la base v0.2 (español forzado,
-modo toggle, sin history, refine Groq oculto, sección Diccionario):
-- **Transcripción → Whisper Medium (GGUF Q5_K_M)**, español fijo. **CAMBIO CLAVE:** Parakeet
-  (transductor) NO respetaba el idioma forzado → mezclaba inglés/español (el "garabato").
-  Whisper **sí** respeta `language=es` y es excelente en español (lo que usa Aztec).
-- **Binario renombrado** `handy` → `closelabs-voice` (crate + lib `closelabs_voice_lib`) → la
-  notificación de Login Items ya no dice "handy".
-- **Íconos de tray** = isotipo CloseLabs; **ícono de app** = morado muy oscuro (`#1A0A2E`) +
-  isotipo blanco (limpio, no chillón).
-- **Overlay** oscuro neutro (`#17161C`, no morado chillón) + tagline "Automatiza tu consultorio
-  con CloseLabs".
-- **Dock siempre visible** (política Regular) para que un no-técnico reabra la app fácil.
-- Traducción español completada (huecos que quedaban en inglés).
+Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en Mac.
+Highlights acumulados:
+- **Transcripción → Whisper Medium (GGUF Q5_K_M)** vía transcribe-cpp, **español fijo**
+  (`selected_language="es"`). Parakeet no respetaba el idioma → se cambió a Whisper (como Aztec).
+- **Refine → Groq `llama-3.3-70b-versatile`** (el 8B se negaba). Prompt = **formateador general**
+  (puntúa/estructura, quita muletillas; NO médico, NO parafrasea). ⚠️ **El refine se aplica
+  SIEMPRE que `post_process_enabled=true`** (default), sin importar el atajo: en `actions.rs`,
+  `post_process = self.post_process || post_process_enabled` (antes el atajo `transcribe` salía
+  crudo sin puntuación — bug corregido). Migración en `ensure_post_process_defaults` fuerza
+  modelo+prompt del código. Key Groq embebida (env build-time). Offline → RAW + guarda anti-rechazo.
+- **Binario** `closelabs-voice` (crate + lib `closelabs_voice_lib`); nada de "handy" visible.
+- **Rediseño v0.3b:** tema **blanco + acentos lila** (light forzado con `@custom-variant dark`
+  class-based), sidebar tipo Aztec: **Inicio · Diccionario · Configuración · Instrucciones ·
+  Acerca de · Ayuda** (`src/components/settings/{home,instructions,help}/`). Configuración
+  simplificada (esconde lo técnico). Instrucciones = tutorial animado (`Instructions.css`).
+- **Íconos:** app = blanco + isotipo negro grande; tray = isotipo (más grande). Overlay oscuro
+  neutro (`#17161C`), **centrado** (`OverlayPosition::Center`), logo grande, **arrastrable**
+  (`-webkit-app-region: drag`), tagline "Automatiza tu consultorio · closelabs.co".
+- **Ventana/Dock (macOS):** política **Regular** (ícono en el Dock siempre). El **autostart de
+  login** pasa `--start-hidden` (arranca oculto); la **apertura manual muestra la ventana**
+  (`should_hide = cli_args.start_hidden`). Cerrar solo oculta (Reopen/single-instance reabren).
+- **Defaults:** modo toggle, mute-while-recording ON, audio-feedback ON, sin history/audio, es.
 
-**Siguiente (v0.3b):** rediseño limpio/minimalista tipo Aztec (tema blanco + acentos lila;
-sidebar Inicio/Diccionario/Configuración/Instrucciones/Ayuda; settings simplificados).
+## Multiplataforma (Windows)
+
+El código es **cross-platform** (Tauri). Lo específico de macOS está detrás de `#[cfg]`:
+activation policy (Dock), NSPanel del overlay, stub de Apple Intelligence. En **Windows** el
+overlay usa `WebviewWindowBuilder` (la posición Center también aplica), tray/íconos (`.ico`),
+Whisper vía transcribe-cpp (Vulkan/CPU) y el refine Groq funcionan igual. **Pendiente:** compilar
+y probar el `.exe` (requiere máquina o **CI de Windows** — hay base en `.github/`). No se ha
+buildeado Windows todavía.
+
+**Rediseño (hecho en v0.3b):** tema blanco + acentos lila; sidebar completo; settings simples.
 **Pendiente:** build Windows (CI), prueba real con micrófono, firma/notarización, proxy de refine.
 
 ## Qué es

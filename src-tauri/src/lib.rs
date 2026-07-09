@@ -747,7 +747,10 @@ pub fn run(cli_args: CliArgs) {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
-            Some(vec![]),
+            // CloseLabs Voice: el inicio automático en el LOGIN arranca oculto (solo
+            // tray/dock, sin ventana). La apertura MANUAL sí muestra la ventana — ver
+            // `should_hide` en setup(), que solo oculta cuando llega esta bandera.
+            Some(vec!["--start-hidden"]),
         ))
         .manage(cli_args.clone())
         .setup(move |app| {
@@ -855,10 +858,11 @@ pub fn run(cli_args: CliArgs) {
                 tray::set_tray_visibility(&app_handle, false);
             }
 
-            // Show main window only if not starting hidden.
-            // CLI --start-hidden flag overrides the setting.
-            // But if permission onboarding is required, always show the window.
-            let should_hide = settings.start_hidden || cli_args.start_hidden;
+            // CloseLabs Voice: solo ocultar en el arranque cuando llega la bandera
+            // --start-hidden (que SOLO pasa el autostart del login). Así la apertura
+            // MANUAL (doble clic en la app / Dock) SIEMPRE muestra la ventana — antes
+            // quedaba oculta y el usuario tenía que hacer un clic extra para verla.
+            let should_hide = cli_args.start_hidden;
             let should_force_show = should_force_show_permissions_window(&app_handle);
 
             // If start_hidden but tray is disabled, we must show the window

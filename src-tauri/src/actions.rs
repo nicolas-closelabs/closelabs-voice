@@ -662,7 +662,11 @@ impl ShortcutAction for TranscribeAction {
         play_feedback_sound(app, SoundType::Stop);
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
-        let post_process = self.post_process;
+        // CloseLabs Voice: el refine (limpieza) va SIEMPRE que esté activado globalmente
+        // (post_process_enabled=true por defecto), sin importar por cuál atajo se dictó.
+        // Handy tenía dos atajos (crudo vs. con post-proceso); aquí el atajo principal
+        // también refina, que es lo que espera el médico.
+        let post_process = self.post_process || get_settings(app).post_process_enabled;
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {

@@ -1,6 +1,6 @@
 [package]
 name = "closelabs-voice"
-version = "0.4.2"
+version = "0.4.3"
 description = "CloseLabs Voice"
 authors = ["CloseLabs", "cjpais (Handy, MIT)"]
 edition = "2021"
