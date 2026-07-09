@@ -1,46 +1,87 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useState } from "react";
-import {
-  Keyboard,
-  Mic,
-  ClipboardCheck,
-  BookMarked,
-  ShieldCheck,
-  ArrowLeft,
-  ArrowRight,
-} from "lucide-react";
+import { ShieldCheck, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import "./Instructions.css";
 
 interface Step {
-  icon: React.ReactNode;
   title: string;
   desc: string;
+  demo: React.ReactNode;
 }
+
+const KeysDemo = () => (
+  <div className="clv-keys clv-rise">
+    <span className="clv-key k1">⌥</span>
+    <span className="clv-plus">+</span>
+    <span className="clv-key k2">Espacio</span>
+  </div>
+);
+
+const OverlayDemo = () => (
+  <div className="clv-overlay clv-rise">
+    <span className="clv-brand">◈ CloseLabs</span>
+    <div className="clv-bars">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <i key={i} style={{ animationDelay: `${i * 0.08}s` }} />
+      ))}
+    </div>
+    <span className="clv-tag">Escuchando…</span>
+  </div>
+);
+
+const TypeDemo = () => (
+  <div className="clv-field clv-rise">
+    <span className="clv-type">Hola, ¿cómo está hoy el paciente?</span>
+  </div>
+);
+
+const DictDemo = () => (
+  <div className="clv-chips">
+    <span className="clv-chip">Amoxicilina</span>
+    <span className="clv-chip accent">
+      <Check className="w-3.5 h-3.5" /> CloseLabs
+    </span>
+    <span className="clv-chip">Ibuprofeno</span>
+    <span className="clv-chip">Dr. Pérez</span>
+  </div>
+);
+
+const PrivateDemo = () => (
+  <div className="flex flex-col items-center gap-3">
+    <div className="clv-shield">
+      <ShieldCheck className="w-11 h-11" />
+    </div>
+    <span className="clv-rise text-sm font-heading font-semibold text-brand-text-secondary">
+      100% local · sin internet
+    </span>
+  </div>
+);
 
 const STEPS: Step[] = [
   {
-    icon: <Keyboard className="w-8 h-8" />,
     title: "1. Presiona el atajo",
-    desc: "Ponte en cualquier campo de texto (historia clínica, WhatsApp, correo…) y presiona ⌥ + Espacio para empezar a grabar.",
+    desc: "En cualquier campo de texto (historia clínica, WhatsApp, correo…) presiona ⌥ + Espacio para empezar a grabar.",
+    demo: <KeysDemo />,
   },
   {
-    icon: <Mic className="w-8 h-8" />,
     title: "2. Habla natural",
-    desc: "Dicta como hablas normalmente, en español. No necesitas decir la puntuación: CloseLabs Voice la agrega por ti.",
+    desc: "Dicta como hablas normalmente, en español. No necesitas decir la puntuación: se agrega sola.",
+    demo: <OverlayDemo />,
   },
   {
-    icon: <ClipboardCheck className="w-8 h-8" />,
     title: "3. Termina y listo",
-    desc: "Presiona ⌥ + Espacio otra vez para terminar. El texto se limpia (quita muletillas) y se pega solo donde tenías el cursor.",
+    desc: "Presiona ⌥ + Espacio otra vez. El texto se limpia (quita muletillas) y se pega solo donde tenías el cursor.",
+    demo: <TypeDemo />,
   },
   {
-    icon: <BookMarked className="w-8 h-8" />,
     title: "4. Tu diccionario",
-    desc: "En la sección Diccionario agrega nombres, medicamentos o términos que quieras que escriba siempre bien.",
+    desc: "En la sección Diccionario agrega nombres, medicamentos o términos para que siempre se escriban bien.",
+    demo: <DictDemo />,
   },
   {
-    icon: <ShieldCheck className="w-8 h-8" />,
     title: "5. Privado y offline",
     desc: "La transcripción ocurre en tu computador; tu voz nunca se sube a internet. Funciona incluso sin conexión.",
+    demo: <PrivateDemo />,
   },
 ];
 
@@ -58,18 +99,20 @@ export const InstructionsSettings: React.FC = () => {
         </p>
       </div>
 
-      {/* Tarjeta del paso */}
-      <div className="rounded-3xl border border-brand-border bg-white shadow-[0_2px_10px_rgba(26,22,32,0.05)] p-8 flex flex-col items-center text-center gap-4 min-h-[240px] justify-center">
-        <div className="grid place-items-center w-16 h-16 rounded-2xl bg-brand-accent-soft text-brand-accent">
-          {step.icon}
-        </div>
+      {/* Escenario animado (se remonta por paso para reproducir la animación) */}
+      <div key={i} className="clv-stage">
+        {step.demo}
+      </div>
+
+      {/* Texto del paso */}
+      <div className="text-center px-4 min-h-[72px]">
         <h2 className="font-heading font-semibold text-lg">{step.title}</h2>
-        <p className="text-brand-text-secondary max-w-md leading-relaxed">
+        <p className="text-brand-text-secondary max-w-md mx-auto leading-relaxed mt-1">
           {step.desc}
         </p>
       </div>
 
-      {/* Dots + navegación */}
+      {/* Navegación */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setI((v) => Math.max(0, v - 1))}

@@ -192,10 +192,15 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     #[cfg(unix)]
     signal_handle::setup_signal_handler(app_handle.clone(), signals);
 
-    // CloseLabs Voice: mantenemos SIEMPRE el ícono del Dock (política Regular por defecto),
-    // aunque arranque oculta. Así un médico no técnico siempre puede hacer clic en el Dock
-    // (o en el tray) para abrir la ventana — antes, al arrancar oculta o al cerrar, la app
-    // pasaba a Accessory y desaparecía del Dock, y no encontraban el panel.
+    // CloseLabs Voice: mantenemos SIEMPRE el ícono del Dock. Forzamos Regular explícitamente
+    // en el arranque para que el ícono aparezca AUNQUE la app inicie oculta (start_hidden) —
+    // así el médico siempre puede hacer clic en el Dock (o en el tray) para abrir la ventana.
+    #[cfg(target_os = "macos")]
+    {
+        if let Err(e) = app_handle.set_activation_policy(tauri::ActivationPolicy::Regular) {
+            log::error!("Failed to set activation policy to Regular at startup: {}", e);
+        }
+    }
     // Get the current theme to set the appropriate initial icon
     let initial_theme = tray::get_current_theme(app_handle);
 

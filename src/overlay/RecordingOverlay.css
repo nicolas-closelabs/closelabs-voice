@@ -71,6 +71,10 @@
 .ov-stage.top {
   align-items: flex-start; /* top placement: flush to the top edge */
 }
+/* CloseLabs Voice: overlay centrado vertical (default). */
+.ov-stage.center {
+  align-items: center;
+}
 
 /* Compact pill: fade the whole container in/out (the pill itself never pops or
    morphs). */
@@ -394,7 +398,7 @@
   padding-top: 2px;
 }
 .scard.cbrand .ovlogo img {
-  height: 20px;
+  height: 28px;
   width: auto;
   display: block;
   -webkit-user-select: none;

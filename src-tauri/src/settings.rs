@@ -116,6 +116,8 @@ pub enum OverlayPosition {
     // raw stored string to recover the old "hidden" intent as `OverlayStyle::None`.
     #[serde(alias = "none")]
     Bottom,
+    /// CloseLabs Voice: overlay centrado vertical (default).
+    Center,
 }
 
 /// Which recording overlay to display. `Minimal` and `Live` share one base
@@ -488,9 +490,8 @@ fn default_selected_language() -> String {
 }
 
 fn default_overlay_position() -> OverlayPosition {
-    // Position only matters when the overlay is shown; whether it shows at all is
-    // `overlay_style` (Linux defaults that to None). So a single default suffices.
-    OverlayPosition::Bottom
+    // CloseLabs Voice: overlay centrado en pantalla por defecto.
+    OverlayPosition::Center
 }
 
 fn default_overlay_style() -> OverlayStyle {
@@ -876,7 +877,7 @@ pub fn get_default_settings() -> AppSettings {
         bindings,
         // CloseLabs Voice: modo toggle (presiono→hablo→presiono para terminar), no hold.
         push_to_talk: false,
-        audio_feedback: false,
+        audio_feedback: true,
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),
         start_hidden: default_start_hidden(),
@@ -911,7 +912,7 @@ pub fn get_default_settings() -> AppSettings {
         post_process_models: default_post_process_models(),
         post_process_prompts: default_post_process_prompts(),
         post_process_selected_prompt_id: default_post_process_selected_prompt_id(),
-        mute_while_recording: false,
+        mute_while_recording: true,
         append_trailing_space: false,
         app_language: default_app_language(),
         experimental_enabled: false,

@@ -86,6 +86,11 @@ fn update_gtk_layer_shell_anchors(overlay_window: &tauri::webview::WebviewWindow
                     gtk_window.set_anchor(Edge::Bottom, true);
                     gtk_window.set_anchor(Edge::Top, false);
                 }
+                OverlayPosition::Center => {
+                    // Centrado vertical: sin anclas top/bottom (queda al centro).
+                    gtk_window.set_anchor(Edge::Top, false);
+                    gtk_window.set_anchor(Edge::Bottom, false);
+                }
             }
         }
     });
@@ -243,6 +248,8 @@ fn calculate_overlay_position(
     let y = match settings.overlay_position {
         OverlayPosition::Top => monitor_y + OVERLAY_TOP_OFFSET,
         OverlayPosition::Bottom => monitor_y + monitor_height - height - OVERLAY_BOTTOM_OFFSET,
+        // CloseLabs Voice: centrado vertical en la pantalla.
+        OverlayPosition::Center => monitor_y + (monitor_height - height) / 2.0,
     };
 
     Some((x, y))

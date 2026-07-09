@@ -1,0 +1,214 @@
+/* CloseLabs Voice — animaciones del tutorial de Instrucciones (paso a paso).
+   Las animaciones se re-disparan al cambiar de paso porque el "stage" se remonta
+   con key={step}. */
+
+.clv-stage {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #faf9fc 0%, #f4f1f9 100%);
+  border: 1px solid var(--brand-border);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* aparición general */
+@keyframes clv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.clv-rise {
+  animation: clv-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---- Keycaps (paso 1) ---- */
+.clv-keys {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.clv-key {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--brand-text-primary);
+  background: #fff;
+  border: 1px solid var(--brand-border-strong);
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-shadow: 0 2px 0 rgba(26, 22, 32, 0.08);
+}
+.clv-key.k1 {
+  animation: clv-press 1.8s ease-in-out infinite;
+}
+.clv-key.k2 {
+  animation: clv-press 1.8s ease-in-out 0.12s infinite;
+}
+.clv-plus {
+  color: var(--brand-text-muted);
+  font-size: 18px;
+}
+@keyframes clv-press {
+  0%,
+  55%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 2px 0 rgba(26, 22, 32, 0.08);
+    border-color: var(--brand-border-strong);
+  }
+  62% {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 rgba(26, 22, 32, 0.08);
+    border-color: var(--brand-accent);
+  }
+}
+
+/* ---- Overlay demo (paso 2) ---- */
+.clv-overlay {
+  width: 220px;
+  border-radius: 16px;
+  background: #17161c;
+  border: 1px solid rgba(164, 57, 255, 0.25);
+  padding: 12px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.clv-overlay .clv-brand {
+  color: #f4f2f7;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+.clv-bars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+}
+.clv-bars i {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--brand-accent);
+  animation: clv-bar 1s ease-in-out infinite;
+}
+@keyframes clv-bar {
+  0%,
+  100% {
+    height: 5px;
+    opacity: 0.7;
+  }
+  50% {
+    height: 22px;
+    opacity: 1;
+  }
+}
+.clv-overlay .clv-tag {
+  color: rgba(244, 242, 247, 0.5);
+  font-size: 9.5px;
+}
+
+/* ---- Typewriter (paso 3) ---- */
+.clv-field {
+  width: 260px;
+  background: #fff;
+  border: 1px solid var(--brand-border-strong);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--brand-text-primary);
+  box-shadow: 0 2px 8px rgba(26, 22, 32, 0.04);
+}
+.clv-type {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid var(--brand-accent);
+  animation:
+    clv-type 2.2s steps(24) 0.3s both,
+    clv-caret 0.8s step-end infinite;
+  max-width: 100%;
+}
+@keyframes clv-type {
+  from {
+    width: 0;
+  }
+  to {
+    width: 15.5em;
+  }
+}
+@keyframes clv-caret {
+  50% {
+    border-color: transparent;
+  }
+}
+
+/* ---- Chip diccionario (paso 4) ---- */
+.clv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 280px;
+}
+.clv-chip {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--brand-border);
+  color: var(--brand-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.clv-chip.accent {
+  background: var(--brand-accent-soft);
+  border-color: transparent;
+  color: var(--brand-accent);
+}
+.clv-chip:nth-child(1) {
+  animation: clv-pop 0.4s both 0.1s;
+}
+.clv-chip:nth-child(2) {
+  animation: clv-pop 0.4s both 0.35s;
+}
+.clv-chip:nth-child(3) {
+  animation: clv-pop 0.4s both 0.6s;
+}
+.clv-chip:nth-child(4) {
+  animation: clv-pop 0.4s both 0.85s;
+}
+@keyframes clv-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Privado (paso 5) ---- */
+.clv-shield {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  background: var(--brand-accent-soft);
+  color: var(--brand-accent);
+  animation: clv-pop 0.5s both;
+}
