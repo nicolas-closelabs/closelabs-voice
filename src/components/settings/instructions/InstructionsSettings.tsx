@@ -69,17 +69,22 @@ const STEPS: Step[] = [
     demo: <OverlayDemo />,
   },
   {
-    title: "3. Termina y listo",
-    desc: "Presiona ⌥ + Espacio otra vez. El texto se limpia (quita muletillas) y se pega solo donde tenías el cursor.",
+    title: "3. Vuelve a presionar el atajo",
+    desc: "Presiona ⌥ + Espacio otra vez para terminar de grabar.",
+    demo: <KeysDemo />,
+  },
+  {
+    title: "4. ¡Listo! Se pega solo",
+    desc: "El texto se limpia (quita muletillas y puntúa) y se pega donde tenías el cursor.",
     demo: <TypeDemo />,
   },
   {
-    title: "4. Tu diccionario",
+    title: "5. Tu diccionario",
     desc: "En la sección Diccionario agrega nombres, medicamentos o términos para que siempre se escriban bien.",
     demo: <DictDemo />,
   },
   {
-    title: "5. Privado y offline",
+    title: "6. Privado y offline",
     desc: "La transcripción ocurre en tu computador; tu voz nunca se sube a internet. Funciona incluso sin conexión.",
     demo: <PrivateDemo />,
   },
