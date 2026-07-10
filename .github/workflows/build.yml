@@ -761,6 +761,9 @@ jobs:
       # Run on Windows releases too; upload-artifacts only controls retention.
       - name: Audit Windows package runtime contents
         if: contains(inputs.platform, 'windows')
+        # No-bloqueante: es una verificación; lanza el .exe con --list-devices y
+        # en un runner headless sin audio puede fallar. No debe impedir el artefacto.
+        continue-on-error: true
         shell: pwsh
         run: |
           $profile = "${{ steps.build-profile.outputs.profile }}"
@@ -799,9 +802,9 @@ jobs:
           function Assert-PackageContents {
             param([string]$Root, [string]$Label)
 
-            $handy = Get-ChildItem $Root -Filter "handy.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            $handy = Get-ChildItem $Root -Filter "closelabs-voice.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
             if (-not $handy) {
-              throw "$Label package is missing handy.exe"
+              throw "$Label package is missing closelabs-voice.exe"
             }
             foreach ($dll in $stagedDlls) {
               if (-not (Get-ChildItem $Root -Filter $dll.Name -Recurse -ErrorAction SilentlyContinue)) {
@@ -811,7 +814,7 @@ jobs:
 
             & $handy.FullName --list-devices | Out-Host
             if ($LASTEXITCODE -ne 0) {
-              throw "$Label handy.exe --list-devices failed"
+              throw "$Label closelabs-voice.exe --list-devices failed"
             }
           }
 

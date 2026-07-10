@@ -41,6 +41,11 @@ jobs:
           - platform: "macos-latest"
             target: "x86_64-apple-darwin"
             args: "--target x86_64-apple-darwin"
+          # Windows x64 — instalador .exe (NSIS). Sin firma: se abre con
+          # "Más info → Ejecutar de todas formas" (SmartScreen). Firma = Fase 2.
+          - platform: "windows-latest"
+            target: "x86_64-pc-windows-msvc"
+            args: ""
 
     uses: ./.github/workflows/build.yml
     with:
