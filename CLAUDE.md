@@ -29,6 +29,35 @@ Highlights acumulados:
   (`should_hide = cli_args.start_hidden`). Cerrar solo oculta (Reopen/single-instance reabren).
 - **Defaults:** modo toggle, mute-while-recording ON, audio-feedback ON, sin history/audio, es.
 
+## Distribución (por qué "no abre en otros Macs") — CI + firma
+
+⚠️ **Un `.dmg` compilado localmente NO se distribuye a otros equipos.** Dos razones (confirmadas):
+1. **Arquitectura:** `bun tauri build` local sale **solo arm64** → **no corre en Macs Intel**
+   (necesitan build `x86_64`). Se compila por separado (Handy no hace universal para Intel).
+2. **Firma/notarización:** el build local es **ad-hoc** (`signingIdentity: "-"`, `hardenedRuntime`
+   on). En OTRO Mac, macOS le pone `com.apple.quarantine` y Gatekeeper lo bloquea ("dañada"/
+   "desarrollador no verificado"). Solo abre en el equipo que lo compiló. **Handy SÍ abre para
+   todos porque está firmado + notarizado** (su `build.yml` usa `APPLE_CERTIFICATE`/`APPLE_ID`/
+   `APPLE_TEAM_ID` → una cuenta Apple Developer de pago). **"Open source" ≠ "sin firma".** No hay
+   camino gratis al "doble clic": o notarizas ($99/año) o el usuario hace bypass manual.
+
+**Bypass temporal (solo testers técnicos):** `xattr -cr "/Applications/CloseLabs Voice.app"`
+quita la cuarentena. **NO sirve para médicos 0-techie** (requiere Terminal).
+
+**CI (la solución real, estilo Handy):** en `.github/workflows/` quedó un pipeline limpio:
+- **`build.yml`** — workflow reusable heredado de Handy (compila, baja el **ONNX Runtime x86_64**
+  para el slice Intel — `ort-sys` no trae prebuilt de `x86_64-apple-darwin`—, firma/notariza si
+  hay secretos). Editado: inyecta `CLOSELABS_GROQ_API_KEY` (secreto), binario `closelabs-voice`.
+- **`closelabs.yml`** — orquestador propio. **Fase 1 (actual): macOS ARM+Intel, `sign-binaries:
+  false`** (artefactos `.dmg` descargables del run; abren con `xattr`). **Fase 2:** poner secretos
+  `APPLE_*` + `sign-binaries: true` → firmado+notarizado, doble clic sin advertencias. Windows se
+  añade a la matriz igual (aparte). Se **borraron** los orquestadores Handy (main-build, release,
+  nix-check, test, etc.) para no lanzar jobs de Linux que fallan.
+- **Secreto requerido en el repo:** `CLOSELABS_GROQ_API_KEY` (Settings → Secrets → Actions).
+- **Fase 2 (notarización) requiere:** cuenta Apple Developer + secretos `APPLE_CERTIFICATE`,
+  `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_PASSWORD` (app-specific), `APPLE_TEAM_ID`,
+  `KEYCHAIN_PASSWORD`.
+
 ## Multiplataforma (Windows)
 
 El código es **cross-platform** (Tauri). Lo específico de macOS está detrás de `#[cfg]`:
