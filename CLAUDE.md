@@ -56,7 +56,17 @@ quita la cuarentena. **NO sirve para médicos 0-techie** (requiere Terminal).
 - **Secreto requerido en el repo:** `CLOSELABS_GROQ_API_KEY` (Settings → Secrets → Actions).
 - **Fase 2 (notarización) requiere:** cuenta Apple Developer + secretos `APPLE_CERTIFICATE`,
   `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_PASSWORD` (app-specific), `APPLE_TEAM_ID`,
-  `KEYCHAIN_PASSWORD`.
+  `KEYCHAIN_PASSWORD`. ⚠️ **Al pasar a Fase 2, volver a poner `hardenedRuntime: true`** en
+  `tauri.conf.json` (la notarización lo exige).
+
+⚠️ **Bug Intel resuelto (build x86_64 se cerraba al abrir):** el build de Intel enlaza el ONNX
+Runtime **dinámicamente** (`libonnxruntime.1.24.2.dylib`, empaquetado en `Contents/Frameworks/`);
+con `hardenedRuntime: true` + firma ad-hoc, macOS (Library Validation) **rechazaba** ese dylib de
+terceros → crash `Library not loaded @rpath/libonnxruntime`. Fix: (1) entitlement
+`com.apple.security.cs.disable-library-validation` en `Entitlements.plist`, y (2) Fase 1
+`hardenedRuntime: false` (garantía sin firma). El build **ARM no sufre** esto (ONNX estático, sin
+dylib externo). En Fase 2, al firmar con Developer ID el dylib queda firmado por nosotros → carga
+ok con hardened runtime (el entitlement queda de respaldo).
 
 ## Multiplataforma (Windows)
 
