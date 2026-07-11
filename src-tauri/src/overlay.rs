@@ -345,7 +345,15 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
             .no_activate(true)
             .corner_radius(0.0)
             .style_mask(StyleMask::empty().borderless().nonactivating_panel())
-            .with_window(|w| w.decorations(false).transparent(true).focusable(false))
+            // accept_first_mouse: entrega el primer clic aunque el panel esté inactivo
+            // (no-activable) — necesario para que el arrastre nativo (startDragging) capture
+            // el mousedown y mueva el overlay.
+            .with_window(|w| {
+                w.decorations(false)
+                    .transparent(true)
+                    .focusable(false)
+                    .accept_first_mouse(true)
+            })
             .collection_behavior(
                 CollectionBehavior::new()
                     .can_join_all_spaces()

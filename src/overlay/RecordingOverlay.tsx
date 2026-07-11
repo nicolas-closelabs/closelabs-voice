@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
@@ -209,35 +209,16 @@ const RecordingOverlay: React.FC = () => {
     </div>
   );
 
-  // Arrastre del overlay: como es un NSPanel (macOS) que ignora `-webkit-app-region`,
-  // movemos la ventana a mano con la API de Tauri. Funciona igual en Windows/Linux.
-  const onCardPointerDown = async (e: React.PointerEvent) => {
+  // Arrastre del overlay. El overlay es un NSPanel "no-activable" (macOS): NO entrega
+  // los eventos de movimiento del mouse al webview, así que el arrastre manual (pointermove
+  // + setPosition) no funciona ahí. Usamos el arrastre NATIVO de la ventana
+  // (`startDragging` → performWindowDragWithEvent en macOS), que macOS maneja a nivel de SO
+  // aunque la ventana no esté activa. Funciona igual en Windows/Linux.
+  const onCardPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     // No arrastrar al presionar el botón de cancelar (X).
     if ((e.target as HTMLElement).closest(".sx")) return;
-    e.preventDefault();
-    const win = getCurrentWindow();
-    const scale = window.devicePixelRatio || 1;
-    const startX = e.screenX;
-    const startY = e.screenY;
-    let base: { x: number; y: number };
-    try {
-      const p = await win.outerPosition(); // posición física
-      base = { x: p.x / scale, y: p.y / scale }; // a lógica
-    } catch {
-      return;
-    }
-    const move = (ev: PointerEvent) => {
-      const nx = base.x + (ev.screenX - startX);
-      const ny = base.y + (ev.screenY - startY);
-      void win.setPosition(new LogicalPosition(nx, ny));
-    };
-    const up = () => {
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerup", up);
-    };
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", up);
+    void getCurrentWindow().startDragging();
   };
 
   // ---- Live overlay: a pill that sculpts open into a panel ----
