@@ -4,14 +4,22 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.4.2)
+## Estado actual (v0.5)
 
 Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en Mac.
 Highlights acumulados:
-- **Transcripción → Whisper Medium (GGUF Q5_K_M)** vía transcribe-cpp, **español fijo**
-  (`selected_language="es"`). Parakeet no respetaba el idioma → se cambió a Whisper (como Aztec).
+- **Transcripción → Parakeet TDT 0.6b v3 (GGUF Q5_K_M)** vía transcribe-cpp. ⚠️ **CAMBIO CLAVE
+  (v0.5): se volvió a Parakeet.** Whisper Medium era demasiado PESADO en CPU (Intel/Windows se
+  colgaban ~48s por 2.5s de audio). Parakeet 0.6b es **~30x más rápido en CPU**, **más preciso**
+  (WER 6.32 vs 7.44), excelente en español (WER 3-4%) y **maneja bien el espanglish médico**
+  (metformina, bypass, stent, "industrial engineer" se quedan como se dijeron). El "garabato" de
+  la v0.1/v0.2 con Parakeet **era caché vieja** (confirmado: instalación limpia transcribe
+  perfecto). Parakeet **auto-detecta idioma** (no se fuerza; para español puro acierta). Ficha:
+  `nvidia/parakeet-tdt-0.6b-v3` (25 idiomas europeos, CC-BY-4.0). GGUF: `handy-computer/parakeet-tdt-0.6b-v3-gguf`.
 - **Refine → Groq `llama-3.3-70b-versatile`** (el 8B se negaba). Prompt = **formateador general**
-  (puntúa/estructura, quita muletillas; NO médico, NO parafrasea). ⚠️ **El refine se aplica
+  (puntúa/estructura, quita muletillas; NO médico, NO parafrasea). **Regla añadida: NO TRADUCIR** —
+  conserva en su idioma los términos que el usuario dijo en inglés (antes traducía "industrial
+  engineer" → "ingeniero industrial"). ⚠️ **El refine se aplica
   SIEMPRE que `post_process_enabled=true`** (default), sin importar el atajo: en `actions.rs`,
   `post_process = self.post_process || post_process_enabled` (antes el atajo `transcribe` salía
   crudo sin puntuación — bug corregido). Migración en `ensure_post_process_defaults` fuerza

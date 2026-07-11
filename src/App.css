@@ -21,6 +21,7 @@
   --color-brand-accent: var(--brand-accent);
   --color-brand-accent-secondary: var(--brand-accent-secondary);
   --color-brand-accent-soft: var(--brand-accent-soft);
+  --color-brand-accent-tint: var(--brand-accent-tint);
   --color-brand-text-secondary: var(--brand-text-secondary);
   --color-brand-text-muted: var(--brand-text-muted);
   --color-brand-surface: var(--brand-surface);

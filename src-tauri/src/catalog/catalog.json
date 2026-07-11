@@ -1,40 +1,40 @@
 {
   "models": [
     {
-      "id": "handy-computer/whisper-medium-gguf",
-      "slug": "whisper-medium",
+      "id": "handy-computer/parakeet-tdt-0.6b-v3-gguf",
+      "slug": "parakeet-tdt-0.6b-v3",
       "name": "CloseLabs Voice",
-      "architecture": "whisper",
-      "family": "whisper",
-      "parameters": "764M",
-      "description": "Motor de transcripción local de CloseLabs Voice. Whisper Medium: excelente en español (respeta el idioma), privado y offline.",
-      "base_model": "openai/whisper-medium",
-      "license": "apache-2.0",
-      "language_count": 99,
-      "languages": ["es", "en", "pt", "fr", "de", "it", "ca", "gl", "eu"],
+      "architecture": "parakeet",
+      "family": "parakeet",
+      "parameters": "0.6B",
+      "description": "Motor de transcripción local de CloseLabs Voice. Rápido, privado y preciso; funciona sin internet.",
+      "base_model": "nvidia/parakeet-tdt-0.6b-v3",
+      "license": "cc-by-4.0",
+      "language_count": 25,
+      "languages": ["es", "en", "pt", "fr", "de", "it", "bg", "hr", "cs", "da", "nl", "et", "fi", "el", "hu", "lv", "lt", "mt", "pl", "ro", "ru", "sk", "sl", "sv", "uk"],
       "capabilities": {
         "streaming": false,
-        "translate": true,
+        "translate": false,
         "lang_detect": true,
-        "timestamps": "segment"
+        "timestamps": "token"
       },
-      "speed_score": 42,
-      "accuracy_score": 84,
+      "speed_score": 79,
+      "accuracy_score": 88,
       "files": [
         {
-          "filename": "whisper-medium-Q4_K_M.gguf",
+          "filename": "parakeet-tdt-0.6b-v3-Q4_K_M.gguf",
           "quant": "Q4_K_M",
-          "size_bytes": 504102848
+          "size_bytes": 485425504
         },
         {
-          "filename": "whisper-medium-Q5_K_M.gguf",
+          "filename": "parakeet-tdt-0.6b-v3-Q5_K_M.gguf",
           "quant": "Q5_K_M",
-          "size_bytes": 582746048
+          "size_bytes": 548946272
         },
         {
-          "filename": "whisper-medium-Q8_0.gguf",
+          "filename": "parakeet-tdt-0.6b-v3-Q8_0.gguf",
           "quant": "Q8_0",
-          "size_bytes": 831538144
+          "size_bytes": 739508576
         }
       ],
       "default_quant": "Q5_K_M",
