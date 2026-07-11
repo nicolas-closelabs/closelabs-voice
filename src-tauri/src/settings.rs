@@ -490,8 +490,9 @@ fn default_selected_language() -> String {
 }
 
 fn default_overlay_position() -> OverlayPosition {
-    // CloseLabs Voice: overlay centrado en pantalla por defecto.
-    OverlayPosition::Center
+    // CloseLabs Voice: overlay ABAJO por defecto (no tapa el centro de la pantalla
+    // ni quita visibilidad). El usuario lo puede arrastrar a donde quiera.
+    OverlayPosition::Bottom
 }
 
 fn default_overlay_style() -> OverlayStyle {

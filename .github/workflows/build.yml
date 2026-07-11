@@ -367,6 +367,17 @@ jobs:
           ORT_DIR="$(pwd)/onnxruntime-osx-x86_64-${ORT_VERSION}"
           echo "ORT_LIB_LOCATION=$ORT_DIR/lib" >> $GITHUB_ENV
           echo "ORT_PREFER_DYNAMIC_LINK=1" >> $GITHUB_ENV
+          # CloseLabs Voice — FIX Intel colgado al transcribir:
+          #   GGML_NATIVE=OFF  — este slice x86_64 se CROSS-compila en un runner ARM.
+          #     Con GGML_NATIVE=ON (default) ggml afina el binario al CPU del runner
+          #     (mal detectado para el target x86) → cómputo Whisper inválido → la app
+          #     "escucha" pero se cuelga infinitamente al transcribir en Macs Intel.
+          #     OFF = baseline x86 portable (mantiene AVX2 por defecto). Mismo motivo
+          #     por el que el build de Windows (también cross) ya fija GGML_NATIVE=OFF.
+          #   TRANSCRIBE_METAL=OFF — Metal de ggml es inestable en GPUs de Macs Intel
+          #     (puede colgar). En Intel forzamos CPU (con AVX2 va bien). ARM no se toca
+          #     (usa Metal nativo y va perfecto).
+          echo "TRANSCRIBE_CMAKE_ARGS=-DGGML_NATIVE=OFF -DTRANSCRIBE_METAL=OFF" >> $GITHUB_ENV
           # Bundle the versioned dylib (matches the install name @rpath/libonnxruntime.1.24.2.dylib)
           jq --arg lib "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" \
             '.bundle.macOS.frameworks = [$lib]' \

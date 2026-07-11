@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
@@ -208,6 +209,37 @@ const RecordingOverlay: React.FC = () => {
     </div>
   );
 
+  // Arrastre del overlay: como es un NSPanel (macOS) que ignora `-webkit-app-region`,
+  // movemos la ventana a mano con la API de Tauri. Funciona igual en Windows/Linux.
+  const onCardPointerDown = async (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    // No arrastrar al presionar el botón de cancelar (X).
+    if ((e.target as HTMLElement).closest(".sx")) return;
+    e.preventDefault();
+    const win = getCurrentWindow();
+    const scale = window.devicePixelRatio || 1;
+    const startX = e.screenX;
+    const startY = e.screenY;
+    let base: { x: number; y: number };
+    try {
+      const p = await win.outerPosition(); // posición física
+      base = { x: p.x / scale, y: p.y / scale }; // a lógica
+    } catch {
+      return;
+    }
+    const move = (ev: PointerEvent) => {
+      const nx = base.x + (ev.screenX - startX);
+      const ny = base.y + (ev.screenY - startY);
+      void win.setPosition(new LogicalPosition(nx, ny));
+    };
+    const up = () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
+    };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
+  };
+
   // ---- Live overlay: a pill that sculpts open into a panel ----
   if (state === "streaming") {
     const hasText =
@@ -224,6 +256,7 @@ const RecordingOverlay: React.FC = () => {
       <div dir={direction} className={`ov-stage ${position}`}>
         <div
           key={session}
+          onPointerDown={onCardPointerDown}
           className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
             isVisible ? "" : "leaving"
           }`}
@@ -275,7 +308,10 @@ const RecordingOverlay: React.FC = () => {
       className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
     >
       {/* CloseLabs Voice: card branded (logo + barras lila + tagline) */}
-      <div className={`scard cbrand ${working && isVisible ? "cworking" : ""}`}>
+      <div
+        onPointerDown={onCardPointerDown}
+        className={`scard cbrand ${working && isVisible ? "cworking" : ""}`}
+      >
         <div className="ovlogo">
           <img src="/brand/closelabs-white.png" alt="CloseLabs Voice" />
         </div>

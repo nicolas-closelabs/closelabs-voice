@@ -22,8 +22,11 @@ Highlights acumulados:
   Acerca de · Ayuda** (`src/components/settings/{home,instructions,help}/`). Configuración
   simplificada (esconde lo técnico). Instrucciones = tutorial animado (`Instructions.css`).
 - **Íconos:** app = blanco + isotipo negro grande; tray = isotipo (más grande). Overlay oscuro
-  neutro (`#17161C`), **centrado** (`OverlayPosition::Center`), logo grande, **arrastrable**
-  (`-webkit-app-region: drag`), tagline "Automatiza tu consultorio · closelabs.co".
+  neutro (`#17161C`), **por defecto ABAJO** (`OverlayPosition::Bottom` — no tapa el centro),
+  logo grande, **arrastrable con JS** (`onCardPointerDown` en `RecordingOverlay.tsx` mueve la
+  ventana vía `setPosition`; el `-webkit-app-region: drag` NO sirve en el NSPanel de macOS y se
+  quitó), tagline "Automatiza tu consultorio · closelabs.co". El overlay se recoloca abajo en
+  cada uso; el arrastre es por sesión.
 - **Ventana/Dock (macOS):** política **Regular** (ícono en el Dock siempre). El **autostart de
   login** pasa `--start-hidden` (arranca oculto); la **apertura manual muestra la ventana**
   (`should_hide = cli_args.start_hidden`). Cerrar solo oculta (Reopen/single-instance reabren).
