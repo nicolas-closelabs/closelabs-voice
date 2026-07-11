@@ -588,6 +588,8 @@ pub fn run(cli_args: CliArgs) {
             shortcut::handy_keys::stop_handy_keys_recording,
             trigger_update_check,
             show_main_window_command,
+            overlay::start_overlay_drag,
+            overlay::stop_overlay_drag,
             commands::cancel_operation,
             commands::is_portable,
             commands::get_app_dir_path,

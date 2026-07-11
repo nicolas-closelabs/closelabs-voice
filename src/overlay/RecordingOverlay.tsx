@@ -1,5 +1,5 @@
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
@@ -209,16 +209,22 @@ const RecordingOverlay: React.FC = () => {
     </div>
   );
 
-  // Arrastre del overlay. El overlay es un NSPanel "no-activable" (macOS): NO entrega
-  // los eventos de movimiento del mouse al webview, así que el arrastre manual (pointermove
-  // + setPosition) no funciona ahí. Usamos el arrastre NATIVO de la ventana
-  // (`startDragging` → performWindowDragWithEvent en macOS), que macOS maneja a nivel de SO
-  // aunque la ventana no esté activa. Funciona igual en Windows/Linux.
+  // Arrastre del overlay. El NSPanel "no-activable" (macOS) NO entrega pointermove al
+  // webview, así que ni el arrastre manual ni startDragging funcionan. En su lugar, en
+  // pointerdown arrancamos un loop en Rust (start_overlay_drag) que lee el cursor global y
+  // mueve la ventana hasta pointerup (stop_overlay_drag). pointerdown/pointerup SÍ llegan.
   const onCardPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     // No arrastrar al presionar el botón de cancelar (X).
     if ((e.target as HTMLElement).closest(".sx")) return;
-    void getCurrentWindow().startDragging();
+    void invoke("start_overlay_drag");
+    const stop = () => {
+      void invoke("stop_overlay_drag");
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   };
 
   // ---- Live overlay: a pill that sculpts open into a panel ----

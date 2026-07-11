@@ -23,10 +23,17 @@ Highlights acumulados:
   simplificada (esconde lo técnico). Instrucciones = tutorial animado (`Instructions.css`).
 - **Íconos:** app = blanco + isotipo negro grande; tray = isotipo (más grande). Overlay oscuro
   neutro (`#17161C`), **por defecto ABAJO** (`OverlayPosition::Bottom` — no tapa el centro),
-  logo grande, **arrastrable con JS** (`onCardPointerDown` en `RecordingOverlay.tsx` mueve la
-  ventana vía `setPosition`; el `-webkit-app-region: drag` NO sirve en el NSPanel de macOS y se
-  quitó), tagline "Automatiza tu consultorio · closelabs.co". El overlay se recoloca abajo en
-  cada uso; el arrastre es por sesión.
+  logo grande, tagline "Automatiza tu consultorio · closelabs.co".
+- **Overlay arrastrable (importante — causa raíz):** el overlay es un **NSPanel no-activable**
+  (macOS) que **NO entrega `pointermove`/mouseDragged al webview**, así que NADA de lo típico
+  mueve la ventana: ni `-webkit-app-region: drag`, ni arrastre JS manual, ni `startDragging`
+  (`performWindowDragWithEvent`). Los **clics SÍ llegan** (mouseDown/Up). Solución en
+  `overlay.rs`: comandos `start_overlay_drag`/`stop_overlay_drag` — en `pointerdown` un **loop en
+  Rust lee el cursor GLOBAL** (`input::get_cursor_position`, vía enigo) y mueve la ventana con
+  `set_position` hasta `pointerup`. **Cross-platform:** enigo devuelve coords lógicas en macOS
+  pero **físicas** en Windows/Linux → `cursor_logical()` normaliza según plataforma (correcto a
+  cualquier DPI). **Recuerda la posición** arrastrada durante la sesión (`LAST_DRAG_POS`, en
+  memoria; se resetea al reiniciar → vuelve a abajo). Cero dependencias nuevas, cero peso extra.
 - **Ventana/Dock (macOS):** política **Regular** (ícono en el Dock siempre). El **autostart de
   login** pasa `--start-hidden` (arranca oculto); la **apertura manual muestra la ventana**
   (`should_hide = cli_args.start_hidden`). Cerrar solo oculta (Reopen/single-instance reabren).

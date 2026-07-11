@@ -391,7 +391,11 @@ fn show_overlay_state(app_handle: &AppHandle, state: &str) {
 
         let pos_started = std::time::Instant::now();
         let mut set_pos_elapsed = std::time::Duration::ZERO;
-        if let Some((x, y)) = calculate_overlay_position(app_handle, width, height) {
+        // Si el usuario arrastró el overlay en esta sesión, re-móstralo AHÍ; si no,
+        // usa la posición por defecto (abajo) calculada según el ajuste.
+        let dragged_pos = LAST_DRAG_POS.lock().ok().and_then(|p| *p);
+        let target_pos = dragged_pos.or_else(|| calculate_overlay_position(app_handle, width, height));
+        if let Some((x, y)) = target_pos {
             let set_pos_started = std::time::Instant::now();
             let _ = overlay_window
                 .set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
@@ -510,4 +514,94 @@ pub fn emit_levels(app_handle: &AppHandle, levels: &[f32]) {
     // eval_script call per callback, cutting the per-callback WebKit
     // dispatch work in half.
     let _ = app_handle.emit_to("recording_overlay", "mic-level", levels);
+}
+
+// --- Arrastre del overlay (CloseLabs Voice) ---------------------------------
+// El overlay es un NSPanel "no-activable" (macOS): NO entrega eventos de
+// movimiento del mouse (`pointermove` / mouseDragged) al webview mientras se
+// arrastra. Por eso NADA de lo típico funciona: ni `-webkit-app-region: drag`,
+// ni el arrastre JS manual (pointermove+setPosition), ni `startDragging`
+// (performWindowDragWithEvent). Los clics SÍ llegan (mouseDown/mouseUp), así que
+// entre `pointerdown` y `pointerup` leemos el cursor GLOBAL (input::get_cursor_position,
+// coords lógicas top-left, mismo sistema que set_position) y movemos la ventana
+// para que siga al cursor. Independiente de los eventos que el panel no entrega.
+static OVERLAY_DRAGGING: AtomicBool = AtomicBool::new(false);
+// Última posición a la que el usuario arrastró el overlay (lógica, top-left). Si
+// existe, el overlay se re-muestra AHÍ en vez de volver al default (abajo). En
+// memoria: persiste durante la sesión, se resetea al reiniciar la app. Cero peso.
+static LAST_DRAG_POS: std::sync::Mutex<Option<(f64, f64)>> = std::sync::Mutex::new(None);
+
+// enigo::location() (usado por input::get_cursor_position) devuelve coords LÓGICAS
+// en macOS, pero FÍSICAS en Windows/Linux (GetCursorPos bajo Per-Monitor-V2 DPI).
+// Normalizamos SIEMPRE a lógicas — el mismo sistema que set_position y
+// calculate_overlay_position — para que el arrastre sea correcto a cualquier escalado.
+fn cursor_logical(app: &AppHandle, scale: f64) -> Option<(f64, f64)> {
+    let (x, y) = input::get_cursor_position(app)?;
+    #[cfg(target_os = "macos")]
+    {
+        let _ = scale; // en macOS enigo ya es lógico
+        Some((x as f64, y as f64))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Some((x as f64 / scale, y as f64 / scale)) // físico → lógico
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn start_overlay_drag(app: AppHandle) {
+    // Evita loops duplicados si llegan dos pointerdown seguidos.
+    if OVERLAY_DRAGGING.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    let Some(window) = app.get_webview_window("recording_overlay") else {
+        OVERLAY_DRAGGING.store(false, Ordering::SeqCst);
+        return;
+    };
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let origin = match window.outer_position() {
+        Ok(p) => p,
+        Err(_) => {
+            OVERLAY_DRAGGING.store(false, Ordering::SeqCst);
+            return;
+        }
+    };
+    let Some((cursor_x, cursor_y)) = cursor_logical(&app, scale) else {
+        OVERLAY_DRAGGING.store(false, Ordering::SeqCst);
+        return;
+    };
+    // Punto de agarre: offset (lógico) entre el cursor y la esquina de la ventana.
+    let offset_x = cursor_x - origin.x as f64 / scale;
+    let offset_y = cursor_y - origin.y as f64 / scale;
+
+    std::thread::spawn(move || {
+        let start = std::time::Instant::now();
+        while OVERLAY_DRAGGING.load(Ordering::SeqCst) {
+            // Seguridad: corta a los 30s por si se pierde el pointerup (release fuera del panel).
+            if start.elapsed().as_secs() > 30 {
+                break;
+            }
+            if let Some((cx, cy)) = cursor_logical(&app, scale) {
+                let nx = cx - offset_x;
+                let ny = cy - offset_y;
+                // Recuerda dónde quedó (para re-mostrarlo ahí en el próximo uso).
+                if let Ok(mut last) = LAST_DRAG_POS.lock() {
+                    *last = Some((nx, ny));
+                }
+                let win = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    let _ = win.set_position(tauri::LogicalPosition::new(nx, ny));
+                });
+            }
+            std::thread::sleep(std::time::Duration::from_millis(12));
+        }
+        OVERLAY_DRAGGING.store(false, Ordering::SeqCst);
+    });
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn stop_overlay_drag() {
+    OVERLAY_DRAGGING.store(false, Ordering::SeqCst);
 }
