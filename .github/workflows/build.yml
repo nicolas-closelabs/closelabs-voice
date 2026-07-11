@@ -375,9 +375,14 @@ jobs:
           #     OFF = baseline x86 portable (mantiene AVX2 por defecto). Mismo motivo
           #     por el que el build de Windows (también cross) ya fija GGML_NATIVE=OFF.
           #   TRANSCRIBE_METAL=OFF — Metal de ggml es inestable en GPUs de Macs Intel
-          #     (puede colgar). En Intel forzamos CPU (con AVX2 va bien). ARM no se toca
-          #     (usa Metal nativo y va perfecto).
-          echo "TRANSCRIBE_CMAKE_ARGS=-DGGML_NATIVE=OFF -DTRANSCRIBE_METAL=OFF" >> $GITHUB_ENV
+          #     (puede colgar). En Intel forzamos CPU. ARM no se toca (usa Metal, va perfecto).
+          #   AVX/AVX2/FMA/F16C=ON — CRÍTICO. Al cross-compilar x86 en runner ARM,
+          #     -march=native NO aplica y GGML_NATIVE=OFF por sí solo deja ggml SIN vectorizar
+          #     (0 instrucciones F16C confirmado en el binario) → Whisper Medium por CPU corría
+          #     a velocidad escalar = ~48s para 2.5s de audio = "cuelgue infinito" en Intel.
+          #     Activarlas explícitamente da el baseline SIMD de Haswell (2013+), presente en
+          #     todo Mac Intel usable → inferencia CPU a velocidad normal.
+          echo "TRANSCRIBE_CMAKE_ARGS=-DGGML_NATIVE=OFF -DTRANSCRIBE_METAL=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON" >> $GITHUB_ENV
           # Bundle the versioned dylib (matches the install name @rpath/libonnxruntime.1.24.2.dylib)
           jq --arg lib "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" \
             '.bundle.macOS.frameworks = [$lib]' \

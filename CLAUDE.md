@@ -78,6 +78,15 @@ terceros → crash `Library not loaded @rpath/libonnxruntime`. Fix: (1) entitlem
 dylib externo). En Fase 2, al firmar con Developer ID el dylib queda firmado por nosotros → carga
 ok con hardened runtime (el entitlement queda de respaldo).
 
+⚠️ **Bug Intel #2 — transcripción "colgada" (en realidad lentísima):** el modelo cargaba y
+grababa bien, pero la transcripción tardaba ~48s para 2.5s de audio (parecía colgada). Causa
+(confirmada desensamblando el binario: **0 instrucciones F16C**): al cross-compilar x86 en runner
+ARM, `-march=native` no aplica y `GGML_NATIVE=OFF` deja ggml **sin vectorizar** (SSE/escalar) →
+Whisper Medium por CPU 5-10x más lento. Fix: en `build.yml` (paso x86) `TRANSCRIBE_CMAKE_ARGS`
+añade `-DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON` (baseline Haswell 2013+). Verificar
+tras el build que el binario Intel ya tenga `vcvtph2ps` (F16C) > 0. Nota pendiente: `selected_language`
+sale `"auto"` en fresh install (el log muestra `language=None`); el spec pide forzar `"es"` — revisar.
+
 ## Multiplataforma (Windows)
 
 El código es **cross-platform** (Tauri). Lo específico de macOS está detrás de `#[cfg]`:
