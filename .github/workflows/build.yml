@@ -206,6 +206,24 @@ jobs:
         if: ${{ inputs.target != '' && !contains(inputs.target, 'x86_64-unknown-linux-gnu') && !contains(inputs.target, 'aarch64-unknown-linux-gnu') && !contains(inputs.target, 'x86_64-pc-windows-msvc') }}
         run: rustup target add ${{ inputs.target }}
 
+      # Fix 'ld: library clang_rt.osx not found' en el build ARM nativo: en los Xcode
+      # recientes del runner de GitHub, libclang_rt.osx.a vive en una ruta versionada que
+      # el linker no busca por defecto → falla el link (el x86 cross la ignora, por eso solo
+      # rompía ARM). Localizamos la lib y añadimos su dir a LIBRARY_PATH. Compila local OK
+      # porque el Xcode local sí la tiene en el sitio esperado.
+      - name: Fix clang_rt link path (macOS)
+        if: contains(inputs.platform, 'macos')
+        shell: bash
+        run: |
+          RT="$(find "$(xcode-select -p)" -name 'libclang_rt.osx.a' 2>/dev/null | head -1)"
+          if [ -n "$RT" ]; then
+            RT_DIR="$(dirname "$RT")"
+            echo "LIBRARY_PATH=${RT_DIR}${LIBRARY_PATH:+:$LIBRARY_PATH}" >> "$GITHUB_ENV"
+            echo "clang_rt encontrado en: $RT_DIR"
+          else
+            echo "AVISO: libclang_rt.osx.a no encontrado bajo $(xcode-select -p)"
+          fi
+
       - name: import Apple Developer Certificate
         if: contains(inputs.platform, 'macos') && inputs.sign-binaries
         env:
