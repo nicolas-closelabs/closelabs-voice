@@ -210,12 +210,16 @@ impl HistoryManager {
         })
     }
 
+    // CloseLabs Voice: historial/.wav desactivados (privacidad) → sin uso hoy; se
+    // conserva por si se reactiva el historial en el futuro.
+    #[allow(dead_code)]
     pub fn recordings_dir(&self) -> &std::path::Path {
         &self.recordings_dir
     }
 
     /// Save a new history entry to the database.
     /// The WAV file should already have been written to the recordings directory.
+    #[allow(dead_code)]
     pub fn save_entry(
         &self,
         file_name: String,
@@ -638,6 +642,7 @@ impl HistoryManager {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn format_timestamp_title(&self, timestamp: i64) -> String {
         if let Some(utc_datetime) = DateTime::from_timestamp(timestamp, 0) {
             // Convert UTC to local timezone

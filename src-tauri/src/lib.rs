@@ -7,6 +7,7 @@ mod catalog;
 pub mod cli;
 mod clipboard;
 mod commands;
+mod groq_transcribe;
 mod helpers;
 mod input;
 mod llm_client;

@@ -392,6 +392,12 @@ pub struct AppSettings {
     pub auto_submit_key: AutoSubmitKey,
     #[serde(default = "default_post_process_enabled")]
     pub post_process_enabled: bool,
+    // CloseLabs Voice: transcripción HÍBRIDA (como Aztec). Cuando está ON y hay internet,
+    // la transcripción PRINCIPAL se hace en la nube con Groq Whisper (calidad alta en
+    // texto largo). Offline o si falla → Parakeet local (fallback). ⚠️ En la ruta de nube
+    // el audio SÍ sale del equipo hacia Groq. UI oculta (interno del producto).
+    #[serde(default = "default_cloud_transcription_enabled")]
+    pub cloud_transcription_enabled: bool,
     #[serde(default = "default_post_process_provider_id")]
     pub post_process_provider_id: String,
     #[serde(default = "default_post_process_providers")]
@@ -547,6 +553,12 @@ fn default_sound_theme() -> SoundTheme {
 fn default_post_process_enabled() -> bool {
     // CloseLabs Voice: el refine (limpieza del texto) va activado por defecto — es el
     // valor central del producto. Online usa Groq; offline cae a texto crudo (raw).
+    true
+}
+
+fn default_cloud_transcription_enabled() -> bool {
+    // CloseLabs Voice: transcripción en la nube (Groq Whisper) ACTIVA por defecto — es lo
+    // que da la calidad de Aztec en texto largo. Offline cae a Parakeet local.
     true
 }
 
@@ -907,6 +919,7 @@ pub fn get_default_settings() -> AppSettings {
         auto_submit: default_auto_submit(),
         auto_submit_key: AutoSubmitKey::default(),
         post_process_enabled: default_post_process_enabled(),
+        cloud_transcription_enabled: default_cloud_transcription_enabled(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
         post_process_api_keys: default_post_process_api_keys(),

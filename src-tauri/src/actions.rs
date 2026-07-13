@@ -74,6 +74,61 @@ fn is_blank_transcription(transcription: &str) -> bool {
     transcription.trim().is_empty()
 }
 
+/// CloseLabs Voice: intenta transcribir en la NUBE con Groq Whisper (ruta principal
+/// online). Devuelve `Some(texto)` si funciona; `None` para que el llamador caiga al
+/// Parakeet LOCAL (offline, sin key, deshabilitado, o cualquier error de red/API).
+/// ⚠️ En esta ruta el audio SÍ sale del equipo hacia Groq.
+async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Option<String> {
+    let settings = get_settings(app);
+    if !settings.cloud_transcription_enabled {
+        return None;
+    }
+    let api_key = settings
+        .post_process_api_keys
+        .get("groq")
+        .cloned()
+        .unwrap_or_default();
+    if api_key.is_empty() {
+        debug!("Cloud transcription: sin API key de Groq; usando Parakeet local");
+        return None;
+    }
+    let base_url = settings
+        .post_process_providers
+        .iter()
+        .find(|p| p.id == "groq")
+        .map(|p| p.base_url.clone())
+        .unwrap_or_else(|| "https://api.groq.com/openai/v1".to_string());
+    // Idioma: reutilizamos selected_language. "auto" (default, como Aztec) → None
+    // (auto-detección de Whisper). Si algún día se fuerza "es", se manda tal cual.
+    let language = match settings.selected_language.as_str() {
+        "auto" | "" => None,
+        other => Some(other.to_string()),
+    };
+
+    match crate::groq_transcribe::transcribe_audio_groq(
+        &base_url,
+        &api_key,
+        crate::groq_transcribe::CLOUD_MODEL,
+        language.as_deref(),
+        samples,
+    )
+    .await
+    {
+        Ok(text) if !text.trim().is_empty() => {
+            debug!("Cloud transcription (Groq Whisper) OK: {} chars", text.len());
+            Some(text)
+        }
+        Ok(_) => {
+            warn!("Cloud transcription vacía; fallback a Parakeet local");
+            None
+        }
+        Err(e) => {
+            warn!("Cloud transcription falló ({e}); fallback a Parakeet local");
+            None
+        }
+    }
+}
+
 async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
     if is_blank_transcription(transcription) {
         debug!("Post-processing skipped because the transcription is empty");
@@ -707,7 +762,13 @@ impl ShortcutAction for TranscribeAction {
                     let transcription_time = Instant::now();
                     let transcription_result = match tm.finalize_stream() {
                         Ok(Some(text)) if !text.trim().is_empty() => Ok(text),
-                        Ok(_) => tm.transcribe(samples),
+                        // CloseLabs Voice: transcripción HÍBRIDA (como Aztec). Online →
+                        // Groq Whisper (nube, mejor en texto largo); si falla u offline →
+                        // Parakeet local. ⚠️ En la ruta de nube el audio SÍ sale a Groq.
+                        Ok(_) => match try_cloud_transcription(&ah, &samples).await {
+                            Some(text) => Ok(text),
+                            None => tm.transcribe(samples),
+                        },
                         Err(err) => Err(err),
                     };
 
