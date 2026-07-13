@@ -14,14 +14,25 @@ Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en
 > *"offline fallback"*. Nuestro Parakeet-siempre-local se enredaba en dictados largos (la
 > auto-detección de idioma se voltea a inglés → "garabato"). Replicamos su arquitectura:
 > **Online → Groq Whisper (principal); offline o si falla → Parakeet local.** Código:
-> `groq_transcribe.rs` (WAV en memoria + POST a Groq `/audio/transcriptions`), branch en
+> `groq_transcribe.rs` (POST multipart a Groq `/audio/transcriptions`), branch en
 > `actions.rs` (`try_cloud_transcription`), toggle `cloud_transcription_enabled` (settings.rs,
 > default ON, UI oculta), idioma `auto` (como Aztec), **refine intacto** (`llama-3.3-70b-versatile`,
 > ellos también refinan encima del Whisper). **⚠️ CAMBIO DE PRIVACIDAD: el audio del paciente SÍ
-> sale a Groq cuando hay internet** (offline sigue 100% local). Esto deja OBSOLETAS las promesas de
-> "audio 100% local" de abajo y de la UI → **pendiente: actualizar el mensaje de privacidad de la
-> app** (en el próximo build). **Pendiente de velocidad:** subimos WAV sin comprimir (~2 MB/min);
-> comprimir (FLAC/Opus) antes de subir igualaría la velocidad de Aztec en internet lento.
+> sale a Groq cuando hay internet** (offline sigue 100% local).
+>
+> **Compresión de subida (velocidad en internet lento LatAm) — HECHO:** subimos el audio en
+> **FLAC** (`flacenc`, Rust puro → cero C, cross-compila trivial; ~2x más chico que WAV). Nos deja
+> mejores que Aztec, que sube WAV crudo. **Verificado end-to-end contra la API real de Groq: acepta
+> el FLAC (200 OK).** Red de seguridad en `groq_transcribe.rs`: si Groq rechazara el FLAC por
+> formato → **reintenta con WAV** (cero regresión). ⚠️ **Opus DESCARTADO:** `audiopus` compila
+> libopus con **autotools** (`autoreconf`) → inviable en Windows MSVC (se probó local y falló). No
+> reintroducir Opus salvo que exista un crate que compile libopus con cmake/cc puro.
+>
+> **Wording de privacidad — HECHO (honesto + bajo roce, estilo Aztec sin la mentira "local"):**
+> en Instructions/Help/About se puso *"100% privado y seguro. Tus dictados no se almacenan ni se
+> usan para entrenar modelos."* y se quitaron los claims falsos ("100% local", "offline", "tu voz
+> nunca se sube"). ⚠️ **NUNCA** volver a afirmar "audio 100% local / nunca sale del equipo" en la
+> UI: es comprobablemente falso con el híbrido y sería un riesgo con clientes médicos.
 
 Highlights acumulados:
 - **Transcripción → Parakeet TDT 0.6b v3 (GGUF Q5_K_M)** vía transcribe-cpp. ⚠️ **CAMBIO CLAVE
