@@ -7,6 +7,22 @@
 ## Estado actual (v0.5)
 
 Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en Mac.
+
+> ⚠️ **v0.6 — CAMBIO DE ARQUITECTURA: transcripción HÍBRIDA (como Aztec).** Confirmamos en los
+> **logs reales de Aztec** que su calidad superior en texto largo viene de transcribir en la
+> **NUBE** (Groq Whisper `large-v3-turbo`); su Parakeet local es —en sus propios strings— solo
+> *"offline fallback"*. Nuestro Parakeet-siempre-local se enredaba en dictados largos (la
+> auto-detección de idioma se voltea a inglés → "garabato"). Replicamos su arquitectura:
+> **Online → Groq Whisper (principal); offline o si falla → Parakeet local.** Código:
+> `groq_transcribe.rs` (WAV en memoria + POST a Groq `/audio/transcriptions`), branch en
+> `actions.rs` (`try_cloud_transcription`), toggle `cloud_transcription_enabled` (settings.rs,
+> default ON, UI oculta), idioma `auto` (como Aztec), **refine intacto** (`llama-3.3-70b-versatile`,
+> ellos también refinan encima del Whisper). **⚠️ CAMBIO DE PRIVACIDAD: el audio del paciente SÍ
+> sale a Groq cuando hay internet** (offline sigue 100% local). Esto deja OBSOLETAS las promesas de
+> "audio 100% local" de abajo y de la UI → **pendiente: actualizar el mensaje de privacidad de la
+> app** (en el próximo build). **Pendiente de velocidad:** subimos WAV sin comprimir (~2 MB/min);
+> comprimir (FLAC/Opus) antes de subir igualaría la velocidad de Aztec en internet lento.
+
 Highlights acumulados:
 - **Transcripción → Parakeet TDT 0.6b v3 (GGUF Q5_K_M)** vía transcribe-cpp. ⚠️ **CAMBIO CLAVE
   (v0.5): se volvió a Parakeet.** Whisper Medium era demasiado PESADO en CPU (Intel/Windows se
@@ -119,7 +135,10 @@ app **Tauri v2**.
 
 - **Usuario final:** médicos poco técnicos, en **computadores débiles**, con **internet
   inestable** (clínicas de LatAm). Idioma: **español latino** (Colombia, México, Perú).
-- **Privacidad:** se manejan datos de **pacientes** → el audio nunca debe salir del equipo.
+- **Privacidad:** se manejan datos de **pacientes**. ⚠️ **v0.6:** con la transcripción híbrida el
+  audio **SÍ sale a Groq cuando hay internet** (offline sigue 100% local). Es la misma decisión que
+  Aztec (que se vende como "privacy-first" apoyándose en que Groq no entrena/retiene datos de API).
+  Hay que **actualizar el mensaje de privacidad de la app** para reflejarlo con honestidad.
 - **Negocio:** producto **de pago** (~$30/mes/médico). Lanzamiento a producción **sin fallas**.
 - **Debe ser modificable**, no estático (marca, modelo, refine: todo parametrizable).
 
@@ -127,18 +146,23 @@ app **Tauri v2**.
 
 ```
 Atajo global (toggle) → grabar audio
-   → [LOCAL] Transcripción con Whisper Medium (GGUF Q5_K_M, español fijo) → texto crudo
+   → ¿hay internet?  (transcripción HÍBRIDA)
+        sí → [NUBE] Groq Whisper large-v3-turbo → texto   ← PRINCIPAL (calidad Aztec; audio SÍ sale)
+        no → [LOCAL] Parakeet TDT 0.6b (GGUF) → texto      ← fallback (audio NO sale)
    → diccionario/auto-corrección local (offline, siempre; términos médicos)
    → ¿hay internet?
-        sí → [NUBE] Refine con Groq (llama-3.1-8b-instant) → texto limpio
+        sí → [NUBE] Refine con Groq (llama-3.3-70b-versatile) → texto limpio
         no → RAW (texto crudo + diccionario local)
    → pegar en la app activa
 ```
 
-- **Transcripción: SIEMPRE LOCAL** — **Whisper Medium**, GGUF `Q5_K_M` (~583 MB), vía el motor
-  **`transcribe-cpp`** (GGML). El audio del paciente **nunca sale**. **Se fuerza a español**
-  (`selected_language="es"`, en `settings.rs`); Whisper **respeta** ese idioma y transcribe
-  español excelente (incl. términos médicos en inglés).
+- **Transcripción: HÍBRIDA (v0.6 — ver nota de arriba).** Online → **Groq Whisper `large-v3-turbo`
+  en la NUBE** (principal, calidad Aztec; el audio SÍ sale a Groq). Offline o si la nube falla →
+  **Parakeet TDT 0.6b (GGUF `Q5_K_M`) LOCAL** vía `transcribe-cpp` (fallback; el audio NO sale).
+  Idioma `auto` (como Aztec). ⚠️ El texto histórico de abajo (Whisper Medium local "siempre") quedó
+  obsoleto con el híbrido; se conserva por contexto de las decisiones previas.
+  - _Histórico:_ **Whisper Medium**, GGUF `Q5_K_M` (~583 MB), vía **`transcribe-cpp`** (GGML), se
+    forzaba a español (`selected_language="es"`); Whisper respeta el idioma forzado.
   - ⚠️ **Historia (por qué Whisper y no Parakeet):** la v0.1/v0.2 usaba **Parakeet TDT v3**
     (transductor). Parakeet **no respeta bien el idioma forzado** → autodetectaba por segmento y
     mezclaba inglés/español (el "garabato"). Se cambió a Whisper en v0.3 porque **sí** honra

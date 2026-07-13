@@ -52,6 +52,11 @@ cpal = "0.16.0"
 anyhow = "1.0.95"
 rubato = "0.16.2"
 hound = "3.5.1"
+# CloseLabs Voice: compresión de audio para subir a Groq Whisper (internet lento LatAm).
+# flacenc = encoder FLAC en RUST PURO → cero dependencias C, cross-compila trivialmente en
+# las 3 plataformas (verificado: Groq acepta el FLAC con 200 OK). ~2x más chico que WAV.
+# (Opus se descartó: audiopus compila libopus con autotools → no viable en Windows MSVC.)
+flacenc = "0.4"
 log = "0.4.25"
 env_filter = "0.1.0"
 tokio = "1.43.0"

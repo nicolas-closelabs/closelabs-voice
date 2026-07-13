@@ -52,7 +52,7 @@ const PrivateDemo = () => (
       <ShieldCheck className="w-11 h-11" />
     </div>
     <span className="clv-rise text-sm font-heading font-semibold text-brand-text-secondary">
-      100% local · sin internet
+      100% privado y seguro
     </span>
   </div>
 );
@@ -84,8 +84,8 @@ const STEPS: Step[] = [
     demo: <DictDemo />,
   },
   {
-    title: "6. Privado y offline",
-    desc: "La transcripción ocurre en tu computador; tu voz nunca se sube a internet. Funciona incluso sin conexión.",
+    title: "6. Privado y seguro",
+    desc: "Tus dictados son privados y seguros: no se almacenan ni se usan para entrenar modelos. Sin conexión, la transcripción ocurre 100% en tu computador.",
     demo: <PrivateDemo />,
   },
 ];

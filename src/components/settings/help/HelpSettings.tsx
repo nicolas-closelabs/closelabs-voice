@@ -23,7 +23,7 @@ const FAQ: QA[] = [
   },
   {
     q: "¿Es privado? ¿Se sube mi voz?",
-    a: "La transcripción ocurre 100% en tu computador; tu voz nunca se sube a internet y funciona sin conexión. Solo la limpieza opcional del texto usa la nube (sin audio).",
+    a: "Sí, es 100% privado y seguro: tus dictados no se almacenan ni se usan para entrenar modelos. Sin conexión, la transcripción ocurre 100% en tu computador.",
   },
   {
     q: "No encuentro la ventana de la app.",

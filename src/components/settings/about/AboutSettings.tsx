@@ -21,7 +21,7 @@ export const AboutSettings: React.FC = () => {
 
         <p className="text-brand-text-secondary max-w-md leading-relaxed">
           CloseLabs Voice convierte tu voz en texto, al instante y en tu idioma.
-          Dictado privado y local para que dediques menos tiempo a escribir y más
+          Dictado privado y seguro para que dediques menos tiempo a escribir y más
           a tus pacientes.
         </p>
 
