@@ -116,6 +116,37 @@
     prompt pide "responde únicamente con el texto" mientras la API exige JSON. Evaluar añadir la
     instrucción de JSON solo en la ruta estructurada.
 
+## ESTADO AL 2026-09-18 (para retomar)
+
+- Rama `feat/sprint1-paridad-aztec`, commit `4d9442a`, **versión 0.5.0**. Todo verde:
+  116 pruebas Rust, TypeScript compila. **Sin pushear** (esta sesión no tiene credenciales de
+  GitHub).
+- Probado con dictado real en Mac (M4): correo con arroba, signos dictados con excepción médica,
+  diccionario con términos de 2 palabras corrigiendo en la nube, fallback offline, y la limpieza
+  con `openai/gpt-oss-20b` funcionando. Tiempos: ~1,3 s transcripción + ~1,5 s limpieza + 0,4 s
+  pegado.
+- En `/Applications` quedó un build **--debug** (más lento al abrir). La versión anterior está en
+  `~/Desktop/CloseLabs Voice (version anterior).app`.
+
+### Cómo probar localmente (lecciones de esta sesión)
+1. `bun tauri dev` **no sirve** para probar permisos: macOS le atribuye el permiso de
+   Accesibilidad al proceso que lanzó la app (la terminal), no a la app.
+2. Hay que compilar `bun tauri build --debug --bundles app`, copiar el `.app` a `/Applications`
+   y abrirlo con `open`. Cada build cambia la firma → macOS revoca el permiso → hay que apagar y
+   encender el interruptor en Ajustes → Privacidad → Accesibilidad.
+3. `tccutil reset Accessibility com.closelabs.voice` limpia entradas viejas cuando se enredan.
+4. El log vive en `~/Library/Logs/com.closelabs.voice/handy.log` **en hora UTC**.
+
+### Para lanzar los builds de Intel y Windows (CI)
+El workflow `.github/workflows/closelabs.yml` ya tiene los tres objetivos (macOS ARM, macOS Intel,
+Windows) y se dispara con push a `main` o manualmente. Falta:
+1. Autenticar GitHub en la máquina: `gh auth login` (o hacer el push a mano).
+2. Decidir cómo pagar los minutos: el repo es privado y los minutos de macOS se agotan. La opción
+   usada antes era hacerlo público un rato; es una decisión del cliente, no se hace sin permiso.
+3. ⚠️ **Si se rota la API key de Groq, actualizar el secreto `CLOSELABS_GROQ_API_KEY` del repo** o
+   los builds saldrán sin refine.
+4. Conseguir alguien con Windows que pruebe el `.exe` (nunca se ha probado).
+
 ## Acciones del cliente (fuera de código)
 - **Groq:** poner **alertas de saldo + auto-recarga + límite de gasto** en el dashboard (cuando se
   pueda pagar). Vigilar si reabren el Developer tier.
