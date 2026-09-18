@@ -10,10 +10,12 @@ mod commands;
 mod groq_transcribe;
 mod helpers;
 mod input;
+mod last_transcript;
 mod llm_client;
 mod managers;
 mod overlay;
 pub mod portable;
+mod refine_guard;
 mod settings;
 mod shortcut;
 mod signal_handle;
@@ -234,6 +236,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             }
             "copy_last_transcript" => {
                 tray::copy_last_transcript(app);
+            }
+            "paste_last_transcript" => {
+                tray::paste_last_transcript(app);
             }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
@@ -595,6 +600,7 @@ pub fn run(cli_args: CliArgs) {
             commands::is_portable,
             commands::get_app_dir_path,
             commands::get_app_settings,
+            commands::complete_onboarding,
             commands::get_default_settings,
             commands::get_log_dir_path,
             commands::set_log_level,
@@ -647,13 +653,19 @@ pub fn run(cli_args: CliArgs) {
             managers::transcription::StreamPhaseEvent,
         ]);
 
-    #[cfg(debug_assertions)] // <- Only export on non-release builds
-    specta_builder
-        .export(
-            Typescript::default().bigint(BigIntExportBehavior::Number),
-            "../src/bindings.ts",
-        )
-        .expect("Failed to export typescript bindings");
+    // Solo en builds de desarrollo: regenera `src/bindings.ts` (las interfaces que usa el
+    // frontend). Es una comodidad de desarrollo y NO puede tumbar la app: cuando el build de
+    // debug se ejecuta como aplicación instalada, el directorio de trabajo no es el del
+    // proyecto y la escritura falla con "Permission denied". Con `.expect()` eso hacía
+    // **panic en el arranque**: la app moría antes de registrar el atajo global y la pantalla
+    // de permisos se quedaba esperando para siempre (parecía un problema de Accesibilidad).
+    #[cfg(debug_assertions)]
+    if let Err(e) = specta_builder.export(
+        Typescript::default().bigint(BigIntExportBehavior::Number),
+        "../src/bindings.ts",
+    ) {
+        log::warn!("No se pudieron exportar las interfaces TypeScript (se continúa): {e}");
+    }
 
     let invoke_handler = specta_builder.invoke_handler();
 
@@ -810,6 +822,10 @@ pub fn run(cli_args: CliArgs) {
                     .min_inner_size(680.0, 570.0)
                     .resizable(true)
                     .maximizable(false)
+                    // Sin posición explícita, macOS coloca la ventana desde su origen, que
+                    // está en la esquina INFERIOR IZQUIERDA → la app aparecía abajo a la
+                    // izquierda en vez del centro.
+                    .center()
                     .visible(false);
 
             if let Some(data_dir) = portable::data_dir() {

@@ -16,7 +16,7 @@ Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en
 > **Online → Groq Whisper (principal); offline o si falla → Parakeet local.** Código:
 > `groq_transcribe.rs` (POST multipart a Groq `/audio/transcriptions`), branch en
 > `actions.rs` (`try_cloud_transcription`), toggle `cloud_transcription_enabled` (settings.rs,
-> default ON, UI oculta), idioma `auto` (como Aztec), **refine intacto** (`llama-3.3-70b-versatile`,
+> default ON, UI oculta), idioma `auto` (como Aztec), **refine** (hoy `openai/gpt-oss-20b`,
 > ellos también refinan encima del Whisper). **⚠️ CAMBIO DE PRIVACIDAD: el audio del paciente SÍ
 > sale a Groq cuando hay internet** (offline sigue 100% local).
 >
@@ -26,7 +26,11 @@ Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en
 > el FLAC (200 OK).** Red de seguridad en `groq_transcribe.rs`: si Groq rechazara el FLAC por
 > formato → **reintenta con WAV** (cero regresión). ⚠️ **Opus DESCARTADO:** `audiopus` compila
 > libopus con **autotools** (`autoreconf`) → inviable en Windows MSVC (se probó local y falló). No
-> reintroducir Opus salvo que exista un crate que compile libopus con cmake/cc puro.
+> reintroducir Opus salvo que exista un crate que compile libopus con cmake/cc puro. **Actualización
+> 2026-09-16:** ese crate existe — `opusic-sys` (cmake); Aztec 1.8.2 lo usa en macOS y en Windows MSVC.
+> Opus queda reabierto (ver `AZTEC-BENCHMARK.md` §1.4).
+>
+> **Benchmark completo de Aztec 1.8.2 → `AZTEC-BENCHMARK.md`** (qué nos falta, priorizado por sprint).
 >
 > **Wording de privacidad — HECHO (honesto + bajo roce, estilo Aztec sin la mentira "local"):**
 > en Instructions/Help/About se puso *"100% privado y seguro. Tus dictados no se almacenan ni se
@@ -43,7 +47,12 @@ Highlights acumulados:
   la v0.1/v0.2 con Parakeet **era caché vieja** (confirmado: instalación limpia transcribe
   perfecto). Parakeet **auto-detecta idioma** (no se fuerza; para español puro acierta). Ficha:
   `nvidia/parakeet-tdt-0.6b-v3` (25 idiomas europeos, CC-BY-4.0). GGUF: `handy-computer/parakeet-tdt-0.6b-v3-gguf`.
-- **Refine → Groq `llama-3.3-70b-versatile`** (el 8B se negaba). Prompt = **formateador general**
+- **Refine → Groq `openai/gpt-oss-20b` con salida JSON estricta.** ⚠️ **2026-09-18: Groq RETIRÓ
+  `llama-3.3-70b-versatile` y `llama-3.1-8b-instant`** → la API devolvía 404 en cada dictado y el
+  refine caía a texto crudo en silencio (los instaladores entregados quedaron así; hay que publicar
+  build nuevo). El reemplazo se verificó contra la API real con dictados clínicos: 0,85–1,5 s, y con
+  `json_schema` estricto obedece mejor. `openai/gpt-oss-120b` falló al generar el JSON → descartado.
+  _Histórico:_ antes `llama-3.3-70b-versatile` (el 8B se negaba). Prompt = **formateador general**
   (puntúa/estructura, quita muletillas; NO médico, NO parafrasea). **Regla añadida: NO TRADUCIR** —
   conserva en su idioma los términos que el usuario dijo en inglés (antes traducía "industrial
   engineer" → "ingeniero industrial"). ⚠️ **El refine se aplica
@@ -162,7 +171,7 @@ Atajo global (toggle) → grabar audio
         no → [LOCAL] Parakeet TDT 0.6b (GGUF) → texto      ← fallback (audio NO sale)
    → diccionario/auto-corrección local (offline, siempre; términos médicos)
    → ¿hay internet?
-        sí → [NUBE] Refine con Groq (llama-3.3-70b-versatile) → texto limpio
+        sí → [NUBE] Refine con Groq (openai/gpt-oss-20b, JSON estricto) → texto limpio
         no → RAW (texto crudo + diccionario local)
    → pegar en la app activa
 ```
@@ -252,8 +261,9 @@ CLOSELABS_GROQ_API_KEY=gsk_... bun tauri build
 ```
 Si no se define, el refine queda sin key (el usuario puede pegarla en Ajustes, o se migra
 a un proxy propio cambiando el `base_url` del proveedor Groq). El modelo por defecto es
-`llama-3.1-8b-instant` (económico) y el prompt es de limpieza médica en español; ambos
-son configurables. Offline el refine cae a texto crudo automáticamente.
+`openai/gpt-oss-20b` y el prompt es de limpieza médica en español; ambos son configurables.
+⚠️ Groq retira modelos sin aviso: si el refine deja de limpiar, lo primero es
+`curl https://api.groq.com/openai/v1/models` y revisar que el default siga existiendo. Offline el refine cae a texto crudo automáticamente.
 
 ## Estructura / archivos clave
 

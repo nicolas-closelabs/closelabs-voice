@@ -3,6 +3,7 @@
     "settings": "Configurações...",
     "checkUpdates": "Verificar Atualizações...",
     "copyLastTranscript": "Copiar última transcrição",
+    "pasteLastTranscript": "Paste Last Transcript",
     "unloadModel": "Descarregar modelo",
     "model": "Modelo",
     "quit": "Sair",
@@ -102,6 +103,8 @@
       "title": "Permissões Necessárias",
       "description": "O CloseLabs Voice precisa de algumas permissões para funcionar corretamente.",
       "microphone": {
+        "recommended": "recommended",
+        "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "Acesso ao Microfone",
         "description": "Necessário para ouvir sua voz para transcrição."
       },
@@ -608,6 +611,9 @@
     "modelLoadFailedUnknown": "modelo desconhecido",
     "pasteFailedTitle": "Falha ao colar o texto",
     "pasteFailed": "Não foi possível colar o texto no aplicativo ativo.",
+    "pasteNeedsManualTitle": "Permission needed to paste",
+    "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
+    "grantAccessibility": "Grant permission",
     "transcriptionFailedTitle": "Falha na transcrição"
   },
   "appLanguage": {

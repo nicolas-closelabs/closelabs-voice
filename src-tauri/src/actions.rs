@@ -1,6 +1,8 @@
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
+use crate::audio_toolkit::text::is_whisper_hallucination;
+use crate::audio_toolkit::{apply_custom_words, filter_transcription_output};
 use crate::audio_toolkit::{is_microphone_access_denied, is_no_input_device_error, VadPolicy};
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
@@ -104,19 +106,54 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
         "auto" | "" => None,
         other => Some(other.to_string()),
     };
+    // El diccionario viaja como pista de vocabulario: Whisper escribe bien fármacos y apellidos.
+    let prompt = crate::groq_transcribe::build_whisper_prompt(&settings.custom_words);
+    match prompt.as_deref() {
+        Some(p) => debug!(
+            "Pista de vocabulario para Whisper: {} palabras, {} chars",
+            settings.custom_words.iter().filter(|w| !w.trim().is_empty()).count(),
+            p.chars().count()
+        ),
+        None => debug!("Sin pista de vocabulario (diccionario vacío)"),
+    }
 
     match crate::groq_transcribe::transcribe_audio_groq(
         &base_url,
         &api_key,
         crate::groq_transcribe::CLOUD_MODEL,
         language.as_deref(),
+        prompt.as_deref(),
         samples,
     )
     .await
     {
+        Ok(text) if is_whisper_hallucination(&text, prompt.as_deref()) => {
+            // Era silencio/ruido: no hay nada que pegar, y tampoco tiene sentido reintentar
+            // con Parakeet sobre el mismo audio.
+            warn!("Cloud transcription descartada: alucinación conocida de Whisper");
+            Some(String::new())
+        }
         Ok(text) if !text.trim().is_empty() => {
             debug!("Cloud transcription (Groq Whisper) OK: {} chars", text.len());
-            Some(text)
+            // El diccionario se aplica TAMBIÉN al texto de la nube. La pista que se le manda a
+            // Whisper solo *sugiere* el vocabulario: en pruebas reales devolvió "Icetotrinoina"
+            // teniendo "Isotetrinoina" en el diccionario. Esta corrección por similitud es
+            // determinista y cierra el caso. Antes solo corría en el motor local, así que desde
+            // que la nube pasó a ser la ruta principal (v0.6) el diccionario dejó de corregir
+            // en la práctica.
+            let corrected = apply_custom_words(
+                &text,
+                &settings.custom_words,
+                settings.word_correction_threshold,
+            );
+            if corrected != text {
+                debug!("Diccionario aplicado al texto de la nube");
+            }
+            Some(filter_transcription_output(
+                &corrected,
+                &settings.app_language,
+                &settings.custom_filler_words,
+            ))
         }
         Ok(_) => {
             warn!("Cloud transcription vacía; fallback a Parakeet local");
@@ -129,9 +166,24 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
     }
 }
 
+/// `true` si el error viene de no tener red (no de la API). Offline, reintentar es tiempo
+/// perdido: se pega la transcripción cruda y listo.
+fn is_offline_error(message: &str) -> bool {
+    let m = message.to_lowercase();
+    m.contains("error sending request")
+        || m.contains("dns error")
+        || m.contains("connection refused")
+        || m.contains("network is unreachable")
+        || m.contains("proxy unreachable")
+}
+
 async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
     if is_blank_transcription(transcription) {
         debug!("Post-processing skipped because the transcription is empty");
+        return None;
+    }
+    if !crate::refine_guard::should_refine(transcription) {
+        debug!("Post-processing skipped: dictado demasiado corto");
         return None;
     }
 
@@ -295,6 +347,16 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
                             json.get(TRANSCRIPTION_FIELD).and_then(|t| t.as_str())
                         {
                             let result = strip_invisible_chars(transcription_value);
+                            if let Some(reason) = crate::refine_guard::rejection_reason(
+                                transcription,
+                                &result,
+                                &prompt,
+                            ) {
+                                warn!(
+                                    "Refine descartado ({reason}); se usa la transcripción cruda"
+                                );
+                                return None;
+                            }
                             debug!(
                                 "Structured output post-processing succeeded for provider '{}'. Output length: {} chars",
                                 provider.id,
@@ -302,16 +364,16 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
                             );
                             return Some(result);
                         } else {
-                            error!("Structured output response missing 'transcription' field");
-                            return Some(strip_invisible_chars(&content));
+                            error!("Structured output response missing 'transcription' field; se usa la cruda");
+                            return None;
                         }
                     }
                     Err(e) => {
                         error!(
-                            "Failed to parse structured output JSON: {}. Returning raw content.",
+                            "Failed to parse structured output JSON: {}; se usa la cruda",
                             e
                         );
-                        return Some(strip_invisible_chars(&content));
+                        return None;
                     }
                 }
             }
@@ -320,6 +382,10 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
                 return None;
             }
             Err(e) => {
+                if is_offline_error(&e.to_string()) {
+                    debug!("Refine omitido: no hay conexión");
+                    return None;
+                }
                 warn!(
                     "Structured output failed for provider '{}': {}. Falling back to legacy mode.",
                     provider.id, e
@@ -333,60 +399,45 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
     let processed_prompt = prompt.replace("${output}", transcription);
     debug!("Processed prompt length: {} chars", processed_prompt.len());
 
-    match crate::llm_client::send_chat_completion(
+    let mut response = crate::llm_client::send_chat_completion(
         &provider,
-        api_key,
+        api_key.clone(),
         &model,
-        processed_prompt,
-        reasoning_effort,
-        reasoning,
+        processed_prompt.clone(),
+        reasoning_effort.clone(),
+        reasoning.clone(),
     )
-    .await
-    {
+    .await;
+    if let Err(e) = &response {
+        if is_offline_error(&e.to_string()) {
+            // Sin internet no tiene sentido reintentar: se pega la transcripción cruda.
+            debug!("Refine omitido: no hay conexión");
+            return None;
+        }
+        // Un solo reintento: fallos transitorios de red o de Groq son comunes en LatAm.
+        warn!("Refine: primer intento falló ({e}); reintentando una vez");
+        response = crate::llm_client::send_chat_completion(
+            &provider,
+            api_key,
+            &model,
+            processed_prompt,
+            reasoning_effort,
+            reasoning,
+        )
+        .await;
+    }
+
+    match response {
         Ok(Some(content)) => {
             let content = strip_invisible_chars(&content);
             let trimmed = content.trim();
 
-            // Guarda anti-alucinación (CloseLabs): en notas médicas es inaceptable que
-            // el refine invente o agregue texto. Si el modelo devolvió vacío, o un texto
-            // desproporcionadamente más largo que la entrada (preámbulos tipo "Aquí está
-            // el texto...", contenido inventado), lo descartamos y caemos a la
-            // transcripción CRUDA (retornar None hace que se use el texto original).
-            if trimmed.is_empty() {
-                error!("Refine devolvió vacío; se usa la transcripción cruda");
-                return None;
-            }
-
-            // Guarda anti-rechazo: si el modelo, en vez de limpiar el texto, respondió con
-            // una meta-frase (se negó, comentó, o pidió más info — ej. "esto no parece una
-            // conversación médica"), descartamos y usamos la cruda. Frases largas y muy
-            // específicas para no chocar con dictado real.
-            let low = trimmed.to_lowercase();
-            const REFUSAL_MARKERS: [&str; 9] = [
-                "no parece ser una",
-                "no parece una conversación",
-                "no es una transcrip",
-                "no es una conversación",
-                "proporciona una transcrip",
-                "proporciona un dictado",
-                "según las instrucciones",
-                "lo siento, pero",
-                "no puedo ayudarte",
-            ];
-            if REFUSAL_MARKERS.iter().any(|m| low.contains(m)) {
-                error!("Refine devolvió una meta-respuesta/rechazo; se usa la transcripción cruda");
-                return None;
-            }
-
-            // La limpieza normal no crece mucho (quita muletillas, ajusta puntuación). Un
-            // texto desproporcionadamente más largo = preámbulo/comentario/invención → cruda.
-            let input_len = transcription.chars().count();
-            let output_len = trimmed.chars().count();
-            if input_len > 0 && output_len > input_len * 2 + 30 {
-                error!(
-                    "Refine descartado por desproporcionado (entrada {} vs salida {} chars); se usa la cruda",
-                    input_len, output_len
-                );
+            // Guardas (CloseLabs): en notas médicas es inaceptable que el refine invente,
+            // recorte o filtre texto del prompt. Ante la duda, se pega la transcripción cruda.
+            if let Some(reason) =
+                crate::refine_guard::rejection_reason(transcription, trimmed, &prompt)
+            {
+                error!("Refine descartado ({reason}); se usa la transcripción cruda");
                 return None;
             }
 
@@ -505,6 +556,14 @@ pub(crate) async fn process_transcription_output(
         maybe_convert_chinese_variant(&effective_language, transcription).await
     {
         final_text = converted_text;
+    }
+
+    // Emails y URLs dictados ("juan arroba gmail punto com" → juan@gmail.com). Es local y
+    // determinista, así que también arregla el texto cuando no hay internet para el refine.
+    let normalized = crate::audio_toolkit::spoken_text::normalize_spoken_emails_and_urls(&final_text);
+    if normalized != final_text {
+        debug!("Emails/URLs dictados normalizados");
+        final_text = normalized;
     }
 
     if post_process {
@@ -717,10 +776,10 @@ impl ShortcutAction for TranscribeAction {
         play_feedback_sound(app, SoundType::Stop);
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
-        // CloseLabs Voice: el refine (limpieza) va SIEMPRE que esté activado globalmente
-        // (post_process_enabled=true por defecto), sin importar por cuál atajo se dictó.
-        // Handy tenía dos atajos (crudo vs. con post-proceso); aquí el atajo principal
-        // también refina, que es lo que espera el médico.
+                                                 // CloseLabs Voice: el refine (limpieza) va SIEMPRE que esté activado globalmente
+                                                 // (post_process_enabled=true por defecto), sin importar por cuál atajo se dictó.
+                                                 // Handy tenía dos atajos (crudo vs. con post-proceso); aquí el atajo principal
+                                                 // también refina, que es lo que espera el médico.
         let post_process = self.post_process || get_settings(app).post_process_enabled;
         let cancel_generation = rm.cancel_generation();
 
@@ -767,7 +826,14 @@ impl ShortcutAction for TranscribeAction {
                         // Parakeet local. ⚠️ En la ruta de nube el audio SÍ sale a Groq.
                         Ok(_) => match try_cloud_transcription(&ah, &samples).await {
                             Some(text) => Ok(text),
-                            None => tm.transcribe(samples),
+                            None => tm.transcribe(samples).map(|text| {
+                                if is_whisper_hallucination(&text, None) {
+                                    warn!("Transcripción local descartada: alucinación conocida");
+                                    String::new()
+                                } else {
+                                    text
+                                }
+                            }),
                         },
                         Err(err) => Err(err),
                     };
@@ -781,10 +847,11 @@ impl ShortcutAction for TranscribeAction {
 
                     match transcription_result {
                         Ok(transcription) => {
+                            // Privacidad: nunca escribir el texto dictado en el log.
                             debug!(
-                                "Transcription completed in {:?}: '{}'",
+                                "Transcription completed in {:?}: {} chars",
                                 transcription_time.elapsed(),
-                                transcription
+                                transcription.chars().count()
                             );
 
                             if post_process {
@@ -812,6 +879,7 @@ impl ShortcutAction for TranscribeAction {
                                 utils::hide_recording_overlay(&ah);
                                 change_tray_icon(&ah, TrayIconState::Idle);
                             } else {
+                                crate::last_transcript::set(&processed.final_text);
                                 let ah_clone = ah.clone();
                                 let paste_time = Instant::now();
                                 let final_text = processed.final_text;

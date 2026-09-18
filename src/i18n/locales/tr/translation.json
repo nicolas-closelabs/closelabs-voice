@@ -3,6 +3,7 @@
     "settings": "Ayarlar...",
     "checkUpdates": "Güncellemeleri Kontrol Et...",
     "copyLastTranscript": "Son transkripti kopyala",
+    "pasteLastTranscript": "Paste Last Transcript",
     "unloadModel": "Modeli boşalt",
     "model": "Model",
     "quit": "Çıkış",
@@ -102,6 +103,8 @@
       "title": "İzinler Gerekli",
       "description": "CloseLabs Voice'nin düzgün çalışabilmesi için birkaç izne ihtiyacı var.",
       "microphone": {
+        "recommended": "recommended",
+        "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "Mikrofon Erişimi",
         "description": "Sesinizi transkripsiyon için alabilmek için gereklidir."
       },
@@ -608,6 +611,9 @@
     "modelLoadFailedUnknown": "bilinmeyen model",
     "pasteFailedTitle": "Metin yapıştırılamadı",
     "pasteFailed": "Metin etkin uygulamaya yapıştırılamadı.",
+    "pasteNeedsManualTitle": "Permission needed to paste",
+    "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
+    "grantAccessibility": "Grant permission",
     "transcriptionFailedTitle": "Transkripsiyon başarısız oldu"
   },
   "appLanguage": {

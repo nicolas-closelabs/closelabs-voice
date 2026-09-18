@@ -76,10 +76,11 @@ export const HomeSettings: React.FC = () => {
               <Loader2 className="w-5 h-5 text-brand-accent animate-spin" />
               <div>
                 <div className="font-heading font-semibold text-[15px]">
-                  Preparando CloseLabs Voice…
+                  Ya puedes dictar
                 </div>
                 <div className="text-sm text-brand-text-secondary">
-                  Descargando el modelo de voz (solo la primera vez).
+                  Mientras tanto se descarga el modo sin conexión (solo la
+                  primera vez).
                 </div>
               </div>
             </div>

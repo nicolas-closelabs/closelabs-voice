@@ -3,6 +3,7 @@
     "settings": "设置...",
     "checkUpdates": "检查更新...",
     "copyLastTranscript": "复制最新转录",
+    "pasteLastTranscript": "Paste Last Transcript",
     "unloadModel": "卸载模型",
     "model": "模型",
     "quit": "退出",
@@ -102,6 +103,8 @@
       "title": "需要权限",
       "description": "CloseLabs Voice 需要一些权限才能正常工作。",
       "microphone": {
+        "recommended": "recommended",
+        "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "麦克风访问",
         "description": "需要听取您的语音进行转录。"
       },
@@ -608,6 +611,9 @@
     "modelLoadFailedUnknown": "未知模型",
     "pasteFailedTitle": "粘贴文本失败",
     "pasteFailed": "无法将文本粘贴到当前活动的应用程序中。",
+    "pasteNeedsManualTitle": "Permission needed to paste",
+    "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
+    "grantAccessibility": "Grant permission",
     "transcriptionFailedTitle": "转录失败"
   },
   "appLanguage": {

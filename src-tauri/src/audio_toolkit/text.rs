@@ -319,9 +319,95 @@ pub fn filter_transcription_output(
     filtered.trim().to_string()
 }
 
+/// Frases que Whisper "inventa" cuando el audio es silencio, ruido o muy corto (vienen de los
+/// subtítulos de YouTube con los que se entrenó). Se comparan normalizadas contra el texto
+/// COMPLETO de la transcripción: si una frase aparece dentro de un dictado real, no se toca.
+const WHISPER_HALLUCINATIONS: &[&str] = &[
+    "subtitulos realizados por la comunidad de amara org",
+    "subtitulado por la comunidad de amara org",
+    "gracias por ver",
+    "gracias por ver el video",
+    "gracias por ver este video",
+    "muchas gracias por ver el video",
+    "suscribete",
+    "suscribete al canal",
+    "no olvides suscribirte",
+    "thanks for watching",
+    "thank you for watching",
+    "thank you",
+    "sous titres realises par la communaute d amara org",
+    "merci d avoir regarde cette video",
+    "untertitel der amara org community",
+    "legendas pela comunidade amara org",
+];
+
+/// Minúsculas, sin tildes y solo letras/dígitos separados por un espacio.
+fn normalize_for_match(text: &str) -> String {
+    let folded: String = text
+        .to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'á' | 'à' | 'ä' | 'â' => 'a',
+            'é' | 'è' | 'ë' | 'ê' => 'e',
+            'í' | 'ì' | 'ï' | 'î' => 'i',
+            'ó' | 'ò' | 'ö' | 'ô' => 'o',
+            'ú' | 'ù' | 'ü' | 'û' => 'u',
+            'ñ' => 'n',
+            'ç' => 'c',
+            c if c.is_alphanumeric() => c,
+            _ => ' ',
+        })
+        .collect();
+    folded.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// `true` si la transcripción no es habla real: una alucinación conocida de Whisper, o el
+/// eco de la pista de vocabulario (`prompt`), que Whisper devuelve tal cual ante el silencio.
+pub fn is_whisper_hallucination(text: &str, prompt: Option<&str>) -> bool {
+    let normalized = normalize_for_match(text);
+    if normalized.is_empty() {
+        return false;
+    }
+    if WHISPER_HALLUCINATIONS.contains(&normalized.as_str()) {
+        return true;
+    }
+    prompt.is_some_and(|p| normalize_for_match(p) == normalized)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn detects_known_whisper_hallucinations() {
+        assert!(is_whisper_hallucination(
+            "Subtítulos realizados por la comunidad de Amara.org",
+            None
+        ));
+        assert!(is_whisper_hallucination(" ¡Gracias por ver! ", None));
+        assert!(is_whisper_hallucination("Thank you.", None));
+    }
+
+    #[test]
+    fn keeps_real_dictation_containing_hallucination_phrases() {
+        assert!(!is_whisper_hallucination(
+            "Paciente refiere dolor abdominal, gracias por ver el resultado.",
+            None
+        ));
+        assert!(!is_whisper_hallucination("", None));
+    }
+
+    #[test]
+    fn detects_prompt_echo() {
+        let prompt = Some("Metformina, Losartán, Pérez.");
+        assert!(is_whisper_hallucination(
+            "metformina losartan perez",
+            prompt
+        ));
+        assert!(!is_whisper_hallucination(
+            "Metformina 850 cada 12 horas.",
+            prompt
+        ));
+    }
 
     #[test]
     fn test_apply_custom_words_exact_match() {

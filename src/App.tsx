@@ -6,7 +6,9 @@ import { platform } from "@tauri-apps/plugin-os";
 import {
   checkAccessibilityPermission,
   checkMicrophonePermission,
+  requestAccessibilityPermission,
 } from "tauri-plugin-macos-permissions-api";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ModelStateEvent, RecordingErrorEvent } from "./lib/types/events";
 import "./App.css";
 import AccessibilityPermissions from "./components/AccessibilityPermissions";
@@ -34,8 +36,7 @@ function App() {
   // Track if this is a returning user who just needs to grant permissions
   // (vs a new user who needs full onboarding including model selection)
   const [isReturningUser, setIsReturningUser] = useState(false);
-  const [currentSection, setCurrentSection] =
-    useState<SidebarSection>("home");
+  const [currentSection, setCurrentSection] = useState<SidebarSection>("home");
   const { settings, updateSetting } = useSettings();
   const direction = getLanguageDirection(i18n.language);
   const refreshAudioDevices = useSettingsStore(
@@ -130,6 +131,31 @@ function App() {
     const unlisten = listen("paste-error", () => {
       toast.error(t("errors.pasteFailedTitle"), {
         description: t("errors.pasteFailed"),
+      });
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
+  // macOS sin permiso de Accesibilidad: el texto quedó en el portapapeles. Se muestra la
+  // ventana (si estaba oculta el toast no se vería) con la acción para dar el permiso.
+  useEffect(() => {
+    const unlisten = listen("paste-needs-manual", async () => {
+      const win = getCurrentWindow();
+      await win.show();
+      await win.setFocus();
+      toast.warning(t("errors.pasteNeedsManualTitle"), {
+        description: t("errors.pasteNeedsManual"),
+        duration: 15000,
+        action: {
+          label: t("errors.grantAccessibility"),
+          onClick: () => {
+            requestAccessibilityPermission().catch((e) =>
+              console.error("Failed to request accessibility permission:", e),
+            );
+          },
+        },
       });
     });
     return () => {
@@ -237,10 +263,33 @@ function App() {
     }
   };
 
-  const handleAccessibilityComplete = () => {
+  const handleAccessibilityComplete = async () => {
     // Returning users already have models, skip to main app
-    // New users need to select a model
-    setOnboardingStep(isReturningUser ? "done" : "model");
+    if (isReturningUser) {
+      setOnboardingStep("done");
+      return;
+    }
+
+    // CloseLabs Voice: con la transcripción híbrida no hay que esperar al modelo local. Si
+    // hay internet y la nube está activa, el médico dicta desde ya y Parakeet (el respaldo
+    // sin conexión) sigue bajando en segundo plano; el progreso se ve en Inicio.
+    try {
+      const settingsResult = await commands.getAppSettings();
+      const cloudReady =
+        settingsResult.status === "ok" &&
+        settingsResult.data.cloud_transcription_enabled === true &&
+        navigator.onLine;
+      if (cloudReady) {
+        await commands.completeOnboarding();
+        setOnboardingStep("done");
+        return;
+      }
+    } catch (e) {
+      console.warn("Failed to check cloud transcription availability:", e);
+    }
+
+    // Sin nube disponible, el modelo local es imprescindible: se espera la descarga.
+    setOnboardingStep("model");
   };
 
   const handleModelSelected = () => {

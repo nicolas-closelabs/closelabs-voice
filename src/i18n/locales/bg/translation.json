@@ -3,6 +3,7 @@
     "settings": "Настройки...",
     "checkUpdates": "Проверка за актуализации...",
     "copyLastTranscript": "Копиране на последния транскрипт",
+    "pasteLastTranscript": "Paste Last Transcript",
     "unloadModel": "Разтоварване на модела",
     "model": "Модел",
     "quit": "Изход",
@@ -102,6 +103,8 @@
       "title": "Необходими разрешения",
       "description": "CloseLabs Voice се нуждае от няколко разрешения, за да работи правилно.",
       "microphone": {
+        "recommended": "recommended",
+        "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "Достъп до микрофон",
         "description": "Необходим е, за да чуе гласа ви при транскрипция."
       },
@@ -608,6 +611,9 @@
     "modelLoadFailedUnknown": "неизвестен модел",
     "pasteFailedTitle": "Неуспешно поставяне на текст",
     "pasteFailed": "Текстът не можа да бъде поставен в активното приложение.",
+    "pasteNeedsManualTitle": "Permission needed to paste",
+    "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
+    "grantAccessibility": "Grant permission",
     "transcriptionFailedTitle": "Неуспешна транскрипция"
   },
   "appLanguage": {

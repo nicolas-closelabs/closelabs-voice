@@ -1,4 +1,3 @@
-use crate::managers::history::{HistoryEntry, HistoryManager};
 use crate::managers::model::ModelManager;
 use crate::managers::transcription::TranscriptionManager;
 use crate::settings;
@@ -142,6 +141,14 @@ pub fn update_tray_menu(app: &AppHandle, state: &TrayIconState, locale: Option<&
         None::<&str>,
     )
     .expect("failed to create copy last transcript item");
+    let paste_last_transcript_i = MenuItem::with_id(
+        app,
+        "paste_last_transcript",
+        &strings.paste_last_transcript,
+        true,
+        None::<&str>,
+    )
+    .expect("failed to create paste last transcript item");
     let model_loaded = app.state::<Arc<TranscriptionManager>>().is_model_loaded();
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)
         .expect("failed to create quit item");
@@ -198,6 +205,7 @@ pub fn update_tray_menu(app: &AppHandle, state: &TrayIconState, locale: Option<&
                     &cancel_i,
                     &separator(),
                     &copy_last_transcript_i,
+                    &paste_last_transcript_i,
                     &separator(),
                     &settings_i,
                     &check_updates_i,
@@ -213,6 +221,7 @@ pub fn update_tray_menu(app: &AppHandle, state: &TrayIconState, locale: Option<&
                 &version_i,
                 &separator(),
                 &copy_last_transcript_i,
+                &paste_last_transcript_i,
                 &separator(),
                 &model_submenu,
                 &unload_model_i,
@@ -232,13 +241,6 @@ pub fn update_tray_menu(app: &AppHandle, state: &TrayIconState, locale: Option<&
     let _ = tray.set_tooltip(Some(version_label));
 }
 
-fn last_transcript_text(entry: &HistoryEntry) -> &str {
-    entry
-        .post_processed_text
-        .as_deref()
-        .unwrap_or(&entry.transcription_text)
-}
-
 pub fn set_tray_visibility(app: &AppHandle, visible: bool) {
     let tray = app.state::<TrayIcon>();
     if let Err(e) = tray.set_visible(visible) {
@@ -248,65 +250,35 @@ pub fn set_tray_visibility(app: &AppHandle, visible: bool) {
     }
 }
 
+/// Copia el último dictado (guardado solo en memoria) al portapapeles.
 pub fn copy_last_transcript(app: &AppHandle) {
-    let history_manager = app.state::<Arc<HistoryManager>>();
-    let entry = match history_manager.get_latest_completed_entry() {
-        Ok(Some(entry)) => entry,
-        Ok(None) => {
-            warn!("No completed transcription history entries available for tray copy.");
-            return;
-        }
-        Err(err) => {
-            error!(
-                "Failed to fetch last completed transcription entry: {}",
-                err
-            );
-            return;
-        }
-    };
-
-    let text = last_transcript_text(&entry);
-    if text.trim().is_empty() {
-        warn!("Last completed transcription is empty; skipping tray copy.");
+    let Some(text) = crate::last_transcript::get() else {
+        warn!("No hay transcripción reciente para copiar desde la bandeja.");
         return;
-    }
-
+    };
     if let Err(err) = app.clipboard().write_text(text) {
         error!("Failed to copy last transcript to clipboard: {}", err);
         return;
     }
-
     info!("Copied last transcript to clipboard via tray.");
 }
 
-#[cfg(test)]
-mod tests {
-    use super::last_transcript_text;
-    use crate::managers::history::HistoryEntry;
-
-    fn build_entry(transcription: &str, post_processed: Option<&str>) -> HistoryEntry {
-        HistoryEntry {
-            id: 1,
-            file_name: "handy-1.wav".to_string(),
-            timestamp: 0,
-            saved: false,
-            title: "Recording".to_string(),
-            transcription_text: transcription.to_string(),
-            post_processed_text: post_processed.map(|text| text.to_string()),
-            post_process_prompt: None,
-            post_process_requested: false,
-        }
-    }
-
-    #[test]
-    fn uses_post_processed_text_when_available() {
-        let entry = build_entry("raw", Some("processed"));
-        assert_eq!(last_transcript_text(&entry), "processed");
-    }
-
-    #[test]
-    fn falls_back_to_raw_transcription() {
-        let entry = build_entry("raw", None);
-        assert_eq!(last_transcript_text(&entry), "raw");
-    }
+/// Vuelve a pegar el último dictado en la app activa (rescate si cayó en otra ventana).
+pub fn paste_last_transcript(app: &AppHandle) {
+    let Some(text) = crate::last_transcript::get() else {
+        warn!("No hay transcripción reciente para pegar desde la bandeja.");
+        return;
+    };
+    let app_clone = app.clone();
+    // Tras hacer clic en el menú, el foco vuelve a la app anterior; se espera un instante
+    // antes de simular el pegado para que el texto no caiga en la barra de menú.
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        let app_for_paste = app_clone.clone();
+        let _ =
+            app_clone.run_on_main_thread(move || match crate::utils::paste(text, app_for_paste) {
+                Ok(()) => info!("Pasted last transcript via tray."),
+                Err(err) => error!("Failed to paste last transcript: {}", err),
+            });
+    });
 }

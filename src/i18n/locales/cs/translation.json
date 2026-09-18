@@ -3,6 +3,7 @@
     "settings": "Nastavení...",
     "checkUpdates": "Zkontrolovat aktualizace...",
     "copyLastTranscript": "Zkopírovat poslední přepis",
+    "pasteLastTranscript": "Paste Last Transcript",
     "unloadModel": "Uvolnit model",
     "model": "Model",
     "quit": "Ukončit",
@@ -102,6 +103,8 @@
       "title": "Vyžadována oprávnění",
       "description": "CloseLabs Voice potřebuje několik oprávnění pro správné fungování.",
       "microphone": {
+        "recommended": "recommended",
+        "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "Přístup k mikrofonu",
         "description": "Potřebný pro zachycení vašeho hlasu k přepisu."
       },
@@ -608,6 +611,9 @@
     "modelLoadFailedUnknown": "neznámý model",
     "pasteFailedTitle": "Vložení textu se nezdařilo",
     "pasteFailed": "Text nebylo možné vložit do aktivní aplikace.",
+    "pasteNeedsManualTitle": "Permission needed to paste",
+    "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
+    "grantAccessibility": "Grant permission",
     "transcriptionFailedTitle": "Přepis selhal"
   },
   "appLanguage": {

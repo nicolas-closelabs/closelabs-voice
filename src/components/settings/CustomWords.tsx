@@ -23,7 +23,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
       const sanitizedWord = trimmedWord.replace(/[<>"'&]/g, "");
       if (
         sanitizedWord &&
-        !sanitizedWord.includes(" ") &&
+        sanitizedWord.split(/\s+/).length <= 3 &&
         sanitizedWord.length <= 50
       ) {
         if (customWords.includes(sanitizedWord)) {
@@ -76,7 +76,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
               onClick={handleAddWord}
               disabled={
                 !newWord.trim() ||
-                newWord.includes(" ") ||
+                newWord.trim().split(/\s+/).length > 3 ||
                 newWord.trim().length > 50 ||
                 isUpdating("custom_words")
               }

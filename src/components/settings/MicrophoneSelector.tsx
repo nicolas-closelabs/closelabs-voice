@@ -4,6 +4,10 @@ import { Dropdown } from "../ui/Dropdown";
 import { SettingContainer } from "../ui/SettingContainer";
 import { ResetButton } from "../ui/ResetButton";
 import { useSettings } from "../../hooks/useSettings";
+import {
+  classifyMicrophone,
+  findBuiltInMicrophone,
+} from "../../lib/utils/microphone";
 
 interface MicrophoneSelectorProps {
   descriptionMode?: "inline" | "tooltip";
@@ -36,10 +40,23 @@ export const MicrophoneSelector: React.FC<MicrophoneSelectorProps> = React.memo(
       await resetSetting("selected_microphone");
     };
 
+    // El micrófono del computador se marca como recomendado: arranca al instante, a
+    // diferencia de los audífonos Bluetooth.
+    const builtInName = findBuiltInMicrophone(audioDevices.map((d) => d.name));
     const microphoneOptions = audioDevices.map((device) => ({
       value: device.name,
-      label: device.name,
+      label:
+        device.name === builtInName
+          ? `${device.name} — ${t("settings.sound.microphone.recommended")}`
+          : device.name,
     }));
+
+    // Con "Default" el sistema decide, así que el aviso también aplica si hay audífonos
+    // Bluetooth conectados y podrían tomar el turno.
+    const bluetoothSelected =
+      classifyMicrophone(selectedMicrophone) === "bluetooth" ||
+      (selectedMicrophone === "Default" &&
+        audioDevices.some((d) => classifyMicrophone(d.name) === "bluetooth"));
 
     return (
       <SettingContainer
@@ -70,6 +87,11 @@ export const MicrophoneSelector: React.FC<MicrophoneSelectorProps> = React.memo(
             disabled={isUpdating("selected_microphone") || isLoading}
           />
         </div>
+        {bluetoothSelected && (
+          <p className="mt-2 text-xs text-brand-text-secondary">
+            {t("settings.sound.microphone.bluetoothWarning")}
+          </p>
+        )}
       </SettingContainer>
     );
   },

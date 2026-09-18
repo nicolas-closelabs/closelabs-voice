@@ -3,6 +3,7 @@
     "settings": "Inställningar...",
     "checkUpdates": "Sök efter uppdateringar...",
     "copyLastTranscript": "Kopiera senaste transkriptionen",
+    "pasteLastTranscript": "Paste Last Transcript",
     "unloadModel": "Avlasta modell",
     "model": "Modell",
     "quit": "Avsluta",
@@ -102,6 +103,8 @@
       "title": "Behörigheter krävs",
       "description": "CloseLabs Voice behöver ett par behörigheter för att fungera korrekt.",
       "microphone": {
+        "recommended": "recommended",
+        "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "Mikrofonåtkomst",
         "description": "Krävs för att höra din röst för transkription."
       },
@@ -608,6 +611,9 @@
     "noInputDevice": "Ingen ljudenhet hittades. Anslut en mikrofon eller ett headset och försök igen.",
     "pasteFailedTitle": "Det gick inte att klistra in texten",
     "pasteFailed": "Texten kunde inte klistras in i det aktiva programmet.",
+    "pasteNeedsManualTitle": "Permission needed to paste",
+    "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
+    "grantAccessibility": "Grant permission",
     "transcriptionFailedTitle": "Transkriptionen misslyckades"
   },
   "appLanguage": {

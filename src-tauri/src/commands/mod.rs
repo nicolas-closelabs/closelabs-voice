@@ -35,6 +35,24 @@ pub fn get_app_settings(app: AppHandle) -> Result<AppSettings, String> {
     Ok(get_settings(&app))
 }
 
+/// CloseLabs Voice: marca el onboarding como terminado sin esperar al modelo local.
+///
+/// Con la transcripción híbrida, el médico puede dictar en la NUBE desde el primer minuto
+/// mientras Parakeet (el respaldo sin conexión) se descarga en segundo plano. Sin esto, el
+/// primer arranque obligaba a esperar ~550 MB, que en LatAm pueden ser 20 minutos.
+#[tauri::command]
+#[specta::specta]
+pub fn complete_onboarding(app: AppHandle) -> Result<(), String> {
+    let mut settings = get_settings(&app);
+    if settings.onboarding_completed {
+        return Ok(());
+    }
+    settings.onboarding_completed = true;
+    crate::settings::write_settings(&app, settings);
+    log::info!("Onboarding completado (dictado en la nube mientras baja el modelo local)");
+    Ok(())
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn get_default_settings() -> Result<AppSettings, String> {

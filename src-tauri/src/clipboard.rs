@@ -6,11 +6,25 @@ use enigo::{Direction, Enigo, Key, Keyboard};
 use log::info;
 use std::process::Command;
 use std::time::Duration;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 #[cfg(target_os = "linux")]
 use crate::utils::{is_kde_wayland, is_wayland};
+
+/// Espera antes de devolver el portapapeles original. Apps Electron/Chromium leen el
+/// portapapeles de forma asíncrona: restaurarlo demasiado pronto pega el contenido VIEJO.
+const CLIPBOARD_RESTORE_DELAY_MS: u64 = 200;
+
+/// macOS: `true` si la app tiene permiso de Accesibilidad (necesario para simular Cmd+V).
+#[cfg(target_os = "macos")]
+fn accessibility_trusted() -> bool {
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn AXIsProcessTrusted() -> bool;
+    }
+    unsafe { AXIsProcessTrusted() }
+}
 
 /// Pastes text using the clipboard: saves current content, writes text, sends paste keystroke, restores clipboard.
 fn paste_via_clipboard(
@@ -61,7 +75,17 @@ fn paste_via_clipboard(
         }
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(50));
+    std::thread::sleep(std::time::Duration::from_millis(CLIPBOARD_RESTORE_DELAY_MS));
+
+    // CloseLabs: si el usuario copió algo durante el pegado, no se lo pisamos.
+    if clipboard
+        .read_text()
+        .map(|current| current != text)
+        .unwrap_or(false)
+    {
+        info!("Clipboard changed during paste window; skipping restore");
+        return Ok(());
+    }
 
     // Restore original clipboard content
     // On Wayland, prefer wl-copy for better compatibility
@@ -604,6 +628,23 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
         "Using paste method: {:?}, delay: {}ms",
         paste_method, paste_delay_ms
     );
+
+    // macOS sin permiso de Accesibilidad: el Cmd+V simulado no llega a ninguna app. En vez de
+    // fallar en silencio, dejamos el texto en el portapapeles y avisamos al médico.
+    #[cfg(target_os = "macos")]
+    if !matches!(
+        paste_method,
+        PasteMethod::None | PasteMethod::ExternalScript
+    ) && !accessibility_trusted()
+    {
+        app_handle
+            .clipboard()
+            .write_text(&text)
+            .map_err(|e| format!("Failed to copy to clipboard: {}", e))?;
+        log::warn!("Sin permiso de Accesibilidad: texto dejado en el portapapeles");
+        let _ = app_handle.emit("paste-needs-manual", ());
+        return Ok(());
+    }
 
     // Get the managed Enigo instance
     let enigo_state = app_handle

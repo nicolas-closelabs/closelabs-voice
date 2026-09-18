@@ -1409,7 +1409,8 @@ impl TranscriptionManager {
         if final_result.is_empty() {
             info!("Transcription result is empty");
         } else {
-            info!("Transcription result: {}", final_result);
+            // Privacidad: nunca escribir el texto dictado en el log.
+            info!("Transcription result: {} chars", final_result.chars().count());
         }
 
         self.maybe_unload_immediately("transcription");
