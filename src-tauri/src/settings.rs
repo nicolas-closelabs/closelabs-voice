@@ -832,8 +832,7 @@ fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
             changed = true;
         }
     }
-    if settings.post_process_selected_prompt_id.as_deref()
-        != Some("default_improve_transcriptions")
+    if settings.post_process_selected_prompt_id.as_deref() != Some("default_improve_transcriptions")
     {
         settings.post_process_selected_prompt_id = default_post_process_selected_prompt_id();
         changed = true;

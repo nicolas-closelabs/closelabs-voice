@@ -50,7 +50,8 @@ cambia la URL.
   (404 en cada dictado → producción pegando texto crudo). Verificado contra la API real con 4 dictados
   clínicos. Pendiente: few-shot propios y comparar con dictados reales cuando lleguen.
 - [x] Parakeet en segundo plano: con internet, el onboarding ya no espera los ~550 MB (comando `complete_onboarding`).
-- [ ] Opus (`opusic-sys`) → FLAC → WAV. Validar primero en CI Windows.
+- [x] Opus (`opusic-sys`) → FLAC → WAV. 11x más chico que WAV, 6x que FLAC, con transcripción
+  idéntica contra la API real. ⏳ Falta que pase el CI de Windows MSVC.
 - [x] Micrófono: "del computador (recomendado)" + aviso de Bluetooth (AirPods pierden las primeras palabras).
 - [ ] Atajo "Reprocesar último dictado" (audio solo en RAM).
 - [ ] Pegado por menú Edición > Pegar como respaldo (macOS).

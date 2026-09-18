@@ -20,15 +20,19 @@ Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en
 > ellos también refinan encima del Whisper). **⚠️ CAMBIO DE PRIVACIDAD: el audio del paciente SÍ
 > sale a Groq cuando hay internet** (offline sigue 100% local).
 >
-> **Compresión de subida (velocidad en internet lento LatAm) — HECHO:** subimos el audio en
-> **FLAC** (`flacenc`, Rust puro → cero C, cross-compila trivial; ~2x más chico que WAV). Nos deja
-> mejores que Aztec, que sube WAV crudo. **Verificado end-to-end contra la API real de Groq: acepta
-> el FLAC (200 OK).** Red de seguridad en `groq_transcribe.rs`: si Groq rechazara el FLAC por
-> formato → **reintenta con WAV** (cero regresión). ⚠️ **Opus DESCARTADO:** `audiopus` compila
-> libopus con **autotools** (`autoreconf`) → inviable en Windows MSVC (se probó local y falló). No
-> reintroducir Opus salvo que exista un crate que compile libopus con cmake/cc puro. **Actualización
-> 2026-09-16:** ese crate existe — `opusic-sys` (cmake); Aztec 1.8.2 lo usa en macOS y en Windows MSVC.
-> Opus queda reabierto (ver `AZTEC-BENCHMARK.md` §1.4).
+> **Compresión de subida (velocidad en internet lento LatAm) — HECHO, ahora en OPUS:** el cuello
+> de botella de la nube no es Groq (0,5 s) sino la SUBIDA. `groq_transcribe.rs` sube el audio como
+> **Ogg/Opus 16 kHz mono a 24 kbps** (`opus_encode.rs`), con **cadena de respaldo Opus → FLAC →
+> WAV**: se baja un escalón solo si la codificación falla o si Groq rechaza el FORMATO (400/415/422);
+> cualquier otro error corta y cae a Parakeet. Así nunca quedamos peor que antes de comprimir.
+> **Medido contra la API real** con un dictado clínico de 38 s: WAV 1,23 MB → FLAC 668 KB → **Opus
+> 110 KB** (11x / 6x), y los tres devolvieron la **misma transcripción carácter por carácter**
+> (incluidos "metformina 850 mg", "atorvastatina", "isotretinoína"). Opus tiene pérdida, pero es el
+> códec diseñado para voz y a 24 kbps no le mueve el WER a Whisper; Aztec 1.8.2 hace lo mismo.
+> ⚠️ **Por qué Opus estaba descartado y ya no:** el problema era de COMPILACIÓN, no de calidad —
+> `audiopus` construye libopus con **autotools** (`autoreconf`) → inviable en Windows MSVC. El
+> reemplazo es **`opusic-sys`**, que lo construye con **cmake** (ya es requisito nuestro: lo usa
+> transcribe-cpp). No volver a `audiopus`.
 >
 > **Benchmark completo de Aztec 1.8.2 → `AZTEC-BENCHMARK.md`** (qué nos falta, priorizado por sprint).
 >
@@ -272,6 +276,10 @@ a un proxy propio cambiando el `base_url` del proveedor Groq). El modelo por def
   `show_whats_new=false`, `post_process_enabled=true` + proveedor Groq + modelo + prompt médico ES
   + `post_process_selected_prompt_id` + key embebida (`option_env!("CLOSELABS_GROQ_API_KEY")`).
 - `src-tauri/src/actions.rs` — flujo transcribir→refinar→pegar; **NO guarda `.wav` ni historial**.
+- `src-tauri/src/groq_transcribe.rs` — subida a Groq Whisper: `prompt` con el diccionario del
+  usuario, timeouts, y la cadena de formatos `UPLOAD_FORMATS` (Opus → FLAC → WAV).
+- `src-tauri/src/opus_encode.rs` — codificador Ogg/Opus escrito a mano sobre `opusic-sys` + `ogg`
+  (RFC 7845: `OpusHead`, `OpusTags`, granule positions a 48 kHz).
 - `src-tauri/src/catalog/catalog.json` — catálogo reducido a Parakeet v3 (default_quant `Q5_K_M`).
 - `src-tauri/src/managers/{model,transcription}.rs` — carga de modelo + idioma (`effective_language`).
 - `src-tauri/src/overlay.rs` (tamaño ventana) + `src/overlay/RecordingOverlay.{tsx,css}` —

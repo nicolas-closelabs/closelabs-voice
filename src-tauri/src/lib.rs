@@ -13,6 +13,7 @@ mod input;
 mod last_transcript;
 mod llm_client;
 mod managers;
+mod opus_encode;
 mod overlay;
 pub mod portable;
 mod refine_guard;
@@ -201,7 +202,10 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     #[cfg(target_os = "macos")]
     {
         if let Err(e) = app_handle.set_activation_policy(tauri::ActivationPolicy::Regular) {
-            log::error!("Failed to set activation policy to Regular at startup: {}", e);
+            log::error!(
+                "Failed to set activation policy to Regular at startup: {}",
+                e
+            );
         }
     }
     // Get the current theme to set the appropriate initial icon

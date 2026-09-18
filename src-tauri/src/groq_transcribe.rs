@@ -4,10 +4,10 @@
 //! Aztec). Si falla (offline, timeout, rate-limit), el llamador cae al Parakeet LOCAL.
 //! ⚠️ En esta ruta el audio SÍ sale del equipo hacia Groq.
 //!
-//! Optimización de velocidad (internet lento LatAm): subimos el audio comprimido en **FLAC**
-//! (~2x más chico que WAV; verificado que Groq lo acepta con 200 OK). `flacenc` es Rust puro
-//! (cero C → compila en las 3 plataformas). Red de seguridad: si Groq rechazara el FLAC por
-//! formato, **reintentamos con WAV** → nunca se regresa peor que antes.
+//! Optimización de velocidad (internet lento LatAm): subimos el audio comprimido en **Opus**
+//! (~11x más chico que WAV, ~6x que FLAC; medido con un dictado clínico de 38 s: 1,23 MB →
+//! 110 KB, con transcripción idéntica carácter por carácter). Red de seguridad en cadena: si
+//! Groq rechazara el formato, se baja a FLAC y luego a WAV → nunca se regresa peor que antes.
 //!
 //! Calidad (benchmark Aztec 1.8.2): el diccionario del usuario viaja como `prompt` de Whisper
 //! para que escriba bien fármacos, apellidos y marcas. Red: `connect_timeout` corto (sin
@@ -223,9 +223,42 @@ async fn post_audio_with_retry(
     }
 }
 
-/// Transcribe `samples` con Groq Whisper. Sube **FLAC** (comprimido); si Groq lo rechazara
-/// por formato, **reintenta con WAV**. `language` opcional (`None` = auto, como Aztec).
-/// `prompt` = pista de vocabulario (ver [`build_whisper_prompt`]).
+/// Un formato de subida: cómo se codifica y cómo se anuncia en el multipart.
+struct UploadFormat {
+    label: &'static str,
+    filename: &'static str,
+    mime: &'static str,
+    encode: fn(&[f32]) -> Result<Vec<u8>, String>,
+}
+
+/// Formatos en orden de preferencia: del más liviano al más universal. Se baja un escalón solo
+/// si la codificación falla o si Groq rechaza el FORMATO; cualquier otro error corta la cadena
+/// (no tiene sentido resubir el mismo audio si lo que falló fue la red o la autenticación).
+/// El último, WAV, es la garantía de que nunca quedamos peor que antes de comprimir.
+const UPLOAD_FORMATS: &[UploadFormat] = &[
+    UploadFormat {
+        label: "Opus",
+        filename: "audio.ogg",
+        mime: "audio/ogg",
+        encode: crate::opus_encode::encode_opus_ogg,
+    },
+    UploadFormat {
+        label: "FLAC",
+        filename: "audio.flac",
+        mime: "audio/flac",
+        encode: encode_flac,
+    },
+    UploadFormat {
+        label: "WAV",
+        filename: "audio.wav",
+        mime: "audio/wav",
+        encode: encode_wav_16k_mono,
+    },
+];
+
+/// Transcribe `samples` con Groq Whisper. Sube **Opus** (~11x más chico que WAV) y, si Groq lo
+/// rechazara por formato, baja a FLAC y luego a WAV. `language` opcional (`None` = auto, como
+/// Aztec). `prompt` = pista de vocabulario (ver [`build_whisper_prompt`]).
 pub async fn transcribe_audio_groq(
     base_url: &str,
     api_key: &str,
@@ -243,34 +276,33 @@ pub async fn transcribe_audio_groq(
         timeout: request_timeout(samples.len()),
     };
 
-    // 1) Intento comprimido (FLAC).
-    match encode_flac(samples) {
-        Ok(flac) => {
-            let kb = flac.len() / 1024;
-            match post_audio_with_retry(&req, flac, "audio.flac", "audio/flac").await {
-                Ok(text) => {
-                    info!("Groq Whisper vía FLAC OK ({kb} KB subidos)");
-                    return Ok(text);
-                }
-                Err(e) if matches!(e.status, Some(400) | Some(415) | Some(422)) => {
-                    warn!("Groq rechazó el FLAC ({}); reintento con WAV", e.msg);
-                }
-                Err(e) => return Err(e.msg),
+    let mut last_error = "no se pudo codificar el audio en ningún formato".to_string();
+    for format in UPLOAD_FORMATS {
+        let bytes = match (format.encode)(samples) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                warn!("Falló codificar {} ({e}); siguiente formato", format.label);
+                last_error = e;
+                continue;
             }
+        };
+        let kb = bytes.len() / 1024;
+        match post_audio_with_retry(&req, bytes, format.filename, format.mime).await {
+            Ok(text) => {
+                info!("Groq Whisper vía {} OK ({kb} KB subidos)", format.label);
+                return Ok(text);
+            }
+            Err(e) if matches!(e.status, Some(400) | Some(415) | Some(422)) => {
+                warn!(
+                    "Groq rechazó el {} ({}); probando el siguiente formato",
+                    format.label, e.msg
+                );
+                last_error = e.msg;
+            }
+            Err(e) => return Err(e.msg),
         }
-        Err(e) => warn!("Falló codificar FLAC ({e}); usando WAV"),
     }
-
-    // 2) Fallback sin comprimir (WAV) — garantiza no ser peor que antes.
-    let wav = encode_wav_16k_mono(samples)?;
-    let kb = wav.len() / 1024;
-    match post_audio_with_retry(&req, wav, "audio.wav", "audio/wav").await {
-        Ok(text) => {
-            info!("Groq Whisper vía WAV OK ({kb} KB subidos)");
-            Ok(text)
-        }
-        Err(e) => Err(e.msg),
-    }
+    Err(last_error)
 }
 
 #[cfg(test)]
@@ -292,7 +324,10 @@ mod tests {
     #[test]
     fn whisper_prompt_keeps_style_hint_without_words() {
         assert_eq!(build_whisper_prompt(&[]).as_deref(), Some(STYLE_HINT));
-        assert_eq!(build_whisper_prompt(&words(&["  "])).as_deref(), Some(STYLE_HINT));
+        assert_eq!(
+            build_whisper_prompt(&words(&["  "])).as_deref(),
+            Some(STYLE_HINT)
+        );
     }
 
     #[test]

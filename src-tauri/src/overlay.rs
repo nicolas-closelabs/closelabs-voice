@@ -394,7 +394,8 @@ fn show_overlay_state(app_handle: &AppHandle, state: &str) {
         // Si el usuario arrastró el overlay en esta sesión, re-móstralo AHÍ; si no,
         // usa la posición por defecto (abajo) calculada según el ajuste.
         let dragged_pos = LAST_DRAG_POS.lock().ok().and_then(|p| *p);
-        let target_pos = dragged_pos.or_else(|| calculate_overlay_position(app_handle, width, height));
+        let target_pos =
+            dragged_pos.or_else(|| calculate_overlay_position(app_handle, width, height));
         if let Some((x, y)) = target_pos {
             let set_pos_started = std::time::Instant::now();
             let _ = overlay_window

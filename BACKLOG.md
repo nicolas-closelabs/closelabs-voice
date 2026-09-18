@@ -61,9 +61,11 @@
    `info!("Transcription result: {}")` → el dictado completo queda en el archivo de log. Loguear
    solo la longitud.
 
-8. **Opus reabierto.** Aztec 1.8.2 comprime en Opus con `opusic-sys` (libopus vía **cmake**) y
-   funciona en su `.exe` de Windows MSVC. Lo que falló fue `audiopus` (autotools), no Opus en sí.
-   Validar en CI Windows → cadena Opus → FLAC → WAV (~10x más chico que FLAC).
+8. ✅ **Opus — HECHO (2026-09-18).** `opus_encode.rs` codifica Ogg/Opus 16 kHz mono a 24 kbps
+   (`opusic-sys`, libopus vía **cmake**) y `groq_transcribe.rs` lo encadena **Opus → FLAC → WAV**.
+   Medido contra la API real con un dictado clínico de 38 s: 1,23 MB → 668 KB → **110 KB**, misma
+   transcripción carácter por carácter en los tres. ⏳ Falta confirmar que `opusic-sys` compile en
+   **CI Windows MSVC** (en macOS ya está verificado).
 
 9. ⚠️ **PRODUCCIÓN ROTA — Groq retiró `llama-3.3-70b-versatile` (detectado 2026-09-18).** La API
    devolvía `404 model_not_found` en CADA dictado → el refine caía a texto crudo (sin puntuación)

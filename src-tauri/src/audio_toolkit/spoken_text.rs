@@ -102,9 +102,7 @@ pub fn normalize_spoken_emails_and_urls(text: &str) -> String {
 fn is_plain_word(token: &str) -> bool {
     let (word, _) = split_trailing_punct(token);
     let folded = fold(word);
-    !folded.is_empty()
-        && folded.chars().all(char::is_alphanumeric)
-        && symbol_for(&folded).is_none()
+    !folded.is_empty() && folded.chars().all(char::is_alphanumeric) && symbol_for(&folded).is_none()
 }
 
 /// Busca en `tokens`, desde `start`, el patrón `palabra (separador palabra)+`. Devuelve el
@@ -131,7 +129,8 @@ fn scan_address(tokens: &[&str], start: usize) -> Option<usize> {
         let Some(symbol) = symbol_for(&fold(split_trailing_punct(tokens[symbol_idx]).0)) else {
             break;
         };
-        if !split_trailing_punct(tokens[symbol_idx]).1.is_empty() || !is_plain_word(tokens[word_idx])
+        if !split_trailing_punct(tokens[symbol_idx]).1.is_empty()
+            || !is_plain_word(tokens[word_idx])
         {
             break;
         }
@@ -164,7 +163,9 @@ mod tests {
     #[test]
     fn rebuilds_dictated_email() {
         assert_eq!(
-            normalize_spoken_emails_and_urls("mándale el resumen a maria punto lopez arroba clinica punto com por favor"),
+            normalize_spoken_emails_and_urls(
+                "mándale el resumen a maria punto lopez arroba clinica punto com por favor"
+            ),
             "mándale el resumen a maria.lopez@clinica.com por favor"
         );
     }

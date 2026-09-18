@@ -111,7 +111,11 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
     match prompt.as_deref() {
         Some(p) => debug!(
             "Pista de vocabulario para Whisper: {} palabras, {} chars",
-            settings.custom_words.iter().filter(|w| !w.trim().is_empty()).count(),
+            settings
+                .custom_words
+                .iter()
+                .filter(|w| !w.trim().is_empty())
+                .count(),
             p.chars().count()
         ),
         None => debug!("Sin pista de vocabulario (diccionario vacío)"),
@@ -134,7 +138,10 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
             Some(String::new())
         }
         Ok(text) if !text.trim().is_empty() => {
-            debug!("Cloud transcription (Groq Whisper) OK: {} chars", text.len());
+            debug!(
+                "Cloud transcription (Groq Whisper) OK: {} chars",
+                text.len()
+            );
             // El diccionario se aplica TAMBIÉN al texto de la nube. La pista que se le manda a
             // Whisper solo *sugiere* el vocabulario: en pruebas reales devolvió "Icetotrinoina"
             // teniendo "Isotetrinoina" en el diccionario. Esta corrección por similitud es
@@ -560,7 +567,8 @@ pub(crate) async fn process_transcription_output(
 
     // Emails y URLs dictados ("juan arroba gmail punto com" → juan@gmail.com). Es local y
     // determinista, así que también arregla el texto cuando no hay internet para el refine.
-    let normalized = crate::audio_toolkit::spoken_text::normalize_spoken_emails_and_urls(&final_text);
+    let normalized =
+        crate::audio_toolkit::spoken_text::normalize_spoken_emails_and_urls(&final_text);
     if normalized != final_text {
         debug!("Emails/URLs dictados normalizados");
         final_text = normalized;
