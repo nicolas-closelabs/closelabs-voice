@@ -57,6 +57,11 @@ hound = "3.5.1"
 # las 3 plataformas (verificado: Groq acepta el FLAC con 200 OK). ~2x más chico que WAV.
 # (Opus se descartó: audiopus compila libopus con autotools → no viable en Windows MSVC.)
 flacenc = "0.4"
+# Opus: ~10x más chico que FLAC en la subida. `opusic-sys` compila libopus con CMAKE
+# (no autotools como `audiopus`, que era lo que rompía en Windows MSVC). Aztec 1.8.2 lo usa
+# en sus tres plataformas, así que está probado en producción ajena.
+opusic-sys = "0.7"
+ogg = "0.9"
 log = "0.4.25"
 env_filter = "0.1.0"
 tokio = "1.43.0"
