@@ -53,6 +53,9 @@ cambia la URL.
 - [x] Opus (`opusic-sys`) → FLAC → WAV. 11x más chico que WAV, 6x que FLAC, con transcripción
   idéntica contra la API real. ⏳ Falta que pase el CI de Windows MSVC.
 - [x] Micrófono: "del computador (recomendado)" + aviso de Bluetooth (AirPods pierden las primeras palabras).
+- [x] Prompt del formateador acortado (1.444 → 1.221 tokens) tras medir el techo de 8.000 TPM del
+  tier gratis de Groq. Validado contra la API real: acierta 8/8 casos clínicos donde el largo hacía
+  6/8. ⚠️ El techo real solo lo levanta el tier pago detrás del proxy (Fase 1) — ver BACKLOG #16.
 - [ ] Atajo "Reprocesar último dictado" (audio solo en RAM).
 - [ ] Pegado por menú Edición > Pegar como respaldo (macOS).
 - [x] Normalización de emails/URLs dictados, local y sin internet ("juan arroba gmail punto com" → juan@gmail.com).
@@ -97,7 +100,7 @@ cambia la URL.
 | # | Acción | Bloquea |
 |---|---|---|
 | 1 | Crear proyecto Supabase (org CloseLabs) y compartir URL + anon key; service role solo como secreto | Fase 1 |
-| 2 | Groq: activar **Zero Data Retention**, límite de gasto y alertas; tener key de OpenAI como plan B | Fase 1 |
+| 2 | Groq: **habilitar facturación (tier pago)** — el gratis tiene un techo de 8.000 tokens/minuto para toda la cuenta, o sea ~6 dictados por minuto entre TODOS los médicos; con eso no se puede vender. Además: **Zero Data Retention**, límite de gasto y alertas; key de OpenAI como plan B | Fase 1 |
 | 3 | Decidir pasarela de pago (Wompi / Mercado Pago / Stripe / Paddle o Lemon Squeezy), precio, días de trial y dispositivos por plan | Fase 2 |
 | 4 | Páginas en closelabs.co: confirmar email, recuperar contraseña, suscripción | Fase 2 |
 | 5 | Abogado: política de datos sensibles (salud), transferencia internacional (Groq/Supabase en EE. UU.) | Fase 2 |

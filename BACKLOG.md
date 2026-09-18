@@ -109,14 +109,29 @@
     **Arreglado en el prompt** (regla 11) con **excepción médica**: "coma" y "punto" sueltos NUNCA
     se convierten ("paciente en coma", "punto de sutura", "punto gatillo"). Validado contra la API.
 
-16. **Límite de Groq por minuto (TPM) alcanzado durante las pruebas.** Nuestro prompt de limpieza
-    pesa ~4.500 caracteres y se envía en cada dictado. Con varios médicos a la vez esto topa el
-    tier gratis. Acciones: acortar el prompt y/o mover a un tier pago vía el proxy (pendiente #5).
+16. ⚠️ **TECHO DE ESCALA — el tier gratis de Groq NO aguanta el producto (medido 2026-09-18).**
+    La cuenta reporta `x-ratelimit-limit-tokens: 8000` **por minuto para toda la organización**.
+    Cada dictado gasta el prompt entero, así que el techo es directo: **~5-6 dictados por minuto
+    ENTRE TODOS los médicos**. Con dos o tres consultorios a la vez ya devuelve 429 (se reprodujo:
+    12 de 20 llamadas seguidas fallaron).
+    - ✅ *Hecho:* prompt acortado de 1.444 → **1.221 tokens** (4.674 → 3.759 caracteres), lo que
+      sube el techo a ~6-7 dictados/min. Se validó contra la API real con 8 casos clínicos, dos
+      corridas: el prompt CORTO acierta **8/8**, el largo 6/8 y 7/8 (el largo insertaba una coma
+      antes de la palabra "coma" y a veces no pasaba "sesenta y dos" a 62). O sea: más barato *y*
+      más preciso.
+    - ❌ *Lo que NO resuelve:* acortar el prompt es aritmética lineal; ningún prompt razonable
+      hace que 8.000 TPM alcancen para un producto de pago. **La solución real es el tier pago de
+      Groq detrás del proxy (pendiente #5 / Fase 1).** Es acción del cliente: habilitar facturación
+      en Groq antes de vender licencias.
 
 17. **La salida estructurada falla de forma intermitente** (`400 Failed to generate JSON`): cuando
-    pasa, se reintenta por la ruta clásica y el dictado tarda ~6 s en vez de 2,5 s. Hipótesis: el
-    prompt pide "responde únicamente con el texto" mientras la API exige JSON. Evaluar añadir la
-    instrucción de JSON solo en la ruta estructurada.
+    pasa, se reintenta por la ruta clásica y el dictado tarda ~6 s en vez de 2,5 s.
+    **2026-09-18 — NO se pudo reproducir:** 32 llamadas con `json_schema` estricto contra la API
+    real no dieron ni un solo 400 (todos los fallos fueron 429 por el techo del pendiente #16).
+    La hipótesis de que el "responde ÚNICAMENTE con el texto" del prompt chocara con el JSON queda
+    **sin confirmar**; se probó una variante que pedía JSON explícitamente y no hubo diferencia
+    medible. Dejar la guarda de respaldo como está y volver a mirar si reaparece con el tier pago
+    (puede que el 400 fuera el disfraz de un throttle).
 
 ## ESTADO AL 2026-09-18 (para retomar)
 
