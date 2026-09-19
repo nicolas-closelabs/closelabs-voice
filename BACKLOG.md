@@ -64,8 +64,9 @@
 8. ✅ **Opus — HECHO (2026-09-18).** `opus_encode.rs` codifica Ogg/Opus 16 kHz mono a 24 kbps
    (`opusic-sys`, libopus vía **cmake**) y `groq_transcribe.rs` lo encadena **Opus → FLAC → WAV**.
    Medido contra la API real con un dictado clínico de 38 s: 1,23 MB → 668 KB → **110 KB**, misma
-   transcripción carácter por carácter en los tres. ⏳ Falta confirmar que `opusic-sys` compile en
-   **CI Windows MSVC** (en macOS ya está verificado).
+   transcripción carácter por carácter en los tres. ✅ **`opusic-sys` compila en CI Windows MSVC**
+   (run 35377377639, las tres plataformas en verde): queda demostrado que el bloqueo era autotools
+   de `audiopus`, no Opus.
 
 9. ⚠️ **PRODUCCIÓN ROTA — Groq retiró `llama-3.3-70b-versatile` (detectado 2026-09-18).** La API
    devolvía `404 model_not_found` en CADA dictado → el refine caía a texto crudo (sin puntuación)

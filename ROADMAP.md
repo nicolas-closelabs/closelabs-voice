@@ -51,7 +51,7 @@ cambia la URL.
   clínicos. Pendiente: few-shot propios y comparar con dictados reales cuando lleguen.
 - [x] Parakeet en segundo plano: con internet, el onboarding ya no espera los ~550 MB (comando `complete_onboarding`).
 - [x] Opus (`opusic-sys`) → FLAC → WAV. 11x más chico que WAV, 6x que FLAC, con transcripción
-  idéntica contra la API real. ⏳ Falta que pase el CI de Windows MSVC.
+  idéntica contra la API real, y compila en las tres plataformas (Windows MSVC incluido).
 - [x] Micrófono: "del computador (recomendado)" + aviso de Bluetooth (AirPods pierden las primeras palabras).
 - [x] Prompt del formateador acortado (1.444 → 1.221 tokens) tras medir el techo de 8.000 TPM del
   tier gratis de Groq. Validado contra la API real: acierta 8/8 casos clínicos donde el largo hacía

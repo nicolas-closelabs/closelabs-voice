@@ -32,7 +32,8 @@ Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en
 > ⚠️ **Por qué Opus estaba descartado y ya no:** el problema era de COMPILACIÓN, no de calidad —
 > `audiopus` construye libopus con **autotools** (`autoreconf`) → inviable en Windows MSVC. El
 > reemplazo es **`opusic-sys`**, que lo construye con **cmake** (ya es requisito nuestro: lo usa
-> transcribe-cpp). No volver a `audiopus`.
+> transcribe-cpp). **Verificado en CI: compila en macOS ARM, macOS Intel y Windows MSVC.** No
+> volver a `audiopus`.
 >
 > **Benchmark completo de Aztec 1.8.2 → `AZTEC-BENCHMARK.md`** (qué nos falta, priorizado por sprint).
 >
