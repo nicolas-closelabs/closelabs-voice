@@ -290,6 +290,15 @@ archivo que el reporte de problemas empezaba a subir. Corregido con el tipo `Sec
 La lección general, que vale para el futuro: **cualquier `String` que se añada a `AppSettings`
 termina escrito en disco.** Si es un secreto, va en `Secret` o `SecretMap`.
 
+### Pendiente que quedó fuera de este build
+**El CI todavía inyecta `CLOSELABS_GROQ_API_KEY`.** El cambio está escrito pero no se pudo subir:
+el token de `gh` de la máquina no tiene el permiso `workflow` y GitHub rechaza el push. No afecta
+al binario —la app no lee esa variable desde que existe el proxy—, así que el instalador sale
+igual de limpio. Lo que sí estorba es que, mientras el secreto siga nombrado en el workflow,
+nadie se va a atrever a borrarlo de la cuenta de Groq.
+
+Se arregla con `gh auth refresh -h github.com -s workflow` y volviendo a aplicar el cambio.
+
 ### Código muerto retirado
 `llm_client.rs` perdió su cliente de chat y `proxy.rs` su `transcribe`. El primero importa: era
 una segunda ruta directa al proveedor, con su propia llave, e invitaba a reconectar justo lo que
@@ -338,10 +347,15 @@ término del usuario de forma intermitente. Esto además desbloqueó unir las do
 - **Recompilar los instaladores en CI** (saldrán sin llave) y **ahí sí borrar la llave vieja de
   Groq**. ⚠️ Mientras no se haga, los instaladores del Escritorio siguen con la llave vieja.
 
-### Acciones del cliente pendientes
-1. Correo comercial a Groq (el plan Developer lleva meses cerrado; es una fila por falta de chips).
-2. Rotar la llave de DeepInfra que quedó escrita en el chat (la de Groq ya se rotó).
-3. Volver el repo a privado cuando se acaben los builds.
+### Acciones del cliente
+- [x] Correo comercial a Groq — **enviado el 2026-09-19.** ⚠️ Si hay respuesta, el dato más fuerte
+  que tenemos es de `errores_recientes`: **21 `rate_limit` en un día con UN solo dispositivo**.
+- [x] Rotar la llave de DeepInfra que quedó escrita en el chat — **hecho** (la de Groq ya se había
+  rotado).
+- [ ] **Volver el repo a privado** cuando se acaben los builds (hoy está público para el CI).
+- [ ] **Borrar la llave vieja de Groq** de la cuenta. ⚠️ **NO antes** de que los testers estén en
+  0.6.0: los instaladores 0.5.0 la llevan dentro y la usan directamente. En cuanto se borre, esos
+  dejan de formatear —en silencio, cayendo a texto crudo— y no tienen config remota para avisar.
 
 ## ESTADO AL 2026-09-18 (para retomar)
 
