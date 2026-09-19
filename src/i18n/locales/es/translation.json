@@ -204,6 +204,10 @@
           "transcribe_with_post_process": {
             "name": "Tecla de Post Procesamiento",
             "description": "Opcional: Una tecla de acceso rápido dedicada que siempre aplica post procesamiento con IA a tu transcripción."
+          },
+          "reprocess_last": {
+            "name": "Atajo de Reprocesar",
+            "description": "Vuelve a transcribir el último dictado sin tener que repetirlo. Útil si se cayó el internet o si acabas de agregar un término al diccionario."
           }
         },
         "errors": {
@@ -621,7 +625,9 @@
     "pasteNeedsManualTitle": "Falta un permiso para pegar",
     "pasteNeedsManual": "No tengo permiso de Accesibilidad para pegar automáticamente. Tu texto está en el portapapeles: pégalo con Cmd+V.",
     "grantAccessibility": "Dar permiso",
-    "transcriptionFailedTitle": "Error de transcripción"
+    "transcriptionFailedTitle": "Error de transcripción",
+    "reprocessUnavailableTitle": "No hay nada que reprocesar",
+    "reprocessUnavailable": "Todavía no has dictado en esta sesión, o el dictado fue demasiado largo para guardarlo. El audio nunca se guarda en el disco."
   },
   "appLanguage": {
     "title": "Idioma de la aplicación",

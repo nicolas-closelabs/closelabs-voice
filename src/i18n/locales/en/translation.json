@@ -186,6 +186,10 @@
           "transcribe_with_post_process": {
             "name": "Post-Processing Hotkey",
             "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+          },
+          "reprocess_last": {
+            "name": "Reprocess Shortcut",
+            "description": "Transcribes your last dictation again without repeating it. Useful if the connection dropped or you just added a term to the dictionary."
           }
         },
         "errors": {
@@ -624,7 +628,9 @@
     "pasteNeedsManualTitle": "Permission needed to paste",
     "pasteNeedsManual": "I don't have Accessibility permission to paste automatically. Your text is in the clipboard: paste it with Cmd+V.",
     "grantAccessibility": "Grant permission",
-    "transcriptionFailedTitle": "Transcription Failed"
+    "transcriptionFailedTitle": "Transcription Failed",
+    "reprocessUnavailableTitle": "Nothing to reprocess",
+    "reprocessUnavailable": "You haven't dictated in this session yet, or the dictation was too long to keep. Audio is never saved to disk."
   },
   "appLanguage": {
     "title": "Application Language",

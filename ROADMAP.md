@@ -56,7 +56,9 @@ cambia la URL.
 - [x] Prompt del formateador acortado (1.444 → 1.221 tokens) tras medir el techo de 8.000 TPM del
   tier gratis de Groq. Validado contra la API real: acierta 8/8 casos clínicos donde el largo hacía
   6/8. ⚠️ El techo real solo lo levanta el tier pago detrás del proxy (Fase 1) — ver BACKLOG #16.
-- [ ] Atajo "Reprocesar último dictado" (audio solo en RAM).
+- [x] Atajo "Reprocesar último dictado" (audio solo en RAM, tope de 5 min, nunca toca el disco).
+  Por defecto ⌥⇧R en Mac y Ctrl+Shift+R en Windows. Sirve cuando se cayó el internet a mitad del
+  dictado o cuando se acaba de agregar un término al diccionario.
 - [ ] Pegado por menú Edición > Pegar como respaldo (macOS).
 - [x] Normalización de emails/URLs dictados, local y sin internet ("juan arroba gmail punto com" → juan@gmail.com).
 

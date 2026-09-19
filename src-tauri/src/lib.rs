@@ -10,6 +10,7 @@ mod commands;
 mod groq_transcribe;
 mod helpers;
 mod input;
+mod last_recording;
 mod last_transcript;
 mod llm_client;
 mod managers;

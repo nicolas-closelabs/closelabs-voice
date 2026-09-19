@@ -138,6 +138,19 @@ function App() {
     };
   }, [t]);
 
+  // El atajo de reprocesar se apretó sin tener audio en memoria. Se avisa para que el médico
+  // no crea que el atajo está roto.
+  useEffect(() => {
+    const unlisten = listen("reprocess-unavailable", () => {
+      toast.info(t("errors.reprocessUnavailableTitle"), {
+        description: t("errors.reprocessUnavailable"),
+      });
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
   // macOS sin permiso de Accesibilidad: el texto quedó en el portapapeles. Se muestra la
   // ventana (si estaba oculta el toast no se vería) con la acción para dar el permiso.
   useEffect(() => {

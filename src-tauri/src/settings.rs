@@ -884,6 +884,25 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_post_process_shortcut.to_string(),
         },
     );
+    // "Reprocesar último dictado": repite la transcripción del audio que sigue en memoria. La
+    // tecla R es mnemotécnica y no choca con los atajos del sistema en ninguna plataforma.
+    #[cfg(target_os = "macos")]
+    let default_reprocess_shortcut = "option+shift+r";
+    #[cfg(not(target_os = "macos"))]
+    let default_reprocess_shortcut = "ctrl+shift+r";
+
+    bindings.insert(
+        "reprocess_last".to_string(),
+        ShortcutBinding {
+            id: "reprocess_last".to_string(),
+            name: "Reprocess Last Dictation".to_string(),
+            description: "Transcribes the last dictation again, without recording it anew."
+                .to_string(),
+            default_binding: default_reprocess_shortcut.to_string(),
+            current_binding: default_reprocess_shortcut.to_string(),
+        },
+    );
+
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {

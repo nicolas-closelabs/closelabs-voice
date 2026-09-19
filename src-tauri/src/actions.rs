@@ -20,6 +20,7 @@ use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::Manager;
@@ -822,6 +823,10 @@ impl ShortcutAction for TranscribeAction {
                     utils::hide_recording_overlay(&ah);
                     change_tray_icon(&ah, TrayIconState::Idle);
                 } else {
+                    // Solo en RAM, para el atajo "reprocesar último dictado". Va antes de
+                    // transcribir porque `tm.transcribe` consume los samples.
+                    crate::last_recording::set(&samples);
+
                     // CloseLabs Voice: NO se guarda el audio (.wav) ni el historial —
                     // privacidad del paciente + no gastar memoria. Solo se transcribe y se
                     // pega el texto. Si había un stream en vivo, se finaliza y se usa su
@@ -956,6 +961,127 @@ impl ShortcutAction for TranscribeAction {
     }
 }
 
+/// Vuelve a transcribir el último dictado sin volver a grabarlo.
+///
+/// Para qué sirve en consulta: si el internet se cayó justo al dictar, la app resuelve con el
+/// Parakeet local (más flojo en texto largo); y si el médico acaba de agregar un fármaco al
+/// diccionario, la transcripción anterior no lo tenía. En ambos casos esto lo arregla sin
+/// pedirle al paciente que espere otro dictado.
+///
+/// No reutiliza el flujo de [`TranscribeAction`] porque aquí no hay grabación en curso: no hay
+/// nada que cancelar, ni overlay de grabación, ni stream en vivo. Lo que sí comparte son las
+/// piezas que importan — la transcripción en la nube, la limpieza y el pegado — así que el
+/// resultado es idéntico al de un dictado normal.
+struct ReprocessLastAction;
+
+/// Evita que dos reprocesos se pisen si el médico machaca el atajo: el segundo pegaría el texto
+/// encima del primero, en cualquier campo donde haya quedado el cursor.
+static REPROCESS_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+
+/// Libera [`REPROCESS_IN_FLIGHT`] pase lo que pase — incluido un `return` temprano o un panic —
+/// para que un fallo no deje el atajo muerto por el resto de la sesión.
+struct ReprocessGuard;
+
+impl Drop for ReprocessGuard {
+    fn drop(&mut self) {
+        REPROCESS_IN_FLIGHT.store(false, Ordering::SeqCst);
+    }
+}
+
+impl ShortcutAction for ReprocessLastAction {
+    fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        // Con una grabación en curso no se reprocesa: si no, al soltar la tecla se pegarían dos
+        // textos distintos en el mismo campo.
+        if app
+            .try_state::<Arc<AudioRecordingManager>>()
+            .is_some_and(|rm| rm.is_recording())
+        {
+            debug!("Reprocesar: hay una grabación en curso; se ignora");
+            return;
+        }
+        if REPROCESS_IN_FLIGHT.swap(true, Ordering::SeqCst) {
+            debug!("Reprocesar: ya hay uno en curso; se ignora");
+            return;
+        }
+        let guard = ReprocessGuard;
+
+        let Some(samples) = crate::last_recording::get() else {
+            debug!("Reprocesar: no hay audio del último dictado en memoria");
+            let _ = app.emit("reprocess-unavailable", ());
+            return;
+        };
+
+        let app = app.clone();
+        tauri::async_runtime::spawn(async move {
+            let _guard = guard; // se libera al terminar la tarea, salga como salga
+            debug!(
+                "Reprocesando el último dictado ({} muestras)",
+                samples.len()
+            );
+            show_processing_overlay(&app);
+
+            let started = Instant::now();
+            let transcription = match try_cloud_transcription(&app, &samples).await {
+                Some(text) => Some(text),
+                None => {
+                    let tm = app.state::<Arc<TranscriptionManager>>();
+                    match tm.transcribe(samples) {
+                        Ok(text) if !is_whisper_hallucination(&text, None) => Some(text),
+                        Ok(_) => {
+                            warn!("Reprocesar: transcripción local descartada (alucinación)");
+                            None
+                        }
+                        Err(err) => {
+                            error!("Reprocesar: falló la transcripción: {err}");
+                            let _ = app.emit("transcription-error", err.to_string());
+                            None
+                        }
+                    }
+                }
+            };
+
+            let final_text = match transcription {
+                Some(text) if !text.trim().is_empty() => {
+                    let settings = get_settings(&app);
+                    process_transcription_output(&app, &text, settings.post_process_enabled)
+                        .await
+                        .final_text
+                }
+                _ => String::new(),
+            };
+
+            if final_text.is_empty() {
+                debug!("Reprocesar: no se obtuvo texto; no se pega nada");
+                utils::hide_recording_overlay(&app);
+                change_tray_icon(&app, TrayIconState::Idle);
+                return;
+            }
+
+            debug!(
+                "Reprocesado en {:?}: {} chars",
+                started.elapsed(),
+                final_text.chars().count()
+            );
+            crate::last_transcript::set(&final_text);
+
+            let app_for_paste = app.clone();
+            let _ = app.run_on_main_thread(move || {
+                let handle = app_for_paste.clone();
+                if let Err(e) = utils::paste(final_text, handle) {
+                    error!("Reprocesar: falló el pegado: {e}");
+                    let _ = app_for_paste.emit("paste-error", ());
+                }
+                utils::hide_recording_overlay(&app_for_paste);
+                change_tray_icon(&app_for_paste, TrayIconState::Idle);
+            });
+        });
+    }
+
+    fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        // Se dispara al presionar; soltar la tecla no hace nada.
+    }
+}
+
 // Cancel Action
 struct CancelAction;
 
@@ -1004,6 +1130,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         "transcribe_with_post_process".to_string(),
         Arc::new(TranscribeAction { post_process: true }) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        "reprocess_last".to_string(),
+        Arc::new(ReprocessLastAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "cancel".to_string(),

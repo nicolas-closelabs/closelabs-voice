@@ -34,6 +34,7 @@ export const GeneralSettings: React.FC = () => {
         {!isLinux && !pushToTalk && (
           <ShortcutInput shortcutId="cancel" grouped={true} />
         )}
+        <ShortcutInput shortcutId="reprocess_last" grouped={true} />
       </SettingsGroup>
 
       <SettingsGroup title="Entrega del texto">
