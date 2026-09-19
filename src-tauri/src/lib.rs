@@ -17,6 +17,7 @@ mod managers;
 mod opus_encode;
 mod overlay;
 pub mod portable;
+mod proxy;
 mod refine_guard;
 mod settings;
 mod shortcut;

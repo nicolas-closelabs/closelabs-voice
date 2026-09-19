@@ -1,5 +1,3 @@
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
 use crate::audio_toolkit::text::is_whisper_hallucination;
 use crate::audio_toolkit::{apply_custom_words, filter_transcription_output};
@@ -9,7 +7,7 @@ use crate::managers::history::HistoryManager;
 use crate::managers::model::ModelManager;
 use crate::managers::transcription::StreamWorkKind;
 use crate::managers::transcription::TranscriptionManager;
-use crate::settings::{get_settings, AppSettings, OverlayStyle, APPLE_INTELLIGENCE_PROVIDER_ID};
+use crate::settings::{get_settings, AppSettings, OverlayStyle};
 use crate::shortcut;
 use crate::tray::{change_tray_icon, TrayIconState};
 use crate::utils::{
@@ -54,9 +52,6 @@ struct TranscribeAction {
     post_process: bool,
 }
 
-/// Field name for structured output JSON schema
-const TRANSCRIPTION_FIELD: &str = "transcription";
-
 /// Strip invisible Unicode characters that some LLMs may insert
 fn strip_invisible_chars(s: &str) -> String {
     s.replace(['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'], "")
@@ -86,28 +81,13 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
     if !settings.cloud_transcription_enabled {
         return None;
     }
-    let api_key = settings
-        .post_process_api_keys
-        .get("groq")
-        .cloned()
-        .unwrap_or_default();
-    if api_key.is_empty() {
-        debug!("Cloud transcription: sin API key de Groq; usando Parakeet local");
-        return None;
-    }
-    let base_url = settings
-        .post_process_providers
-        .iter()
-        .find(|p| p.id == "groq")
-        .map(|p| p.base_url.clone())
-        .unwrap_or_else(|| "https://api.groq.com/openai/v1".to_string());
-    // Idioma: reutilizamos selected_language. "auto" (default, como Aztec) → None
-    // (auto-detección de Whisper). Si algún día se fuerza "es", se manda tal cual.
+    // Idioma: "auto" (default, como Aztec) → None, para que Whisper lo detecte.
     let language = match settings.selected_language.as_str() {
         "auto" | "" => None,
         other => Some(other.to_string()),
     };
-    // El diccionario viaja como pista de vocabulario: Whisper escribe bien fármacos y apellidos.
+    // El diccionario viaja como pista de vocabulario. El servidor la descarta si el proveedor de
+    // turno no la soporta — ver la nota sobre el truncado silencioso en `proxy.rs`.
     let prompt = crate::groq_transcribe::build_whisper_prompt(&settings.custom_words);
     match prompt.as_deref() {
         Some(p) => debug!(
@@ -122,33 +102,28 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
         None => debug!("Sin pista de vocabulario (diccionario vacío)"),
     }
 
-    match crate::groq_transcribe::transcribe_audio_groq(
-        &base_url,
-        &api_key,
-        crate::groq_transcribe::CLOUD_MODEL,
+    match crate::proxy::transcribe_with_fallback(
+        app,
+        samples,
         language.as_deref(),
         prompt.as_deref(),
-        samples,
     )
     .await
     {
         Ok(text) if is_whisper_hallucination(&text, prompt.as_deref()) => {
-            // Era silencio/ruido: no hay nada que pegar, y tampoco tiene sentido reintentar
+            // Era silencio o ruido: no hay nada que pegar, y tampoco tiene sentido reintentar
             // con Parakeet sobre el mismo audio.
-            warn!("Cloud transcription descartada: alucinación conocida de Whisper");
+            warn!("Transcripción descartada: alucinación conocida de Whisper");
             Some(String::new())
         }
         Ok(text) if !text.trim().is_empty() => {
             debug!(
-                "Cloud transcription (Groq Whisper) OK: {} chars",
-                text.len()
+                "Transcripción en la nube OK: {} chars",
+                text.chars().count()
             );
-            // El diccionario se aplica TAMBIÉN al texto de la nube. La pista que se le manda a
-            // Whisper solo *sugiere* el vocabulario: en pruebas reales devolvió "Icetotrinoina"
-            // teniendo "Isotetrinoina" en el diccionario. Esta corrección por similitud es
-            // determinista y cierra el caso. Antes solo corría en el motor local, así que desde
-            // que la nube pasó a ser la ruta principal (v0.6) el diccionario dejó de corregir
-            // en la práctica.
+            // El diccionario se aplica TAMBIÉN al texto de la nube: la pista solo *sugiere* el
+            // vocabulario, y en pruebas reales devolvía "Icetotrinoina" teniendo "Isotetrinoina"
+            // en el diccionario. Esta corrección por similitud es local y determinista.
             let corrected = apply_custom_words(
                 &text,
                 &settings.custom_words,
@@ -164,11 +139,13 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
             ))
         }
         Ok(_) => {
-            warn!("Cloud transcription vacía; fallback a Parakeet local");
+            warn!("Transcripción en la nube vacía; fallback a Parakeet local");
             None
         }
-        Err(e) => {
-            warn!("Cloud transcription falló ({e}); fallback a Parakeet local");
+        Err(code) => {
+            // `code` es nuestro vocabulario cerrado ('rate_limit', 'quota_exceeded', 'timeout'…),
+            // nunca el mensaje del proveedor, que podría traer eco del dictado.
+            warn!("Transcripción en la nube falló ({code}); fallback a Parakeet local");
             None
         }
     }
@@ -192,300 +169,69 @@ fn is_timeout_error(message: &str) -> bool {
     m.contains("timed out") || m.contains("timeout") || m.contains("operation timed out")
 }
 
-async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
+/// Limpia el dictado (puntuación, muletillas, formato) pasando por NUESTRO proxy.
+///
+/// Ya no conoce proveedores ni modelos: eso lo decide el servidor leyendo una tabla. Lo que sí
+/// se queda aquí son las guardas, porque protegen al médico del modelo y deben correr aunque el
+/// servidor cambie de proveedor: no refinar dictados de dos palabras, y descartar una salida que
+/// se inventó cosas, se negó a responder o repitió el prompt.
+async fn post_process_transcription(
+    app: &AppHandle,
+    settings: &AppSettings,
+    transcription: &str,
+) -> Option<String> {
     if is_blank_transcription(transcription) {
-        debug!("Post-processing skipped because the transcription is empty");
+        debug!("Refine omitido: la transcripción está vacía");
         return None;
     }
     if !crate::refine_guard::should_refine(transcription) {
-        debug!("Post-processing skipped: dictado demasiado corto");
+        debug!("Refine omitido: dictado demasiado corto");
         return None;
     }
 
-    let provider = match settings.active_post_process_provider().cloned() {
-        Some(provider) => provider,
-        None => {
-            debug!("Post-processing enabled but no provider is selected");
-            return None;
-        }
-    };
-
-    let model = settings
-        .post_process_models
-        .get(&provider.id)
-        .cloned()
-        .unwrap_or_default();
-
-    if model.trim().is_empty() {
-        debug!(
-            "Post-processing skipped because provider '{}' has no model configured",
-            provider.id
-        );
-        return None;
-    }
-
-    let selected_prompt_id = match &settings.post_process_selected_prompt_id {
-        Some(id) => id.clone(),
-        None => {
-            debug!("Post-processing skipped because no prompt is selected");
-            return None;
-        }
-    };
-
-    let prompt = match settings
+    let selected_prompt_id = settings.post_process_selected_prompt_id.as_deref()?;
+    let prompt_template = settings
         .post_process_prompts
         .iter()
-        .find(|prompt| prompt.id == selected_prompt_id)
-    {
-        Some(prompt) => prompt.prompt.clone(),
-        None => {
-            debug!(
-                "Post-processing skipped because prompt '{}' was not found",
-                selected_prompt_id
-            );
+        .find(|p| p.id == selected_prompt_id)
+        .map(|p| p.prompt.clone())?;
+    let system_prompt = build_system_prompt(&prompt_template);
+
+    let mut response = crate::proxy::format(app, transcription, &system_prompt).await;
+
+    if let Err(code) = &response {
+        // Sin conexión o agotado el tiempo, reintentar solo hace esperar más al médico para
+        // volver a fallar: se pega el texto crudo, que es lo que ya tenemos.
+        if is_timeout_error(code) || is_offline_error(code) {
+            warn!("Refine omitido ({code}); se pega la transcripción cruda");
+            return None;
+        }
+        // El cupo agotado y el límite del proveedor tampoco se arreglan reintentando al instante.
+        if code == "quota_exceeded" || code == "rate_limit" {
+            warn!("Refine omitido ({code}); se pega la transcripción cruda");
+            return None;
+        }
+        warn!("Refine: primer intento falló ({code}); reintentando una vez");
+        response = crate::proxy::format(app, transcription, &system_prompt).await;
+    }
+
+    let cleaned = match response {
+        Ok(text) => strip_invisible_chars(&text),
+        Err(code) => {
+            warn!("Refine falló ({code}); se pega la transcripción cruda");
             return None;
         }
     };
 
-    if prompt.trim().is_empty() {
-        debug!("Post-processing skipped because the selected prompt is empty");
+    if let Some(reason) =
+        crate::refine_guard::rejection_reason(transcription, &cleaned, &prompt_template)
+    {
+        warn!("Refine descartado ({reason}); se usa la transcripción cruda");
         return None;
     }
 
-    debug!(
-        "Starting LLM post-processing with provider '{}' (model: {})",
-        provider.id, model
-    );
-
-    let api_key = settings
-        .post_process_api_keys
-        .get(&provider.id)
-        .cloned()
-        .unwrap_or_default();
-
-    // Disable reasoning for providers where post-processing rarely benefits from it.
-    // - custom: top-level reasoning_effort (works for local OpenAI-compat servers)
-    // - openrouter: nested reasoning object; exclude:true also keeps reasoning text
-    //   out of the response so it can't pollute structured-output JSON parsing
-    let (reasoning_effort, reasoning) = match provider.id.as_str() {
-        "custom" => (Some("none".to_string()), None),
-        "openrouter" => (
-            None,
-            Some(crate::llm_client::ReasoningConfig {
-                effort: Some("none".to_string()),
-                exclude: Some(true),
-            }),
-        ),
-        _ => (None, None),
-    };
-
-    if provider.supports_structured_output {
-        debug!("Using structured outputs for provider '{}'", provider.id);
-
-        let system_prompt = build_system_prompt(&prompt);
-        let user_content = transcription.to_string();
-
-        // Handle Apple Intelligence separately since it uses native Swift APIs
-        if provider.id == APPLE_INTELLIGENCE_PROVIDER_ID {
-            #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-            {
-                if !apple_intelligence::check_apple_intelligence_availability() {
-                    debug!(
-                        "Apple Intelligence selected but not currently available on this device"
-                    );
-                    return None;
-                }
-
-                let token_limit = model.trim().parse::<i32>().unwrap_or(0);
-                return match apple_intelligence::process_text_with_system_prompt(
-                    &system_prompt,
-                    &user_content,
-                    token_limit,
-                ) {
-                    Ok(result) => {
-                        if result.trim().is_empty() {
-                            debug!("Apple Intelligence returned an empty response");
-                            None
-                        } else {
-                            let result = strip_invisible_chars(&result);
-                            debug!(
-                                "Apple Intelligence post-processing succeeded. Output length: {} chars",
-                                result.len()
-                            );
-                            Some(result)
-                        }
-                    }
-                    Err(err) => {
-                        error!("Apple Intelligence post-processing failed: {}", err);
-                        None
-                    }
-                };
-            }
-
-            #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
-            {
-                debug!("Apple Intelligence provider selected on unsupported platform");
-                return None;
-            }
-        }
-
-        // Define JSON schema for transcription output
-        let json_schema = serde_json::json!({
-            "type": "object",
-            "properties": {
-                (TRANSCRIPTION_FIELD): {
-                    "type": "string",
-                    "description": "The cleaned and processed transcription text"
-                }
-            },
-            "required": [TRANSCRIPTION_FIELD],
-            "additionalProperties": false
-        });
-
-        match crate::llm_client::send_chat_completion_with_schema(
-            &provider,
-            api_key.clone(),
-            &model,
-            user_content,
-            Some(system_prompt),
-            Some(json_schema),
-            reasoning_effort.clone(),
-            reasoning.clone(),
-        )
-        .await
-        {
-            Ok(Some(content)) => {
-                // Parse the JSON response to extract the transcription field
-                match serde_json::from_str::<serde_json::Value>(&content) {
-                    Ok(json) => {
-                        if let Some(transcription_value) =
-                            json.get(TRANSCRIPTION_FIELD).and_then(|t| t.as_str())
-                        {
-                            let result = strip_invisible_chars(transcription_value);
-                            if let Some(reason) = crate::refine_guard::rejection_reason(
-                                transcription,
-                                &result,
-                                &prompt,
-                            ) {
-                                warn!(
-                                    "Refine descartado ({reason}); se usa la transcripción cruda"
-                                );
-                                return None;
-                            }
-                            debug!(
-                                "Structured output post-processing succeeded for provider '{}'. Output length: {} chars",
-                                provider.id,
-                                result.len()
-                            );
-                            return Some(result);
-                        } else {
-                            error!("Structured output response missing 'transcription' field; se usa la cruda");
-                            return None;
-                        }
-                    }
-                    Err(e) => {
-                        error!(
-                            "Failed to parse structured output JSON: {}; se usa la cruda",
-                            e
-                        );
-                        return None;
-                    }
-                }
-            }
-            Ok(None) => {
-                error!("LLM API response has no content");
-                return None;
-            }
-            Err(e) => {
-                if is_timeout_error(&e.to_string()) {
-                    // Caer a la ruta clásica aquí sumaría OTRO timeout encima: el médico
-                    // esperaría el doble para, casi seguro, volver a quedarse sin respuesta.
-                    warn!("Refine: se agotó el tiempo; se pega la transcripción cruda");
-                    return None;
-                }
-                if is_offline_error(&e.to_string()) {
-                    debug!("Refine omitido: no hay conexión");
-                    return None;
-                }
-                warn!(
-                    "Structured output failed for provider '{}': {}. Falling back to legacy mode.",
-                    provider.id, e
-                );
-                // Fall through to legacy mode below
-            }
-        }
-    }
-
-    // Legacy mode: Replace ${output} variable in the prompt with the actual text
-    let processed_prompt = prompt.replace("${output}", transcription);
-    debug!("Processed prompt length: {} chars", processed_prompt.len());
-
-    let mut response = crate::llm_client::send_chat_completion(
-        &provider,
-        api_key.clone(),
-        &model,
-        processed_prompt.clone(),
-        reasoning_effort.clone(),
-        reasoning.clone(),
-    )
-    .await;
-    if let Err(e) = &response {
-        if is_timeout_error(&e.to_string()) {
-            warn!("Refine: se agotó el tiempo; se pega la transcripción cruda");
-            return None;
-        }
-        if is_offline_error(&e.to_string()) {
-            // Sin internet no tiene sentido reintentar: se pega la transcripción cruda.
-            debug!("Refine omitido: no hay conexión");
-            return None;
-        }
-        // Un solo reintento: fallos transitorios de red o de Groq son comunes en LatAm.
-        warn!("Refine: primer intento falló ({e}); reintentando una vez");
-        response = crate::llm_client::send_chat_completion(
-            &provider,
-            api_key,
-            &model,
-            processed_prompt,
-            reasoning_effort,
-            reasoning,
-        )
-        .await;
-    }
-
-    match response {
-        Ok(Some(content)) => {
-            let content = strip_invisible_chars(&content);
-            let trimmed = content.trim();
-
-            // Guardas (CloseLabs): en notas médicas es inaceptable que el refine invente,
-            // recorte o filtre texto del prompt. Ante la duda, se pega la transcripción cruda.
-            if let Some(reason) =
-                crate::refine_guard::rejection_reason(transcription, trimmed, &prompt)
-            {
-                error!("Refine descartado ({reason}); se usa la transcripción cruda");
-                return None;
-            }
-
-            debug!(
-                "LLM post-processing succeeded for provider '{}'. Output length: {} chars",
-                provider.id,
-                trimmed.len()
-            );
-            Some(trimmed.to_string())
-        }
-        Ok(None) => {
-            error!("LLM API response has no content");
-            None
-        }
-        Err(e) => {
-            error!(
-                "LLM post-processing failed for provider '{}': {}. Falling back to original transcription.",
-                provider.id,
-                e
-            );
-            None
-        }
-    }
+    debug!("Refine OK: {} chars", cleaned.chars().count());
+    Some(cleaned)
 }
 
 async fn maybe_convert_chinese_variant(
@@ -593,7 +339,8 @@ pub(crate) async fn process_transcription_output(
     }
 
     if post_process {
-        if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
+        if let Some(processed_text) = post_process_transcription(app, &settings, &final_text).await
+        {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 

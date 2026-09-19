@@ -1,8 +1,9 @@
-//! CloseLabs Voice — transcripción en la NUBE vía Groq Whisper (`whisper-large-v3-turbo`).
+//! CloseLabs Voice — preparación del audio para subirlo a la nube.
 //!
-//! Ruta PRINCIPAL de transcripción cuando hay internet (calidad alta en texto largo, como
-//! Aztec). Si falla (offline, timeout, rate-limit), el llamador cae al Parakeet LOCAL.
-//! ⚠️ En esta ruta el audio SÍ sale del equipo hacia Groq.
+//! ⚠️ Este módulo YA NO habla con Groq. Desde la Fase 1 la app no conoce ninguna llave de
+//! proveedor: manda el audio a nuestro proxy (`proxy.rs`), que decide a quién llamar. Aquí solo
+//! queda lo que sigue siendo del cliente — comprimir el audio y armar la pista de vocabulario —
+//! porque comprimir ANTES de subir es lo que hace tolerable el internet de una clínica.
 //!
 //! Optimización de velocidad (internet lento LatAm): subimos el audio comprimido en **Opus**
 //! (~11x más chico que WAV, ~6x que FLAC; medido con un dictado clínico de 38 s: 1,23 MB →
@@ -15,7 +16,6 @@
 //! reintento solo si falló la CONEXIÓN (errores rápidos, no reenvía uploads largos).
 
 use std::io::Cursor;
-use std::time::Duration;
 
 use flacenc::bitsink::ByteSink;
 use flacenc::component::BitRepr;
@@ -23,16 +23,11 @@ use flacenc::error::Verify;
 use flacenc::source::MemSource;
 use log::{info, warn};
 
-/// Modelo de transcripción en la nube. El mismo que usa Aztec: rápido y muy preciso.
-pub const CLOUD_MODEL: &str = "whisper-large-v3-turbo";
-
 const IN_RATE: usize = 16_000; // sample rate de nuestro grabador (mono f32)
 
 /// Groq limita el `prompt` de Whisper a 224 tokens. ~450 caracteres para las palabras del
 /// usuario deja margen para la frase de estilo y para el español (tokens más cortos).
 const PROMPT_MAX_CHARS: usize = 450;
-/// Tiempo máximo para abrir la conexión. Offline o red caída → fallback local rápido.
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 
 /// Frase de estilo que encabeza la pista. El `prompt` de Whisper funciona como "contexto
 /// previo": el modelo continúa en el mismo registro. Con esto escribe dictado clínico en
@@ -59,13 +54,6 @@ pub fn build_whisper_prompt(words: &[String]) -> Option<String> {
     }
     prompt.push('.');
     Some(format!("{STYLE_HINT} {prompt}"))
-}
-
-/// Timeout total de la petición: base + medio segundo por cada segundo de audio (subidas
-/// lentas en LatAm), con tope para no dejar al médico esperando indefinidamente.
-fn request_timeout(samples: usize) -> Duration {
-    let audio_secs = samples as u64 / IN_RATE as u64;
-    Duration::from_secs((15 + audio_secs / 2).min(120))
 }
 
 /// Codifica los samples a un archivo **FLAC** en memoria (comprimido, sin pérdida).
@@ -112,130 +100,19 @@ fn encode_wav_16k_mono(samples: &[f32]) -> Result<Vec<u8>, String> {
     Ok(cursor.into_inner())
 }
 
-/// Error de un intento de subida. `status` distingue un rechazo de FORMATO (reintentar con
-/// WAV) de un error de red/auth (dejar caer al motor local). `connect` marca que ni siquiera
-/// se pudo abrir la conexión (vale la pena un reintento rápido).
-struct PostErr {
-    status: Option<u16>,
-    connect: bool,
-    msg: String,
-}
-
-/// Petición a Groq ya armada (salvo el archivo, que se consume en cada intento).
-struct AudioRequest<'a> {
-    base_url: &'a str,
-    api_key: &'a str,
-    model: &'a str,
-    language: Option<&'a str>,
-    prompt: Option<&'a str>,
-    timeout: Duration,
-}
-
-async fn post_audio(
-    req: &AudioRequest<'_>,
-    bytes: Vec<u8>,
-    filename: &str,
-    mime: &str,
-) -> Result<String, PostErr> {
-    let part = reqwest::multipart::Part::bytes(bytes)
-        .file_name(filename.to_string())
-        .mime_str(mime)
-        .map_err(|e| PostErr {
-            status: None,
-            connect: false,
-            msg: format!("mime: {e}"),
-        })?;
-    let mut form = reqwest::multipart::Form::new()
-        .part("file", part)
-        .text("model", req.model.to_string())
-        .text("response_format", "json".to_string())
-        .text("temperature", "0".to_string());
-    if let Some(lang) = req.language {
-        form = form.text("language", lang.to_string());
-    }
-    if let Some(prompt) = req.prompt {
-        form = form.text("prompt", prompt.to_string());
-    }
-
-    let url = format!(
-        "{}/audio/transcriptions",
-        req.base_url.trim_end_matches('/')
-    );
-    let client = reqwest::Client::builder()
-        .connect_timeout(CONNECT_TIMEOUT)
-        .timeout(req.timeout)
-        .build()
-        .map_err(|e| PostErr {
-            status: None,
-            connect: false,
-            msg: format!("client: {e}"),
-        })?;
-
-    let resp = client
-        .post(&url)
-        .bearer_auth(req.api_key)
-        .multipart(form)
-        .send()
-        .await
-        .map_err(|e| PostErr {
-            status: None,
-            connect: e.is_connect(),
-            msg: format!("request: {e}"),
-        })?;
-
-    let status = resp.status();
-    if !status.is_success() {
-        let body = resp.text().await.unwrap_or_default();
-        return Err(PostErr {
-            status: Some(status.as_u16()),
-            connect: false,
-            msg: format!("groq {status}: {body}"),
-        });
-    }
-
-    let json: serde_json::Value = resp.json().await.map_err(|e| PostErr {
-        status: None,
-        connect: false,
-        msg: format!("json: {e}"),
-    })?;
-    Ok(json
-        .get("text")
-        .and_then(|t| t.as_str())
-        .unwrap_or("")
-        .trim()
-        .to_string())
-}
-
-/// Un intento con un único reintento si falló al CONECTAR (red intermitente). Timeouts y
-/// errores HTTP no se reintentan: el llamador cae a Parakeet sin hacer esperar más.
-async fn post_audio_with_retry(
-    req: &AudioRequest<'_>,
-    bytes: Vec<u8>,
-    filename: &str,
-    mime: &str,
-) -> Result<String, PostErr> {
-    match post_audio(req, bytes.clone(), filename, mime).await {
-        Err(e) if e.connect => {
-            warn!("Groq: fallo de conexión ({}); reintentando una vez", e.msg);
-            post_audio(req, bytes, filename, mime).await
-        }
-        other => other,
-    }
-}
-
 /// Un formato de subida: cómo se codifica y cómo se anuncia en el multipart.
-struct UploadFormat {
-    label: &'static str,
-    filename: &'static str,
-    mime: &'static str,
-    encode: fn(&[f32]) -> Result<Vec<u8>, String>,
+pub(crate) struct UploadFormat {
+    pub(crate) label: &'static str,
+    pub(crate) filename: &'static str,
+    pub(crate) mime: &'static str,
+    pub(crate) encode: fn(&[f32]) -> Result<Vec<u8>, String>,
 }
 
 /// Formatos en orden de preferencia: del más liviano al más universal. Se baja un escalón solo
 /// si la codificación falla o si Groq rechaza el FORMATO; cualquier otro error corta la cadena
 /// (no tiene sentido resubir el mismo audio si lo que falló fue la red o la autenticación).
 /// El último, WAV, es la garantía de que nunca quedamos peor que antes de comprimir.
-const UPLOAD_FORMATS: &[UploadFormat] = &[
+pub(crate) const UPLOAD_FORMATS: &[UploadFormat] = &[
     UploadFormat {
         label: "Opus",
         filename: "audio.ogg",
@@ -255,55 +132,6 @@ const UPLOAD_FORMATS: &[UploadFormat] = &[
         encode: encode_wav_16k_mono,
     },
 ];
-
-/// Transcribe `samples` con Groq Whisper. Sube **Opus** (~11x más chico que WAV) y, si Groq lo
-/// rechazara por formato, baja a FLAC y luego a WAV. `language` opcional (`None` = auto, como
-/// Aztec). `prompt` = pista de vocabulario (ver [`build_whisper_prompt`]).
-pub async fn transcribe_audio_groq(
-    base_url: &str,
-    api_key: &str,
-    model: &str,
-    language: Option<&str>,
-    prompt: Option<&str>,
-    samples: &[f32],
-) -> Result<String, String> {
-    let req = AudioRequest {
-        base_url,
-        api_key,
-        model,
-        language,
-        prompt,
-        timeout: request_timeout(samples.len()),
-    };
-
-    let mut last_error = "no se pudo codificar el audio en ningún formato".to_string();
-    for format in UPLOAD_FORMATS {
-        let bytes = match (format.encode)(samples) {
-            Ok(bytes) => bytes,
-            Err(e) => {
-                warn!("Falló codificar {} ({e}); siguiente formato", format.label);
-                last_error = e;
-                continue;
-            }
-        };
-        let kb = bytes.len() / 1024;
-        match post_audio_with_retry(&req, bytes, format.filename, format.mime).await {
-            Ok(text) => {
-                info!("Groq Whisper vía {} OK ({kb} KB subidos)", format.label);
-                return Ok(text);
-            }
-            Err(e) if matches!(e.status, Some(400) | Some(415) | Some(422)) => {
-                warn!(
-                    "Groq rechazó el {} ({}); probando el siguiente formato",
-                    format.label, e.msg
-                );
-                last_error = e.msg;
-            }
-            Err(e) => return Err(e.msg),
-        }
-    }
-    Err(last_error)
-}
 
 #[cfg(test)]
 mod tests {
@@ -337,12 +165,5 @@ mod tests {
         assert!(prompt.chars().count() <= STYLE_HINT.chars().count() + PROMPT_MAX_CHARS + 1);
         assert!(prompt.ends_with('.'));
         assert!(prompt.contains("termino0, termino1"));
-    }
-
-    #[test]
-    fn request_timeout_grows_with_audio_and_is_capped() {
-        assert_eq!(request_timeout(0), Duration::from_secs(15));
-        assert_eq!(request_timeout(IN_RATE * 60), Duration::from_secs(45));
-        assert_eq!(request_timeout(IN_RATE * 3600), Duration::from_secs(120));
     }
 }

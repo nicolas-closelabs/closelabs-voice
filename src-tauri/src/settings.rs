@@ -398,6 +398,16 @@ pub struct AppSettings {
     // el audio SÍ sale del equipo hacia Groq. UI oculta (interno del producto).
     #[serde(default = "default_cloud_transcription_enabled")]
     pub cloud_transcription_enabled: bool,
+
+    // CloseLabs Voice — Fase 1: la app ya NO habla con Groq. Manda el audio y el texto a nuestro
+    // proxy, que guarda la llave del proveedor y decide a quién llamar. Así cambiar de proveedor
+    // es editar una fila en el servidor, no republicar la app en el computador de cada médico.
+    #[serde(default = "default_proxy_base_url")]
+    pub proxy_base_url: String,
+    // Token de ESTA instalación, recibido al registrarse en el primer arranque. No identifica al
+    // médico (las cuentas son la Fase 2): solo permite revocar una instalación concreta.
+    #[serde(default)]
+    pub device_token: Option<String>,
     #[serde(default = "default_post_process_provider_id")]
     pub post_process_provider_id: String,
     #[serde(default = "default_post_process_providers")]
@@ -556,6 +566,11 @@ fn default_post_process_enabled() -> bool {
     true
 }
 
+/// Proxy de CloseLabs. Configurable por si hace falta apuntar a un entorno de pruebas.
+fn default_proxy_base_url() -> String {
+    "https://gdizmbuzepxnkiahbeoz.supabase.co/functions/v1".to_string()
+}
+
 fn default_cloud_transcription_enabled() -> bool {
     // CloseLabs Voice: transcripción en la nube (Groq Whisper) ACTIVA por defecto — es lo
     // que da la calidad de Aztec en texto largo. Offline cae a Parakeet local.
@@ -574,16 +589,6 @@ fn default_show_tray_icon() -> bool {
 fn default_post_process_provider_id() -> String {
     // CloseLabs Voice: refine vía Groq por defecto (rápido y económico).
     "groq".to_string()
-}
-
-/// API key de Groq embebida en build time para el refine.
-/// Inyéctala al compilar:  CLOSELABS_GROQ_API_KEY=gsk_...  (con LÍMITE DE GASTO en la
-/// cuenta de Groq). Si no está, queda vacía y el usuario puede pegarla en Ajustes, o se
-/// migra a un proxy propio cambiando el `base_url` del proveedor (endpoint configurable).
-fn embedded_groq_api_key() -> String {
-    option_env!("CLOSELABS_GROQ_API_KEY")
-        .unwrap_or("")
-        .to_string()
 }
 
 fn default_post_process_providers() -> Vec<PostProcessProvider> {
@@ -680,16 +685,17 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
     providers
 }
 
+/// ⚠️ **Fase 1: el instalador ya NO lleva ninguna llave de proveedor.** Antes se incrustaba la de
+/// Groq al compilar, con dos consecuencias malas: cualquiera con la app instalada podía
+/// extraerla, y cambiar de proveedor obligaba a recompilar y reinstalar en el computador de cada
+/// médico — lo que se volvió un bloqueo cuando Groq cerró su plan de pago.
+///
+/// Ahora las llaves viven en los secretos del proxy y la app no las conoce. Este mapa arranca
+/// vacío y solo se llena si alguien pega una llave propia en Ajustes (uso avanzado).
 fn default_post_process_api_keys() -> SecretMap {
     let mut map = HashMap::new();
     for provider in default_post_process_providers() {
-        // Groq usa la key embebida en build time; el resto arranca vacío.
-        let key = if provider.id == "groq" {
-            embedded_groq_api_key()
-        } else {
-            String::new()
-        };
-        map.insert(provider.id, key);
+        map.insert(provider.id, String::new());
     }
     SecretMap(map)
 }
@@ -958,6 +964,8 @@ pub fn get_default_settings() -> AppSettings {
         auto_submit_key: AutoSubmitKey::default(),
         post_process_enabled: default_post_process_enabled(),
         cloud_transcription_enabled: default_cloud_transcription_enabled(),
+        proxy_base_url: default_proxy_base_url(),
+        device_token: None,
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
         post_process_api_keys: default_post_process_api_keys(),
@@ -1140,6 +1148,22 @@ fn apply_settings_migrations(
         } else {
             OverlayStyle::Live
         };
+        updated = true;
+    }
+
+    // Fase 1: la app dejó de hablar con los proveedores. Quien venga de una versión anterior
+    // tiene la llave de Groq guardada en su archivo de ajustes, en claro. Ya no sirve para nada
+    // —las peticiones van al proxy— y esa llave está por revocarse, así que se borra: una
+    // credencial muerta en el disco de un médico no le hace bien a nadie.
+    if settings
+        .post_process_api_keys
+        .get("groq")
+        .is_some_and(|k| !k.is_empty())
+    {
+        debug!("Migración: se borra la llave de Groq guardada; ahora las peticiones van al proxy");
+        settings
+            .post_process_api_keys
+            .insert("groq".to_string(), String::new());
         updated = true;
     }
 
