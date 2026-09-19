@@ -24,7 +24,7 @@ use ogg::writing::{PacketWriteEndInfo, PacketWriter};
 use opusic_sys::{
     opus_encode_float, opus_encoder_create, opus_encoder_ctl, opus_encoder_destroy, OpusEncoder,
     OPUS_APPLICATION_VOIP, OPUS_GET_LOOKAHEAD_REQUEST, OPUS_OK, OPUS_SET_BITRATE_REQUEST,
-    OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE,
+    OPUS_SET_COMPLEXITY_REQUEST, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE,
 };
 
 /// Sample rate de nuestro grabador (mono f32). Opus solo admite 8/12/16/24/48 kHz.
@@ -33,6 +33,14 @@ const IN_RATE: usize = 16_000;
 const FRAME_SAMPLES: usize = IN_RATE / 1000 * 20; // 320
 /// 24 kbps mono es transparente para voz. Subirlo no mejora el WER; bajarlo empieza a doler.
 const BITRATE: i32 = 24_000;
+/// Esfuerzo del compresor, de 0 a 10. El valor por defecto de libopus es 9 y cuesta caro: 286 ms
+/// para 50 s de audio, que el médico espera DESPUÉS de soltar la tecla. Medido el 2026-09-19,
+/// bajarlo a 5 cuesta 127 ms —159 menos— y produce un archivo igual de chico. Verificado contra
+/// la API real con un dictado clínico de 38 s y uno corto: la transcripción sale **idéntica
+/// carácter por carácter** en 3, 5 y 10. Se elige 5 y no 3 para dejar margen: las pruebas usan
+/// voz sintética, más limpia que el ruido de un consultorio.
+const COMPLEXITY: i32 = 5;
+
 /// Un paquete de 20 ms nunca pasa de ~250 bytes a 24 kbps; 4 KB es margen de sobra.
 const MAX_PACKET: usize = 4_000;
 /// Ogg cuenta el tiempo SIEMPRE en muestras de 48 kHz, sin importar el sample rate real.
@@ -68,6 +76,7 @@ impl Encoder {
         enc.ctl(OPUS_SET_BITRATE_REQUEST, BITRATE)?;
         // Le decimos que es voz para que priorice el modo SILK (mucho mejor a bitrate bajo).
         enc.ctl(OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE)?;
+        enc.ctl(OPUS_SET_COMPLEXITY_REQUEST, COMPLEXITY)?;
         Ok(enc)
     }
 
@@ -241,4 +250,5 @@ mod tests {
         assert!(encode_opus_ogg(&[]).is_err());
     }
 }
+
 
