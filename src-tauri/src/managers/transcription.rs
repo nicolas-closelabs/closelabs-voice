@@ -1,4 +1,4 @@
-use crate::audio_toolkit::{apply_custom_words, filter_transcription_output};
+use crate::audio_toolkit::filter_transcription_output;
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::model::{EngineType, ModelManager};
 use crate::settings::{
@@ -1599,21 +1599,12 @@ fn post_process_transcription_text(
     settings: &AppSettings,
     custom_words_already_prompted: bool,
 ) -> String {
-    let corrected = if !settings.custom_words.is_empty() && !custom_words_already_prompted {
-        apply_custom_words(
-            &raw,
-            &settings.custom_words,
-            settings.word_correction_threshold,
-        )
-    } else {
-        raw
-    };
+    // El diccionario ya NO se aplica aquí. Desde el 2026-09-19 corre una sola vez, al FINAL de
+    // `actions::process_transcription_output`, después del formateo, para que el término que el
+    // médico escribió sea la última palabra y no dependa de lo que decida el modelo.
+    let _ = custom_words_already_prompted;
 
-    filter_transcription_output(
-        &corrected,
-        &settings.app_language,
-        &settings.custom_filler_words,
-    )
+    filter_transcription_output(&raw, &settings.app_language, &settings.custom_filler_words)
 }
 
 /// Decide a transcribe-cpp run's task + translation target from settings.

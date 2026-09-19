@@ -354,7 +354,33 @@ pub(crate) async fn process_transcription_output(
                 }
             }
         }
-    } else if final_text != transcription {
+    }
+
+    // ⚠️ EL DICCIONARIO VA AL FINAL, Y ESO ES DELIBERADO.
+    //
+    // Antes corría antes del formateo y el modelo podía sobrescribirlo. Medido el 2026-09-19: el
+    // formateador NO es determinista ni con `temperature: 0` —el mismo texto dio 3 salidas
+    // distintas de 4— y en una de ellas cambió "Isotetrinoina", el término que el médico había
+    // puesto en SU diccionario, por "Isotretinoína". Un término que unas veces sale como el médico
+    // lo escribió y otras no es peor que cualquiera de las dos opciones puras: destruye la
+    // confianza en la única función del producto que el médico controla.
+    //
+    // Decisión de producto: manda el médico. Si alguien se tomó el trabajo de escribir un término
+    // en su diccionario, así debe salir, aunque el modelo crea saber más.
+    if !settings.custom_words.is_empty() {
+        let corrected = apply_custom_words(
+            &final_text,
+            &settings.custom_words,
+            settings.word_correction_threshold,
+        );
+        if corrected != final_text {
+            debug!("Diccionario aplicado (última palabra)");
+            final_text = corrected;
+            post_processed_text = Some(final_text.clone());
+        }
+    }
+
+    if post_processed_text.is_none() && final_text != transcription {
         post_processed_text = Some(final_text.clone());
     }
 
