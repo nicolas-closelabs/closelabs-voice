@@ -185,6 +185,13 @@ fn is_offline_error(message: &str) -> bool {
         || m.contains("proxy unreachable")
 }
 
+/// `true` si el intento se agotó por tiempo. Reintentar entonces DUPLICA la espera del médico
+/// (dos veces el timeout) para volver a caer en lo mismo: mejor pegar el texto crudo ya.
+fn is_timeout_error(message: &str) -> bool {
+    let m = message.to_lowercase();
+    m.contains("timed out") || m.contains("timeout") || m.contains("operation timed out")
+}
+
 async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
     if is_blank_transcription(transcription) {
         debug!("Post-processing skipped because the transcription is empty");
@@ -390,6 +397,12 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
                 return None;
             }
             Err(e) => {
+                if is_timeout_error(&e.to_string()) {
+                    // Caer a la ruta clásica aquí sumaría OTRO timeout encima: el médico
+                    // esperaría el doble para, casi seguro, volver a quedarse sin respuesta.
+                    warn!("Refine: se agotó el tiempo; se pega la transcripción cruda");
+                    return None;
+                }
                 if is_offline_error(&e.to_string()) {
                     debug!("Refine omitido: no hay conexión");
                     return None;
@@ -417,6 +430,10 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
     )
     .await;
     if let Err(e) = &response {
+        if is_timeout_error(&e.to_string()) {
+            warn!("Refine: se agotó el tiempo; se pega la transcripción cruda");
+            return None;
+        }
         if is_offline_error(&e.to_string()) {
             // Sin internet no tiene sentido reintentar: se pega la transcripción cruda.
             debug!("Refine omitido: no hay conexión");
@@ -1148,7 +1165,27 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
 
 #[cfg(test)]
 mod tests {
-    use super::is_blank_transcription;
+    use super::{is_blank_transcription, is_offline_error, is_timeout_error};
+
+    #[test]
+    fn timeouts_are_detected_so_we_do_not_wait_twice() {
+        // Texto real de reqwest al agotarse el tiempo.
+        assert!(is_timeout_error(
+            "HTTP request failed: error sending request: operation timed out"
+        ));
+        assert!(is_timeout_error(
+            "request or response body error: timed out"
+        ));
+    }
+
+    #[test]
+    fn a_normal_api_error_still_gets_its_retry() {
+        // Un 500 o un rechazo del proveedor sí merece el reintento: no debe confundirse
+        // con un timeout ni con estar sin internet.
+        let err = "API request failed with status 500: internal server error";
+        assert!(!is_timeout_error(err));
+        assert!(!is_offline_error(err));
+    }
 
     #[test]
     fn blank_transcription_is_detected() {

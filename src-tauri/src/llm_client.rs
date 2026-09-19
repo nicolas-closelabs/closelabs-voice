@@ -3,6 +3,7 @@ use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE, REFERER, USER_AGENT};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::time::Duration;
 
 #[derive(Debug, Serialize)]
 struct ChatMessage {
@@ -96,11 +97,23 @@ fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<Header
     Ok(headers)
 }
 
+/// Tiempo máximo para abrir la conexión. Sin internet, el refine se rinde rápido y el médico
+/// recibe el texto crudo en vez de quedarse mirando el overlay.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
+
+/// Tiempo máximo del refine completo. Normalmente tarda 1-4 s; medido contra proveedores reales,
+/// bajo ráfaga aparece un rezagado ocasional que se va a ~38 s. Sin tope, ese rezagado CONGELA el
+/// dictado: la petición no tenía ningún timeout y el médico se quedaba esperando sin salida.
+/// A los 15 s preferimos pegar el texto sin pulir: mal puntuado se arregla; esperar no.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
+
 /// Create an HTTP client with provider-specific headers
 fn create_client(provider: &PostProcessProvider, api_key: &str) -> Result<reqwest::Client, String> {
     let headers = build_headers(provider, api_key)?;
     reqwest::Client::builder()
         .default_headers(headers)
+        .connect_timeout(CONNECT_TIMEOUT)
+        .timeout(REQUEST_TIMEOUT)
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {}", e))
 }
