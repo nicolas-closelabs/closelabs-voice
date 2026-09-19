@@ -843,7 +843,10 @@ fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
 
 pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
-pub fn get_default_settings() -> AppSettings {
+/// Atajos que trae el producto de fábrica. Vive aparte de [`get_default_settings`] porque las
+/// migraciones lo necesitan para añadir los atajos que una versión nueva agregue, sin pisar los
+/// que el usuario ya cambió.
+fn default_bindings() -> HashMap<String, ShortcutBinding> {
     #[cfg(target_os = "windows")]
     let default_shortcut = "ctrl+space";
     #[cfg(target_os = "macos")]
@@ -913,6 +916,12 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: "escape".to_string(),
         },
     );
+
+    bindings
+}
+
+pub fn get_default_settings() -> AppSettings {
+    let bindings = default_bindings();
 
     AppSettings {
         settings_schema_version: default_settings_schema_version(),
@@ -1009,19 +1018,9 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
         match serde_json::from_value::<AppSettings>(settings_value.clone()) {
             Ok(mut settings) => {
                 debug!("Found existing settings: {:?}", settings);
-                let default_settings = get_default_settings();
-                let mut updated = apply_settings_migrations(&mut settings, &settings_value);
-
-                // Merge default bindings into existing settings
-                for (key, value) in default_settings.bindings {
-                    if let std::collections::hash_map::Entry::Vacant(entry) =
-                        settings.bindings.entry(key)
-                    {
-                        debug!("Adding missing binding: {}", entry.key());
-                        entry.insert(value);
-                        updated = true;
-                    }
-                }
+                // Los atajos que falten los añade `apply_settings_migrations`, para que también
+                // converjan por la ruta de `get_settings`.
+                let updated = apply_settings_migrations(&mut settings, &settings_value);
 
                 if updated {
                     debug!("Settings updated with defaults/migrations");
@@ -1144,6 +1143,26 @@ fn apply_settings_migrations(
         updated = true;
     }
 
+    // Atajos que existen en el código pero no en los ajustes guardados (una versión nueva añadió
+    // uno). Antes esto solo pasaba en `load_or_create_app_settings`, que lo llama el sistema de
+    // atajos; si ese no arrancaba —por ejemplo en macOS sin permiso de Accesibilidad— el atajo
+    // nuevo nunca aparecía, ni siquiera en la pantalla de Configuración. Aquí converge siempre.
+    updated |= merge_missing_bindings(settings);
+
+    updated
+}
+
+/// Añade los atajos por defecto que falten, sin tocar los que el usuario ya personalizó.
+/// Devuelve `true` si añadió alguno. Es idempotente: a la segunda pasada no hace nada.
+fn merge_missing_bindings(settings: &mut AppSettings) -> bool {
+    let mut updated = false;
+    for (key, value) in default_bindings() {
+        if let std::collections::hash_map::Entry::Vacant(entry) = settings.bindings.entry(key) {
+            debug!("Adding missing binding: {}", entry.key());
+            entry.insert(value);
+            updated = true;
+        }
+    }
     updated
 }
 
@@ -1182,6 +1201,42 @@ pub fn get_recording_retention_period(app: &AppHandle) -> RecordingRetentionPeri
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn migrations_add_bindings_that_a_new_version_introduced() {
+        // Simula a alguien que viene de una versión anterior: tiene los atajos viejos guardados
+        // y "reprocesar" todavía no existía.
+        let mut settings = get_default_settings();
+        settings.bindings.remove("reprocess_last");
+        let stored = serde_json::to_value(&settings).unwrap();
+
+        assert!(
+            apply_settings_migrations(&mut settings, &stored),
+            "debe reportar que cambió algo"
+        );
+        assert!(
+            settings.bindings.contains_key("reprocess_last"),
+            "el atajo nuevo debe quedar disponible tras actualizar"
+        );
+    }
+
+    #[test]
+    fn migrations_never_overwrite_a_shortcut_the_user_changed() {
+        let mut settings = get_default_settings();
+        settings
+            .bindings
+            .get_mut("transcribe")
+            .unwrap()
+            .current_binding = "ctrl+alt+d".to_string();
+        let stored = serde_json::to_value(&settings).unwrap();
+
+        apply_settings_migrations(&mut settings, &stored);
+
+        assert_eq!(
+            settings.bindings["transcribe"].current_binding, "ctrl+alt+d",
+            "el atajo que el médico personalizó no se toca"
+        );
+    }
 
     #[test]
     fn default_settings_disable_auto_submit() {
