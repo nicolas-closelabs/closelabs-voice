@@ -413,3 +413,16 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# CloseLabs Voice — funciones del proxy.
+#
+# `verify_jwt = false` porque en la Fase 1 NO hay cuentas de usuario: la identidad es el
+# dispositivo, y la comprobación la hace nuestro propio código (`_shared/auth.ts`) con el token
+# que la app recibió al registrarse. Dejar el JWT activo obligaría a mandar además la llave
+# anónima de Supabase, que no aporta seguridad —viaja dentro de la app igual— y solo añade otra
+# credencial que mantener. En la Fase 2, cuando exista el médico, la sesión se monta encima.
+[functions.register]
+verify_jwt = false
+
+[functions.format]
+verify_jwt = false

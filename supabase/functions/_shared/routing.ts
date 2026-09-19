@@ -1,0 +1,134 @@
+// CloseLabs Voice — a qué proveedor va cada petición.
+//
+// Esta es la razón de ser de toda la Fase 1. Hoy el proveedor está escrito dentro del programa
+// instalado: cambiarlo obliga a recompilar y reinstalar en el computador de cada médico. Aquí es
+// una fila en `app_config`, así que el día que Groq nos cierre la puerta o se caiga, se edita esa
+// fila y TODAS las instalaciones obedecen en el siguiente dictado.
+
+import { serviceClient } from "./db.ts";
+
+export type Kind = "transcribe" | "format";
+
+export interface Route {
+  provider: string;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  /** Solo para formatear: 'low' | 'medium' | 'high'. Ver nota en la migración. */
+  reasoningEffort: string | null;
+  /**
+   * Solo para transcribir. ⚠️ Medido el 2026-09-19: el Whisper turbo de DeepInfra DEVUELVE LA
+   * TRANSCRIPCIÓN VACÍA cuando la pista de vocabulario pasa de ~150 caracteres, y con pistas
+   * medianas la TRUNCA EN SILENCIO — media historia clínica sin que el médico se entere. Por eso
+   * es un dato por proveedor: si es `false`, la pista NO se manda, aunque el médico tenga
+   * diccionario. Perder la ayuda del diccionario es malo; perder medio dictado es inaceptable.
+   */
+  supportsTranscribePrompt: boolean;
+  dailyQuota: number;
+}
+
+export interface AppConfig {
+  minSupportedVersion: string;
+  blockedMessage: string;
+  downloadUrl: string;
+  tutorialUrl: string | null;
+}
+
+/**
+ * El ruteo se guarda en memoria durante `CACHE_MS`. Son dos consultas que, desde el borde hasta
+ * São Paulo, costaban cientos de milisegundos en CADA dictado, para leer algo que cambia una vez
+ * cada varios meses.
+ *
+ * El precio de la caché es la demora en obedecer: cambiar de proveedor en `app_config` tarda
+ * hasta un minuto en llegar a todas las instancias. Es un intercambio deliberado — un minuto es
+ * nada comparado con las horas que tomaba antes, cuando había que recompilar y reinstalar.
+ */
+const CACHE_MS = 60_000;
+let cache: { at: number; cfg: RoutingConfig } | null = null;
+
+interface RoutingConfig {
+  transcribeProvider: string;
+  formatProvider: string;
+  dailyQuota: number;
+  providers: Record<string, ProviderRow>;
+}
+
+interface ProviderRow {
+  name: string;
+  base_url: string;
+  api_key_env: string;
+  transcribe_model: string | null;
+  format_model: string | null;
+  format_reasoning_effort: string | null;
+  supports_transcribe_prompt: boolean;
+  enabled: boolean;
+}
+
+async function routingConfig(): Promise<RoutingConfig> {
+  if (cache && Date.now() - cache.at < CACHE_MS) return cache.cfg;
+
+  const db = serviceClient();
+  const [cfgRes, provRes] = await Promise.all([
+    db.from("app_config").select("transcribe_provider, format_provider, daily_quota").single(),
+    db.from("providers").select(
+      "name, base_url, api_key_env, transcribe_model, format_model, format_reasoning_effort, supports_transcribe_prompt, enabled",
+    ),
+  ]);
+  if (cfgRes.error || !cfgRes.data) throw new Error("no se pudo leer app_config");
+  if (provRes.error || !provRes.data) throw new Error("no se pudieron leer los proveedores");
+
+  const providers: Record<string, ProviderRow> = {};
+  for (const p of provRes.data as ProviderRow[]) providers[p.name] = p;
+
+  const cfg: RoutingConfig = {
+    transcribeProvider: cfgRes.data.transcribe_provider,
+    formatProvider: cfgRes.data.format_provider,
+    dailyQuota: cfgRes.data.daily_quota,
+    providers,
+  };
+  cache = { at: Date.now(), cfg };
+  return cfg;
+}
+
+/** Resuelve el proveedor vigente para `kind`, con su llave sacada de los secretos. */
+export async function resolveRoute(kind: Kind): Promise<Route> {
+  const cfg = await routingConfig();
+  const name = kind === "transcribe" ? cfg.transcribeProvider : cfg.formatProvider;
+
+  const p = cfg.providers[name];
+  if (!p) throw new Error(`proveedor '${name}' no existe`);
+  if (!p.enabled) throw new Error(`proveedor '${name}' está deshabilitado`);
+
+  // La llave nunca está en la base: solo el NOMBRE del secreto que la guarda.
+  const apiKey = Deno.env.get(p.api_key_env);
+  if (!apiKey) throw new Error(`falta el secreto ${p.api_key_env}`);
+
+  const model = kind === "transcribe" ? p.transcribe_model : p.format_model;
+  if (!model) throw new Error(`'${name}' no tiene modelo para ${kind}`);
+
+  return {
+    provider: p.name,
+    baseUrl: p.base_url.replace(/\/+$/, ""),
+    apiKey,
+    model,
+    reasoningEffort: p.format_reasoning_effort,
+    supportsTranscribePrompt: p.supports_transcribe_prompt,
+    dailyQuota: cfg.dailyQuota,
+  };
+}
+
+/** Configuración que la app consulta al arrancar (versión mínima, URLs). */
+export async function loadAppConfig(): Promise<AppConfig> {
+  const db = serviceClient();
+  const { data, error } = await db
+    .from("app_config")
+    .select("min_supported_version, blocked_message, download_url, tutorial_url")
+    .single();
+  if (error || !data) throw new Error("no se pudo leer app_config");
+  return {
+    minSupportedVersion: data.min_supported_version,
+    blockedMessage: data.blocked_message,
+    downloadUrl: data.download_url,
+    tutorialUrl: data.tutorial_url,
+  };
+}
