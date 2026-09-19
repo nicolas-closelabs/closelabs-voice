@@ -21,7 +21,6 @@ use flacenc::bitsink::ByteSink;
 use flacenc::component::BitRepr;
 use flacenc::error::Verify;
 use flacenc::source::MemSource;
-use log::warn;
 
 const IN_RATE: usize = 16_000; // sample rate de nuestro grabador (mono f32)
 

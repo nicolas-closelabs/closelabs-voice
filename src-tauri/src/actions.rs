@@ -76,7 +76,16 @@ fn is_blank_transcription(transcription: &str) -> bool {
 /// online). Devuelve `Some(texto)` si funciona; `None` para que el llamador caiga al
 /// Parakeet LOCAL (offline, sin key, deshabilitado, o cualquier error de red/API).
 /// ⚠️ En esta ruta el audio SÍ sale del equipo hacia Groq.
-async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Option<String> {
+/// Dicta en la NUBE a través de nuestro proxy: transcribe y limpia en una sola llamada.
+///
+/// Devuelve `None` para que el llamador caiga al Parakeet LOCAL (sin internet, sin token, la
+/// nube deshabilitada o cualquier error). ⚠️ En esta ruta el audio del paciente SÍ sale del
+/// equipo, pasando por nuestro servidor, que no lo guarda.
+async fn try_cloud_dictation(
+    app: &tauri::AppHandle,
+    samples: &[f32],
+    post_process: bool,
+) -> Option<crate::proxy::Dictation> {
     let settings = get_settings(app);
     if !settings.cloud_transcription_enabled {
         return None;
@@ -102,50 +111,58 @@ async fn try_cloud_transcription(app: &tauri::AppHandle, samples: &[f32]) -> Opt
         None => debug!("Sin pista de vocabulario (diccionario vacío)"),
     }
 
-    match crate::proxy::transcribe_with_fallback(
+    // El prompt del formateador viaja en la misma llamada. Si no hay que limpiar, no se manda y
+    // el servidor solo transcribe.
+    let system_prompt = if post_process {
+        settings
+            .post_process_selected_prompt_id
+            .as_deref()
+            .and_then(|id| settings.post_process_prompts.iter().find(|p| p.id == id))
+            .map(|p| build_system_prompt(&p.prompt))
+    } else {
+        None
+    };
+
+    match crate::proxy::dictate_with_fallback(
         app,
         samples,
         language.as_deref(),
         prompt.as_deref(),
+        system_prompt.as_deref(),
     )
     .await
     {
-        Ok(text) if is_whisper_hallucination(&text, prompt.as_deref()) => {
+        Ok(d) if is_whisper_hallucination(&d.raw, prompt.as_deref()) => {
             // Era silencio o ruido: no hay nada que pegar, y tampoco tiene sentido reintentar
             // con Parakeet sobre el mismo audio.
             warn!("Transcripción descartada: alucinación conocida de Whisper");
-            Some(String::new())
+            Some(crate::proxy::Dictation {
+                raw: String::new(),
+                formatted: None,
+            })
         }
-        Ok(text) if !text.trim().is_empty() => {
-            debug!(
-                "Transcripción en la nube OK: {} chars",
-                text.chars().count()
-            );
-            // El diccionario se aplica TAMBIÉN al texto de la nube: la pista solo *sugiere* el
-            // vocabulario, y en pruebas reales devolvía "Icetotrinoina" teniendo "Isotetrinoina"
-            // en el diccionario. Esta corrección por similitud es local y determinista.
-            let corrected = apply_custom_words(
-                &text,
-                &settings.custom_words,
-                settings.word_correction_threshold,
-            );
-            if corrected != text {
-                debug!("Diccionario aplicado al texto de la nube");
-            }
-            Some(filter_transcription_output(
-                &corrected,
+        Ok(d) if !d.raw.trim().is_empty() => {
+            debug!("Dictado en la nube OK: {} chars", d.raw.chars().count());
+            // Las muletillas se filtran localmente; el diccionario va al FINAL del flujo
+            // (ver la nota en `process_transcription_output`).
+            let raw = filter_transcription_output(
+                &d.raw,
                 &settings.app_language,
                 &settings.custom_filler_words,
-            ))
+            );
+            Some(crate::proxy::Dictation {
+                raw,
+                formatted: d.formatted,
+            })
         }
         Ok(_) => {
-            warn!("Transcripción en la nube vacía; fallback a Parakeet local");
+            warn!("Dictado en la nube vacío; fallback a Parakeet local");
             None
         }
         Err(code) => {
             // `code` es nuestro vocabulario cerrado ('rate_limit', 'quota_exceeded', 'timeout'…),
             // nunca el mensaje del proveedor, que podría traer eco del dictado.
-            warn!("Transcripción en la nube falló ({code}); fallback a Parakeet local");
+            warn!("Dictado en la nube falló ({code}); fallback a Parakeet local");
             None
         }
     }
@@ -313,6 +330,9 @@ pub(crate) async fn process_transcription_output(
     app: &AppHandle,
     transcription: &str,
     post_process: bool,
+    // `pre_formatted`: texto ya limpio que vino en la MISMA llamada que la transcripción. Si
+    // está, no se vuelve a llamar al formateador — esa segunda llamada costaba ~1,8 s por dictado.
+    pre_formatted: Option<String>,
 ) -> ProcessedTranscription {
     let settings = get_settings(app);
     let mut final_text = transcription.to_string();
@@ -329,18 +349,29 @@ pub(crate) async fn process_transcription_output(
         final_text = converted_text;
     }
 
-    // Emails y URLs dictados ("juan arroba gmail punto com" → juan@gmail.com). Es local y
-    // determinista, así que también arregla el texto cuando no hay internet para el refine.
-    let normalized =
-        crate::audio_toolkit::spoken_text::normalize_spoken_emails_and_urls(&final_text);
-    if normalized != final_text {
-        debug!("Emails/URLs dictados normalizados");
-        final_text = normalized;
-    }
-
     if post_process {
-        if let Some(processed_text) = post_process_transcription(app, &settings, &final_text).await
-        {
+        let cleaned = match pre_formatted {
+            Some(text) => {
+                // Las guardas corren igual: protegen al médico del modelo, y da lo mismo si el
+                // texto vino de una llamada o de dos.
+                let prompt_template = settings
+                    .post_process_selected_prompt_id
+                    .as_deref()
+                    .and_then(|id| settings.post_process_prompts.iter().find(|p| p.id == id))
+                    .map(|p| p.prompt.clone())
+                    .unwrap_or_default();
+                let text = strip_invisible_chars(&text);
+                match crate::refine_guard::rejection_reason(&final_text, &text, &prompt_template) {
+                    Some(reason) => {
+                        warn!("Refine descartado ({reason}); se usa la transcripción cruda");
+                        None
+                    }
+                    None => Some(text),
+                }
+            }
+            None => post_process_transcription(app, &settings, &final_text).await,
+        };
+        if let Some(processed_text) = cleaned {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
@@ -354,6 +385,17 @@ pub(crate) async fn process_transcription_output(
                 }
             }
         }
+    }
+
+    // Emails y URLs dictados ("juan arroba gmail punto com" → juan@gmail.com). Va DESPUÉS del
+    // formateo, no antes: es local y determinista, así que sirve de red tanto cuando el modelo no
+    // reconstruyó la arroba como cuando no hubo internet para llamarlo siquiera.
+    let normalized =
+        crate::audio_toolkit::spoken_text::normalize_spoken_emails_and_urls(&final_text);
+    if normalized != final_text {
+        debug!("Emails/URLs dictados normalizados");
+        final_text = normalized;
+        post_processed_text = Some(final_text.clone());
     }
 
     // ⚠️ EL DICCIONARIO VA AL FINAL, Y ESO ES DELIBERADO.
@@ -622,13 +664,19 @@ impl ShortcutAction for TranscribeAction {
                     // pega el texto. Si había un stream en vivo, se finaliza y se usa su
                     // texto; si no, se transcribe el lote de samples.
                     let transcription_time = Instant::now();
+                    // La nube devuelve el texto crudo Y el limpio en una sola llamada; se guarda
+                    // el limpio para no volver a pedirlo (ahorra ~1,8 s por dictado).
+                    let mut cloud_formatted: Option<String> = None;
                     let transcription_result = match tm.finalize_stream() {
                         Ok(Some(text)) if !text.trim().is_empty() => Ok(text),
-                        // CloseLabs Voice: transcripción HÍBRIDA (como Aztec). Online →
-                        // Groq Whisper (nube, mejor en texto largo); si falla u offline →
-                        // Parakeet local. ⚠️ En la ruta de nube el audio SÍ sale a Groq.
-                        Ok(_) => match try_cloud_transcription(&ah, &samples).await {
-                            Some(text) => Ok(text),
+                        // CloseLabs Voice: dictado HÍBRIDO (como Aztec). Online → nuestro proxy;
+                        // si falla u offline → Parakeet local. ⚠️ En la ruta de nube el audio SÍ
+                        // sale del equipo.
+                        Ok(_) => match try_cloud_dictation(&ah, &samples, post_process).await {
+                            Some(d) => {
+                                cloud_formatted = d.formatted;
+                                Ok(d.raw)
+                            }
                             None => tm.transcribe(samples).map(|text| {
                                 if is_whisper_hallucination(&text, None) {
                                     warn!("Transcripción local descartada: alucinación conocida");
@@ -664,9 +712,13 @@ impl ShortcutAction for TranscribeAction {
                                     show_processing_overlay(&ah);
                                 }
                             }
-                            let processed =
-                                process_transcription_output(&ah, &transcription, post_process)
-                                    .await;
+                            let processed = process_transcription_output(
+                                &ah,
+                                &transcription,
+                                post_process,
+                                cloud_formatted,
+                            )
+                            .await;
 
                             if rm.was_cancelled_since(cancel_generation) {
                                 debug!("Transcription operation cancelled before paste");
@@ -811,8 +863,19 @@ impl ShortcutAction for ReprocessLastAction {
             show_processing_overlay(&app);
 
             let started = Instant::now();
-            let transcription = match try_cloud_transcription(&app, &samples).await {
-                Some(text) => Some(text),
+            let settings_now = get_settings(&app);
+            let mut cloud_formatted: Option<String> = None;
+            let transcription = match try_cloud_dictation(
+                &app,
+                &samples,
+                settings_now.post_process_enabled,
+            )
+            .await
+            {
+                Some(d) => {
+                    cloud_formatted = d.formatted;
+                    Some(d.raw)
+                }
                 None => {
                     let tm = app.state::<Arc<TranscriptionManager>>();
                     match tm.transcribe(samples) {
@@ -832,10 +895,14 @@ impl ShortcutAction for ReprocessLastAction {
 
             let final_text = match transcription {
                 Some(text) if !text.trim().is_empty() => {
-                    let settings = get_settings(&app);
-                    process_transcription_output(&app, &text, settings.post_process_enabled)
-                        .await
-                        .final_text
+                    process_transcription_output(
+                        &app,
+                        &text,
+                        settings_now.post_process_enabled,
+                        cloud_formatted,
+                    )
+                    .await
+                    .final_text
                 }
                 _ => String::new(),
             };

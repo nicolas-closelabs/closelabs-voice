@@ -53,6 +53,25 @@ struct TranscribeResponse {
     prompt_sent: bool,
 }
 
+/// Respuesta de `/dictate`: transcripción y limpieza en una sola llamada.
+#[derive(Deserialize)]
+struct DictateResponse {
+    text_raw: String,
+    /// `None` si el formateo falló. No es motivo de error: se pega el texto crudo, que es
+    /// infinitamente mejor que perder el dictado.
+    text_final: Option<String>,
+    #[serde(default)]
+    prompt_sent: bool,
+    #[serde(default)]
+    provider: String,
+}
+
+/// Lo que devuelve un dictado completo.
+pub struct Dictation {
+    pub raw: String,
+    pub formatted: Option<String>,
+}
+
 #[derive(Deserialize)]
 struct FormatResponse {
     text: String,
@@ -197,6 +216,86 @@ pub async fn transcribe(
     Ok(body.text)
 }
 
+/// Transcribe y limpia en UNA sola llamada.
+///
+/// Medido el 2026-09-19: hacerlo en dos llamadas costaba **1,84 s más** por dictado. No era solo
+/// el viaje de ida y vuelta extra — cada llamada pagaba además su propio arranque de la función
+/// en el servidor.
+///
+/// Esto solo fue posible después de decidir que el diccionario del médico se aplica al FINAL:
+/// antes corría en el cliente entre las dos llamadas, y eso impedía unirlas.
+pub async fn dictate(
+    app: &AppHandle,
+    audio: Vec<u8>,
+    filename: &str,
+    mime: &str,
+    audio_seconds: f32,
+    language: Option<&str>,
+    prompt: Option<&str>,
+    system_prompt: Option<&str>,
+) -> Result<Dictation, String> {
+    let settings = get_settings(app);
+    let token = ensure_device_token(app)
+        .await
+        .ok_or_else(|| "sin token de instalación".to_string())?;
+
+    let part = reqwest::multipart::Part::bytes(audio)
+        .file_name(filename.to_string())
+        .mime_str(mime)
+        .map_err(|e| format!("mime: {e}"))?;
+    let mut form = reqwest::multipart::Form::new()
+        .part("file", part)
+        .text("audio_seconds", audio_seconds.to_string());
+    if let Some(lang) = language {
+        form = form.text("language", lang.to_string());
+    }
+    if let Some(p) = prompt {
+        form = form.text("prompt", p.to_string());
+    }
+    if let Some(sp) = system_prompt {
+        form = form.text("system_prompt", sp.to_string());
+    }
+
+    // El tope cubre transcripción + limpieza, así que se le suma el presupuesto del formateo.
+    let timeout = request_timeout(audio_seconds) + FORMAT_TIMEOUT;
+    let url = format!("{}/dictate", settings.proxy_base_url.trim_end_matches('/'));
+
+    let res = client(timeout)?
+        .post(&url)
+        .bearer_auth(&token)
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|e| format!("proxy dictate: {e}"))?;
+
+    if !res.status().is_success() {
+        return Err(error_code(res).await);
+    }
+
+    let body: DictateResponse = res
+        .json()
+        .await
+        .map_err(|e| format!("respuesta del proxy: {e}"))?;
+
+    if prompt.is_some() && !body.prompt_sent {
+        debug!("El proveedor actual no acepta la pista del diccionario; se transcribió sin ella");
+    }
+    debug!(
+        "Dictado vía proxy OK ({} chars crudos, limpieza {}, proveedor {})",
+        body.text_raw.chars().count(),
+        if body.text_final.is_some() {
+            "sí"
+        } else {
+            "no"
+        },
+        body.provider
+    );
+    Ok(Dictation {
+        raw: body.text_raw,
+        formatted: body.text_final,
+    })
+}
+
 /// Limpia `text` con el formateador que decida el servidor.
 pub async fn format(app: &AppHandle, text: &str, system_prompt: &str) -> Result<String, String> {
     let settings = get_settings(app);
@@ -229,19 +328,20 @@ pub async fn format(app: &AppHandle, text: &str, system_prompt: &str) -> Result<
     Ok(body.text)
 }
 
-/// Transcribe `samples` subiendo **Opus** y, si el proveedor rechazara el formato, bajando a
-/// FLAC y luego a WAV. Es la misma cadena de antes: comprimir agresivamente para el internet
-/// lento de las clínicas, con WAV al final como garantía de no quedar peor que sin comprimir.
+/// Dicta `samples` subiendo **Opus** y, si el proveedor rechazara el formato, bajando a FLAC y
+/// luego a WAV. Es la misma cadena de siempre: comprimir agresivamente para el internet lento de
+/// las clínicas, con WAV al final como garantía de no quedar peor que sin comprimir.
 ///
 /// Solo se baja un escalón si la codificación falla o si el servidor responde `bad_request`.
 /// Cualquier otro error (sin red, cupo agotado, el proveedor caído) corta la cadena: no tiene
 /// sentido resubir el mismo audio por un problema que no es de formato.
-pub async fn transcribe_with_fallback(
+pub async fn dictate_with_fallback(
     app: &AppHandle,
     samples: &[f32],
     language: Option<&str>,
     prompt: Option<&str>,
-) -> Result<String, String> {
+    system_prompt: Option<&str>,
+) -> Result<Dictation, String> {
     const IN_RATE: usize = 16_000;
     let audio_seconds = samples.len() as f32 / IN_RATE as f32;
 
@@ -256,7 +356,7 @@ pub async fn transcribe_with_fallback(
             }
         };
         let kb = bytes.len() / 1024;
-        match transcribe(
+        match dictate(
             app,
             bytes,
             format.filename,
@@ -264,12 +364,13 @@ pub async fn transcribe_with_fallback(
             audio_seconds,
             language,
             prompt,
+            system_prompt,
         )
         .await
         {
-            Ok(text) => {
-                info!("Transcripción vía proxy en {} OK ({kb} KB)", format.label);
-                return Ok(text);
+            Ok(d) => {
+                info!("Dictado vía proxy en {} OK ({kb} KB)", format.label);
+                return Ok(d);
             }
             Err(code) if code == "bad_request" => {
                 warn!(
