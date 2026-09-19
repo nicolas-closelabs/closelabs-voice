@@ -639,5 +639,11 @@
   "overlay": {
     "transcribing": "Transcribing...",
     "processing": "Processing..."
+  },
+  "blocked": {
+    "title": "You need to update CloseLabs Voice",
+    "download": "Download the new version",
+    "updateTitle": "A new version is available",
+    "updateBody": "Version {{version}} is out. You can keep dictating in the meantime."
   }
 }

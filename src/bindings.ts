@@ -474,6 +474,9 @@ async startOverlayDrag() : Promise<void> {
 async stopOverlayDrag() : Promise<void> {
     await TAURI_INVOKE("stop_overlay_drag");
 },
+async getBlockState() : Promise<BlockState | null> {
+    return await TAURI_INVOKE("get_block_state");
+},
 async cancelOperation() : Promise<void> {
     await TAURI_INVOKE("cancel_operation");
 },
@@ -908,6 +911,7 @@ overlay_style?: OverlayStyle }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { transcribe: string[]; ort: string[]; gpu_devices: GpuDeviceOption[] }
+export type BlockState = { message: string; download_url: string }
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }

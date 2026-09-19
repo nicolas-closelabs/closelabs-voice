@@ -432,3 +432,6 @@ verify_jwt = false
 
 [functions.dictate]
 verify_jwt = false
+
+[functions.config]
+verify_jwt = false

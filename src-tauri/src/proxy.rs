@@ -41,18 +41,6 @@ struct RegisterResponse {
     token: String,
 }
 
-#[derive(Deserialize)]
-struct TranscribeResponse {
-    text: String,
-    #[serde(default)]
-    provider: String,
-    /// El servidor avisa si mandó la pista del diccionario. Si es `false` teniendo diccionario,
-    /// significa que el proveedor de turno no la soporta — útil para no adivinar cuando un
-    /// médico reporta que "el diccionario no funciona".
-    #[serde(default)]
-    prompt_sent: bool,
-}
-
 /// Respuesta de `/dictate`: transcripción y limpieza en una sola llamada.
 #[derive(Deserialize)]
 struct DictateResponse {
@@ -144,76 +132,6 @@ pub async fn ensure_device_token(app: &AppHandle) -> Option<String> {
     write_settings(app, updated);
     info!("Instalación registrada en el proxy de CloseLabs");
     Some(token)
-}
-
-/// Transcribe `audio` (ya codificado) con el proveedor que decida el servidor.
-///
-/// `filename` y `mime` describen el formato, para que el cliente conserve su cadena de respaldo
-/// Opus → FLAC → WAV: si el proveedor de turno rechazara el formato, el servidor devuelve
-/// `bad_request` y el llamador prueba el siguiente.
-pub async fn transcribe(
-    app: &AppHandle,
-    audio: Vec<u8>,
-    filename: &str,
-    mime: &str,
-    audio_seconds: f32,
-    language: Option<&str>,
-    prompt: Option<&str>,
-) -> Result<String, String> {
-    let settings = get_settings(app);
-    let token = ensure_device_token(app)
-        .await
-        .ok_or_else(|| "sin token de instalación".to_string())?;
-
-    let part = reqwest::multipart::Part::bytes(audio)
-        .file_name(filename.to_string())
-        .mime_str(mime)
-        .map_err(|e| format!("mime: {e}"))?;
-    let mut form = reqwest::multipart::Form::new()
-        .part("file", part)
-        .text("audio_seconds", audio_seconds.to_string());
-    if let Some(lang) = language {
-        form = form.text("language", lang.to_string());
-    }
-    if let Some(p) = prompt {
-        form = form.text("prompt", p.to_string());
-    }
-
-    let timeout = request_timeout(audio_seconds);
-    let url = format!(
-        "{}/transcribe",
-        settings.proxy_base_url.trim_end_matches('/')
-    );
-
-    let res = client(timeout)?
-        .post(&url)
-        .bearer_auth(&token)
-        .multipart(form)
-        .send()
-        .await
-        .map_err(|e| format!("proxy transcribe: {e}"))?;
-
-    if !res.status().is_success() {
-        return Err(error_code(res).await);
-    }
-
-    let body: TranscribeResponse = res
-        .json()
-        .await
-        .map_err(|e| format!("respuesta del proxy: {e}"))?;
-
-    if prompt.is_some() && !body.prompt_sent {
-        // No es un error: el proveedor de turno no soporta pistas y el servidor la descartó a
-        // propósito para no arriesgar una transcripción truncada. Queda en el log por si alguien
-        // reporta que el diccionario dejó de corregir.
-        debug!("El proveedor actual no acepta la pista del diccionario; se transcribió sin ella");
-    }
-    debug!(
-        "Transcripción vía proxy OK ({} chars, proveedor {})",
-        body.text.chars().count(),
-        body.provider
-    );
-    Ok(body.text)
 }
 
 /// Transcribe y limpia en UNA sola llamada.

@@ -1,64 +1,25 @@
+//! Cliente HTTP hacia un proveedor de LLM compatible con OpenAI.
+//!
+//! ⚠️ De este módulo ya NO sale ningún dictado. El formateo vive en nuestro proxy
+//! (`proxy::format` → Edge Function `/format`), que es quien guarda la llave y decide a qué
+//! proveedor llamar. Lo único que queda aquí es **listar los modelos disponibles**, para el
+//! selector de Ajustes cuando alguien configura su propio proveedor a mano.
+//!
+//! El cliente de chat que vivía aquí se borró a propósito, y no solo por estar sin usar: era una
+//! segunda ruta directa al proveedor, con su propia llave. Dejarla ahí invitaba a reconectarla y
+//! reintroducir justo lo que la Fase 1 vino a quitar.
+
 use crate::settings::PostProcessProvider;
 use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE, REFERER, USER_AGENT};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::time::Duration;
 
-#[derive(Debug, Serialize)]
-struct ChatMessage {
-    role: String,
-    content: String,
-}
+/// Tiempo máximo para abrir la conexión. Sin internet, rendirse rápido en vez de colgar la UI.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 
-#[derive(Debug, Serialize)]
-struct JsonSchema {
-    name: String,
-    strict: bool,
-    schema: Value,
-}
-
-#[derive(Debug, Serialize)]
-struct ResponseFormat {
-    #[serde(rename = "type")]
-    format_type: String,
-    json_schema: JsonSchema,
-}
-
-#[derive(Debug, Serialize, Clone, Default)]
-pub struct ReasoningConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub effort: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub exclude: Option<bool>,
-}
-
-#[derive(Debug, Serialize)]
-struct ChatCompletionRequest {
-    model: String,
-    messages: Vec<ChatMessage>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    response_format: Option<ResponseFormat>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    reasoning_effort: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    reasoning: Option<ReasoningConfig>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChatCompletionResponse {
-    choices: Vec<ChatChoice>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChatChoice {
-    message: ChatMessageResponse,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChatMessageResponse {
-    content: Option<String>,
-}
+/// Tope de la petición completa. Listar modelos es una llamada chica; si tarda más que esto, el
+/// proveedor tiene un problema y la lista puede esperar.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 
 /// Build headers for API requests based on provider type
 fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<HeaderMap, String> {
@@ -66,10 +27,7 @@ fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<Header
 
     // Common headers
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    headers.insert(
-        REFERER,
-        HeaderValue::from_static("https://www.closelabs.co"),
-    );
+    headers.insert(REFERER, HeaderValue::from_static("https://www.closelabs.co"));
     headers.insert(
         USER_AGENT,
         HeaderValue::from_static("CloseLabsVoice/1.0 (+https://www.closelabs.co)"),
@@ -97,16 +55,6 @@ fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<Header
     Ok(headers)
 }
 
-/// Tiempo máximo para abrir la conexión. Sin internet, el refine se rinde rápido y el médico
-/// recibe el texto crudo en vez de quedarse mirando el overlay.
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
-
-/// Tiempo máximo del refine completo. Normalmente tarda 1-4 s; medido contra proveedores reales,
-/// bajo ráfaga aparece un rezagado ocasional que se va a ~38 s. Sin tope, ese rezagado CONGELA el
-/// dictado: la petición no tenía ningún timeout y el médico se quedaba esperando sin salida.
-/// A los 15 s preferimos pegar el texto sin pulir: mal puntuado se arregla; esperar no.
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
-
 /// Create an HTTP client with provider-specific headers
 fn create_client(provider: &PostProcessProvider, api_key: &str) -> Result<reqwest::Client, String> {
     let headers = build_headers(provider, api_key)?;
@@ -116,118 +64,6 @@ fn create_client(provider: &PostProcessProvider, api_key: &str) -> Result<reqwes
         .timeout(REQUEST_TIMEOUT)
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {}", e))
-}
-
-/// Send a chat completion request to an OpenAI-compatible API
-/// Returns Ok(Some(content)) on success, Ok(None) if response has no content,
-/// or Err on actual errors (HTTP, parsing, etc.)
-pub async fn send_chat_completion(
-    provider: &PostProcessProvider,
-    api_key: String,
-    model: &str,
-    prompt: String,
-    reasoning_effort: Option<String>,
-    reasoning: Option<ReasoningConfig>,
-) -> Result<Option<String>, String> {
-    send_chat_completion_with_schema(
-        provider,
-        api_key,
-        model,
-        prompt,
-        None,
-        None,
-        reasoning_effort,
-        reasoning,
-    )
-    .await
-}
-
-/// Send a chat completion request with structured output support
-/// When json_schema is provided, uses structured outputs mode
-/// system_prompt is used as the system message when provided
-/// reasoning_effort sets the OpenAI-style top-level field (e.g., "none", "low", "medium", "high")
-/// reasoning sets the OpenRouter-style nested object (effort + exclude)
-#[allow(clippy::too_many_arguments)]
-pub async fn send_chat_completion_with_schema(
-    provider: &PostProcessProvider,
-    api_key: String,
-    model: &str,
-    user_content: String,
-    system_prompt: Option<String>,
-    json_schema: Option<Value>,
-    reasoning_effort: Option<String>,
-    reasoning: Option<ReasoningConfig>,
-) -> Result<Option<String>, String> {
-    let base_url = provider.base_url.trim_end_matches('/');
-    let url = format!("{}/chat/completions", base_url);
-
-    debug!("Sending chat completion request to: {}", url);
-
-    let client = create_client(provider, &api_key)?;
-
-    // Build messages vector
-    let mut messages = Vec::new();
-
-    // Add system prompt if provided
-    if let Some(system) = system_prompt {
-        messages.push(ChatMessage {
-            role: "system".to_string(),
-            content: system,
-        });
-    }
-
-    // Add user message
-    messages.push(ChatMessage {
-        role: "user".to_string(),
-        content: user_content,
-    });
-
-    // Build response_format if schema is provided
-    let response_format = json_schema.map(|schema| ResponseFormat {
-        format_type: "json_schema".to_string(),
-        json_schema: JsonSchema {
-            name: "transcription_output".to_string(),
-            strict: true,
-            schema,
-        },
-    });
-
-    let request_body = ChatCompletionRequest {
-        model: model.to_string(),
-        messages,
-        response_format,
-        reasoning_effort,
-        reasoning,
-    };
-
-    let response = client
-        .post(&url)
-        .json(&request_body)
-        .send()
-        .await
-        .map_err(|e| format!("HTTP request failed: {}", e))?;
-
-    let status = response.status();
-    if !status.is_success() {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Failed to read error response".to_string());
-        return Err(format!(
-            "API request failed with status {}: {}",
-            status, error_text
-        ));
-    }
-
-    let completion: ChatCompletionResponse = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse API response: {}", e))?;
-
-    Ok(completion
-        .choices
-        .first()
-        .and_then(|choice| choice.message.content.clone()))
 }
 
 /// Fetch available models from an OpenAI-compatible API

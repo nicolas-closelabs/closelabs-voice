@@ -3,6 +3,7 @@ import { toast, Toaster } from "sonner";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { platform } from "@tauri-apps/plugin-os";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   checkAccessibilityPermission,
   checkMicrophonePermission,
@@ -12,6 +13,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ModelStateEvent, RecordingErrorEvent } from "./lib/types/events";
 import "./App.css";
 import AccessibilityPermissions from "./components/AccessibilityPermissions";
+import VersionBlocked from "./components/VersionBlocked";
 import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
@@ -46,6 +48,11 @@ function App() {
     (state) => state.refreshOutputDevices,
   );
   const hasCompletedPostOnboardingInit = useRef(false);
+  // Configuración remota: `null` mientras esta versión siga siendo válida.
+  const [blocked, setBlocked] = useState<{
+    message: string;
+    download_url: string;
+  } | null>(null);
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -146,6 +153,57 @@ function App() {
         description: t("errors.reprocessUnavailable"),
       });
     });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
+  // Configuración remota (`remote_config.rs`). Dos caminos porque hay una carrera real: el
+  // backend consulta al servidor a los pocos segundos de arrancar y puede responder ANTES de que
+  // esta ventana exista, y entonces el evento se emitiría sin que nadie lo escuche. Por eso
+  // también se pregunta el estado al montar.
+  useEffect(() => {
+    commands
+      .getBlockState()
+      .then((state) => setBlocked(state ?? null))
+      .catch((e) => console.warn("No se pudo leer el estado de bloqueo:", e));
+
+    const unBlocked = listen<{ message: string; download_url: string }>(
+      "app-blocked",
+      async (event) => {
+        setBlocked(event.payload);
+        // Si la app estaba oculta en la bandeja, el médico solo vería que el atajo dejó de
+        // responder. La ventana tiene que aparecer para explicar por qué.
+        const win = getCurrentWindow();
+        await win.show();
+        await win.setFocus();
+      },
+    );
+    const unUnblocked = listen("app-unblocked", () => setBlocked(null));
+
+    return () => {
+      unBlocked.then((fn) => fn());
+      unUnblocked.then((fn) => fn());
+    };
+  }, []);
+
+  // Hay una versión nueva, pero esta sigue sirviendo: se avisa y se puede cerrar el aviso.
+  useEffect(() => {
+    const unlisten = listen<{ latest_version: string; download_url: string }>(
+      "update-available",
+      (event) => {
+        toast.info(t("blocked.updateTitle"), {
+          description: t("blocked.updateBody", {
+            version: event.payload.latest_version,
+          }),
+          duration: 15000,
+          action: {
+            label: t("blocked.download"),
+            onClick: () => void openUrl(event.payload.download_url),
+          },
+        });
+      },
+    );
     return () => {
       unlisten.then((fn) => fn());
     };
@@ -309,6 +367,17 @@ function App() {
     // Transition to main app - user has started a download
     setOnboardingStep("done");
   };
+
+  // El bloqueo manda sobre todo lo demás, incluido el onboarding: si esta versión no debe
+  // usarse, tampoco debe poder configurarse ni descargar un modelo de 550 MB.
+  if (blocked) {
+    return (
+      <VersionBlocked
+        message={blocked.message}
+        downloadUrl={blocked.download_url}
+      />
+    );
+  }
 
   // Still checking onboarding status
   if (onboardingStep === null) {

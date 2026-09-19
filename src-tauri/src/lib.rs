@@ -19,6 +19,7 @@ mod overlay;
 pub mod portable;
 mod proxy;
 mod refine_guard;
+mod remote_config;
 mod settings;
 mod shortcut;
 mod signal_handle;
@@ -602,6 +603,7 @@ pub fn run(cli_args: CliArgs) {
             show_main_window_command,
             overlay::start_overlay_drag,
             overlay::stop_overlay_drag,
+            remote_config::get_block_state,
             commands::cancel_operation,
             commands::is_portable,
             commands::get_app_dir_path,
@@ -860,6 +862,10 @@ pub fn run(cli_args: CliArgs) {
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
 
             initialize_core_logic(&app_handle);
+
+            // Pregunta al servidor si esta versión sigue siendo válida. Corre en segundo
+            // plano y falla hacia abierto: si el servidor no responde, no pasa nada.
+            remote_config::start(app_handle.clone());
 
             // Populate the overlay-enabled cache from initial settings so the
             // audio path (overlay::emit_levels, called ~24 Hz during recording)

@@ -639,5 +639,11 @@
   },
   "whatsNew": {
     "title": "Nuevo en CloseLabs Voice v{{version}}"
+  },
+  "blocked": {
+    "title": "Necesitas actualizar CloseLabs Voice",
+    "download": "Descargar la versión nueva",
+    "updateTitle": "Hay una versión nueva",
+    "updateBody": "La versión {{version}} ya está disponible. Puedes seguir dictando mientras tanto."
   }
 }

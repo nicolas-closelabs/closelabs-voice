@@ -107,3 +107,15 @@ export async function authorize(req: Request): Promise<AuthResult> {
 export function touchDevice(deviceId: string): void {
   rpcDetached("touch_device", { p_device_id: deviceId });
 }
+
+/**
+ * Igual, pero partiendo del hash del token, para `/config`, que no autoriza a nadie y por tanto
+ * no conoce el `device_id`. Aprovecha para refrescar la versión instalada: es el único momento
+ * en que la app nos dice qué versión está corriendo de verdad.
+ */
+export function touchDeviceByHash(tokenHash: string, appVersion?: string | null): void {
+  rpcDetached("touch_device_by_hash", {
+    p_token_hash: tokenHash,
+    p_app_version: appVersion ?? null,
+  });
+}

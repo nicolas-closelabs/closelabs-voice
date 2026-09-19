@@ -29,6 +29,8 @@ export interface Route {
 
 export interface AppConfig {
   minSupportedVersion: string;
+  /** Última publicada. Nulo = no avisar. Ver la migración: es el aviso suave, no el bloqueo. */
+  latestVersion: string | null;
   blockedMessage: string;
   downloadUrl: string;
   tutorialUrl: string | null;
@@ -124,14 +126,19 @@ export async function resolveRoute(kind: Kind): Promise<Route> {
 export async function loadAppConfig(): Promise<AppConfig> {
   const rows = await select<{
     min_supported_version: string;
+    latest_version: string | null;
     blocked_message: string;
     download_url: string;
     tutorial_url: string | null;
-  }>("app_config", "select=min_supported_version,blocked_message,download_url,tutorial_url&limit=1");
+  }>(
+    "app_config",
+    "select=min_supported_version,latest_version,blocked_message,download_url,tutorial_url&limit=1",
+  );
   const data = rows[0];
   if (!data) throw new Error("no se pudo leer app_config");
   return {
     minSupportedVersion: data.min_supported_version,
+    latestVersion: data.latest_version,
     blockedMessage: data.blocked_message,
     downloadUrl: data.download_url,
     tutorialUrl: data.tutorial_url,

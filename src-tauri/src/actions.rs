@@ -433,8 +433,27 @@ pub(crate) async fn process_transcription_output(
     }
 }
 
+/// `true` si el servidor marcó esta versión como inutilizable (ver `remote_config.rs`).
+///
+/// Se comprueba ANTES de grabar, no después: si se dejara hablar al médico para descartar el
+/// audio al final, habría perdido el dictado entero y la consulta con él. Se reemite el aviso en
+/// cada intento porque es la única señal de por qué el atajo dejó de responder.
+fn blocked_by_server(app: &AppHandle) -> bool {
+    match crate::remote_config::block_state() {
+        Some(state) => {
+            warn!("Dictado detenido: el servidor marcó esta versión como no soportada");
+            let _ = app.emit("app-blocked", state);
+            true
+        }
+        None => false,
+    }
+}
+
 impl ShortcutAction for TranscribeAction {
     fn start(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
+        if blocked_by_server(app) {
+            return;
+        }
         let start_time = Instant::now();
         debug!("TranscribeAction::start called for binding: {}", binding_id);
 
@@ -832,6 +851,9 @@ impl Drop for ReprocessGuard {
 
 impl ShortcutAction for ReprocessLastAction {
     fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        if blocked_by_server(app) {
+            return;
+        }
         // Con una grabación en curso no se reprocesa: si no, al soltar la tecla se pegarían dos
         // textos distintos en el mismo campo.
         if app
