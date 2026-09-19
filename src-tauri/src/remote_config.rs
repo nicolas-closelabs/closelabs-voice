@@ -100,7 +100,7 @@ async fn check(app: &AppHandle) {
     // El token es opcional aquí y no autoriza nada; sirve para que el servidor sepa qué versión
     // corre esta instalación. Si todavía no hay token, la consulta se hace igual: no vamos a
     // registrar una instalación solo para preguntar la versión.
-    let token = settings.device_token.clone().filter(|t| !t.is_empty());
+    let token = settings.device_token.get().filter(|t| !t.is_empty()).cloned();
     let url = format!(
         "{}/config?app_version={current}",
         settings.proxy_base_url.trim_end_matches('/')

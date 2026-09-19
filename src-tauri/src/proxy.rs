@@ -96,7 +96,7 @@ async fn error_code(res: reqwest::Response) -> String {
 /// motor local, igual que hacía antes cuando fallaba la nube.
 pub async fn ensure_device_token(app: &AppHandle) -> Option<String> {
     let settings = get_settings(app);
-    if let Some(token) = settings.device_token.clone().filter(|t| !t.is_empty()) {
+    if let Some(token) = settings.device_token.get().filter(|t| !t.is_empty()).cloned() {
         return Some(token);
     }
 
@@ -128,7 +128,7 @@ pub async fn ensure_device_token(app: &AppHandle) -> Option<String> {
     // Se guarda de inmediato: si esto se pierde, la próxima vez se registra otra instalación y
     // las estadísticas contarían dos donde hay una.
     let mut updated = get_settings(app);
-    updated.device_token = Some(token.clone());
+    updated.device_token.set(Some(token.clone()));
     write_settings(app, updated);
     info!("Instalación registrada en el proxy de CloseLabs");
     Some(token)

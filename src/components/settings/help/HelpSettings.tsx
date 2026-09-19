@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ChevronDown, LifeBuoy } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { ReportProblem } from "./ReportProblem";
 
 interface QA {
   q: string;
@@ -78,6 +79,8 @@ export const HelpSettings: React.FC = () => {
           />
         ))}
       </div>
+
+      <ReportProblem />
 
       <div className="rounded-2xl border border-brand-border bg-brand-surface p-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

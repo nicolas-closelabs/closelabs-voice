@@ -17,6 +17,7 @@ mod managers;
 mod opus_encode;
 mod overlay;
 pub mod portable;
+mod problem_report;
 mod proxy;
 mod refine_guard;
 mod remote_config;
@@ -604,6 +605,7 @@ pub fn run(cli_args: CliArgs) {
             overlay::start_overlay_drag,
             overlay::stop_overlay_drag,
             remote_config::get_block_state,
+            problem_report::send_problem_report,
             commands::cancel_operation,
             commands::is_portable,
             commands::get_app_dir_path,

@@ -308,6 +308,35 @@ impl fmt::Debug for SecretMap {
     }
 }
 
+/// Un secreto suelto que **nunca** debe aparecer en un log.
+///
+/// Hermano de [`SecretMap`], para los valores que no viven en un mapa. Existe porque
+/// `AppSettings` se vuelca entero con `{:?}` en cada arranque: cualquier `String` que se añada
+/// ahí termina escrito en disco sin que nadie lo note.
+#[derive(Clone, Serialize, Deserialize, Type, Default)]
+#[serde(transparent)]
+pub struct Secret(Option<String>);
+
+impl fmt::Debug for Secret {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.0 {
+            Some(v) if !v.is_empty() => f.write_str("Some(\"[REDACTED]\")"),
+            Some(_) => f.write_str("Some(\"\")"),
+            None => f.write_str("None"),
+        }
+    }
+}
+
+impl Secret {
+    pub fn get(&self) -> Option<&String> {
+        self.0.as_ref()
+    }
+
+    pub fn set(&mut self, value: Option<String>) {
+        self.0 = value;
+    }
+}
+
 impl std::ops::Deref for SecretMap {
     type Target = HashMap<String, String>;
     fn deref(&self) -> &Self::Target {
@@ -406,8 +435,13 @@ pub struct AppSettings {
     pub proxy_base_url: String,
     // Token de ESTA instalación, recibido al registrarse en el primer arranque. No identifica al
     // médico (las cuentas son la Fase 2): solo permite revocar una instalación concreta.
+    //
+    // ⚠️ Va envuelto en `Secret` porque ES UNA CREDENCIAL. Como `Option<String>` pelado se
+    // escribía EN CLARO en el log en cada arranque (`Found existing settings: {:?}`), y ese
+    // archivo es justo el que un médico nos manda al reportar un problema — o le reenvía a
+    // quien sea. Cualquiera con ese token podía dictar a nuestra cuenta hasta revocarlo.
     #[serde(default)]
-    pub device_token: Option<String>,
+    pub device_token: Secret,
     #[serde(default = "default_post_process_provider_id")]
     pub post_process_provider_id: String,
     #[serde(default = "default_post_process_providers")]
@@ -965,7 +999,7 @@ pub fn get_default_settings() -> AppSettings {
         post_process_enabled: default_post_process_enabled(),
         cloud_transcription_enabled: default_cloud_transcription_enabled(),
         proxy_base_url: default_proxy_base_url(),
-        device_token: None,
+        device_token: Secret::default(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
         post_process_api_keys: default_post_process_api_keys(),
@@ -1368,6 +1402,28 @@ mod tests {
             TranscribeAcceleratorSetting::Gpu
         );
         assert_eq!(settings.transcribe_gpu_device, 2);
+    }
+
+    #[test]
+    fn debug_output_redacts_the_device_token() {
+        // Regresión real: `device_token` entró como `Option<String>` pelado y quedó escrito EN
+        // CLARO en el log en cada arranque, porque `AppSettings` se vuelca entero con `{:?}`.
+        // Ese archivo es justo el que un médico nos manda al reportar un problema, así que el
+        // token —una credencial que sirve para dictar a nuestra cuenta— viajaba con él.
+        let mut settings = get_default_settings();
+        settings
+            .device_token
+            .set(Some("45hY6EmN9aeDi3xXU_jC6NB_token".to_string()));
+
+        let debug_output = format!("{:?}", settings);
+
+        assert!(!debug_output.contains("45hY6EmN9aeDi3xXU_jC6NB_token"));
+        assert!(debug_output.contains("[REDACTED]"));
+        // Y el token sigue siendo legible para quien sí lo necesita.
+        assert_eq!(
+            settings.device_token.get().map(String::as_str),
+            Some("45hY6EmN9aeDi3xXU_jC6NB_token")
+        );
     }
 
     #[test]

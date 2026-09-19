@@ -525,13 +525,17 @@ jobs:
 
       # FASE 1 (sin firma): NO se define ninguna variable APPLE_* — si se define
       # APPLE_CERTIFICATE aunque sea vacía, Tauri intenta importar un cert vacío
-      # y falla (security import). Solo Groq key. El .app queda ad-hoc (como local).
+      # y falla (security import). El .app queda ad-hoc (como local).
+      #
+      # ⚠️ Ya NO se inyecta CLOSELABS_GROQ_API_KEY, y eso es el punto de la Fase 1: el
+      # instalador no lleva ninguna llave de proveedor. La app habla con nuestro proxy,
+      # que es quien las guarda. Si alguien la vuelve a poner aquí, la está devolviendo
+      # al binario, de donde es extraíble.
       - name: Build with Tauri (unsigned)
         if: ${{ !inputs.sign-binaries }}
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CLOSELABS_GROQ_API_KEY: ${{ secrets.CLOSELABS_GROQ_API_KEY }}
         with:
           tagName: ${{ inputs.release-id && format('v{0}', steps.get-version.outputs.version) || '' }}
           releaseName: ${{ inputs.release-id && format('v{0}', steps.get-version.outputs.version) || '' }}
@@ -545,7 +549,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CLOSELABS_GROQ_API_KEY: ${{ secrets.CLOSELABS_GROQ_API_KEY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}

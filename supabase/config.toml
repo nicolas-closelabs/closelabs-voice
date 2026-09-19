@@ -435,3 +435,6 @@ verify_jwt = false
 
 [functions.config]
 verify_jwt = false
+
+[functions.report]
+verify_jwt = false
