@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     const code = isAbort(e) ? "timeout" : "provider_error";
-    void logUsage({
+    logUsage({
       deviceId, kind: "transcribe", provider: route.provider, model: route.model,
       audioSeconds, latencyMs: performance.now() - started, ok: false, errorCode: code,
     });
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
   if (!res.ok) {
     const code = classifyProviderError(res.status);
     console.error(`proveedor ${route.provider} devolvió ${res.status} al transcribir`);
-    void logUsage({
+    logUsage({
       deviceId, kind: "transcribe", provider: route.provider, model: route.model,
       audioSeconds, latencyMs: performance.now() - started, ok: false, errorCode: code,
     });
@@ -103,14 +103,14 @@ Deno.serve(async (req) => {
   if (!text) {
     // Puede ser silencio de verdad, o el fallo silencioso de un proveedor que no soporta la
     // pista. Se anota como vacío para poder distinguir los dos casos en la tabla de uso.
-    void logUsage({
+    logUsage({
       deviceId, kind: "transcribe", provider: route.provider, model: route.model,
       audioSeconds, latencyMs, ok: false, errorCode: "empty_result",
     });
     return fail("empty_result", 502);
   }
 
-  void logUsage({
+  logUsage({
     deviceId, kind: "transcribe", provider: route.provider, model: route.model,
     audioSeconds, latencyMs, ok: true,
   });

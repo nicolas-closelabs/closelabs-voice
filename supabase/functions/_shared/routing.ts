@@ -5,7 +5,7 @@
 // una fila en `app_config`, así que el día que Groq nos cierre la puerta o se caiga, se edita esa
 // fila y TODAS las instalaciones obedecen en el siguiente dictado.
 
-import { serviceClient } from "./db.ts";
+import { select } from "./db.ts";
 
 export type Kind = "transcribe" | "format";
 
@@ -67,23 +67,26 @@ interface ProviderRow {
 async function routingConfig(): Promise<RoutingConfig> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.cfg;
 
-  const db = serviceClient();
-  const [cfgRes, provRes] = await Promise.all([
-    db.from("app_config").select("transcribe_provider, format_provider, daily_quota").single(),
-    db.from("providers").select(
-      "name, base_url, api_key_env, transcribe_model, format_model, format_reasoning_effort, supports_transcribe_prompt, enabled",
+  const [cfgRows, provRows] = await Promise.all([
+    select<{ transcribe_provider: string; format_provider: string; daily_quota: number }>(
+      "app_config",
+      "select=transcribe_provider,format_provider,daily_quota&limit=1",
+    ),
+    select<ProviderRow>(
+      "providers",
+      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,supports_transcribe_prompt,enabled",
     ),
   ]);
-  if (cfgRes.error || !cfgRes.data) throw new Error("no se pudo leer app_config");
-  if (provRes.error || !provRes.data) throw new Error("no se pudieron leer los proveedores");
+  const row = cfgRows[0];
+  if (!row) throw new Error("no se pudo leer app_config");
 
   const providers: Record<string, ProviderRow> = {};
-  for (const p of provRes.data as ProviderRow[]) providers[p.name] = p;
+  for (const p of provRows) providers[p.name] = p;
 
   const cfg: RoutingConfig = {
-    transcribeProvider: cfgRes.data.transcribe_provider,
-    formatProvider: cfgRes.data.format_provider,
-    dailyQuota: cfgRes.data.daily_quota,
+    transcribeProvider: row.transcribe_provider,
+    formatProvider: row.format_provider,
+    dailyQuota: row.daily_quota,
     providers,
   };
   cache = { at: Date.now(), cfg };
@@ -119,12 +122,14 @@ export async function resolveRoute(kind: Kind): Promise<Route> {
 
 /** Configuración que la app consulta al arrancar (versión mínima, URLs). */
 export async function loadAppConfig(): Promise<AppConfig> {
-  const db = serviceClient();
-  const { data, error } = await db
-    .from("app_config")
-    .select("min_supported_version, blocked_message, download_url, tutorial_url")
-    .single();
-  if (error || !data) throw new Error("no se pudo leer app_config");
+  const rows = await select<{
+    min_supported_version: string;
+    blocked_message: string;
+    download_url: string;
+    tutorial_url: string | null;
+  }>("app_config", "select=min_supported_version,blocked_message,download_url,tutorial_url&limit=1");
+  const data = rows[0];
+  if (!data) throw new Error("no se pudo leer app_config");
   return {
     minSupportedVersion: data.min_supported_version,
     blockedMessage: data.blocked_message,

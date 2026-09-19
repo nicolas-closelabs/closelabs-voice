@@ -6,7 +6,7 @@
 
 import { json } from "../_shared/http.ts";
 import { hashToken, newToken } from "../_shared/auth.ts";
-import { serviceClient } from "../_shared/db.ts";
+import { insert } from "../_shared/db.ts";
 import { loadAppConfig } from "../_shared/routing.ts";
 
 Deno.serve(async (req) => {
@@ -24,22 +24,22 @@ Deno.serve(async (req) => {
   }
 
   const token = newToken();
-  const db = serviceClient();
-  const { data, error } = await db
-    .from("devices")
-    .insert({ token_hash: await hashToken(token), platform, app_version: appVersion })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    console.error("no se pudo registrar el dispositivo:", error?.message);
-    return json({ error: "register_failed" }, 500);
+  let created: { id: string } | null = null;
+  try {
+    created = await insert<{ id: string }>(
+      "devices",
+      { token_hash: await hashToken(token), platform, app_version: appVersion },
+      "id",
+    );
+  } catch (e) {
+    console.error("no se pudo registrar el dispositivo:", (e as Error).message);
   }
+  if (!created) return json({ error: "register_failed" }, 500);
 
   // Se devuelve también la configuración para que el primer arranque no necesite otra llamada.
   const config = await loadAppConfig().catch(() => null);
 
   // ⚠️ El token en claro se ve UNA sola vez, aquí. La base solo guarda su hash, así que si la app
   // lo pierde, no hay forma de recuperarlo: hay que registrarse de nuevo. Es a propósito.
-  return json({ device_id: data.id, token, config });
+  return json({ device_id: created.id, token, config });
 });

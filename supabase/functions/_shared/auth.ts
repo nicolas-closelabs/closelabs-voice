@@ -6,7 +6,7 @@
 // lo es—, sino que **se puede revocar desde el servidor** sin tocar a nadie más. Hoy, con la llave
 // de Groq incrustada, la única forma de cortar un abuso es recompilar y reinstalar en todas partes.
 
-import { serviceClient } from "./db.ts";
+import { rpc, rpcDetached } from "./db.ts";
 
 export interface Authorized {
   deviceId: string;
@@ -67,13 +67,20 @@ export async function authorize(req: Request): Promise<AuthResult> {
   const hit = authCache.get(hash);
   if (hit && Date.now() - hit.at < AUTH_CACHE_MS) return hit.result;
 
-  const db = serviceClient();
-  const { data, error } = await db
-    .rpc("authorize_device", { p_token_hash: hash })
-    .maybeSingle();
+  let data: {
+    device_id: string;
+    revoked: boolean;
+    used_today: number;
+    daily_quota: number;
+  } | null = null;
+  try {
+    data = await rpc("authorize_device", { p_token_hash: hash });
+  } catch (e) {
+    console.error("autorización:", (e as Error).message);
+  }
 
   let result: AuthResult;
-  if (error || !data || data.revoked) {
+  if (!data || data.revoked) {
     result = { ok: false, reason: "unauthorized" };
   } else if (data.used_today >= data.daily_quota) {
     result = { ok: false, reason: "quota_exceeded" };
@@ -98,7 +105,5 @@ export async function authorize(req: Request): Promise<AuthResult> {
 
 /** Marca la instalación como viva. No se espera: es estadística, no parte del dictado. */
 export function touchDevice(deviceId: string): void {
-  serviceClient()
-    .rpc("touch_device", { p_device_id: deviceId })
-    .then(() => {});
+  rpcDetached("touch_device", { p_device_id: deviceId });
 }

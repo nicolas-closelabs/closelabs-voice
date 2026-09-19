@@ -55,27 +55,39 @@ Deno.serve(async (req) => {
     return fail("provider_error", 503);
   }
 
-  const payload: Record<string, unknown> = {
-    model: route.model,
-    temperature: 0,
-    max_tokens: MAX_OUTPUT_TOKENS,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: text },
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: { name: "transcription", strict: true, schema: SCHEMA },
-    },
-  };
-  // Solo se manda si el proveedor lo aprovecha: en DeepInfra 'low' acierta igual y tarda la mitad;
-  // en Groq empeora los errores 400, por eso allá la columna va nula.
-  if (route.reasoningEffort) payload.reasoning_effort = route.reasoningEffort;
+  /**
+   * Una petición al proveedor. `strict` decide si se le exige el esquema JSON.
+   *
+   * ⚠️ Los dos modos existen por una razón medida: Groq falla de forma intermitente al cerrar el
+   * JSON (`400 Failed to validate JSON`, ~1 de cada 16 según lo medido el 2026-09-19) y devuelve
+   * el error en 2,3 s. La app tenía una ruta clásica de respaldo; al mudar el formateo aquí se
+   * perdió, y el efecto fue que un dictado real se pegó SIN puntuar. Ahora el respaldo vive en
+   * el servidor, que es donde debe estar.
+   */
+  function buildPayload(strict: boolean): Record<string, unknown> {
+    const payload: Record<string, unknown> = {
+      model: route.model,
+      temperature: 0,
+      max_tokens: MAX_OUTPUT_TOKENS,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text },
+      ],
+    };
+    if (strict) {
+      payload.response_format = {
+        type: "json_schema",
+        json_schema: { name: "transcription", strict: true, schema: SCHEMA },
+      };
+    }
+    // Solo si el proveedor lo aprovecha: en DeepInfra 'low' acierta igual y tarda la mitad; en
+    // Groq empeora los 400, por eso allá la columna va nula.
+    if (route.reasoningEffort) payload.reasoning_effort = route.reasoningEffort;
+    return payload;
+  }
 
-  const started = performance.now();
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(
+  async function callProvider(strict: boolean): Promise<Response> {
+    return await fetchWithTimeout(
       `${route.baseUrl}/chat/completions`,
       {
         method: "POST",
@@ -83,14 +95,28 @@ Deno.serve(async (req) => {
           authorization: `Bearer ${route.apiKey}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(buildPayload(strict)),
       },
       TIMEOUT_MS,
     );
+  }
+
+  const started = performance.now();
+  let strict = true;
+  let res: Response;
+  try {
+    res = await callProvider(strict);
+    // Un 400 con esquema estricto casi siempre es el proveedor incapaz de cerrar el JSON, no una
+    // petición mal armada: se repite sin esquema antes de rendirse y devolver texto crudo.
+    if (res.status === 400) {
+      console.warn(`${route.provider} no pudo generar el JSON; reintento sin esquema estricto`);
+      strict = false;
+      res = await callProvider(strict);
+    }
   } catch (e) {
     const code = isAbort(e) ? "timeout" : "provider_error";
-    void logUsage({
-      deviceId: device.id, kind: "format", provider: route.provider, model: route.model,
+    logUsage({
+      deviceId, kind: "format", provider: route.provider, model: route.model,
       latencyMs: performance.now() - started, ok: false, errorCode: code,
     });
     return fail(code, code === "timeout" ? 504 : 502);
@@ -98,36 +124,45 @@ Deno.serve(async (req) => {
 
   if (!res.ok) {
     const code = classifyProviderError(res.status);
-    // El cuerpo del error se queda en los registros de la función: puede traer eco del dictado.
+    // El cuerpo del error se queda en los registros: puede traer eco del dictado.
     console.error(`proveedor ${route.provider} devolvió ${res.status}`);
-    void logUsage({
-      deviceId: device.id, kind: "format", provider: route.provider, model: route.model,
+    logUsage({
+      deviceId, kind: "format", provider: route.provider, model: route.model,
       latencyMs: performance.now() - started, ok: false, errorCode: code,
     });
     return fail(code, res.status === 429 ? 429 : 502);
   }
 
   const body = await res.json();
-  const content = body?.choices?.[0]?.message?.content ?? "";
-  let cleaned = "";
-  try {
-    cleaned = String(JSON.parse(content).transcription ?? "");
-  } catch {
-    // Algunos proveedores fallan al cerrar el JSON. No es recuperable aquí: la app tiene su propia
-    // guarda y pega el texto crudo, que es mejor que pegar basura.
-    cleaned = "";
+  const content = String(body?.choices?.[0]?.message?.content ?? "");
+  let cleaned: string;
+  if (strict) {
+    try {
+      cleaned = String(JSON.parse(content).transcription ?? "");
+    } catch {
+      cleaned = "";
+    }
+  } else {
+    // En modo clásico el modelo responde el texto pelado. Algunos igual lo envuelven en JSON, así
+    // que se intenta desenvolver y, si no es JSON, se usa tal cual.
+    try {
+      const parsed = JSON.parse(content);
+      cleaned = typeof parsed?.transcription === "string" ? parsed.transcription : content;
+    } catch {
+      cleaned = content;
+    }
   }
 
   const latencyMs = performance.now() - started;
   if (!cleaned.trim()) {
-    void logUsage({
+    logUsage({
       deviceId: device.id, kind: "format", provider: route.provider, model: route.model,
       latencyMs, ok: false, errorCode: "empty_result",
     });
     return fail("empty_result", 502);
   }
 
-  void logUsage({
+  logUsage({
     deviceId: device.id, kind: "format", provider: route.provider, model: route.model,
     tokensIn: body?.usage?.prompt_tokens, tokensOut: body?.usage?.completion_tokens,
     latencyMs, ok: true,

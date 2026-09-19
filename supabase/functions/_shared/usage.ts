@@ -5,7 +5,7 @@
 // salió bien. Los fallos se marcan con un código corto NUESTRO, nunca con el texto que devolvió
 // el proveedor, porque las APIs suelen hacer eco de la entrada en sus mensajes de error.
 
-import { serviceClient } from "./db.ts";
+import { insertDetached } from "./db.ts";
 import type { Kind } from "./routing.ts";
 
 export interface UsageRecord {
@@ -31,9 +31,8 @@ export type ErrorCode =
   | "empty_result"
   | "quota_exceeded";
 
-export async function logUsage(u: UsageRecord): Promise<void> {
-  const db = serviceClient();
-  const { error } = await db.from("usage_events").insert({
+export function logUsage(u: UsageRecord): void {
+  insertDetached("usage_events", {
     device_id: u.deviceId,
     kind: u.kind,
     provider: u.provider,
@@ -45,7 +44,4 @@ export async function logUsage(u: UsageRecord): Promise<void> {
     ok: u.ok,
     error_code: u.errorCode ?? null,
   });
-  // Que falle el registro no debe tumbar un dictado que ya salió bien: el médico está esperando
-  // su texto, no nuestras estadísticas.
-  if (error) console.error("no se pudo registrar el uso:", error.message);
 }
