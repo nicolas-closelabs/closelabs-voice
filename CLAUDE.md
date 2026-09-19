@@ -4,9 +4,25 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.5)
+## Estado actual (v0.6.0)
 
-Compila (backend+frontend). Build macOS `.dmg` sin firma. Funciona end-to-end en Mac.
+Compila (backend+frontend). Funciona end-to-end en Mac. **Fase 1 cerrada: el instalador ya no
+contiene ninguna llave de proveedor.**
+
+> **v0.6.0 — PROXY PROPIO (Fase 1).** La app ya no habla con Groq: manda el audio y el texto a
+> nuestras Edge Functions en Supabase, que guardan las llaves y deciden el proveedor leyendo una
+> tabla. **Cambiar de proveedor es editar una fila** y todas las instalaciones obedecen en menos
+> de un minuto — antes había que recompilar y reinstalar en el computador de cada médico, y eso
+> pasó de incómodo a bloqueante cuando Groq cerró su plan de pago. Un dictado completo va en UNA
+> llamada (`/dictate`): de 7-11 s a 2-4 s. Detalle y mediciones en `BACKLOG.md`.
+>
+> Además: **configuración remota** (`remote_config.rs` + `/config`) para avisar de versiones
+> nuevas o detener una versión rota, siempre **fallando hacia abierto**; **reportar un problema**
+> desde Ayuda, con el log limpiado en la app; y tres vistas de salud sobre `usage_events`.
+>
+> ⚠️ **Regla que se aprendió a golpes:** cualquier `String` que se añada a `AppSettings` termina
+> escrito en el log (se vuelca entero con `{:?}` en cada arranque). Si es un secreto, va envuelto
+> en `Secret` o `SecretMap`. El `device_token` se escapó así y quedó en claro en los logs.
 
 > ⚠️ **v0.6 — CAMBIO DE ARQUITECTURA: transcripción HÍBRIDA (como Aztec).** Confirmamos en los
 > **logs reales de Aztec** que su calidad superior en texto largo viene de transcribir en la
@@ -260,15 +276,17 @@ Requiere toolchain: **Rust (cargo)** + **Bun** + **cmake** (lo usa `transcribe-c
 el motor GGML) + Xcode CLT (macOS). cmake se puede instalar con `brew install cmake` o
 `pip install --user cmake`.
 
-**Refine (Groq):** la API key se inyecta en build time por variable de entorno:
-```bash
-CLOSELABS_GROQ_API_KEY=gsk_... bun tauri build
+**Proveedores (desde v0.6.0):** ⚠️ **NO hay ninguna llave en el build.** `bun tauri build` a
+secas produce el instalador final. Las llaves viven en los secretos de Supabase y el proveedor se
+elige en la tabla `app_config` (columnas `transcribe_provider` / `format_provider`).
+
+Cambiar de proveedor, de modelo o avisar de una versión nueva se hace **sin recompilar**:
+```sql
+update app_config set format_provider = 'deepinfra';   -- se propaga en <1 min
+update app_config set latest_version  = '0.7.0';       -- aviso de actualización
 ```
-Si no se define, el refine queda sin key (el usuario puede pegarla en Ajustes, o se migra
-a un proxy propio cambiando el `base_url` del proveedor Groq). El modelo por defecto es
-`openai/gpt-oss-20b` y el prompt es de limpieza médica en español; ambos son configurables.
-⚠️ Groq retira modelos sin aviso: si el refine deja de limpiar, lo primero es
-`curl https://api.groq.com/openai/v1/models` y revisar que el default siga existiendo. Offline el refine cae a texto crudo automáticamente.
+⚠️ Groq retira modelos sin aviso: si el formateo deja de limpiar, mirar `errores_recientes` y
+`curl https://api.groq.com/openai/v1/models`. Sin internet, el formateo cae a texto crudo.
 
 ## Estructura / archivos clave
 
@@ -277,8 +295,15 @@ a un proxy propio cambiando el `base_url` del proveedor Groq). El modelo por def
   `show_whats_new=false`, `post_process_enabled=true` + proveedor Groq + modelo + prompt médico ES
   + `post_process_selected_prompt_id` + key embebida (`option_env!("CLOSELABS_GROQ_API_KEY")`).
 - `src-tauri/src/actions.rs` — flujo transcribir→refinar→pegar; **NO guarda `.wav` ni historial**.
-- `src-tauri/src/groq_transcribe.rs` — subida a Groq Whisper: `prompt` con el diccionario del
-  usuario, timeouts, y la cadena de formatos `UPLOAD_FORMATS` (Opus → FLAC → WAV).
+- `src-tauri/src/proxy.rs` — cliente de nuestras Edge Functions (`/register`, `/dictate`,
+  `/format`). Es el ÚNICO camino a un proveedor; la app no conoce ninguna llave.
+- `src-tauri/src/remote_config.rs` — pregunta al arrancar si esta versión sigue siendo válida.
+  Falla hacia abierto siempre; ver la nota larga en el encabezado del archivo.
+- `src-tauri/src/problem_report.rs` — "Reportar un problema": limpia el log antes de que salga
+  del computador. ⚠️ Al añadir una regla nueva ahí, la norma es: ante la duda, se borra.
+- `supabase/` — migraciones y Edge Functions. Proyecto `gdizmbuzepxnkiahbeoz` (São Paulo).
+- `src-tauri/src/groq_transcribe.rs` — ya no llama a Groq: quedan `build_whisper_prompt` (el
+  diccionario como pista) y la cadena de formatos `UPLOAD_FORMATS` (Opus → FLAC → WAV).
 - `src-tauri/src/opus_encode.rs` — codificador Ogg/Opus escrito a mano sobre `opusic-sys` + `ogg`
   (RFC 7845: `OpusHead`, `OpusTags`, granule positions a 48 kHz).
 - `src-tauri/src/catalog/catalog.json` — catálogo reducido a Parakeet v3 (default_quant `Q5_K_M`).

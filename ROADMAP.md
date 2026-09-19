@@ -69,7 +69,7 @@ cambia la URL.
   Nunca hemos visto el problema. Se retoma cuando un médico reporte la app concreta.
 - [x] Normalización de emails/URLs dictados, local y sin internet ("juan arroba gmail punto com" → juan@gmail.com).
 
-### Fase 1 — Backend base (necesita: proyecto Supabase) · ⬆️ PRIORIDAD SUBIDA 2026-09-19
+### Fase 1 — Backend base (necesita: proyecto Supabase) · ✅ COMPLETADA 2026-09-19 (v0.6.0)
 
 > El proxy dejó de ser "infraestructura ordenada" y pasó a ser **lo que destraba el crecimiento**.
 > Groq cerró su plan pago ("temporarily unavailable due to high demand") y no se puede pagar para
@@ -85,10 +85,19 @@ cambia la URL.
   proveedor en los secretos. Falta: validar suscripción (Fase 2) y proveedor de respaldo.
 - [x] App apuntando al proxy. **El instalador ya no contiene ninguna llave** (verificado en el
   binario compilado). Una migración borra la llave vieja del disco de quien actualice.
-- [ ] Config remota EN LA APP: la tabla y el endpoint ya la devuelven (`/register`); falta que la
-  app la lea al arrancar y bloquee versiones viejas.
-- [ ] "Reportar un problema" (logs anonimizados) + "Enviar comentarios…" en la bandeja.
-- [ ] Alertas de uso y errores del proveedor (BACKLOG #4).
+- [x] **Config remota EN LA APP.** Endpoint `/config`; la app pregunta al arrancar y cada 6 h.
+  Dos niveles: `latest_version` avisa y se puede cerrar; `min_supported_version` detiene el
+  dictado y muestra una pantalla sin salida. **Falla hacia abierto en todos los caminos** — sin
+  internet, servidor caído, respuesta ilegible o versión que no se entiende, no se bloquea nada.
+  Probado EN VIVO contra el proyecto real: bloqueo y aviso, los dos.
+- [x] **"Reportar un problema"** (Ayuda). Manda lo que el médico escribe + el final del log,
+  limpiado en la app: sin nombre de usuario, sin credenciales, sin correos, sin los términos del
+  diccionario (se conserva cuántos son). Verificado contra un log real de 468 KB, sin fugas.
+  ⏸️ "Enviar comentarios…" en la bandeja: no se hizo, el botón en Ayuda cubre el caso.
+- [x] **Alertas de uso y errores del proveedor** (BACKLOG #4) — la DETECCIÓN. Tres vistas sobre
+  `usage_events`: `salud_ultima_hora`, `errores_recientes`, `uso_diario`. ⚠️ Falta el CANAL: hoy
+  hay que consultarlas, nadie avisa solo. Es una decisión de CloseLabs (correo / WhatsApp /
+  ninguno) y se conecta sin tocar la app.
 
 ### Fase 2 — Usuarios y suscripción (necesita: decisión de pagos + páginas web)
 - [ ] Login, registro (nombre, teléfono con indicativo, consentimiento de datos), recuperar contraseña, confirmación por email.

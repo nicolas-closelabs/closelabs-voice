@@ -233,6 +233,74 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## ESTADO AL 2026-09-19 (cierre de la Fase 1 — v0.6.0)
+
+La Fase 1 quedó completa. Lo que se añadió en esta última vuelta:
+
+### Config remota
+`/config` + `remote_config.rs`. La app pregunta al arrancar y cada 6 h. **Probado en vivo**
+subiendo `min_supported_version` a 0.9.9 y viendo la app bloquearse, y con `latest_version` a
+0.7.0 viendo el aviso. Regla que no se negocia: **falla hacia abierto**. Un dedazo en la base no
+puede dejar mudo un consultorio, y hay una prueba dedicada a eso
+(`una_version_ilegible_nunca_bloquea`).
+
+Cómo se usa, en la práctica:
+- Sacar una versión nueva → `update app_config set latest_version='0.7.0'`. Aviso que se cierra.
+- Una versión sale rota → `min_supported_version` + `blocked_message`. El dictado se detiene.
+  ⚠️ Esto es el martillo. Quitarle el dictado a un médico a mitad de consulta se justifica solo
+  con una versión rota o peligrosa.
+- ⚠️ **Los instaladores 0.5.0 NO obedecen nada de esto**: no traen `remote_config`. Subir el
+  mínimo a 0.6.0 no les mostrará ninguna pantalla — simplemente dejarán de formatear cuando se
+  borre la llave vieja de Groq. Hay que avisarles por fuera.
+
+### Reportar un problema
+Botón en Ayuda. Lo que escribe el médico + el final del log (256 KB), limpiado EN LA APP antes de
+salir. Se quitan: nombre de usuario en rutas, credenciales (por nombre y por longitud ≥40),
+correos y los términos del diccionario —conservando cuántos son, porque ese número explica
+varios fallos reales—. Verificado contra un log de verdad de 468 KB: cero fugas, y el texto
+sigue siendo legible para diagnosticar.
+
+El log va en la tabla `problem_reports`, no en Storage. Storage rechaza la llave que el runtime
+de las Edge Functions inyecta (`sb_secret_…`) con "Invalid Compact JWS": solo acepta la JWT
+antigua, en vía de retiro. La tabla quitó el bucket, los tipos MIME, una segunda ruta de
+autenticación y el caso de "fila escrita, archivo perdido".
+
+### Detección de fallos (pendiente #4) — a medias, a propósito
+Tres vistas: `salud_ultima_hora`, `errores_recientes`, `uso_diario`.
+```sql
+select * from salud_ultima_hora;   -- ¿algo falla AHORA?
+select * from errores_recientes;   -- ¿qué falla y desde cuándo?
+select * from uso_diario;          -- ¿cuánto se está usando?
+```
+**Lo que destaparon el primer día:** 21 `rate_limit` de Groq en `format`, con **un solo
+dispositivo** dictando. El techo de 8.000 TPM del plan gratis no es teórico, y ese número es la
+mejor evidencia para el correo comercial a Groq.
+
+⚠️ **Falta el canal.** Hoy hay que consultar las vistas a mano; nadie avisa solo. Conectar un
+aviso automático (correo / WhatsApp / nada) es una decisión de CloseLabs y **no toca la app**:
+se hace con pg_cron + pg_net cuando se decida a dónde mandarlo.
+
+### Bug de seguridad encontrado y corregido
+**El token del dispositivo se escribía en claro en el log**, en cada arranque, porque
+`AppSettings` se vuelca entero con `{:?}` y `device_token` entró como `Option<String>` pelado.
+Es una credencial: sirve para dictar contra nuestra cuenta hasta que se revoque. Y el log es el
+archivo que el reporte de problemas empezaba a subir. Corregido con el tipo `Secret`
+(`debug_output_redacts_the_device_token`).
+
+La lección general, que vale para el futuro: **cualquier `String` que se añada a `AppSettings`
+termina escrito en disco.** Si es un secreto, va en `Secret` o `SecretMap`.
+
+### Código muerto retirado
+`llm_client.rs` perdió su cliente de chat y `proxy.rs` su `transcribe`. El primero importa: era
+una segunda ruta directa al proveedor, con su propia llave, e invitaba a reconectar justo lo que
+la Fase 1 vino a quitar.
+
+### Versión a 0.6.0
+Primeros instaladores **sin llave incrustada**. El número los distingue de los 0.5.0 en
+`devices.app_version` y en `min_supported_version` el día que se retiren los viejos.
+
+---
+
 ## ESTADO AL 2026-09-19 (fin de sesión — Fase 1 casi cerrada)
 
 **Rama** `feat/sprint1-paridad-aztec`, todo subido, 130 pruebas Rust en verde, TypeScript compila,
