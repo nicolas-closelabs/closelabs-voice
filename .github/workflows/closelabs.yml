@@ -12,9 +12,9 @@ name: "CloseLabs Voice — Build"
 #   y cambiar sign-binaries a true → los .dmg quedan firmados + notarizados y
 #   abren con doble clic, sin advertencias. (Windows se añade igual, aparte.)
 #
-# SECRETOS: ninguno para compilar. Desde la Fase 1 el instalador NO lleva llaves de
-#   proveedor: la app habla con nuestras Edge Functions, que son las que guardan la de
-#   Groq. El secreto CLOSELABS_GROQ_API_KEY quedó sin uso y se puede borrar del repo.
+# Secreto REQUERIDO en el repo (Settings → Secrets and variables → Actions):
+#   CLOSELABS_GROQ_API_KEY  → la API key de Groq para el refine (se inyecta en
+#                             build-time; NUNCA se commitea).
 
 on:
   workflow_dispatch: # botón manual "Run workflow" en la pestaña Actions
