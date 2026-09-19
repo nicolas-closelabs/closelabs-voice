@@ -76,10 +76,17 @@ cambia la URL.
 > subir el techo; con el proxy, el proveedor es una línea de configuración del servidor y se cambia
 > sin reinstalar en el computador de ningún médico. Ver DECISIÓN 2026-09-19 en BACKLOG.md, con el
 > disparador de los ~20 médicos y el reemplazo ya medido.
-- [ ] Migraciones SQL en `supabase/migrations/` (tablas + RLS + `app_config` + bucket `log-reports`).
-- [ ] Edge Functions `transcribe` y `format` (JWT, suscripción activa, registro de uso, key de Groq como secreto, respaldo OpenAI).
-- [ ] App: el cliente de nube apunta al proxy; la key sale del binario.
-- [ ] Config remota: versión mínima obligatoria, mensaje de bloqueo, URL de descarga y del video tutorial.
+- [x] Migraciones SQL: `app_config` (fila única), `providers`, `devices`, `usage_events`, con RLS
+  y permisos mínimos para `service_role`. Falta el bucket `log-reports` (va con el reporte de
+  problemas). Proyecto **gdizmbuzepxnkiahbeoz**, São Paulo, Postgres 17.
+- [x] Edge Functions desplegadas: `register`, `dictate` (transcribe+formatea en UNA llamada),
+  `transcribe` y `format` sueltas (para cuando transcribe el Parakeet local). Identidad por
+  DISPOSITIVO con token revocable, cuota diaria, registro de uso sin audio ni texto, llave del
+  proveedor en los secretos. Falta: validar suscripción (Fase 2) y proveedor de respaldo.
+- [x] App apuntando al proxy. **El instalador ya no contiene ninguna llave** (verificado en el
+  binario compilado). Una migración borra la llave vieja del disco de quien actualice.
+- [ ] Config remota EN LA APP: la tabla y el endpoint ya la devuelven (`/register`); falta que la
+  app la lea al arrancar y bloquee versiones viejas.
 - [ ] "Reportar un problema" (logs anonimizados) + "Enviar comentarios…" en la bandeja.
 - [ ] Alertas de uso y errores del proveedor (BACKLOG #4).
 

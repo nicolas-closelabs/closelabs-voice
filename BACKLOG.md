@@ -233,6 +233,48 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## ESTADO AL 2026-09-19 (fin de sesión — Fase 1 casi cerrada)
+
+**Rama** `feat/sprint1-paridad-aztec`, todo subido, 130 pruebas Rust en verde, TypeScript compila,
+cero código sin usar.
+
+### Lo que quedó funcionando
+- **Proxy completo y en producción** (proyecto `gdizmbuzepxnkiahbeoz`, São Paulo). La app NO
+  contiene ninguna llave: verificado con `strings` sobre el binario compilado.
+- **Un dictado = una llamada** (`/dictate`). Ciclo completo medido, de soltar la tecla a ver el
+  texto pegado: **de 7-11 s a 2-4 s**.
+- **Cambiar de proveedor es editar una fila** en `app_config`; se propaga en menos de un minuto
+  (verificado). El día que Groq conteste el correo comercial, o haya que huir a DeepInfra, no se
+  reinstala nada.
+
+### Bugs de producción encontrados y corregidos esta sesión
+1. **El diccionario borraba palabras del dictado.** "le dije a fernandinho" → "le dije
+   Fernandinho"; "cada cinco días" → "cinco días". Silencioso: el texto queda bien escrito, solo
+   que dice otra cosa. Perder un "cada" cambia una frecuencia de dosis.
+2. **El formateador no tenía timeout.** Un proveedor colgado congelaba el dictado sin salida.
+3. **Se perdió y se recuperó la ruta de respaldo del formateo:** al mudarlo al proxy, un 400 de
+   Groq dejaba el texto sin puntuar. El respaldo vive ahora en el servidor.
+4. **Los números dictados casi no se convertían** (3/12 → 17/18 tras reescribir la regla).
+5. **Los atajos nuevos no aparecían** si no se había dado el permiso de Accesibilidad.
+
+### Decisión de producto tomada
+**El término del diccionario del médico es la última palabra.** Se aplica al FINAL, después del
+formateo. Motivo: el formateador no es determinista ni con `temperature: 0` y sobrescribía el
+término del usuario de forma intermitente. Esto además desbloqueó unir las dos llamadas.
+
+### Lo que falta de la Fase 1
+- Config remota en la app (leerla al arrancar, bloquear versiones viejas). La tabla y el endpoint
+  ya existen.
+- "Reportar un problema" con logs anonimizados + bucket `log-reports`.
+- Alertas de uso (pendiente #4).
+- **Recompilar los instaladores en CI** (saldrán sin llave) y **ahí sí borrar la llave vieja de
+  Groq**. ⚠️ Mientras no se haga, los instaladores del Escritorio siguen con la llave vieja.
+
+### Acciones del cliente pendientes
+1. Correo comercial a Groq (el plan Developer lleva meses cerrado; es una fila por falta de chips).
+2. Rotar la llave de DeepInfra que quedó escrita en el chat (la de Groq ya se rotó).
+3. Volver el repo a privado cuando se acaben los builds.
+
 ## ESTADO AL 2026-09-18 (para retomar)
 
 - Rama `feat/sprint1-paridad-aztec`, commit `4d9442a`, **versión 0.5.0**. Todo verde:
