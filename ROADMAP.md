@@ -32,7 +32,11 @@ cambia la URL.
 
 ## Fases
 
-### Fase 0 — Calidad y robustez (sin infraestructura nueva) · EN CURSO (rama `feat/sprint1-paridad-aztec`)
+### Fase 0 — Calidad y robustez (sin infraestructura nueva) · ✅ COMPLETADA 2026-09-19
+
+> 18 de 19 puntos hechos; el que falta (pegado por menú) está aplazado a propósito, con el porqué
+> escrito abajo. Rama `feat/sprint1-paridad-aztec`, instaladores compilados y verificados en las
+> tres plataformas (macOS ARM, macOS Intel, Windows MSVC). Probado con dictado real en Mac.
 
 > Falta probar en la app real (micrófono + Groq) lo marcado con [x]; las pruebas unitarias pasan.
 - [x] Diccionario enviado como `prompt` a Groq Whisper (máx. ~600 caracteres).
