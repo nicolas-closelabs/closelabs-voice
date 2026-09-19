@@ -127,12 +127,85 @@
 
 17. **La salida estructurada falla de forma intermitente** (`400 Failed to generate JSON`): cuando
     pasa, se reintenta por la ruta clásica y el dictado tarda ~6 s en vez de 2,5 s.
-    **2026-09-18 — NO se pudo reproducir:** 32 llamadas con `json_schema` estricto contra la API
-    real no dieron ni un solo 400 (todos los fallos fueron 429 por el techo del pendiente #16).
+    ✅ **2026-09-19 — IDENTIFICADO: es de Groq.** Se reprodujo con el prompt de producción (1 de 16
+    llamadas) y NO aparece en DeepInfra con el mismo modelo y el mismo esquema (0 de 32). Bajarle
+    el `reasoning_effort` a Groq lo acelera a 0,68 s pero EMPEORA los 400 a 2 de 16 → descartado.
+    No es nuestro prompt: es el validador de JSON de Groq. Se va solo cuando migremos el
+    formateador (ver DECISIÓN 2026-09-19). Mientras tanto la guarda de respaldo lo cubre.
+    _Nota del 2026-09-18:_ 32 llamadas no lo habían reproducido
     La hipótesis de que el "responde ÚNICAMENTE con el texto" del prompt chocara con el JSON queda
     **sin confirmar**; se probó una variante que pedía JSON explícitamente y no hubo diferencia
     medible. Dejar la guarda de respaldo como está y volver a mirar si reaparece con el tier pago
     (puede que el 400 fuera el disfraz de un throttle).
+
+## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
+
+**Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq
+(transcripción + formateo) hasta que exista el proxy de la Fase 1.
+
+**Por qué:** el techo no aprieta (hoy 1 usuario; el límite es 1.000 formateos/día) y mover el
+proveedor ahora obliga a meter una SEGUNDA llave en el binario, un segundo secreto de CI y código
+de migración de ajustes — todo lo cual el proxy borra, porque ahí el proveedor pasa a ser una línea
+de configuración del servidor. Sería levantar un andamio para demolerlo.
+
+### ⚠️ DISPARADOR — cuándo dejar de esperar
+**Más de ~20 médicos activos antes de que el proxy esté listo.** 20 × 40 dictados/día = 800 contra
+1.000 de cupo; en 25 se revienta. Si eso pasa antes de la Fase 1, se hace el cambio de urgencia:
+está medido y validado, es cuestión de horas.
+
+### Lo medido el 2026-09-19 (para no volver a medirlo)
+
+Formateador, mismo modelo `openai/gpt-oss-20b`, 16 casos clínicos:
+
+| | Aciertos | Mediana | Errores 400 |
+|---|---|---|---|
+| Groq | 15/16 | 1,09 s | 1 de 16 |
+| DeepInfra | 16/16 | 3,57 s | 0 |
+| **DeepInfra `reasoning_effort=low`** | **16/16** | **1,66 s** | **0 de 32** |
+| Groq `reasoning_effort=low` | 14/16 | 0,68 s | **2 de 16 (peor)** |
+
+- El `400 Failed to validate JSON` del pendiente #17 **es de Groq**: 0 casos en DeepInfra.
+  Bajarle el razonamiento a Groq lo acelera mucho pero EMPEORA los 400 → descartado.
+- Costo del formateador en DeepInfra: **~$0,07/médico/mes**. El costo nunca fue el problema.
+- Ráfaga de 30 simultáneos en DeepInfra: 30/30 sin rechazos (en Groq gratis es impensable).
+
+Transcripción — **DeepInfra NO sirve para reemplazar a Groq**, por dos motivos distintos:
+
+| Motor | Con la pista del diccionario | Tiempos (12 intentos, audio de 38 s) |
+|---|---|---|
+| Groq `whisper-large-v3-turbo` | Correcto | 1,0 – 2,0 s ✅ |
+| DeepInfra `whisper-large-v3-turbo` | **Devuelve VACÍO 5 de 5** ❌ | 1,4 – 4,5 s |
+| DeepInfra `whisper-large-v3` | Correcto (y clava el correo mejor) | 1,7 s … **37,9 s** ❌ |
+
+⚠️ El turbo de DeepInfra **trunca o borra la transcripción en silencio** cuando la pista pasa de
+~150 caracteres — el médico recibe media historia clínica sin saberlo. El large-v3 sí respeta la
+pista y es más barato ($0,027/h vs $0,040/h), pero se cuelga ~1 de cada 10 veces.
+
+Otros motores de DeepInfra, descartados: `Qwen3-ASR` (no convierte números, 12-130 s),
+`Voxtral-Mini` (inestable), `Nemotron-ASR` (sin mayúsculas). **Deepgram NO está en DeepInfra**
+(empresa aparte, modelo propio).
+
+### Cómo lo hace Aztec (con ~3.000 usuarios)
+
+Los límites de Groq son **por organización, no por usuario**: sus 3.000 usuarios comparten una sola
+llave embebida. Con el plan gratis les tocaría un dictado cada tres días a cada uno → **están
+pagando**. El mensaje de Groq es *"temporarily unavailable due to high demand"*: es una FILA por
+falta de chips, no una política. Aztec va en la 1.8.2 y nosotros en la 0.5 — metieron la tarjeta
+cuando la puerta estaba abierta, y a quien ya está adentro no lo sacan.
+
+**Su ventaja es de calendario, no de ingeniería.** Su 1.8.2 trae `gpt-oss-20b`, el mismo modelo que
+elegimos por nuestra cuenta, y arrastra los `llama-3.3-70b`/`llama-3.1-8b` que Groq ya retiró.
+También traen el mensaje `Groq rate limit reached`, o sea que chocan el mismo techo.
+
+**Acción del cliente:** escribirle a Groq por el canal COMERCIAL, no por el botón de la web. El
+autoservicio está cerrado, pero una empresa con clientes pagando es otra conversación.
+
+### Por qué no vamos a un solo proveedor
+Cada uno falla distinto y ninguno avisa: Groq tiene el techo y los 400; el turbo de DeepInfra borra
+transcripciones; su large-v3 se cuelga; y **Fireworks cerró su servicio de audio en junio de 2026**.
+Si hubiéramos estado casados con Fireworks, el producto se muere de un día para otro. Lo que da
+estabilidad no es tener un proveedor, sino **poder cambiarlo sin reinstalar en cada computador** —
+que es exactamente la Fase 1.
 
 ## ESTADO AL 2026-09-18 (para retomar)
 

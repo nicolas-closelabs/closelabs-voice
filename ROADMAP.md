@@ -65,7 +65,13 @@ cambia la URL.
   Nunca hemos visto el problema. Se retoma cuando un médico reporte la app concreta.
 - [x] Normalización de emails/URLs dictados, local y sin internet ("juan arroba gmail punto com" → juan@gmail.com).
 
-### Fase 1 — Backend base (necesita: proyecto Supabase)
+### Fase 1 — Backend base (necesita: proyecto Supabase) · ⬆️ PRIORIDAD SUBIDA 2026-09-19
+
+> El proxy dejó de ser "infraestructura ordenada" y pasó a ser **lo que destraba el crecimiento**.
+> Groq cerró su plan pago ("temporarily unavailable due to high demand") y no se puede pagar para
+> subir el techo; con el proxy, el proveedor es una línea de configuración del servidor y se cambia
+> sin reinstalar en el computador de ningún médico. Ver DECISIÓN 2026-09-19 en BACKLOG.md, con el
+> disparador de los ~20 médicos y el reemplazo ya medido.
 - [ ] Migraciones SQL en `supabase/migrations/` (tablas + RLS + `app_config` + bucket `log-reports`).
 - [ ] Edge Functions `transcribe` y `format` (JWT, suscripción activa, registro de uso, key de Groq como secreto, respaldo OpenAI).
 - [ ] App: el cliente de nube apunta al proxy; la key sale del binario.
