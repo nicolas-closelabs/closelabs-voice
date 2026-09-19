@@ -207,6 +207,32 @@ Si hubiéramos estado casados con Fireworks, el producto se muere de un día par
 estabilidad no es tener un proveedor, sino **poder cambiarlo sin reinstalar en cada computador** —
 que es exactamente la Fase 1.
 
+## HALLAZGO 2026-09-19 — El formateador NO es determinista (y a veces pisa el diccionario)
+
+Medido contra la API real: el MISMO texto, por el MISMO camino, con `temperature: 0`, devolvió
+**3 salidas distintas de 4 intentos**. Las diferencias son de puntuación (un punto antes de "Mi
+correo" sí o no) y, más serio, de vocabulario: en una de las cuatro cambió `Isotetrinoina` —el
+término que el médico puso en SU diccionario— por `Isotretinoína`.
+
+Dos consecuencias:
+
+1. **El diccionario del médico no manda hoy.** Se aplica ANTES del formateo, así que el modelo
+   puede sobrescribirlo, y lo hace de forma intermitente. Un médico que añade un término y ve que
+   unas veces sale como él lo escribió y otras no, deja de confiar en la función.
+2. **No se puede validar un cambio de orden comparando unas pocas salidas.** Se intentó comparar
+   "diccionario → formateo" contra "formateo → diccionario" y daba 2 de 4 distintas; al repetir el
+   mismo camino consigo mismo salían 3 de 4 distintas. El ruido tapa la señal.
+
+**Aplicar el diccionario AL FINAL lo arreglaría**: el término del médico sería la última palabra,
+siempre. Es la decisión de producto que hay que tomar — ¿manda el médico o manda el modelo? — y de
+paso es lo que permitiría unir las dos llamadas del proxy en una (ver abajo).
+
+### Unir transcripción y formateo en una sola llamada — PENDIENTE, bloqueado por lo anterior
+Ahorraría ~500 ms por dictado (un viaje completo de ida y vuelta al servidor). Requiere que el
+diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos llamadas. No se hizo
+sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
+un susto (ver el arreglo de las palabras que se tragaba).
+
 ## ESTADO AL 2026-09-18 (para retomar)
 
 - Rama `feat/sprint1-paridad-aztec`, commit `4d9442a`, **versión 0.5.0**. Todo verde:
