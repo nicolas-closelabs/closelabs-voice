@@ -59,7 +59,10 @@ cambia la URL.
 - [x] Atajo "Reprocesar último dictado" (audio solo en RAM, tope de 5 min, nunca toca el disco).
   Por defecto ⌥⇧R en Mac y Ctrl+Shift+R en Windows. Sirve cuando se cayó el internet a mitad del
   dictado o cuando se acaba de agregar un término al diccionario.
-- [ ] Pegado por menú Edición > Pegar como respaldo (macOS).
+- ⏸️ Pegado por menú Edición > Pegar como respaldo (macOS) — **aplazado a propósito**: no hay forma
+  de detectar que el Cmd+V falló, así que sería otro interruptor en Ajustes; y hacerlo sin pedir un
+  segundo permiso exige FFI de Accesibilidad imposible de probar sin una app que falle de verdad.
+  Nunca hemos visto el problema. Se retoma cuando un médico reporte la app concreta.
 - [x] Normalización de emails/URLs dictados, local y sin internet ("juan arroba gmail punto com" → juan@gmail.com).
 
 ### Fase 1 — Backend base (necesita: proyecto Supabase)
