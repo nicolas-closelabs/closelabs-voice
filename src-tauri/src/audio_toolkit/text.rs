@@ -99,6 +99,71 @@ fn find_best_match<'a>(
 ///
 /// # Returns
 /// The corrected text with custom words applied
+/// Cuánto tiene que mejorar el encaje para justificar tragarse una palabra más. Es un margen
+/// relativo: el grupo completo debe encajar al menos un 25 % mejor que cualquiera de sus partes.
+const NGRAM_MARGIN: f64 = 0.75;
+
+/// `true` si vale la pena reemplazar el grupo entero en vez de una parte suya.
+///
+/// ⚠️ Esto existe porque el corrector se estaba TRAGANDO palabras del dictado. Pegar las palabras
+/// de un grupo apenas cambia el parecido con el término del diccionario: "a fernandinho" sin
+/// espacios se parece un 92 % a "Fernandinho", así que el corrector reemplazaba las dos y la "a"
+/// desaparecía. Lo mismo con "cada" junto al nombre de un fármaco — y perder un "cada" en una
+/// dosis cambia lo que dice la historia clínica.
+///
+/// Dos comprobaciones, una por cada extremo:
+///
+/// - **Al principio:** la primera palabra debe alinearse con el COMIENZO del término. Es lo que
+///   separa el caso bueno del malo: en "Charge B" → "ChargeBee" la primera palabra *es* el
+///   comienzo; en "a fernandinho" o "è Charge", la primera palabra no pinta nada ahí.
+/// - **Al final:** el grupo entero debe encajar apreciablemente mejor que el grupo sin su última
+///   palabra. Así "Charge B che" no se traga el "che", que no aporta nada.
+fn ngram_is_worth_it(
+    ngram_words: &[&str],
+    matched_term: &str,
+    custom_words: &[String],
+    custom_words_nospace: &[String],
+    threshold: f64,
+    full_score: f64,
+) -> bool {
+    if !first_word_starts_the_term(ngram_words[0], matched_term) {
+        return false;
+    }
+    let n = ngram_words.len();
+    let sub = &ngram_words[..n - 1];
+    let candidate = build_ngram(sub);
+    if let Some((_, sub_score)) =
+        find_best_match(&candidate, custom_words, custom_words_nospace, threshold)
+    {
+        if full_score > sub_score * NGRAM_MARGIN {
+            return false;
+        }
+    }
+    true
+}
+
+/// `true` si la primera palabra del grupo se parece al principio del término del diccionario.
+/// Se compara solo contra los primeros caracteres del término, tantos como letras tenga la
+/// palabra, con una tolerancia de una letra por cada cuatro. Para palabras de menos de cuatro
+/// letras la tolerancia es CERO, y eso es deliberado: con margen de una letra, cualquier palabra
+/// de una sola letra encajaba con cualquier comienzo, y por ahí se colaban la "a" de "a
+/// fernandinho" y la "è" de "è Charge".
+fn first_word_starts_the_term(first_word: &str, term: &str) -> bool {
+    let word: String = first_word
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(|c| c.to_lowercase())
+        .collect();
+    if word.is_empty() {
+        return false;
+    }
+    let term_chars: Vec<char> = term.chars().collect();
+    let take = word.chars().count().min(term_chars.len());
+    let head: String = term_chars[..take].iter().collect();
+    let allowed = word.chars().count() / 4;
+    levenshtein(&word, &head) <= allowed
+}
+
 pub fn apply_custom_words(text: &str, custom_words: &[String], threshold: f64) -> String {
     if custom_words.is_empty() {
         return text.to_string();
@@ -129,8 +194,32 @@ pub fn apply_custom_words(text: &str, custom_words: &[String], threshold: f64) -
             let ngram_words = &words[i..i + n];
             let ngram = build_ngram(ngram_words);
 
-            if let Some((replacement, _score)) =
+            let Some((replacement, score)) =
                 find_best_match(&ngram, custom_words, &custom_words_nospace, threshold)
+            else {
+                continue;
+            };
+
+            // ⚠️ Un grupo de varias palabras solo puede reemplazarse si encaja MEJOR que sus
+            // partes. Sin esta comprobación el corrector se traga palabras del dictado: "a
+            // fernandinho" sin espacios es "afernandinho", que se parece un 92 % a "Fernandinho",
+            // así que reemplazaba las dos y la "a" desaparecía. Igual con "cada" pegado al nombre
+            // de un fármaco — y perder un "cada" en una dosis cambia lo que dice la historia
+            // clínica. Comparando contra los subgrupos, "fernandinho" solo gana (encaja perfecto)
+            // y el grupo de dos pierde, que es lo correcto.
+            if n > 1
+                && !ngram_is_worth_it(
+                    ngram_words,
+                    &replacement.to_lowercase().replace(' ', ""),
+                    custom_words,
+                    &custom_words_nospace,
+                    threshold,
+                    score,
+                )
+            {
+                continue;
+            }
+
             {
                 // Extract punctuation from first and last words of the n-gram
                 let (prefix, _) = extract_punctuation(ngram_words[0]);
@@ -595,6 +684,38 @@ mod tests {
     }
 
     #[test]
+    /// El corrector NO puede tragarse palabras del dictado. Pegar las palabras de un grupo apenas
+    /// cambia el parecido con el término, así que sin protección "a fernandinho" se convertía en
+    /// "Fernandinho" y "cada Icetotrinoina" perdía el "cada". En una historia clínica, perder un
+    /// "cada" cambia una frecuencia de dosis.
+    #[test]
+    fn el_diccionario_no_se_traga_palabras_vecinas() {
+        let dict = vec!["Fernandinho".to_string(), "Isotetrinoina".to_string()];
+
+        let r = apply_custom_words("le dije a fernandinho que vuelva", &dict, 0.18);
+        assert_eq!(
+            r, "le dije a Fernandinho que vuelva",
+            "se perdió la preposición"
+        );
+
+        let r = apply_custom_words("tome una Icetotrinoina cada cinco dias", &dict, 0.18);
+        assert!(
+            r.contains("cada cinco dias"),
+            "se perdió la frecuencia: {r}"
+        );
+        assert!(r.contains("Isotetrinoina"), "no corrigió el fármaco: {r}");
+    }
+
+    /// La protección anterior no puede costarnos la corrección de términos que Whisper parte en
+    /// varias palabras, que es justo para lo que existe el diccionario de varias palabras.
+    #[test]
+    fn el_diccionario_sigue_uniendo_terminos_partidos() {
+        let dict = vec!["CloseLabs".to_string(), "Acetaminophen".to_string()];
+        let r = apply_custom_words("trabajo en close labs y tomo acetaminofem", &dict, 0.18);
+        assert!(r.contains("CloseLabs"), "no unió el término partido: {r}");
+        assert!(r.contains("Acetaminophen"), "no corrigió el fármaco: {r}");
+    }
+
     fn test_apply_custom_words_ngram_two_words() {
         let text = "il cui nome è Charge B, che permette";
         let custom_words = vec!["ChargeBee".to_string()];
