@@ -237,6 +237,42 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — Reinstalar ya no gasta un cupo de equipo
+
+Agujero encontrado **al explicarle al cliente** por qué la sesión se queda abierta cuando se
+llega al tope. No estaba en ninguna lista: salió de escribir el razonamiento.
+
+**Cada reinstalación gastaba un cupo.** Al reinstalar se borran los ajustes y con ellos el token
+del equipo; la app se registra como uno NUEVO y el viejo queda ocupando su lugar para siempre. Un
+médico al que le formateen el computador tres veces se quedaba bloqueado por tres fantasmas
+suyos, sin más salida que escribirnos — el peor tipo de soporte para alguien que está pagando.
+
+Antes de rechazar por tope, `link_device` intenta dos cosas, en este orden:
+
+1. **Reemplazo por reinstalación.** Mismo nombre de equipo + misma plataforma + mismo dueño = es
+   el mismo computador. Se revoca el viejo y entra el nuevo. Va primero porque es la señal más
+   precisa.
+2. **Caducidad.** Los equipos sin dar señales en `device_idle_days` (90 por defecto) sueltan su
+   cupo solos. Cubre el computador que se dañó y nunca volvió, que el punto 1 no alcanza.
+
+⚠️ **Riesgo aceptado en el punto 1:** dos máquinas distintas con el mismo nombre (los Mac salen
+todos como «MacBook-Pro»). Se reemplaza la MÁS VIEJA de las que coinciden — que es justo lo que
+haría el médico a mano, porque en la lista tampoco podría distinguirlas.
+
+Probado contra la base real, con las tres puertas:
+| Escenario | Resultado |
+|---|---|
+| Reinstala el mismo Mac | `reemplazo_reinstalacion`, sigue en 3 |
+| Equipo nuevo de verdad, 3 vivos | `tope_alcanzado` (correcto) |
+| Uno lleva 120 días sin aparecer | `vinculado_tras_liberar` |
+
+### Por qué la sesión se queda abierta al llegar al tope
+La lista de equipos y el botón de soltar viven DENTRO de la sesión. Cerrarla al rebotar dejaría
+al médico sin poder ver cuáles son ni soltar ninguno: tendría que ir físicamente a otro
+computador o escribirnos. Entra, ve y arregla; lo que no puede es dictar hasta que libere sitio.
+
+---
+
 ## 2026-09-20 — Cancelación, 3 equipos y correos de cuenta
 
 ### Cancelar no corta el servicio: lo corta el calendario
