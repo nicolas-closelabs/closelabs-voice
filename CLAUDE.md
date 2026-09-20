@@ -282,9 +282,14 @@ elige en la tabla `app_config` (columnas `transcribe_provider` / `format_provide
 
 Cambiar de proveedor, de modelo o avisar de una versión nueva se hace **sin recompilar**:
 ```sql
-update app_config set format_provider = 'deepinfra';   -- se propaga en <1 min
-update app_config set latest_version  = '0.7.0';       -- aviso de actualización
+update app_config set transcribe_provider = 'deepinfra';  -- plan B, probado 2026-09-20
+update app_config set format_provider     = 'deepinfra';
+update app_config set latest_version      = '0.7.0';      -- aviso de actualización
 ```
+Los tres proveedores (`groq`, `deepinfra`, `openai`) están medidos contra `/dictate` real y la
+tabla `providers.notes` dice qué se midió de cada uno. ⚠️ **No cambiar `transcribe_model` sin
+volver a medir la pista de vocabulario:** el turbo de DeepInfra devuelve la transcripción VACÍA
+cuando lleva pista. Detalle en `BACKLOG.md` (2026-09-20).
 ⚠️ Groq retira modelos sin aviso: si el formateo deja de limpiar, mirar `errores_recientes` y
 `curl https://api.groq.com/openai/v1/models`. Sin internet, el formateo cae a texto crudo.
 

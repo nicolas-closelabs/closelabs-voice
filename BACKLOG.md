@@ -233,6 +233,64 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — PLAN B DE TRANSCRIPCIÓN: resuelto y probado (pendiente #5)
+
+Medido con **voz real** (grabación de Nicolás, 22 s) y con el audio clínico largo (38 s), los dos
+en Opus 24 kbps, o sea exactamente lo que manda la app. Pista de vocabulario a 355 caracteres.
+
+| proveedor / modelo | pista | latencia | resultado |
+|---|---|---|---|
+| `groq / whisper-large-v3-turbo` | sí | 347–1.659 ms | completo — **referencia actual** |
+| `deepinfra / openai/whisper-large-v3` | sí | 1.117–2.800 ms | completo, **idéntico 5 de 5** |
+| `openai / gpt-4o-mini-transcribe` | sí | 1.456–2.028 ms | completo, **mejor calidad** |
+| `openai / gpt-4o-transcribe` | sí | 1.846 ms | igual que el mini, 2x el precio |
+| `openai / whisper-1` | sí | 2.087–3.591 ms | completo pero lento |
+| `deepinfra / …-v3-TURBO` | **sí** | 2.136 ms | ⚠️ **CERO CARACTERES** |
+| `deepinfra / …-v3-TURBO` | no | 861 ms | completo (493 chars) |
+
+**Las dos últimas filas son el hallazgo que sostiene todo lo demás.** El mismo audio, el mismo
+modelo: con pista devuelve vacío, sin pista devuelve una transcripción perfecta. El fallo es de
+la PISTA. Con pistas medianas no se vacía — **corta por la mitad y no avisa**. Ahora reproducido
+con voz real, ya no solo con voz sintética.
+
+### Qué cambió
+`deepinfra` estaba marcado `supports_transcribe_prompt = false`, bandera puesta a partir del
+turbo. Pero la fila usa el modelo **no-turbo**, que sí acepta la pista. O sea: teníamos un plan B
+que habría funcionado *perdiendo el diccionario del médico*, sin necesidad. Corregido.
+
+⚠️ **La bandera vive en el PROVEEDOR pero mide el MODELO.** Cambiar `transcribe_model` de
+DeepInfra al turbo, dejando la bandera en true, reactiva el fallo silencioso. Queda escrito en el
+comentario de la columna y en `providers.notes`.
+
+### Precios (consultados el 2026-09-20)
+| proveedor | por hora de audio | por médico/mes (~440 min) |
+|---|---|---|
+| DeepInfra whisper-large-v3 | $0,027 | **$0,20** |
+| Groq whisper-large-v3-turbo | $0,040 | $0,29 |
+| OpenAI gpt-4o-mini-transcribe | $0,180 | $1,32 |
+| OpenAI whisper-1 | $0,360 | $2,64 |
+
+Contra $30/mes de ingreso, **ninguno es un problema**. El plan B principal es incluso más barato
+que lo que usamos hoy. ⚠️ Groq factura **mínimo 10 segundos por petición**: los dictados cortos
+cuestan más de lo que dice la tabla.
+
+### Orden de preferencia, ya configurado en `providers`
+1. **Groq** (actual) — el más rápido.
+2. **DeepInfra `openai/whisper-large-v3`** — plan B principal. Más barato, ~1,4 s, misma familia.
+   Además **conserva la arroba** de los correos, que Groq pierde.
+3. **OpenAI `gpt-4o-mini-transcribe`** — plan B si el problema es del propio Whisper: es otra
+   arquitectura. Fue el único que oyó *"troponinas seriadas **y** se inicia"* donde los dos
+   Whisper oyeron *"**si** se inicia"* — que dice algo clínicamente distinto.
+
+### Cómo se cambia (probado en caliente, extremo a extremo)
+```sql
+update app_config set transcribe_provider = 'deepinfra';  -- o 'openai'
+```
+Tarda menos de un minuto en propagarse. Los tres se verificaron contra `/dictate` de verdad,
+con `prompt_sent = true` en los tres casos.
+
+---
+
 ## ESTADO AL 2026-09-19 (cierre de la Fase 1 — v0.6.0)
 
 La Fase 1 quedó completa. Lo que se añadió en esta última vuelta:
