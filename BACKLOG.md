@@ -237,6 +237,53 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — Cancelación, 3 equipos y correos de cuenta
+
+### Cancelar no corta el servicio: lo corta el calendario
+Decidido con el cliente: quien cancela el día 15 de una prueba de 30 dicta hasta el 30. Quien
+pagó un mes y cancela el día 10 dicta hasta el 30. **Nunca se pierde a mitad de período.**
+
+En el camino feliz Stripe ya hace lo correcto (deja `cancel_at_period_end` y mantiene el estado
+hasta que vence). Pero eso llega por webhook, y un webhook puede perderse o llegar adelantado.
+Por eso **la fecha manda sobre el estado**: mientras el período siga vivo se dicta, aunque el
+estado ya diga `canceled`. Probado en los cuatro escenarios.
+
+`max_devices` subió a **3**: consultorio, casa y portátil es el caso normal.
+
+### Correos de cuenta — BLOQUEADO en un paso del cliente
+Supabase **no deja personalizar las plantillas sin un SMTP propio** en el plan gratuito (lo
+devuelve la API al empujar: *"Email template modification is not available for free tier
+projects using the default email provider"*). Y su servicio de correo por defecto está limitado
+a unos pocos envíos por hora y solo a miembros del equipo: no sirve para testers.
+
+Hace falta configurar Resend como SMTP en el panel. Valores exactos:
+| Campo | Valor |
+|---|---|
+| Host | `smtp.resend.com` |
+| Puerto | `465` |
+| Usuario | `resend` |
+| Contraseña | la API key de Resend (la misma que ya está en los secretos) |
+| Remitente | `cuentas@closelabs.co` |
+
+Hecho eso, `supabase config push` sube las plantillas en español, que ya están escritas
+(`supabase/templates/`).
+
+### ⚠️ `config push` es peligroso con el archivo que genera `supabase init`
+La plantilla por defecto declara valores que NO son los del proyecto. Empujarla tal cual habría
+**apagado la confirmación de correo** (cualquiera se registraría con un correo ajeno), el MFA y
+la analítica de Storage, y habría dejado `site_url` en `localhost`.
+
+El procedimiento correcto, y hay que repetirlo cada vez:
+1. `supabase config diff` — lista TODO lo que cambiaría.
+2. Alinear a mano lo que solo difiere por la plantilla, dejando únicamente los cambios queridos.
+3. `config diff` otra vez y leerlo entero.
+4. Solo entonces `config push`.
+
+Lo que el archivo **no declara** se queda como está: por eso la sección de Twilio se comentó en
+vez de ponerla en false.
+
+---
+
 ## 2026-09-20 — FASE 2 arrancada: cuentas, dispositivos y suscripción (base de datos)
 
 ### Decisiones tomadas con el cliente

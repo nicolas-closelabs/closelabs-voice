@@ -1,0 +1,54 @@
+<!-- CloseLabs Voice — confirmar el correo al registrarse.
+     Estructura con tablas y estilos en línea a propósito: Outlook y varios clientes de correo
+     ignoran <div> con flex y las hojas de estilo externas. Feo de escribir, pero llega bien. -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f9;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <tr>
+    <td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;padding:40px 36px">
+        <tr>
+          <td>
+            <p style="margin:0 0 4px;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#a439ff">
+              CloseLabs Voice
+            </p>
+            <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#1a1620;line-height:1.3">
+              Confirma tu correo para empezar
+            </h1>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#56505f">
+              Ya casi. Toca el botón y tu cuenta queda activa, con
+              <strong style="color:#1a1620">30 días de prueba</strong> para que dictes sin pagar nada.
+            </p>
+
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+              <tr>
+                <td style="background:#a439ff;border-radius:10px">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none">
+                    Confirmar mi correo
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#8b8496">
+              Si el botón no funciona, copia y pega esta dirección en tu navegador:
+            </p>
+            <p style="margin:0 0 28px;font-size:12px;line-height:1.5;color:#a439ff;word-break:break-all">
+              {{ .ConfirmationURL }}
+            </p>
+
+            <hr style="border:none;border-top:1px solid #eeecf1;margin:0 0 20px">
+
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#8b8496">
+              Si no fuiste tú quien creó esta cuenta, ignora este mensaje: sin confirmar, no se
+              activa nada.
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:20px 0 0;font-size:12px;color:#8b8496">
+        CloseLabs · Dictado por voz para consultorios
+      </p>
+    </td>
+  </tr>
+</table>
