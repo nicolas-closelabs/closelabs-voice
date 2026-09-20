@@ -443,6 +443,13 @@ verify_jwt = false
 [functions.report]
 verify_jwt = false
 
+# ⚠️ La ÚNICA con verify_jwt = true: se autentica con la sesión del médico, no con el token del
+# dispositivo. La pasarela valida el JWT antes de entrar, y la función se fía de eso para leer
+# el id del usuario sin volver a verificar la firma. Si esto se pone en false, esa lectura deja
+# de ser segura.
+[functions.account]
+verify_jwt = true
+
 # La llama pg_cron con la llave de servicio, que la propia función verifica.
 [functions.alertas]
 verify_jwt = false

@@ -442,6 +442,11 @@ pub struct AppSettings {
     // quien sea. Cualquiera con ese token podía dictar a nuestra cuenta hasta revocarlo.
     #[serde(default)]
     pub device_token: Secret,
+    // Llave PÚBLICA del proyecto Supabase. No es un secreto: viaja en cada petición de cualquier
+    // cliente suyo y por sí sola no abre nada — lo que se puede ver lo deciden las políticas de
+    // la base. No tiene relación con las llaves de proveedor que la Fase 1 sacó del binario.
+    #[serde(default = "default_supabase_anon_key")]
+    pub supabase_anon_key: String,
     #[serde(default = "default_post_process_provider_id")]
     pub post_process_provider_id: String,
     #[serde(default = "default_post_process_providers")]
@@ -601,6 +606,15 @@ fn default_post_process_enabled() -> bool {
 }
 
 /// Proxy de CloseLabs. Configurable por si hace falta apuntar a un entorno de pruebas.
+/// Versión de la Política de Tratamiento de Datos que acepta quien se registra. Ante la SIC hay
+/// que poder demostrar QUÉ versión aceptó cada médico, no solo que aceptó algo. Subir este valor
+/// cuando cambie la política.
+pub const TERMS_VERSION: &str = "v1";
+
+fn default_supabase_anon_key() -> String {
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkaXptYnV6ZXB4bmtpYWhiZW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Mzg0MTksImV4cCI6MjEwNTQxNDQxOX0.bl7TlxQj050lpcCchq_yJYVy1HOa15LUtro3-gPBdbw".to_string()
+}
+
 fn default_proxy_base_url() -> String {
     "https://gdizmbuzepxnkiahbeoz.supabase.co/functions/v1".to_string()
 }
@@ -1000,6 +1014,7 @@ pub fn get_default_settings() -> AppSettings {
         cloud_transcription_enabled: default_cloud_transcription_enabled(),
         proxy_base_url: default_proxy_base_url(),
         device_token: Secret::default(),
+        supabase_anon_key: default_supabase_anon_key(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
         post_process_api_keys: default_post_process_api_keys(),

@@ -82,6 +82,12 @@ sha2 = "0.10"
 # Comparación de versiones para la configuración remota (`remote_config.rs`). Ya estaba en
 # el árbol: es la misma que usa Tauri para `package_info().version`, así que no añade peso.
 semver = "1"
+# Llavero del sistema para la sesión del médico (`auth.rs`). El token de refresco da acceso a su
+# cuenta: en un archivo de ajustes quedaría en claro. macOS usa Keychain y Windows el
+# Credential Manager, los dos del propio sistema — sin dependencias externas que compilar.
+keyring = { version = "3", features = ["apple-native", "windows-native"] }
+# Para etiquetar el equipo con un nombre que el médico reconozca al soltarlo.
+gethostname = "1"
 # Whisper-family models run through transcribe-cpp (GGUF/ggml, native backends);
 # transcribe-rs is now ONNX-only (Parakeet, Moonshine, SenseVoice, GigaAM,
 # Canary, Cohere). Per-platform backend features are added in the target tables.

@@ -1,4 +1,5 @@
 mod actions;
+mod auth;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod apple_intelligence;
 mod audio_feedback;
@@ -605,6 +606,12 @@ pub fn run(cli_args: CliArgs) {
             overlay::start_overlay_drag,
             overlay::stop_overlay_drag,
             remote_config::get_block_state,
+            auth::auth_sign_up,
+            auth::auth_sign_in,
+            auth::auth_sign_out,
+            auth::auth_send_recovery,
+            auth::account_state,
+            auth::auth_unlink_device,
             problem_report::send_problem_report,
             commands::cancel_operation,
             commands::is_portable,
