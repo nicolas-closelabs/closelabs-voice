@@ -14,9 +14,21 @@ export interface Authorized {
   dailyQuota: number;
 }
 
+/**
+ * Vocabulario CERRADO de por qué no se puede dictar. Lo decide la base en un solo sitio
+ * (`authorize_device_v2`), no el borde: así la regla de quién puede dictar está escrita una vez.
+ */
+export type DenyReason =
+  | "unauthorized"
+  | "quota_exceeded"
+  | "no_account"
+  | "subscription_missing"
+  | "trial_ended"
+  | "subscription_inactive";
+
 export type AuthResult =
   | { ok: true; device: Authorized }
-  | { ok: false; reason: "unauthorized" | "quota_exceeded" };
+  | { ok: false; reason: DenyReason };
 
 /** SHA-256 en hexadecimal. La base guarda esto, nunca el token en claro. */
 export async function hashToken(token: string): Promise<string> {
@@ -68,22 +80,27 @@ export async function authorize(req: Request): Promise<AuthResult> {
   if (hit && Date.now() - hit.at < AUTH_CACHE_MS) return hit.result;
 
   let data: {
-    device_id: string;
-    revoked: boolean;
+    device_id: string | null;
+    user_id: string | null;
     used_today: number;
     daily_quota: number;
+    allowed: boolean;
+    reason: DenyReason | null;
   } | null = null;
   try {
-    data = await rpc("authorize_device", { p_token_hash: hash });
+    // `authorize_device_v2` decide TODO: dispositivo, cupo del día, cuenta y suscripción, en una
+    // sola ida a la base. Aquí no se vuelve a juzgar nada — solo se transporta su veredicto.
+    data = await rpc("authorize_device_v2", { p_token_hash: hash });
   } catch (e) {
     console.error("autorización:", (e as Error).message);
   }
 
   let result: AuthResult;
-  if (!data || data.revoked) {
+  if (!data) {
+    // Sin respuesta de la base no se inventa un permiso.
     result = { ok: false, reason: "unauthorized" };
-  } else if (data.used_today >= data.daily_quota) {
-    result = { ok: false, reason: "quota_exceeded" };
+  } else if (!data.allowed || !data.device_id) {
+    result = { ok: false, reason: data.reason ?? "unauthorized" };
   } else {
     result = {
       ok: true,

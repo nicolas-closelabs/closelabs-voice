@@ -29,7 +29,12 @@ export type ErrorCode =
   | "bad_request"
   | "auth"
   | "empty_result"
-  | "quota_exceeded";
+  | "quota_exceeded"
+  // Estados de cuenta (Fase 2). La app los traduce a un mensaje; ninguno es culpa del médico
+  // en el sentido de "hiciste algo mal", así que todos llevan explicación en la interfaz.
+  | "no_account"
+  | "trial_ended"
+  | "subscription_inactive";
 
 export function logUsage(u: UsageRecord): void {
   insertDetached("usage_events", {

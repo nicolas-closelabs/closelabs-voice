@@ -14,6 +14,7 @@ import { ModelStateEvent, RecordingErrorEvent } from "./lib/types/events";
 import "./App.css";
 import AccessibilityPermissions from "./components/AccessibilityPermissions";
 import VersionBlocked from "./components/VersionBlocked";
+import AuthGate from "./components/auth/AuthGate";
 import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
@@ -53,6 +54,14 @@ function App() {
     message: string;
     download_url: string;
   } | null>(null);
+  // Sesión. `null` mientras se averigua; después, si hay cuenta o no.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  // Si el servidor exige cuenta. Mientras esté en false se ofrece seguir sin ella, que es lo
+  // que deja dictar a los testers que ya tienen la app puesta.
+  const [accountRequired, setAccountRequired] = useState(false);
+  // El médico eligió seguir sin cuenta EN ESTA SESIÓN. No se guarda a propósito: al reabrir se
+  // le vuelve a ofrecer entrar, sin llegar a molestarlo a mitad de trabajo.
+  const [skippedAuth, setSkippedAuth] = useState(false);
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -157,6 +166,28 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, [t]);
+
+  // Sesión del médico. Se pregunta al montar y tras entrar o salir.
+  const refreshAuth = async () => {
+    try {
+      const [estado, exige] = await Promise.all([
+        commands.accountState(),
+        commands.accountRequired(),
+      ]);
+      setAccountRequired(exige);
+      setSignedIn(estado.status === "ok" ? estado.data.signed_in : false);
+    } catch (e) {
+      // Sin red no se puede saber: se asume que no hay sesión, pero NO se exige cuenta. Un
+      // problema de conexión no puede dejar a un médico sin poder dictar sin conexión.
+      console.warn("No se pudo leer el estado de la cuenta:", e);
+      setAccountRequired(false);
+      setSignedIn(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshAuth();
+  }, []);
 
   // Configuración remota (`remote_config.rs`). Dos caminos porque hay una carrera real: el
   // backend consulta al servidor a los pocos segundos de arrancar y puede responder ANTES de que
@@ -380,8 +411,19 @@ function App() {
   }
 
   // Still checking onboarding status
-  if (onboardingStep === null) {
+  if (onboardingStep === null || signedIn === null) {
     return null;
+  }
+
+  // Sin sesión: se ofrece entrar. Mientras el servidor no exija cuenta, se puede saltar — es lo
+  // que mantiene dictando a quien ya tenía la app instalada antes de que existieran las cuentas.
+  if (!signedIn && !(skippedAuth && !accountRequired)) {
+    return (
+      <AuthGate
+        onSignedIn={() => void refreshAuth()}
+        onSkip={accountRequired ? undefined : () => setSkippedAuth(true)}
+      />
+    );
   }
 
   if (onboardingStep === "accessibility") {

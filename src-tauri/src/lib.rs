@@ -606,6 +606,7 @@ pub fn run(cli_args: CliArgs) {
             overlay::start_overlay_drag,
             overlay::stop_overlay_drag,
             remote_config::get_block_state,
+            remote_config::account_required,
             auth::auth_sign_up,
             auth::auth_sign_in,
             auth::auth_sign_out,

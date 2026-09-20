@@ -486,6 +486,85 @@ async getBlockState() : Promise<BlockState | null> {
     return await TAURI_INVOKE("get_block_state");
 },
 /**
+ * Si la app debe pedir cuenta antes de dejar dictar.
+ */
+async accountRequired() : Promise<boolean> {
+    return await TAURI_INVOKE("account_required");
+},
+/**
+ * Crea la cuenta. No inicia sesión: falta confirmar el correo.
+ */
+async authSignUp(email: string, password: string, fullName: string, phoneCountry: string, phone: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_sign_up", { email, password, fullName, phoneCountry, phone }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Entra y vincula este computador a la cuenta.
+ * 
+ * Devuelve el estado completo para que la interfaz no tenga que pedirlo aparte justo después.
+ */
+async authSignIn(email: string, password: string) : Promise<Result<EstadoCuenta, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_sign_in", { email, password }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Cierra la sesión en este equipo.
+ * 
+ * ⚠️ NO desvincula el dispositivo: el médico cierra sesión, no se muda de computador. Si
+ * desvinculara, volver a entrar consumiría un cupo nuevo cada vez.
+ */
+async authSignOut() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_sign_out") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Manda el correo para cambiar la contraseña. Devuelve `Ok` aunque el correo no exista: decir
+ * "esa cuenta no existe" le confirmaría a un desconocido quién es cliente nuestro.
+ */
+async authSendRecovery(email: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_send_recovery", { email }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Estado de la cuenta. Devuelve "desconectado" en vez de error cuando no hay sesión: para la
+ * interfaz no es un fallo, es la pantalla de entrar.
+ */
+async accountState() : Promise<Result<EstadoCuenta, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("account_state") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Suelta un equipo para hacerle sitio a otro. El servidor comprueba que sea de quien lo pide.
+ */
+async authUnlinkDevice(deviceId: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_unlink_device", { deviceId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Manda el reporte y devuelve su identificador, que se le muestra al médico.
  * 
  * Devuelve `Err` con un código de nuestro vocabulario cerrado, igual que el resto del proxy.
@@ -922,7 +1001,7 @@ settings_schema_version?: number; bindings: Partial<{ [key in string]: ShortcutB
  * upgrading from before this key existed are blanked by the migration so they
  * see the current release's notes — see `apply_settings_migrations`.
  */
-whats_new_last_seen_version?: string; selected_model?: string; onboarding_completed?: boolean; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; cloud_transcription_enabled?: boolean; proxy_base_url?: string; device_token?: Secret; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path: string | null; custom_filler_words?: string[] | null; transcribe_accelerator?: TranscribeAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; transcribe_gpu_device?: number; extra_recording_buffer_ms?: number; vad_enabled?: boolean; 
+whats_new_last_seen_version?: string; selected_model?: string; onboarding_completed?: boolean; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; cloud_transcription_enabled?: boolean; proxy_base_url?: string; device_token?: Secret; supabase_anon_key?: string; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path: string | null; custom_filler_words?: string[] | null; transcribe_accelerator?: TranscribeAcceleratorSetting; ort_accelerator?: OrtAcceleratorSetting; transcribe_gpu_device?: number; extra_recording_buffer_ms?: number; vad_enabled?: boolean; 
 /**
  * Which recording overlay to show: None / Minimal / Live. Streaming mode is
  * not gated on this — that follows model capability. Migrated from the old
@@ -946,6 +1025,17 @@ export type EngineType =
  * the file, so this one variant covers the whole transcribe-cpp family.
  */
 "TranscribeCpp" | "Parakeet" | "Moonshine" | "MoonshineStreaming" | "SenseVoice" | "GigaAM" | "Canary" | "Cohere"
+export type Equipo = { id: string; label: string | null; platform: string | null; app_version: string | null; last_seen_at: string | null; 
+/**
+ * `true` si es ESTE computador. La interfaz lo marca para que nadie se suelte a sí mismo
+ * por error creyendo que libera otro.
+ */
+is_this_device: boolean }
+export type EstadoCuenta = { signed_in: boolean; email: string | null; full_name: string | null; 
+/**
+ * `trialing`, `active`, `past_due`, `canceled`, `incomplete`.
+ */
+status: string | null; trial_ends_at: string | null; current_period_end: string | null; cancel_at_period_end: boolean; devices: Equipo[]; max_devices: number }
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }

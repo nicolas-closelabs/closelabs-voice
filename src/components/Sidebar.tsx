@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Info,
   LifeBuoy,
+  UserRound,
 } from "lucide-react";
 import Logo from "./icons/Logo";
 import {
@@ -16,6 +17,7 @@ import {
   InstructionsSettings,
   AboutSettings,
   HelpSettings,
+  AccountSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -66,6 +68,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.about",
     icon: Info,
     component: AboutSettings,
+    enabled: () => true,
+  },
+  account: {
+    labelKey: "sidebar.account",
+    icon: UserRound,
+    component: AccountSettings,
     enabled: () => true,
   },
   help: {

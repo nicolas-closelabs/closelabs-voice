@@ -21,7 +21,8 @@
     "home": "Home",
     "config": "Settings",
     "instructions": "Instructions",
-    "help": "Help"
+    "help": "Help",
+    "account": "My account"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",

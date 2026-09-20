@@ -28,6 +28,8 @@ export interface Route {
 }
 
 export interface AppConfig {
+  /** En true, la app exige cuenta para dictar en la nube. Ver la migración 20260920000003. */
+  requireAccount: boolean;
   minSupportedVersion: string;
   /** Última publicada. Nulo = no avisar. Ver la migración: es el aviso suave, no el bloqueo. */
   latestVersion: string | null;
@@ -125,6 +127,7 @@ export async function resolveRoute(kind: Kind): Promise<Route> {
 /** Configuración que la app consulta al arrancar (versión mínima, URLs). */
 export async function loadAppConfig(): Promise<AppConfig> {
   const rows = await select<{
+    require_account: boolean;
     min_supported_version: string;
     latest_version: string | null;
     blocked_message: string;
@@ -132,11 +135,12 @@ export async function loadAppConfig(): Promise<AppConfig> {
     tutorial_url: string | null;
   }>(
     "app_config",
-    "select=min_supported_version,latest_version,blocked_message,download_url,tutorial_url&limit=1",
+    "select=require_account,min_supported_version,latest_version,blocked_message,download_url,tutorial_url&limit=1",
   );
   const data = rows[0];
   if (!data) throw new Error("no se pudo leer app_config");
   return {
+    requireAccount: data.require_account,
     minSupportedVersion: data.min_supported_version,
     latestVersion: data.latest_version,
     blockedMessage: data.blocked_message,

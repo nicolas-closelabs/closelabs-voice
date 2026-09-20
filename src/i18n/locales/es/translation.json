@@ -21,7 +21,8 @@
     "home": "Inicio",
     "config": "Configuración",
     "instructions": "Instrucciones",
-    "help": "Ayuda"
+    "help": "Ayuda",
+    "account": "Mi cuenta"
   },
   "onboarding": {
     "subtitle": "Para comenzar, elige un modelo de transcripción",

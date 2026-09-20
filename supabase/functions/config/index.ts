@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
   }
 
   return json({
+    require_account: config.requireAccount,
     min_supported_version: config.minSupportedVersion,
     latest_version: config.latestVersion,
     blocked_message: config.blockedMessage,
