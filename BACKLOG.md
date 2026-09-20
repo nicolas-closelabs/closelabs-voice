@@ -250,23 +250,30 @@ estado ya diga `canceled`. Probado en los cuatro escenarios.
 
 `max_devices` subió a **3**: consultorio, casa y portátil es el caso normal.
 
-### Correos de cuenta — BLOQUEADO en un paso del cliente
-Supabase **no deja personalizar las plantillas sin un SMTP propio** en el plan gratuito (lo
-devuelve la API al empujar: *"Email template modification is not available for free tier
-projects using the default email provider"*). Y su servicio de correo por defecto está limitado
-a unos pocos envíos por hora y solo a miembros del equipo: no sirve para testers.
+### ✅ Correos de cuenta funcionando (2026-09-20)
+Resend como SMTP de Supabase Auth. Plantillas en español y con la marca, versionadas en
+`supabase/templates/` y subidas con `config push`. Probado de verdad: registro y recuperación de
+contraseña, los dos salieron.
 
-Hace falta configurar Resend como SMTP en el panel. Valores exactos:
 | Campo | Valor |
 |---|---|
 | Host | `smtp.resend.com` |
-| Puerto | `465` |
-| Usuario | `resend` |
-| Contraseña | la API key de Resend (la misma que ya está en los secretos) |
+| Puerto | **`587`** (465 no funcionó: GoTrue se lleva mejor con STARTTLS) |
+| Usuario | `resend` (literal) |
+| Contraseña | la API key de Resend, la misma de las alertas |
 | Remitente | `cuentas@closelabs.co` |
 
-Hecho eso, `supabase config push` sube las plantillas en español, que ya están escritas
-(`supabase/templates/`).
+⚠️ **El orden importa y no es el intuitivo:** Supabase **no deja personalizar las plantillas
+hasta que haya un SMTP propio** en el plan gratuito — devuelve *"Email template modification is
+not available for free tier projects using the default email provider"*. Primero SMTP, después
+plantillas.
+
+⚠️ **Si se rota la API key de Resend hay que cambiarla en DOS sitios:** el SMTP de Auth y el
+secreto `RESEND_API_KEY` de las Edge Functions. Cambiar solo uno deja las alertas mudas o los
+correos de cuenta caídos, y en ninguno de los dos casos salta nada.
+
+Verificado además que el alta hace todo en un solo acto (perfil + teléfono + consentimiento
+fechado + 30 días de prueba) y que borrar la cuenta arrastra perfil y suscripción.
 
 ### ⚠️ `config push` es peligroso con el archivo que genera `supabase init`
 La plantilla por defecto declara valores que NO son los del proyecto. Empujarla tal cual habría
