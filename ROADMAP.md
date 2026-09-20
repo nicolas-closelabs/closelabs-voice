@@ -94,10 +94,10 @@ cambia la URL.
   limpiado en la app: sin nombre de usuario, sin credenciales, sin correos, sin los términos del
   diccionario (se conserva cuántos son). Verificado contra un log real de 468 KB, sin fugas.
   ⏸️ "Enviar comentarios…" en la bandeja: no se hizo, el botón en Ayuda cubre el caso.
-- [x] **Alertas de uso y errores del proveedor** (BACKLOG #4) — la DETECCIÓN. Tres vistas sobre
-  `usage_events`: `salud_ultima_hora`, `errores_recientes`, `uso_diario`. ⚠️ Falta el CANAL: hoy
-  hay que consultarlas, nadie avisa solo. Es una decisión de CloseLabs (correo / WhatsApp /
-  ninguno) y se conecta sin tocar la app.
+- [x] **Alertas de uso y errores del proveedor** (BACKLOG #4). Vistas de salud
+  (`salud_ultima_hora`, `errores_recientes`, `uso_diario`) + correo automático: `pg_cron` revisa
+  cada 15 min y avisa a `admin@closelabs.co` cuando hay algo accionable. ⚠️ Falta solo la llave
+  de Resend para que los correos salgan.
 
 ### Fase 2 — Usuarios y suscripción (necesita: decisión de pagos + páginas web)
 - [ ] Login, registro (nombre, teléfono con indicativo, consentimiento de datos), recuperar contraseña, confirmación por email.

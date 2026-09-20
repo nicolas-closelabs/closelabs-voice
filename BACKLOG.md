@@ -237,6 +237,54 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — ALERTAS POR CORREO (pendiente #4, cerrado)
+
+Lo que resuelve, tal cual pasó: Groq retiró un modelo, la API devolvió 404 en cada dictado y la
+app cayó a texto crudo **en silencio**. Nos enteramos días después porque alguien se quejó.
+
+### Cómo está armado
+- **La decisión vive en SQL**: `alertas_pendientes()`. Ajustar un umbral es un `update`, no un
+  despliegue, y se puede probar sin mandarle correo a nadie:
+  ```sql
+  select * from alertas_pendientes();   -- vacío = todo en orden
+  ```
+- **La Edge Function `alertas` solo envía.** No decide nada.
+- **pg_cron la llama cada 15 minutos** con un secreto propio (`ALERT_CRON_SECRET`) en la
+  cabecera `x-alert-secret`. No usa la llave de servicio: la pasarela de Supabase rechaza sus
+  propias llaves en `authorization` antes de que la petición llegue a la función, y además así
+  el secreto del cron solo sirve para disparar el aviso.
+
+### De qué se avisa, y por qué solo de eso
+Cada condición tiene una respuesta concreta. Una alerta sin respuesta es ruido, y el ruido
+entrena a la gente a ignorar el buzón — peor que no tener alertas.
+
+| Condición | Umbral | Qué se hace |
+|---|---|---|
+| `auth` | cualquier caso | La llave del proveedor no sirve: rotarla |
+| `rate_limit` | ≥10 en 1 h | Topamos el plan: cambiar de proveedor en `app_config` |
+| tasa de error | ≥25% con ≥8 llamadas en 1 h | Mirar `errores_recientes` |
+
+Tras avisar hay **6 horas de silencio** para esa condición: un proveedor caído genera cientos
+de fallos por minuto y el primer correo ya lo dijo todo.
+
+⚠️ El silencio se anota **después** de que el correo sale. Si se anotara antes, un fallo de
+envío dejaría el problema callado durante horas sin que nadie se hubiera enterado.
+
+### Para recrear el cron (no está en las migraciones)
+El job lleva el secreto dentro, así que **no puede vivir en un repositorio público**. Si hay que
+rehacerlo: generar un secreto, `supabase secrets set ALERT_CRON_SECRET=...`, y crear el job con
+`cron.schedule('alertas-closelabs', '*/15 * * * *', ...)` apuntando a la función con ese secreto
+en `x-alert-secret`.
+
+### ⚠️ Falta la llave de Resend
+Sin `RESEND_API_KEY` la función evalúa, encuentra los problemas y **no manda nada** — devuelve
+503 y lo escribe en sus registros, sin anotar el silencio, para que el día que aparezca la llave
+el primer correo salga de inmediato. Hace falta: cuenta en Resend, dominio `closelabs.co`
+verificado, y la llave en los secretos. Destino configurado: `admin@closelabs.co`
+(`select * from alert_config`).
+
+---
+
 ## 2026-09-20 — PLAN B DE TRANSCRIPCIÓN: resuelto y probado (pendiente #5)
 
 Medido con **voz real** (grabación de Nicolás, 22 s) y con el audio clínico largo (38 s), los dos

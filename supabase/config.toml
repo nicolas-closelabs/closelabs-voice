@@ -438,3 +438,7 @@ verify_jwt = false
 
 [functions.report]
 verify_jwt = false
+
+# La llama pg_cron con la llave de servicio, que la propia función verifica.
+[functions.alertas]
+verify_jwt = false
