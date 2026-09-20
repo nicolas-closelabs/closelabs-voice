@@ -9,7 +9,7 @@
 // ⚠️ Aquí no pasa ni audio ni texto dictado: los avisos se construyen a partir de contadores.
 
 import { json } from "../_shared/http.ts";
-import { rpc, select, insert } from "../_shared/db.ts";
+import { rpcRows, select, insert } from "../_shared/db.ts";
 
 /** Si Resend tarda más que esto, el problema del que íbamos a avisar seguirá ahí en 15 minutos. */
 const TIMEOUT_MS = 15_000;
@@ -75,8 +75,9 @@ Deno.serve(async (req) => {
 
   let alertas: Alerta[] = [];
   try {
-    const rows = await rpc<Alerta[]>("alertas_pendientes", {});
-    alertas = Array.isArray(rows) ? rows : rows ? [rows] : [];
+    // `rpcRows`, no `rpc`: esta función devuelve un CONJUNTO. Con `rpc` se detectaban dos
+    // problemas y solo se avisaba del primero — visto en la primera prueba real.
+    alertas = await rpcRows<Alerta>("alertas_pendientes", {});
   } catch (e) {
     console.error("no se pudo evaluar las alertas:", (e as Error).message);
     return json({ error: "provider_error" }, 500);

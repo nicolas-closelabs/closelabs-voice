@@ -43,6 +43,23 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
   return rows ?? null;
 }
 
+/**
+ * Igual que `rpc`, pero devuelve TODAS las filas.
+ *
+ * `rpc` se quedaba con la primera, que es lo correcto para `authorize_device` y compañía. Para
+ * una función que devuelve un conjunto —`alertas_pendientes`— eso descarta silenciosamente el
+ * resto: se detectaban dos problemas y solo se avisaba de uno.
+ */
+export async function rpcRows<T>(fn: string, args: Record<string, unknown>): Promise<T[]> {
+  const rows = await call<T[] | T>(`/rpc/${fn}`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(args),
+  });
+  if (Array.isArray(rows)) return rows;
+  return rows ? [rows] : [];
+}
+
 /** Igual que `rpc`, pero sin esperar la respuesta: para lo que no debe retrasar al médico. */
 export function rpcDetached(fn: string, args: Record<string, unknown>): void {
   fetch(`${url()}/rest/v1/rpc/${fn}`, {

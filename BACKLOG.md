@@ -400,14 +400,10 @@ archivo que el reporte de problemas empezaba a subir. Corregido con el tipo `Sec
 La lección general, que vale para el futuro: **cualquier `String` que se añada a `AppSettings`
 termina escrito en disco.** Si es un secreto, va en `Secret` o `SecretMap`.
 
-### Pendiente que quedó fuera de este build
-**El CI todavía inyecta `CLOSELABS_GROQ_API_KEY`.** El cambio está escrito pero no se pudo subir:
-el token de `gh` de la máquina no tiene el permiso `workflow` y GitHub rechaza el push. No afecta
-al binario —la app no lee esa variable desde que existe el proxy—, así que el instalador sale
-igual de limpio. Lo que sí estorba es que, mientras el secreto siga nombrado en el workflow,
-nadie se va a atrever a borrarlo de la cuenta de Groq.
-
-Se arregla con `gh auth refresh -h github.com -s workflow` y volviendo a aplicar el cambio.
+### ✅ El CI ya no nombra ninguna llave de proveedor (2026-09-20)
+`CLOSELABS_GROQ_API_KEY` salió de los dos workflows. No cambiaba el binario —la app no leía esa
+variable desde que existe el proxy—, pero mientras el secreto siguiera nombrado ahí nadie se iba
+a atrever a borrarlo. Ya se borró de la cuenta de Groq.
 
 ### Código muerto retirado
 `llm_client.rs` perdió su cliente de chat y `proxy.rs` su `transcribe`. El primero importa: era
