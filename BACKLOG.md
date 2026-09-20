@@ -26,11 +26,15 @@
    / Dock (macOS `ActivationPolicy::Regular`, `show_main_window`, `--start-hidden`) — especialmente
    en Intel.
 
-3. **Selector de modelos: solo ofrecer el del catálogo.** Un tester con instalación vieja ve
-   Whisper (cacheado) + Parakeet y puede seleccionar el viejo. Fix: la app debe **solo ofrecer/usar
-   el modelo del catálogo (Parakeet) e ignorar/auto-borrar** cualquier modelo que no esté en
-   `catalog.json`. (Workaround manual para testers: borrar `~/.cache/huggingface/hub/models--*whisper*`
-   o toda `~/.cache/huggingface` y reabrir.)
+3. ✅ **Selector de modelos: solo ofrecer el del catálogo — HECHO (2026-09-20).** Dos mitades,
+   y la segunda era la que importaba: `get_available_models` ahora filtra por `is_catalog_model`,
+   y una **migración reapunta `selected_model`** cuando los ajustes señalan un modelo que ya no
+   ofrecemos. Sin la migración, filtrar la lista no le cambiaba nada al tester afectado: la app
+   seguía CARGANDO su Whisper Medium en cada dictado — el modelo que hacía a un Mac Intel tardar
+   48 s en transcribir 2,5 de audio.
+   ⏸️ **No se auto-borra el archivo viejo**, a propósito: son cientos de megas que no son nuestros
+   y borrarlos sin preguntar no es cosa de una migración. Quien quiera el espacio:
+   `rm -rf ~/.cache/huggingface/hub/models--*whisper*`.
 
 4. **Error handling / alertas cuando Groq falla.** Hoy, ante cualquier error de Groq (sin saldo,
    rate limit, caído) cae a Parakeet **en silencio, sin avisar a CloseLabs** → los médicos degradan

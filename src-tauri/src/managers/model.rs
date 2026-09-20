@@ -1085,10 +1085,22 @@ impl ModelManager {
         Ok(manager)
     }
 
+    /// Los modelos que la app OFRECE, que no son todos los que conoce.
+    ///
+    /// ⚠️ El registro contiene además toda la colección heredada de Handy (Whisper small, medium,
+    /// large…) y cualquier cosa que aparezca en la caché de HuggingFace. Eso es útil por dentro —
+    /// `get_model_info` sigue resolviendo un modelo viejo para poder informar sobre él— pero
+    /// ofrecérselo al médico no lo es: un tester con instalación antigua veía su Whisper Medium
+    /// cacheado y podía elegirlo, que es justo el modelo que hacía a un Mac Intel tardar 48
+    /// segundos en transcribir 2,5 de audio. CloseLabs Voice tiene UN motor local.
     pub fn get_available_models(&self) -> Vec<ModelInfo> {
         let mut list: Vec<ModelInfo> = {
             let models = self.available_models.lock().unwrap();
-            models.values().cloned().collect()
+            models
+                .values()
+                .filter(|m| crate::catalog::is_catalog_model(&m.id))
+                .cloned()
+                .collect()
         };
         // Stable, reasonable order: catalog editorial rank first (lower = higher
         // priority), then any other recommended model, then by accuracy, speed,

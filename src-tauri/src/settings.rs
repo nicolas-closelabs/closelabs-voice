@@ -1132,6 +1132,32 @@ fn apply_settings_migrations(
 ) -> bool {
     let mut updated = false;
 
+    // El modelo local seleccionado tiene que ser uno de los que ofrecemos.
+    //
+    // Quien instaló una versión vieja quedó con Whisper Medium elegido y el archivo en la caché
+    // de HuggingFace. Filtrar la lista que se muestra no le cambia nada a esa persona: la app
+    // seguiría CARGANDO el modelo viejo en cada dictado. Y ese es justo el que hacía a un Mac
+    // Intel tardar 48 segundos en transcribir 2,5 de audio.
+    //
+    // Se reapunta al del catálogo. El archivo viejo se queda en disco a propósito: son cientos
+    // de megas que no son nuestros y borrarlos sin preguntar no es cosa de una migración.
+    if !settings.selected_model.is_empty() && !crate::catalog::is_catalog_model(&settings.selected_model) {
+        match crate::catalog::default_model_id() {
+            Some(nuevo) => {
+                log::warn!(
+                    "El modelo '{}' ya no se ofrece; se cambia a '{}'",
+                    settings.selected_model,
+                    nuevo
+                );
+                settings.selected_model = nuevo;
+                updated = true;
+            }
+            // Sin catálogo no hay a dónde apuntar. Se deja como está: peor que un modelo viejo
+            // es quedarse sin ninguno.
+            None => log::error!("El catálogo está vacío; no se puede corregir el modelo"),
+        }
+    }
+
     // One-time onboarding migration: users with an explicit selected model have
     // already made it through model selection. Users who merely have compatible
     // files on disk should still see onboarding.
@@ -1402,6 +1428,30 @@ mod tests {
             TranscribeAcceleratorSetting::Gpu
         );
         assert_eq!(settings.transcribe_gpu_device, 2);
+    }
+
+    #[test]
+    fn un_modelo_que_ya_no_ofrecemos_se_reapunta_al_del_catalogo() {
+        // El caso del tester con instalación vieja: tenía Whisper Medium elegido. Filtrar la
+        // lista no le arregla nada si la app sigue CARGANDO el modelo viejo en cada dictado.
+        let mut settings = get_default_settings();
+        settings.selected_model = "medium".to_string();
+        let raw = serde_json::json!({ "onboarding_completed": true });
+
+        assert!(apply_settings_migrations(&mut settings, &raw));
+        assert!(crate::catalog::is_catalog_model(&settings.selected_model));
+    }
+
+    #[test]
+    fn el_modelo_del_catalogo_no_se_toca() {
+        // La otra mitad: la migración corre en cada arranque, así que no puede andar
+        // reescribiendo los ajustes de quien ya está bien.
+        let mut settings = get_default_settings();
+        let elegido = settings.selected_model.clone();
+        let raw = serde_json::json!({ "onboarding_completed": true });
+
+        apply_settings_migrations(&mut settings, &raw);
+        assert_eq!(settings.selected_model, elegido);
     }
 
     #[test]
