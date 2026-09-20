@@ -237,6 +237,67 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — FASE 2 arrancada: cuentas, dispositivos y suscripción (base de datos)
+
+### Decisiones tomadas con el cliente
+- **Stripe**, **$11/mes**, **30 días de prueba** (subió de 15).
+- **Tarjeta al registrarse**, sin cobro. Si no cancela, el cobro arranca solo al terminar la prueba.
+- **2 dispositivos por cuenta.** El médico con consultorio y casa es el caso normal, no el sospechoso.
+- **Teléfono obligatorio**, guardado con indicativo aparte: además de contacto, es base de
+  contactos para otros productos de CloseLabs.
+
+### La decisión de arquitectura que manda sobre el resto
+**El dictado sigue autenticándose con el token del dispositivo, NO con la sesión del usuario.**
+Al iniciar sesión, el token se vincula a la cuenta (`devices.user_id`) y el servidor mira la
+suscripción de esa cuenta.
+
+El porqué: el JWT de Supabase caduca a la hora. Meter una renovación de sesión en el camino del
+dictado significa que el día que falle —sin internet un momento, el reloj del equipo
+desajustado— el médico se queda mudo a mitad de consulta. El token del dispositivo no caduca,
+se revoca desde el servidor y ya está probado en producción. La sesión se usa para lo que sí
+tolera esperar: entrar, vincular el equipo, ver la suscripción.
+
+### Migración sin romper a los testers
+`app_config.require_account` empieza en **false**: las instalaciones 0.6.0 que ya existen siguen
+dictando sin cuenta. Cuando la Fase 2 esté probada se pone en true. **Un interruptor, no una
+fecha límite.** Verificado: el mismo dispositivo sin cuenta dicta con false y recibe `no_account`
+con true.
+
+### `past_due` SÍ dicta, y es deliberado
+Un cobro rechazado casi siempre es una tarjeta vencida, no alguien que se quiere ir. Cortarle el
+dictado a un médico en consulta por eso es perder al cliente que estaba a un clic de seguir
+pagando. Stripe reintenta varios días; en ese plazo lo que toca es avisar, no bloquear.
+
+### Probado contra la base real
+| Caso | Resultado |
+|---|---|
+| Alta de cuenta | perfil + suscripción de 30 días en un solo acto (disparador sobre `auth.users`) |
+| Vincular 1º y 2º equipo | ✅ con su etiqueta |
+| Vincular 3º | 🚫 `tope_alcanzado` |
+| Volver a vincular el 1º | ✅ `ya_vinculado`, sin gastar cupo |
+| `trialing` / `active` / `past_due` | dicta |
+| `canceled` / `incomplete` | bloquea |
+| prueba vencida | `trial_ended` |
+
+### Bug encontrado al ejecutar (no al compilar)
+`authorize_device_v2` declaraba columnas de salida con el mismo nombre que las de las tablas
+(`daily_quota`, `user_id`). PL/pgSQL aborta con «column reference is ambiguous» — pero **en
+tiempo de ejecución**, así que la migración se aplicó limpia y solo falló al llamarla. Corregido
+aliando cada tabla. Lección: una migración que se aplica sin error no significa que la función
+funcione.
+
+### Lo que falta de la Fase 2
+- Cliente de Auth en la app (entrar, registrarse, guardar sesión en el llavero del sistema).
+- Pantallas: registro con teléfono y consentimiento, inicio de sesión, «tus equipos», estado de
+  la suscripción.
+- Endpoints `/link-device` y `/unlink-device`.
+- Cambiar las Edge Functions a `authorize_device_v2` y borrar la vieja.
+- Páginas web en closelabs.co: confirmar correo, recuperar contraseña.
+- **Stripe al final**, como se acordó: webhook → `subscriptions`.
+- Documentos legales (ver más abajo).
+
+---
+
 ## 2026-09-20 — ALERTAS POR CORREO (pendiente #4, cerrado)
 
 Lo que resuelve, tal cual pasó: Groq retiró un modelo, la API devolvió 404 en cada dictado y la
