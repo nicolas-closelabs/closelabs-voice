@@ -139,6 +139,59 @@ trato que uno IV. Firmar como persona natural no nos deja en desventaja frente a
 
 ---
 
+# Windows — Publicar en Microsoft Store
+
+**Idea aprobada (2026-09-21), para después de tener la firma de SSL.com.** No reemplaza la
+descarga directa: es un segundo canal, con el mismo instalador.
+
+## Por qué
+
+- El médico conoce la tienda: un botón **"Obtener"** en un sitio de Microsoft genera más confianza
+  que un `.exe` bajado de una web que no conoce.
+- **Cuesta casi nada**: la cuenta es **gratis para persona natural** desde 2025 (antes $19), con
+  cédula y selfie, en casi 200 países. Encaja con la regla de la identidad: mismo nombre que la firma.
+- **Cobro sin comisión**: en apps que no son juegos, Microsoft deja usar nuestro propio sistema de
+  pagos sin quedarse con nada (política 10.8.1). La suscripción sigue funcionando como hoy.
+
+## Etapa 1 — Subir el `.exe` firmado (poco trabajo)
+
+Microsoft acepta instaladores EXE/MSI tradicionales desde 2021. Requisitos, y cómo quedamos:
+
+| Requisito de Microsoft | Nosotros |
+|---|---|
+| Instalador y todos sus `.exe`/`.dll` **firmados** con una CA reconocida | ✅ Con SSL.com. **Por eso va después de la firma** |
+| **Instalación silenciosa** (sin ventanas; el aviso de UAC sí se permite) | ✅ NSIS acepta `/S` |
+| **URL versionada**: el archivo detrás del enlace no puede cambiar nunca | Publicar cada versión en un GitHub Release con su número |
+| Instalador **completo**, que no descargue nada al instalarse | ⚠️ Configurar WebView2 en modo *offline installer* para la Store (Tauri lo explica). El modelo de Parakeet no cuenta: lo baja la app al abrir, no el instalador |
+| El nombre del publisher no puede ser igual al del producto | ✅ "Nicolás Walteros" ≠ "CloseLabs Voice" |
+| Las actualizaciones son responsabilidad nuestra | Cada versión nueva = una URL nueva en Partner Center |
+
+**Qué hace Nicolás:** registrarse gratis en [storedeveloper.microsoft.com](https://storedeveloper.microsoft.com)
+como *Individual developer*, con el mismo nombre legal que el certificado. Preparar la ficha:
+descripción, capturas y política de privacidad (tiene que decir, con honestidad, que el audio sale
+a nuestro servidor cuando hay internet).
+
+**Qué hace Claude:** la configuración de Tauri para la Store (WebView2 offline), el Release
+versionado y los parámetros de instalación silenciosa que pide Partner Center.
+
+⚠️ **Lo que NO está confirmado:** que instalar desde la Store quite el aviso de SmartScreen. Con
+EXE/MSI, la Store solo descarga y ejecuta **nuestro** instalador firmado, y Microsoft no lo vuelve a
+firmar. Comprobarlo en la primera instalación real y **no prometérselo a los médicos** antes.
+
+## Etapa 2 — Empaquetar en MSIX (mediano plazo)
+
+MSIX es el formato nativo de la Store. Con él, **Microsoft firma el paquete gratis** y lo aloja en su
+CDN: **cero SmartScreen garantizado** en ese canal.
+
+- **Tauri no genera MSIX.** Hay que empaquetarlo aparte y mantener ese paso en el CI.
+- La app se declara como app de escritorio con acceso completo (*runFullTrust*). La certificación
+  revisa de cerca una app que captura atajos globales y escribe en otras aplicaciones.
+- **No reemplaza a SSL.com:** la descarga directa desde nuestra web sigue necesitando la firma propia.
+
+Vale la pena si la Store se vuelve el canal principal de instalación.
+
+---
+
 # macOS — Apple Developer Program
 
 ## Lo que resuelve
@@ -264,7 +317,8 @@ identidad.
 | **DigiCert** (desde $399,99/año) | Caro, con el almacenamiento en la nube aparte, y enfocado en empresas |
 | **Certificado EV** | Desde 2024 no da reputación instantánea en SmartScreen; recibe el mismo trato que uno IV. Además exige empresa |
 | **Token USB (YubiKey)** | No se puede conectar a los servidores de GitHub donde compilamos |
-| **Microsoft Store** | Tauri solo genera EXE y MSI, así que la ficha de la Store solo **enlaza** a nuestro instalador: SmartScreen aplica igual y hay que firmar de todos modos. El beneficio real exigiría empaquetar en MSIX (fuera del camino oficial de Tauri) y pasar la certificación con una app que escribe en otras aplicaciones y captura atajos globales. Proyecto a mediano plazo, no solución |
+| **Microsoft Store como sustituto de la firma** | Con EXE/MSI la Store exige nuestra firma igual y Microsoft no vuelve a firmar. Como **canal adicional** sí va: ver *Publicar en Microsoft Store* |
+| **Mac App Store** | Exige el *sandbox* de Apple, donde no se concede el permiso de Accesibilidad con el que pegamos el texto: la app tendría que dejarlo en el portapapeles para que el médico pegue a mano. Además usamos APIs privadas de macOS para el overlay (`macOSPrivateApi`), que Tauri advierte que impiden publicar, y Apple exige su sistema de pagos (15-30% de comisión). Se distribuye fuera de la tienda, notarizado |
 
 ---
 
@@ -279,6 +333,9 @@ identidad.
 - [Microsoft — Artifact Signing: prerrequisitos y países](https://learn.microsoft.com/en-us/azure/artifact-signing/quickstart)
 - [Microsoft Q&A — antigüedad mínima de la sociedad](https://learn.microsoft.com/en-us/answers/questions/5977141/azure-artifact-signing-trusted-signing-is-a-us-llc)
 - [Tauri — Microsoft Store](https://v2.tauri.app/distribute/microsoft-store/)
+- [Microsoft — Requisitos para apps MSI/EXE en la Store](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msi/app-package-requirements) — firma, instalación silenciosa, URL versionada, ventajas de MSIX
+- [Microsoft — Registro gratis para desarrolladores individuales](https://learn.microsoft.com/en-us/windows/apps/publish/whats-new-individual-developer)
+- [Microsoft — Políticas de la Store (10.8.1, pagos de terceros)](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies)
 
 **macOS**
 - [Apple — Inscripción en el Apple Developer Program](https://developer.apple.com/programs/enroll/)
