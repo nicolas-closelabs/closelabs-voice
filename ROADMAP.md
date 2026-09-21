@@ -160,9 +160,12 @@ cambia la URL.
   `config.toml` tiene `email_sent = 2` por HORA para todo el proyecto: si ese es el valor real,
   desde el tercer médico que se registre en la misma hora no le llega la confirmación. La CLI no
   deja leerlo; hay que mirarlo en el panel. Techo de fondo: Resend gratis = 100 correos/día.
-- [ ] **Tutorial interactivo del primer dictado** al terminar el registro: un cuadro de texto dentro
-  de la app, "presiona Ctrl + Espacio y di esta frase", y el texto aparece. Enseña haciendo y de
-  paso comprueba micrófono, atajo y pegado antes de que lo intente frente a un paciente.
+- [x] **Tutorial interactivo del primer dictado** (`PrimerDictado.tsx`). ✅ 2026-09-21: al terminar
+  el onboarding de un usuario nuevo, dicta una frase de prueba en un cuadro DENTRO de la app. Cuatro
+  pasos que se van marcando solos, y pistas concretas si se traba (no empezó a grabar, error de
+  micrófono o de internet, el texto no llegó al cuadro). Se repite desde Inicio ("Hacer un dictado
+  de prueba"). ⚠️ Solo se puede probar con instalador: la versión de desarrollo no recibe el
+  permiso de Accesibilidad en Mac.
 - [ ] **Guía visual del permiso de Accesibilidad (Mac)**: una imagen de dónde exactamente hacer clic.
 - [ ] **Página de descarga en closelabs.co** con un botón por sistema y una guía de instalación con
   capturas de los avisos de Windows y macOS. En Mac, el médico no sabe si su chip es Apple Silicon

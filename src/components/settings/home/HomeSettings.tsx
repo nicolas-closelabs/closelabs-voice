@@ -1,9 +1,10 @@
 /* eslint-disable i18next/no-literal-string */
 import React from "react";
-import { Mic, Keyboard, ClipboardCheck, Loader2, Check } from "lucide-react";
+import { Mic, Keyboard, ClipboardCheck, Loader2, Check, PlayCircle } from "lucide-react";
 import { useShortcutKeys } from "../../../hooks/useShortcutKeys";
 import { useModelStore } from "../../../stores/modelStore";
 import Logo from "../../icons/Logo";
+import { ABRIR_PRIMER_DICTADO } from "../../onboarding/PrimerDictado";
 
 const Step: React.FC<{
   n: number;
@@ -89,6 +90,26 @@ export const HomeSettings: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Práctica: el mismo tutorial del primer arranque, para cuando quieran repasar o probar
+          que todo sigue funcionando (un micrófono nuevo, por ejemplo). */}
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event(ABRIR_PRIMER_DICTADO))}
+        className="rounded-2xl border border-brand-border bg-brand-surface p-5 flex items-center gap-4 text-left hover:border-brand-accent transition-colors"
+      >
+        <span className="grid place-items-center w-10 h-10 shrink-0 rounded-full bg-brand-accent text-white">
+          <PlayCircle className="w-5 h-5" />
+        </span>
+        <div>
+          <div className="font-heading font-semibold text-[15px]">
+            Hacer un dictado de prueba
+          </div>
+          <div className="text-sm text-brand-text-secondary">
+            Practica aquí mismo, sin riesgo, antes de dictar en tu historia clínica.
+          </div>
+        </div>
+      </button>
 
       {/* Cómo usar */}
       <div className="flex flex-col gap-3">

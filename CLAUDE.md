@@ -4,7 +4,19 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.6.0)
+## Estado actual (v0.8.0)
+
+> **v0.8.0 — AUTOSERVICIO.** El público son médicos de 40-50 años o más, poco familiarizados con la
+> tecnología y casi todos en **Windows**; tienen que poder instalar, registrarse y dictar solos.
+> Atajo correcto por sistema en toda la app (`shortcutLabels.ts` + `useShortcutKeys` — ⚠️ nunca
+> escribir teclas a mano en un texto: la app le decía "⌥ + Espacio" a usuarios de Windows),
+> WhatsApp de soporte en todas partes (`branding.ts`), entrar solo tras confirmar el correo, y el
+> tutorial "Tu primer dictado". Detalle y pendientes en la Fase 2.5 de `ROADMAP.md`.
+>
+> **v0.7.0 — CUENTAS.** Registro, sesión persistente (archivo 0600, NO el llavero — ver
+> `auth.rs`), 3 equipos por cuenta y suscripción aplicada en el proxy. `require_account` encendido.
+
+### v0.6.0
 
 Compila (backend+frontend). Funciona end-to-end en Mac. **Fase 1 cerrada: el instalador ya no
 contiene ninguna llave de proveedor.**

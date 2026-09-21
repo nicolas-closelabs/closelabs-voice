@@ -17,6 +17,10 @@ import VersionBlocked from "./components/VersionBlocked";
 import AuthGate from "./components/auth/AuthGate";
 import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
+import PrimerDictado, {
+  ABRIR_PRIMER_DICTADO,
+  primerDictadoHecho,
+} from "./components/onboarding/PrimerDictado";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
@@ -56,6 +60,9 @@ function App() {
   } | null>(null);
   // Sesión. `null` mientras se averigua; después, si hay cuenta o no.
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  // "Tu primer dictado". Se abre solo una vez, al terminar el onboarding de un usuario NUEVO
+  // (quien ya usaba la app no lo ve al actualizar), y desde el botón de Inicio cuando se quiera.
+  const [primerDictado, setPrimerDictado] = useState(false);
 
 
   useEffect(() => {
@@ -389,6 +396,18 @@ function App() {
     setOnboardingStep("done");
   };
 
+  useEffect(() => {
+    if (onboardingStep === "done" && !isReturningUser && !primerDictadoHecho()) {
+      setPrimerDictado(true);
+    }
+  }, [onboardingStep, isReturningUser]);
+
+  useEffect(() => {
+    const abrir = () => setPrimerDictado(true);
+    window.addEventListener(ABRIR_PRIMER_DICTADO, abrir);
+    return () => window.removeEventListener(ABRIR_PRIMER_DICTADO, abrir);
+  }, []);
+
   // El bloqueo manda sobre todo lo demás, incluido el onboarding: si esta versión no debe
   // usarse, tampoco debe poder configurarse ni descargar un modelo de 550 MB.
   if (blocked) {
@@ -417,6 +436,20 @@ function App() {
 
   if (onboardingStep === "model") {
     return <Onboarding onModelSelected={handleModelSelected} />;
+  }
+
+  if (primerDictado) {
+    return (
+      <PrimerDictado
+        onDone={() => {
+          // Los avisos que hayan saltado durante la práctica (un pegado fallido, por ejemplo)
+          // ya los explicó el tutorial: que no aparezcan de golpe al volver a Inicio.
+          toast.dismiss();
+          setPrimerDictado(false);
+          setCurrentSection("home");
+        }}
+      />
+    );
   }
 
   return (
