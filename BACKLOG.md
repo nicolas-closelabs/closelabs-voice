@@ -237,6 +237,40 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — ⚠️ Stripe NO opera en Colombia, y Azure tampoco nos firma
+
+Dos caminos que dábamos por buenos resultaron cerrados. Los dos salieron de verificar contra la
+fuente oficial, no de suponer.
+
+**1. Stripe no soporta Colombia.** Verificado en `stripe.com/global`: en América Latina solo están
+**Brasil y México**. Colombia no aparece ni en disponibles ni en "preview". Toda la Fase 2 asume
+Stripe, así que esto hay que resolverlo antes de escribir una línea de la integración. Opciones:
+
+- **Constituir en Estados Unidos** (Delaware LLC/C-corp, vía Stripe Atlas o normal) → Stripe
+  funciona de una. Es el argumento más fuerte que ha aparecido a favor de constituir allá.
+- **Merchant of record** (Paddle, Lemon Squeezy, Polar): ellos son el vendedor legal, cobran, pagan
+  impuestos y nos giran. Aceptan vendedores de muchos países y resuelven el IVA internacional.
+  ⚠️ **Ninguno de los dos confirma Colombia en su documentación pública** — Lemon Squeezy no lista
+  Colombia en pagos por transferencia bancaria, y Paddle solo documenta países de COMPRADORES, no
+  de vendedores. Hay que preguntarles directamente.
+- **Pasarela local** (Wompi, PayU, Mercado Pago): sirve para cobrar en pesos a médicos colombianos,
+  pero nos deja sin el resto de LatAm y sin las herramientas de suscripción de Stripe.
+
+⚠️ **La decisión de dónde constituir ya no es solo tributaria: define cómo cobramos.**
+
+**2. Azure Artifact Signing (ex Trusted Signing) está cerrado para nosotros.** Colombia no está en
+la lista de países, ni para empresas ni para personas (individuos: solo EE.UU. y Canadá). Y a las
+organizaciones elegibles les exigen **tres años de historia verificable**, así que constituir en
+Estados Unidos **tampoco lo desbloquea** hasta dentro de tres años. El plan de ~$10/mes que estaba
+anotado en el roadmap se descarta.
+
+**El hallazgo que sí ayuda:** Microsoft eliminó en 2024 la reputación instantánea de los
+certificados EV. Hoy un EV corporativo recibe el mismo trato de SmartScreen que uno personal. Eso
+significa que **podemos firmar Windows como persona natural sin perder nada** frente a esperar a
+constituir. Todo el análisis, precios y pasos quedaron en **`FIRMA-Y-DISTRIBUCION.md`**.
+
+---
+
 ## 2026-09-20 — El llavero de macOS le pedía al médico la contraseña de su Mac
 
 **Cómo salió:** instalando la 0.7.0 encima de una compilación anterior. Al abrir la app, antes de
