@@ -399,6 +399,61 @@ Correo a **Support@SSL.com** (o el chat de ventas) preguntando exactamente esto:
 **Plan B si rebotan:** Certum (asumiendo el costo de automatización no oficial), o esperar a
 constituir en Estados Unidos y entrar como organización — donde el universo de CAs se abre entero.
 
+## Paso a paso con SSL.com
+
+### Lo que hace Nicolás
+
+1. **Escribir a ventas** con las seis preguntas de arriba. Si confirman Colombia, seguir.
+2. **Crear la cuenta** en ssl.com con una contraseña fuerte y única. Esa contraseña terminará como
+   secreto del CI, así que no reutilizar ninguna.
+3. **Comprar el IV Code Signing.** En *Key Storage & Delivery* elegir **eSigner**, NO el YubiKey.
+   Recomendación: **1 año** para empezar. El descuento de 3 años ahorra ~$59, y todavía no sabemos
+   si la validación pasa ni si más adelante migraremos a Azure.
+4. **Validación de identidad:**
+   - Frente y reverso del **pasaporte** (la apuesta más segura; la cédula queda como alternativa).
+   - **Selfie sosteniendo el documento** junto a la cara, mínimo 5 megapíxeles.
+   - Comprobante de dirección: factura de servicios o extracto bancario reciente.
+   - Estar pendiente de la **llamada de verificación**: sin ella no emiten.
+5. **Inscribir el certificado en eSigner.** Aparece un **código QR**, y junto a él un **"secret
+   code"**.
+   ⚠️ **COPIAR ESE SECRET CODE en un gestor de contraseñas ANTES de cerrar la pantalla.** Es lo que
+   le permite al CI generar los códigos de un solo uso sin un celular. Si solo se escanea el QR con
+   la app del teléfono, la firma automática no funciona.
+   Escanear también el QR con una app de autenticación, para poder firmar a mano si hiciera falta.
+6. **Activar eSigner** (Tier 1, $20/mes). Los primeros **30 días son gratis con firmas
+   ilimitadas**: aprovecharlos para probar el pipeline a fondo.
+7. **Cargar cuatro secretos** en GitHub (Settings → Secrets and variables → Actions). **Nunca por
+   chat:**
+
+| Secreto | Qué es |
+|---|---|
+| `ES_USERNAME` | el usuario de la cuenta de SSL.com |
+| `ES_PASSWORD` | la contraseña de esa cuenta |
+| `ES_CREDENTIAL_ID` | el identificador del certificado en eSigner (sale en el panel, o con `CodeSignTool get_credential_ids`) |
+| `ES_TOTP_SECRET` | el *secret code* del paso 5 |
+
+### Lo que hace Claude
+
+1. **Instalar CodeSignTool** (la herramienta de línea de comandos de SSL.com, en Java) en el runner
+   de Windows.
+2. **Añadir el `signCommand`** en una configuración de Tauri solo para Windows, que llame a
+   CodeSignTool con los cuatro secretos.
+   ⚠️ **Por qué el `signCommand` y NO la GitHub Action de SSL.com:** la Action firma los archivos
+   *después* del build, así que el `.exe` que queda instalado en el computador del médico iría sin
+   firma; solo se firmaría el instalador. El `signCommand` de Tauri firma primero la app y luego
+   los instaladores.
+3. **Separar la firma de Windows de la de Apple.** Hoy un solo interruptor (`sign-binaries`)
+   activa las dos, y Apple todavía no tiene certificado. Si se enciende tal cual, el build de Mac
+   falla.
+4. **Probarlo durante los 30 días gratis** y comprobar la firma en el instalador **y** en el
+   `.exe` instalado (`Get-AuthenticodeSignature` en PowerShell).
+5. **Contar las firmas reales por build**, para confirmar que las 20 al mes del Tier 1 alcanzan.
+
+⚠️ **Por qué esto no se monta antes de tener las credenciales:** sin ellas no se puede probar, y
+un pipeline de firma montado a ciegas es justo lo que heredamos de Handy — medio cableado (el
+`trusted-signing-cli` sin `signCommand`) y sin que nadie supiera que no firmaba nada. Con el trial
+de 30 días, se monta y se prueba el mismo día.
+
 ## Cambios de código pendientes
 
 ⚠️ **Hay un hueco heredado de Handy.** El workflow ya instala `trusted-signing-cli` y ya pasa los
