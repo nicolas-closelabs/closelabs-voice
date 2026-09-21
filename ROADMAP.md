@@ -152,8 +152,14 @@ cambia la URL.
   Ayuda; en TODAS las pantallas de cuenta (sin cuenta no se dicta, así que quien no logra entrar no
   tenía ninguna salida); en la pantalla de versión bloqueada; y tras reportar un problema, con el
   número del reporte ya escrito en el mensaje. Todos los mensajes van prellenados.
-- [ ] **Entrar solo después de confirmar el correo.** Hoy el enlace lleva a la portada de
-  closelabs.co, y el médico tiene que volver a la app y escribir otra vez correo y contraseña.
+- [x] **Entrar solo después de confirmar el correo.** El enlace llevaba a la portada de
+  closelabs.co y había que volver a escribir correo y contraseña. ✅ 2026-09-21: la app reintenta
+  entrar cada 30 s y al recuperar el foco, y la pantalla dice "cuando vuelvas aquí, entrarás solo";
+  más un botón "Ya confirmé mi correo". Queda la página propia de confirmación en closelabs.co.
+- [ ] 🔴 **Verificar el límite de correos de Supabase** (Authentication → Rate Limits). El
+  `config.toml` tiene `email_sent = 2` por HORA para todo el proyecto: si ese es el valor real,
+  desde el tercer médico que se registre en la misma hora no le llega la confirmación. La CLI no
+  deja leerlo; hay que mirarlo en el panel. Techo de fondo: Resend gratis = 100 correos/día.
 - [ ] **Tutorial interactivo del primer dictado** al terminar el registro: un cuadro de texto dentro
   de la app, "presiona Ctrl + Espacio y di esta frase", y el texto aparece. Enseña haciendo y de
   paso comprueba micrófono, atajo y pegado antes de que lo intente frente a un paciente.

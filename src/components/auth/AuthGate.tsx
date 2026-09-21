@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string */
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Loader2, ArrowLeft, MailCheck, MessageCircle } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { commands } from "@/bindings";
@@ -103,28 +103,30 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   // -------------------------------------------------------------------------------------------
   // Pantallas de "ya hicimos lo nuestro, revisa tu correo"
   // -------------------------------------------------------------------------------------------
-  if (modo === "revisa-correo" || modo === "correo-enviado") {
-    const creando = modo === "revisa-correo";
+  if (modo === "revisa-correo") {
+    return (
+      <EsperandoConfirmacion
+        correo={correo}
+        clave={clave}
+        onSignedIn={onSignedIn}
+        onVolver={() => {
+          setModo("entrar");
+          setError(null);
+        }}
+      />
+    );
+  }
+
+  if (modo === "correo-enviado") {
     return (
       <Marco>
         <div className="w-12 h-12 rounded-2xl bg-brand-accent-soft grid place-items-center mb-1">
           <MailCheck className="w-6 h-6 text-brand-accent" />
         </div>
-        <h1 className="font-heading text-xl font-bold">
-          {creando ? "Revisa tu correo" : "Te enviamos un enlace"}
-        </h1>
+        <h1 className="font-heading text-xl font-bold">Te enviamos un enlace</h1>
         <p className="text-[15px] text-brand-text-secondary leading-relaxed">
-          {creando ? (
-            <>
-              Te enviamos un mensaje a <strong>{correo}</strong>. Ábrelo y confirma
-              tu cuenta para empezar tus 30 días de prueba.
-            </>
-          ) : (
-            <>
-              Si existe una cuenta con <strong>{correo}</strong>, ahí llegará el
-              enlace para cambiar la contraseña.
-            </>
-          )}
+          Si existe una cuenta con <strong>{correo}</strong>, ahí llegará el
+          enlace para cambiar la contraseña.
         </p>
         <p className="text-sm text-brand-text-muted">
           ¿No lo ves? Revisa el correo no deseado.
@@ -360,6 +362,150 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
           {creando ? "Ya tengo cuenta" : "Crear una cuenta"}
         </button>
       </div>
+    </Marco>
+  );
+};
+
+/** Cada cuánto se reintenta entrar mientras el médico confirma su correo. */
+const REINTENTO_MS = 30_000;
+/** Pasado este tiempo se deja de reintentar solo; queda el botón "Ya confirmé". */
+const ESPERA_MAX_MS = 60 * 60_000;
+/** Si Supabase frena por exceso de intentos, se descansa esto antes de seguir. */
+const PAUSA_POR_LIMITE_MS = 5 * 60_000;
+/** Mínimo entre intentos automáticos: cambiar de ventana muchas veces no debe disparar una ráfaga. */
+const SEPARACION_MIN_MS = 5_000;
+
+/**
+ * "Revisa tu correo" que entra SOLA cuando el médico confirma.
+ *
+ * Antes, después de tocar "Confirmar mi correo", el médico aterrizaba en la portada de
+ * closelabs.co sin ningún mensaje, y tenía que volver a la app, encontrar "Volver a iniciar
+ * sesión" y escribir otra vez correo y contraseña. Para un médico de 55 años poco familiarizado
+ * con la tecnología, ahí se pierde gente.
+ *
+ * Ahora la app reintenta entrar con lo que acaba de escribir: cada 30 s, y en cuanto la ventana
+ * vuelve a tener el foco (que es justo cuando regresa del navegador). Mientras el correo no esté
+ * confirmado, Supabase responde `sin_confirmar` y no pasa nada visible.
+ *
+ * ⚠️ El ritmo está medido contra el límite de Supabase: 30 intentos de entrar cada 5 minutos por
+ * IP. Cada 30 s son 10, y en un consultorio varios médicos comparten IP. Si aun así frena, se hace
+ * una pausa en vez de insistir.
+ *
+ * La contraseña vive solo en la memoria de esta pantalla, la misma que ya tenía el formulario.
+ */
+const EsperandoConfirmacion: React.FC<{
+  correo: string;
+  clave: string;
+  onSignedIn: () => void;
+  onVolver: () => void;
+}> = ({ correo, clave, onSignedIn, onVolver }) => {
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [probando, setProbando] = useState(false);
+  const enCurso = useRef(false);
+  const pausaHasta = useRef(0);
+  const terminado = useRef(false);
+  const ultimo = useRef(0);
+
+  const intentar = async (manual: boolean) => {
+    if (enCurso.current || terminado.current) return;
+    if (!manual && Date.now() < pausaHasta.current) return;
+    if (!manual && Date.now() - ultimo.current < SEPARACION_MIN_MS) return;
+    ultimo.current = Date.now();
+    enCurso.current = true;
+    if (manual) {
+      setProbando(true);
+      setAviso(null);
+    }
+    const r = await commands.authSignIn(correo, clave);
+    enCurso.current = false;
+    setProbando(false);
+
+    if (r.status === "ok") {
+      terminado.current = true;
+      onSignedIn();
+      return;
+    }
+    if (r.error === "demasiados_intentos") {
+      pausaHasta.current = Date.now() + PAUSA_POR_LIMITE_MS;
+    }
+    // En automático no se molesta al médico: seguir esperando es lo normal.
+    if (manual) {
+      setAviso(
+        r.error === "sin_confirmar"
+          ? "Todavía no vemos la confirmación. Abre el correo que te enviamos y toca el botón «Confirmar mi correo»."
+          : explicar(r.error),
+      );
+    }
+  };
+
+  // La referencia a `intentar` cambia en cada render; el efecto usa siempre la última.
+  const intentarRef = useRef(intentar);
+  intentarRef.current = intentar;
+
+  useEffect(() => {
+    const inicio = Date.now();
+    const tick = setInterval(() => {
+      if (Date.now() - inicio > ESPERA_MAX_MS) {
+        clearInterval(tick);
+        return;
+      }
+      void intentarRef.current(false);
+    }, REINTENTO_MS);
+
+    const alVolver = () => {
+      if (document.visibilityState === "visible") void intentarRef.current(false);
+    };
+    window.addEventListener("focus", alVolver);
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      clearInterval(tick);
+      window.removeEventListener("focus", alVolver);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, []);
+
+  return (
+    <Marco>
+      <div className="w-12 h-12 rounded-2xl bg-brand-accent-soft grid place-items-center mb-1">
+        <MailCheck className="w-6 h-6 text-brand-accent" />
+      </div>
+      <h1 className="font-heading text-xl font-bold">Revisa tu correo</h1>
+      <p className="text-[15px] text-brand-text-secondary leading-relaxed">
+        Te enviamos un mensaje a <strong>{correo}</strong>. Ábrelo y toca el
+        botón <strong>«Confirmar mi correo»</strong>.
+      </p>
+      <p className="text-[15px] text-brand-text-secondary leading-relaxed">
+        Se abrirá nuestra página web: puedes cerrarla.{" "}
+        <strong className="text-brand-text">Cuando vuelvas aquí, entrarás solo.</strong>
+      </p>
+
+      <div className="flex items-center gap-2 text-sm text-brand-text-muted">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Esperando tu confirmación…
+      </div>
+
+      {aviso && <Aviso>{aviso}</Aviso>}
+
+      <button
+        type="button"
+        onClick={() => void intentar(true)}
+        disabled={probando}
+        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors disabled:opacity-40"
+      >
+        {probando && <Loader2 className="w-4 h-4 animate-spin" />}
+        Ya confirmé mi correo
+      </button>
+
+      <p className="text-sm text-brand-text-muted">
+        ¿No lo ves? Revisa el correo no deseado.
+      </p>
+      <button
+        type="button"
+        onClick={onVolver}
+        className="text-sm font-semibold text-brand-accent hover:underline"
+      >
+        Volver a iniciar sesión
+      </button>
     </Marco>
   );
 };
