@@ -107,11 +107,11 @@ Highlights acumulados:
 ## Distribución (por qué "no abre en otros Macs") — CI + firma
 
 > 📄 **Todo lo de firmar (Apple y Windows) vive en `FIRMA-Y-DISTRIBUCION.md`**: precios, pasos,
-> secretos, y qué puede hacer cada entidad según su país. Tres titulares: **Azure Artifact Signing
-> no emite a Colombia pero SÍ a la UE**, así que el camino es la **sociedad española** del socio
-> (~$120/año, y el CI ya está cableado para ese servicio); **Microsoft quitó en 2024 la reputación
-> instantánea de los EV**, así que la identidad que elijamos no nos deja en desventaja; y lo caro
-> no es elegir identidad, es **cambiarla después** (la reputación del publisher se reinicia).
+> secretos, y qué puede hacer cada entidad según su país. ⚠️ **No existe ninguna sociedad** (Nicolás
+> es persona natural colombiana; el socio español es autónomo). Por eso: Apple como persona natural
+> ($99, convertible a empresa sin perder el Team ID) y **Windows con SSL.com IV a nombre de Nicolás**
+> (~$309/año). Azure Artifact Signing exige una organización; se abre el día que CloseLabs se
+> constituya en la UE o EE.UU. (**no** pide antigüedad mínima, aunque medio internet diga que sí).
 > Leer antes de pagar.
 
 

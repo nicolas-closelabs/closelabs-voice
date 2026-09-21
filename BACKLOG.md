@@ -237,38 +237,34 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
-## 2026-09-20 — Colombia cierra dos puertas; el socio español las abre
+## 2026-09-20 — Qué se puede firmar sin tener ninguna sociedad
 
-**1. Stripe no soporta Colombia.** Verificado en `stripe.com/global`: en América Latina solo
-**Brasil y México**. ✅ **RESUELTO el mismo día:** la cuenta de Stripe ya existe a través del
-**socio español**.
+⚠️ **El dato que lo condiciona todo: no existe ninguna sociedad**, en ningún país. Nicolás es
+persona natural colombiana y el socio español es **autónomo** (legalmente, persona física).
 
-**2. Azure Artifact Signing no emite a Colombia** — ni a empresas ni a personas (los individuos
-solo pueden ser de EE.UU. o Canadá). ✅ **También resuelto por España:** la lista de Microsoft
-incluye **la Unión Europea** para organizaciones, así que una sociedad española SÍ califica.
+**Cobrar:** Stripe no opera en Colombia (en LatAm solo Brasil y México, verificado en
+`stripe.com/global`). ✅ **Resuelto:** la cuenta de Stripe existe a través del socio español.
 
-⚠️ **Corrección importante.** Durante esta misma investigación escribí que además hacía falta
-**tres años de historia verificable**, y que por eso ni constituir en Estados Unidos servía. **Era
-falso.** Ese dato salió de una respuesta generada por IA en un hilo de Microsoft Q&A. En ese mismo
-hilo, un empleado de Microsoft respondió a la pregunta directa: *"Artifact Signing has
-country/region onboarding pre-reqs, **no minimum org age restrictions**."* El requisito de los tres
-años fue de la época de vista previa y no está en los prerrequisitos actuales.
+**Firmar Windows:** Azure Artifact Signing exige una **organización** en la UE, EE.UU. u otros
+países de su lista; los individuos solo pueden ser de EE.UU. o Canadá. Ni Nicolás ni un autónomo
+califican (hay reportes de autónomos a los que el flujo solo les ofrece verificación personal).
+**Decisión: SSL.com IV a nombre de Nicolás, ~$309/año.** La identidad queda bajo su control.
 
-**Lección, y es la segunda vez en el día:** no dar por bueno un resumen de búsqueda sin abrir la
-fuente. Casi descartamos por años la opción más barata y mejor integrada.
+⚠️ **Dos correcciones en el mismo día**, las dos por fiarme de resúmenes de búsqueda:
+1. Escribí que Azure exigía **tres años de antigüedad**. Falso: salió de una respuesta generada por
+   IA en Microsoft Q&A; un empleado de Microsoft respondió en ese mismo hilo que **no hay antigüedad
+   mínima**. Importa para el futuro: el día que CloseLabs se constituya en España o EE.UU., Azure
+   (~$120/año, 5.000 firmas/mes) se abre de inmediato.
+2. Asumí que el socio tenía una sociedad española. No la tiene.
 
-**Dónde queda Windows:** Azure Artifact Signing con la sociedad española, **~$120/año con 5.000
-firmas al mes**, y el CI **ya está cableado** para ese servicio (`build.yml` instala
-`trusted-signing-cli` y pasa los secretos `AZURE_*`; solo falta el `signCommand`). Plan B si la
-validación rebota: SSL.com IV a nombre de Nicolás, ~$309/año con 20 firmas al mes.
+**Lección:** abrir la fuente antes de afirmar, y preguntar por la estructura legal antes de
+recomendar algo que depende de ella.
 
-**El otro hallazgo que ayuda:** Microsoft quitó en 2024 la reputación instantánea de los
-certificados EV, así que la identidad que elijamos no nos deja en desventaja frente a una empresa
-grande. Lo que sí cuesta es **cambiar** de identidad después: la reputación del publisher se
-reinicia.
+**El hallazgo que sí ayuda:** Microsoft quitó en 2024 la reputación instantánea de los
+certificados EV. Firmar como persona natural no nos deja en desventaja. Lo que cuesta es
+**cambiar** de identidad después: la reputación del publisher se reinicia.
 
-Todo el detalle —precios, pasos, requisitos de validación, qué preguntar antes de pagar— está en
-**`FIRMA-Y-DISTRIBUCION.md`**.
+Todo el detalle está en **`FIRMA-Y-DISTRIBUCION.md`**.
 
 ---
 
