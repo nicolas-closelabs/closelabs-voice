@@ -53,6 +53,9 @@ let cache: { at: number; cfg: RoutingConfig } | null = null;
 interface RoutingConfig {
   transcribeProvider: string;
   formatProvider: string;
+  /** Respaldo, en orden. Ver `resolveRoutes`. */
+  transcribeFallbacks: string[];
+  formatFallbacks: string[];
   dailyQuota: number;
   providers: Record<string, ProviderRow>;
 }
@@ -72,9 +75,15 @@ async function routingConfig(): Promise<RoutingConfig> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.cfg;
 
   const [cfgRows, provRows] = await Promise.all([
-    select<{ transcribe_provider: string; format_provider: string; daily_quota: number }>(
+    select<{
+      transcribe_provider: string;
+      format_provider: string;
+      transcribe_fallbacks: string[] | null;
+      format_fallbacks: string[] | null;
+      daily_quota: number;
+    }>(
       "app_config",
-      "select=transcribe_provider,format_provider,daily_quota&limit=1",
+      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota&limit=1",
     ),
     select<ProviderRow>(
       "providers",
@@ -90,6 +99,8 @@ async function routingConfig(): Promise<RoutingConfig> {
   const cfg: RoutingConfig = {
     transcribeProvider: row.transcribe_provider,
     formatProvider: row.format_provider,
+    transcribeFallbacks: row.transcribe_fallbacks ?? [],
+    formatFallbacks: row.format_fallbacks ?? [],
     dailyQuota: row.daily_quota,
     providers,
   };
@@ -97,11 +108,8 @@ async function routingConfig(): Promise<RoutingConfig> {
   return cfg;
 }
 
-/** Resuelve el proveedor vigente para `kind`, con su llave sacada de los secretos. */
-export async function resolveRoute(kind: Kind): Promise<Route> {
-  const cfg = await routingConfig();
-  const name = kind === "transcribe" ? cfg.transcribeProvider : cfg.formatProvider;
-
+/** Arma la ruta de UN proveedor, con su llave sacada de los secretos. */
+function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
   const p = cfg.providers[name];
   if (!p) throw new Error(`proveedor '${name}' no existe`);
   if (!p.enabled) throw new Error(`proveedor '${name}' está deshabilitado`);
@@ -122,6 +130,38 @@ export async function resolveRoute(kind: Kind): Promise<Route> {
     supportsTranscribePrompt: p.supports_transcribe_prompt,
     dailyQuota: cfg.dailyQuota,
   };
+}
+
+/**
+ * Los proveedores a los que se puede mandar `kind`, EN ORDEN: el principal y después su respaldo.
+ *
+ * ⚠️ Esto es el respaldo AUTOMÁTICO. Antes había un solo proveedor por tipo y cambiarlo era
+ * manual: si el principal se caía a media mañana, TODOS los dictados fallaban hasta que alguien
+ * viera la alerta (hasta 15 min) y editara `app_config`. Ahora quien llama prueba el siguiente de
+ * la lista dentro del mismo dictado, y el médico solo espera un poco más.
+ *
+ * Un respaldo mal configurado (sin llave, deshabilitado, sin modelo) se salta con un aviso en los
+ * registros en vez de tumbar la petición: el principal puede estar perfecto. Solo falla si no
+ * queda ninguno utilizable.
+ */
+export async function resolveRoutes(kind: Kind): Promise<Route[]> {
+  const cfg = await routingConfig();
+  const principal = kind === "transcribe" ? cfg.transcribeProvider : cfg.formatProvider;
+  const respaldo = kind === "transcribe" ? cfg.transcribeFallbacks : cfg.formatFallbacks;
+
+  const nombres = [...new Set([principal, ...respaldo].filter(Boolean))];
+  const rutas: Route[] = [];
+  const problemas: string[] = [];
+  for (const nombre of nombres) {
+    try {
+      rutas.push(buildRoute(cfg, kind, nombre));
+    } catch (e) {
+      problemas.push((e as Error).message);
+    }
+  }
+  if (problemas.length) console.warn(`ruteo ${kind}: ${problemas.join("; ")}`);
+  if (!rutas.length) throw new Error(`ningún proveedor utilizable para ${kind}`);
+  return rutas;
 }
 
 /** Configuración que la app consulta al arrancar (versión mínima, URLs). */

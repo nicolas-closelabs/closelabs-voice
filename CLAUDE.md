@@ -313,9 +313,17 @@ el motor GGML) + Xcode CLT (macOS). cmake se puede instalar con `brew install cm
 secas produce el instalador final. Las llaves viven en los secretos de Supabase y el proveedor se
 elige en la tabla `app_config` (columnas `transcribe_provider` / `format_provider`).
 
+**Respaldo automático (desde 2026-09-21):** cada tipo tiene una cadena ORDENADA en `app_config`
+(`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir groq → deepinfra → openai; formatear
+groq → deepinfra. Si el principal falla, el proxy prueba el siguiente en el mismo dictado. ⚠️ Al
+tocar `_shared/transcribe.ts` o `_shared/format.ts`, correr antes
+`bun supabase/functions/_tests/respaldo.test.ts`. ⚠️ Desplegar SIEMPRE la migración antes que el
+código: si el código lee columnas que no existen, fallan todos los dictados.
+
 Cambiar de proveedor, de modelo o avisar de una versión nueva se hace **sin recompilar**:
 ```sql
-update app_config set transcribe_provider = 'deepinfra';  -- plan B, probado 2026-09-20
+update app_config set transcribe_provider = 'openai',   -- cambiar el principal…
+                      transcribe_fallbacks = '{deepinfra,groq}';  -- …y su respaldo, en orden
 update app_config set format_provider     = 'deepinfra';
 update app_config set latest_version      = '0.7.0';      -- aviso de actualización
 ```

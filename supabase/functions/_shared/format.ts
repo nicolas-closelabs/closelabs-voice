@@ -4,11 +4,21 @@
 // aparece en ningún mensaje de error. Solo se cuenta cuántos tokens fueron.
 
 import { fetchWithTimeout, isAbort, classifyProviderError } from "./http.ts";
-import { resolveRoute } from "./routing.ts";
+import { resolveRoutes, type Route } from "./routing.ts";
 import { logUsage, type ErrorCode } from "./usage.ts";
 
-/** Normalmente tarda 1-4 s. A los 15 s la app prefiere pegar el texto crudo antes que esperar. */
-const TIMEOUT_MS = 15_000;
+/**
+ * Tiempo total para formatear, contando el respaldo. La app le da 15 s a esta parte
+ * (`FORMAT_TIMEOUT` en proxy.rs) y después pega el texto crudo; se deja margen para la respuesta.
+ */
+const PRESUPUESTO_MS = 12_000;
+
+/**
+ * Lo máximo que se le espera a un proveedor que NO es el último. Normalmente formatea en 1-2 s
+ * (medido: DeepInfra 1,66 s, Groq 1,09 s), y el reintento sin esquema de Groq suma ~2,3 s.
+ */
+const TOPE_INTENTO_MS = 7_000;
+const MINIMO_INTENTO_MS = 2_000;
 
 /** El formateador devuelve el mismo dictado: nunca necesita más que eso. */
 const MAX_OUTPUT_TOKENS = 2_000;
@@ -33,14 +43,47 @@ export async function formatText(
     return { ok: false, code: "bad_request", status: 400 };
   }
 
-  let route;
+  let routes: Route[];
   try {
-    route = await resolveRoute("format");
+    routes = await resolveRoutes("format");
   } catch (e) {
     console.error("ruteo:", (e as Error).message);
     return { ok: false, code: "provider_error", status: 503 };
   }
 
+  // Todo fallo aquí es del proveedor (la entrada ya se validó arriba), así que siempre vale la
+  // pena probar el siguiente. Si no queda ninguno, la app pega el texto crudo: peor que puntuado,
+  // pero el dictado no se pierde.
+  const limite = Date.now() + PRESUPUESTO_MS;
+  let ultimo: FormatResult = { ok: false, code: "provider_error", status: 502 };
+  for (let n = 0; n < routes.length; n++) {
+    const esUltimo = n === routes.length - 1;
+    const queda = limite - Date.now();
+    if (queda < MINIMO_INTENTO_MS) break;
+    const limiteIntento =
+      Date.now() + (esUltimo ? queda : Math.min(TOPE_INTENTO_MS, queda - MINIMO_INTENTO_MS));
+
+    const r = await formatearCon(routes[n], deviceId, text, systemPrompt, limiteIntento);
+    if (r.ok) {
+      if (n > 0) console.warn(`formateo servido por el respaldo ${routes[n].provider}`);
+      return r;
+    }
+    ultimo = r;
+    if (!esUltimo) {
+      console.warn(`${routes[n].provider} falló (${r.code}) al formatear; se prueba el siguiente`);
+    }
+  }
+  return ultimo;
+}
+
+/** Un intento contra UN proveedor, con su reintento sin esquema si hace falta. */
+async function formatearCon(
+  route: Route,
+  deviceId: string,
+  text: string,
+  systemPrompt: string,
+  limite: number,
+): Promise<FormatResult> {
   /**
    * ⚠️ Los dos modos existen por una razón medida: Groq falla de forma intermitente al cerrar el
    * JSON (`400 Failed to validate JSON`, ~1 de cada 16 según lo medido el 2026-09-19) y tarda
@@ -79,7 +122,8 @@ export async function formatText(
         },
         body: JSON.stringify(buildPayload(strict)),
       },
-      TIMEOUT_MS,
+      // El reintento sin esquema comparte el mismo límite: no puede comerse el del respaldo.
+      Math.max(1_000, limite - Date.now()),
     );
 
   const started = performance.now();

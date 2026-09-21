@@ -176,10 +176,13 @@ cambia la URL.
   traban. Encuentra lo que ninguna revisión de código encuentra.
 
 **Producción con más de 20 médicos (proveedores):**
-- [ ] **Respaldo automático en el proxy.** Hoy cambiar de proveedor es manual (una fila de SQL): si
-  el principal se cae a media mañana, todos fallan hasta que alguien vea la alerta y edite la
-  fila. El proxy debe reintentar con el secundario dentro del mismo dictado, con timeouts cortos
-  (eso también cubre los cuelgues de DeepInfra).
+- [x] **Respaldo automático en el proxy.** ✅ 2026-09-21, EN PRODUCCIÓN. Cadenas en `app_config`:
+  transcribir **groq → deepinfra → openai**, formatear **groq → deepinfra**. Si uno falla (caída,
+  429, 5xx, cuelgue, llave rota), el siguiente se prueba en el mismo dictado, con topes de tiempo
+  que caben en lo que la app espera. Excepción deliberada: el `bad_request` al transcribir NO pasa
+  al siguiente (lo usa la cadena Opus → FLAC → WAV de la app). Prueba con 13 escenarios en
+  `supabase/functions/_tests/respaldo.test.ts`. Motivo medido: el formateo de Groq falló en
+  6 de 23 dictados el 21 y en 23 de 81 el 19 — todos pegados sin puntuar.
 - [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
 - [ ] Recomendación provisional: **transcribir con OpenAI** (`gpt-4o-mini-transcribe`, la mejor
   calidad medida, ~$1,30/médico/mes) con DeepInfra y luego Groq de respaldo; **formatear con
