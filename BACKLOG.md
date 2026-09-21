@@ -237,37 +237,38 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
-## 2026-09-20 — ⚠️ Stripe NO opera en Colombia, y Azure tampoco nos firma
+## 2026-09-20 — Colombia cierra dos puertas; el socio español las abre
 
-Dos caminos que dábamos por buenos resultaron cerrados. Los dos salieron de verificar contra la
-fuente oficial, no de suponer.
+**1. Stripe no soporta Colombia.** Verificado en `stripe.com/global`: en América Latina solo
+**Brasil y México**. ✅ **RESUELTO el mismo día:** la cuenta de Stripe ya existe a través del
+**socio español**.
 
-**1. Stripe no soporta Colombia.** Verificado en `stripe.com/global`: en América Latina solo están
-**Brasil y México**. Colombia no aparece ni en disponibles ni en "preview". Toda la Fase 2 asume
-Stripe, así que esto hay que resolverlo antes de escribir una línea de la integración. Opciones:
+**2. Azure Artifact Signing no emite a Colombia** — ni a empresas ni a personas (los individuos
+solo pueden ser de EE.UU. o Canadá). ✅ **También resuelto por España:** la lista de Microsoft
+incluye **la Unión Europea** para organizaciones, así que una sociedad española SÍ califica.
 
-- **Constituir en Estados Unidos** (Delaware LLC/C-corp, vía Stripe Atlas o normal) → Stripe
-  funciona de una. Es el argumento más fuerte que ha aparecido a favor de constituir allá.
-- **Merchant of record** (Paddle, Lemon Squeezy, Polar): ellos son el vendedor legal, cobran, pagan
-  impuestos y nos giran. Aceptan vendedores de muchos países y resuelven el IVA internacional.
-  ⚠️ **Ninguno de los dos confirma Colombia en su documentación pública** — Lemon Squeezy no lista
-  Colombia en pagos por transferencia bancaria, y Paddle solo documenta países de COMPRADORES, no
-  de vendedores. Hay que preguntarles directamente.
-- **Pasarela local** (Wompi, PayU, Mercado Pago): sirve para cobrar en pesos a médicos colombianos,
-  pero nos deja sin el resto de LatAm y sin las herramientas de suscripción de Stripe.
+⚠️ **Corrección importante.** Durante esta misma investigación escribí que además hacía falta
+**tres años de historia verificable**, y que por eso ni constituir en Estados Unidos servía. **Era
+falso.** Ese dato salió de una respuesta generada por IA en un hilo de Microsoft Q&A. En ese mismo
+hilo, un empleado de Microsoft respondió a la pregunta directa: *"Artifact Signing has
+country/region onboarding pre-reqs, **no minimum org age restrictions**."* El requisito de los tres
+años fue de la época de vista previa y no está en los prerrequisitos actuales.
 
-⚠️ **La decisión de dónde constituir ya no es solo tributaria: define cómo cobramos.**
+**Lección, y es la segunda vez en el día:** no dar por bueno un resumen de búsqueda sin abrir la
+fuente. Casi descartamos por años la opción más barata y mejor integrada.
 
-**2. Azure Artifact Signing (ex Trusted Signing) está cerrado para nosotros.** Colombia no está en
-la lista de países, ni para empresas ni para personas (individuos: solo EE.UU. y Canadá). Y a las
-organizaciones elegibles les exigen **tres años de historia verificable**, así que constituir en
-Estados Unidos **tampoco lo desbloquea** hasta dentro de tres años. El plan de ~$10/mes que estaba
-anotado en el roadmap se descarta.
+**Dónde queda Windows:** Azure Artifact Signing con la sociedad española, **~$120/año con 5.000
+firmas al mes**, y el CI **ya está cableado** para ese servicio (`build.yml` instala
+`trusted-signing-cli` y pasa los secretos `AZURE_*`; solo falta el `signCommand`). Plan B si la
+validación rebota: SSL.com IV a nombre de Nicolás, ~$309/año con 20 firmas al mes.
 
-**El hallazgo que sí ayuda:** Microsoft eliminó en 2024 la reputación instantánea de los
-certificados EV. Hoy un EV corporativo recibe el mismo trato de SmartScreen que uno personal. Eso
-significa que **podemos firmar Windows como persona natural sin perder nada** frente a esperar a
-constituir. Todo el análisis, precios y pasos quedaron en **`FIRMA-Y-DISTRIBUCION.md`**.
+**El otro hallazgo que ayuda:** Microsoft quitó en 2024 la reputación instantánea de los
+certificados EV, así que la identidad que elijamos no nos deja en desventaja frente a una empresa
+grande. Lo que sí cuesta es **cambiar** de identidad después: la reputación del publisher se
+reinicia.
+
+Todo el detalle —precios, pasos, requisitos de validación, qué preguntar antes de pagar— está en
+**`FIRMA-Y-DISTRIBUCION.md`**.
 
 ---
 

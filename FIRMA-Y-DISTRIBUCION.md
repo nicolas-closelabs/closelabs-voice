@@ -2,25 +2,31 @@
 
 > Todo lo que hay que saber para firmar la app en macOS y Windows, con lo investigado el
 > **2026-09-20**, incluida la parte que más nos afecta: **qué puede y qué no puede hacer una
-> persona o empresa colombiana**.
+> persona o empresa colombiana** — y qué se abre gracias al **socio español**.
 >
-> Este documento existe porque dos caminos que dábamos por buenos resultaron cerrados para
-> Colombia. Léelo antes de pagar nada.
+> Léelo antes de pagar nada.
 
 ---
 
-## Resumen en diez líneas
+## Resumen
 
 | | macOS | Windows |
 |---|---|---|
-| **¿Se puede desde Colombia?** | Sí, sin problema | Sí, pero **no** con el servicio de Microsoft |
-| **Costo** | $99/año | ~$309/año (certificado + firma en la nube) |
-| **Como persona natural** | Sí, y es **convertible** a empresa después sin perder nada | Sí, y **ya no pierdes nada** frente a una empresa |
+| **Mejor opción** | Apple Developer, persona natural | **Azure Artifact Signing** con la sociedad española |
+| **Costo** | $99/año | **~$120/año** (5.000 firmas/mes) |
+| **Plan B** | — | SSL.com IV a nombre de Nicolás, ~$309/año |
 | **Qué resuelve** | El "app dañada" de Gatekeeper **y** el diálogo del llavero | El "Windows protegió su PC" y el bloqueo de Smart App Control |
-| **Bloqueado para nosotros** | — | Azure Artifact Signing (ex Trusted Signing) |
+| **Desde Colombia sola** | ✅ sin problema | ⚠️ solo vía SSL.com (Azure no emite a Colombia) |
 
-**Decisión tomada (2026-09-20):** arrancar como **persona natural** en ambas plataformas.
-CloseLabs no está constituida todavía y no está decidido si será en Colombia o en Estados Unidos.
+**Decisiones (2026-09-20):**
+- **macOS: persona natural.** Apple permite convertir a organización después **sin perder el Team
+  ID ni los certificados**, así que empezar como persona no cuesta nada.
+- **Windows: intentar con la sociedad española.** España está en la UE, que **sí** está en la lista
+  de Azure. Es 2,5 veces más barato, trae 250 veces más cuota de firmas, y nuestro CI ya está
+  cableado para ese servicio. Si la validación rebota, plan B es SSL.com IV.
+
+⚠️ **La primera versión de este documento decía que Azure estaba cerrado por un requisito de tres
+años de antigüedad. Eso era falso** — ver la corrección en la sección de Azure más abajo.
 
 ---
 
@@ -153,24 +159,83 @@ firma. No un "Ejecutar de todas formas" — un bloqueo, sin salida para el usuar
 sola o no se acumula. (El portal de Security Intelligence es solo para administradores de TI en
 entornos corporativos.)
 
-## ❌ Azure Artifact Signing (ex Trusted Signing) — CERRADO para Colombia
+## ⭐ Azure Artifact Signing (ex Trusted Signing) — cerrado para Colombia, ABIERTO vía España
 
-Era el plan que teníamos anotado en el roadmap, a ~$10/mes. **No podemos usarlo.** De la
-documentación de Microsoft:
+**~$9,99/mes (SKU Basic) con 5.000 firmas al mes.** Es la opción más barata, la más potente y la
+que **nuestro CI ya tiene cableada** (`build.yml` ya instala `trusted-signing-cli` y pasa los
+secretos `AZURE_*`; solo falta el `signCommand`).
 
-> *"Public Trust certificates are available to organizations in the United States, Canada, the
-> European Union, the United Kingdom, Australia, New Zealand, Japan, South Korea, Singapore,
+**Quién puede entrar,** según la documentación de Microsoft:
+
+> *"Public Trust certificates are available to organizations in the United States, Canada, **the
+> European Union**, the United Kingdom, Australia, New Zealand, Japan, South Korea, Singapore,
 > Switzerland, Norway, and Israel. **Individual developers must be located in the United States or
 > Canada.**"*
 
-**Colombia no está en ninguna de las dos listas.** Ni como empresa ni como persona.
+- **Colombia:** ❌ no está en ninguna de las dos listas.
+- **Persona natural española:** ❌ los individuos solo pueden ser de EE.UU. o Canadá.
+- **Sociedad española:** ✅ **España está en la UE, así que una empresa española SÍ califica.**
 
-Y hay un segundo muro: para las organizaciones que sí califican, exigen **tres años de historia
-verificable**. Así que **constituir en Estados Unidos tampoco lo desbloquea** — una sociedad nueva
-no califica hasta dentro de tres años.
+### ⚠️ Corrección al primer borrador de este documento
 
-Este camino está muerto para nosotros durante años, decidamos lo que decidamos sobre dónde
-constituir. **No perder tiempo montando cuentas de Azure.**
+La primera versión decía que hacía falta **tres años de historia verificable** y que por eso ni
+constituir en Estados Unidos servía. **Eso estaba mal.** Ese dato venía de una respuesta generada
+por IA en un hilo de Microsoft Q&A, no de la documentación.
+
+En ese mismo hilo, un **empleado de Microsoft** respondió a la pregunta directa —"¿una LLC de 2025,
+con menos de 3 años, califica bajo GA?"— así:
+
+> *"Artifact Signing has country/region onboarding pre-reqs, **no minimum org age restrictions**."*
+
+El requisito de los tres años fue una **restricción de la época de vista previa pública** (abril de
+2025) y **no aparece en los prerrequisitos actuales de GA**. Lección: no dar por buenos los
+resúmenes de búsqueda sin abrir la fuente.
+
+⚠️ Dicho eso, **sigue apareciendo en hilos de soporte de 2026**, así que el equipo de validación
+podría aplicarlo en la práctica. La validación tarda de **1 a 20 días hábiles** y solo hay **tres
+intentos** para aportar documentos extra. Vale la pena intentarlo —cuesta muy poco— pero sin contar
+con ello hasta tener el "Completed".
+
+### Qué hace falta para entrar con la sociedad española
+
+1. **Suscripción de Azure de pago.** ⚠️ No sirven las cuentas gratuitas, de prueba ni
+   patrocinadas.
+2. **Tenant de Microsoft Entra.**
+3. **Validación de identidad de organización**, que pide:
+   - Nombre legal de la sociedad y su identificador fiscal (CIF/NIF).
+   - **Un sitio web en el dominio propio de la sociedad.**
+   - **Un correo monitoreado en ese mismo dominio** (no vale una lista de distribución, y tiene que
+     poder recibir enlaces de remitentes externos; el enlace caduca a los 7 días).
+   - Dirección de la sociedad.
+   - Una **persona física** que haga la verificación de identidad con documento oficial, mediante
+     AU10TIX y Verified ID en la app Microsoft Authenticator. El socio español encaja aquí.
+4. Registrar el proveedor `Microsoft.CodeSigning`, crear la cuenta de Artifact Signing, el perfil
+   de certificado **Public Trust**, y un **service principal** en Entra con el rol *Artifact
+   Signing Certificate Profile Signer* → de ahí salen `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` y
+   `AZURE_TENANT_ID`, que el workflow **ya espera**.
+
+### ⚠️ El nombre que verá el médico
+
+> *"you can't use a custom Common Name (CN) or a custom Organization (O) [...] CN values must
+> always be the legal entity's validated name."*
+
+El certificado llevará **el nombre legal de la sociedad española**, no "CloseLabs". Eso es lo que
+aparece en el diálogo de SmartScreen y en las propiedades del instalador. Si ese nombre no dice
+nada a un médico colombiano, es una decisión de marca que hay que tomar a conciencia.
+
+### Comparación
+
+| | Azure Artifact Signing | SSL.com IV + eSigner |
+|---|---|---|
+| Costo | **~$120/año** | ~$309/año |
+| Firmas incluidas | **5.000/mes** | 20/mes |
+| Titular | Sociedad española | Persona natural colombiana |
+| CI | **Primera mano, ya cableado** | GitHub Action propia, hay que montarla |
+| Nombre en el diálogo | El de la sociedad española | "Nicolás Walteros" |
+| Riesgo | La validación puede rebotar | Confirmar que emitan a Colombia |
+
+**Recomendación:** intentar Azure con la sociedad española. Si la validación rebota, SSL.com IV a
+nombre de Nicolás sigue en pie como plan B, y el documento ya tiene todo lo necesario.
 
 ## ❌ La Microsoft Store — no es el atajo que parece
 
@@ -195,7 +260,7 @@ El beneficio real solo llega con **MSIX de verdad**, refirmado por Microsoft. Es
 
 **Conclusión: es un proyecto, no un atajo.** Anotarlo como idea a mediano plazo, no como solución.
 
-## ✅ La opción real: SSL.com IV + eSigner
+## ✅ Plan B: SSL.com IV + eSigner (si Azure rebota)
 
 **~$309/año**, y es la única con soporte de CI de primera mano.
 
@@ -285,15 +350,17 @@ constituir en Estados Unidos y entrar como organización — donde el universo d
 
 ## Cambios de código pendientes
 
-⚠️ **Hay un hueco heredado de Handy.** El workflow instala `trusted-signing-cli` y pasa los
+⚠️ **Hay un hueco heredado de Handy.** El workflow ya instala `trusted-signing-cli` y ya pasa los
 secretos `AZURE_*`, pero **no existe ningún `signCommand` en `tauri.conf.json`**. Es decir: hoy,
-aunque tuviéramos credenciales, **no firmaría nada en Windows**.
+aunque tuviéramos credenciales, **no firmaría nada en Windows**. Es lo único que falta.
 
-Al comprar el certificado hay que:
-- Añadir el `signCommand` en la configuración de Tauri apuntando al cliente de eSigner.
-- Quitar del workflow el andamiaje de `trusted-signing-cli` y los secretos `AZURE_*`, que ya
-  sabemos que nunca vamos a usar.
-- Añadir los secretos de SSL.com (usuario, contraseña, credential ID y TOTP secret de eSigner).
+**Si vamos por Azure (camino preferido):** el andamiaje ya está. Solo hay que añadir el
+`signCommand` apuntando a `trusted-signing-cli` con la cuenta, el perfil de certificado y el
+endpoint de la región, y cargar `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` y `AZURE_TENANT_ID` como
+secretos del repo. **No borrar los pasos de `trusted-signing-cli`** — resultaron ser los correctos.
+
+**Si caemos al plan B (SSL.com):** añadir el `signCommand` apuntando al cliente de eSigner, cargar
+sus secretos (usuario, contraseña, credential ID y TOTP), y ahí sí retirar el andamiaje de Azure.
 
 ---
 
@@ -303,30 +370,38 @@ Al comprar el certificado hay que:
 
 - macOS: **no hay problema.** La conversión de individual a organización conserva el Team ID y los
   certificados.
-- Windows: **no hay conversión.** Un certificado a nombre de CloseLabs es un certificado nuevo, con
-  otro publisher, y la reputación acumulada vuelve a cero.
+- Windows: **no hay conversión.** Cambiar de la sociedad española a CloseLabs —o de Nicolás a
+  cualquiera de las dos— es un certificado nuevo, con otro publisher, y la reputación acumulada
+  vuelve a cero.
 
-**Recomendación:** cuando CloseLabs se constituya, **considerar seguir firmando Windows como
-persona natural más tiempo del que parecería natural.** Que el diálogo diga "Nicolás Walteros"
-importa menos que reiniciar el contador justo cuando empiecen a entrar médicos en volumen. El
-momento de cambiar de identidad es **antes** de una campaña de crecimiento, no durante.
+**Recomendación:** elegir **una** identidad para Windows y sostenerla años. Si va a ser la
+sociedad española, que sea desde el primer instalador firmado; si va a ser Nicolás como persona,
+igual. Lo caro no es elegir mal, es cambiar a mitad de camino.
+
+⚠️ **Y si CloseLabs se constituye después**, resistir el impulso de mover la firma de inmediato.
+Que el diálogo diga el nombre de la sociedad española importa menos que reiniciar el contador justo
+cuando empiecen a entrar médicos en volumen. El momento de cambiar de identidad es **antes** de una
+campaña de crecimiento, nunca durante.
 
 ---
 
-# Sobre dónde constituir
+# Sobre dónde constituir — y el papel de la sociedad española
 
-Esto no es una decisión de firma, pero **dos hallazgos de esta investigación pesan en ella**:
+Dos cosas que parecían empujar la decisión hacia Estados Unidos **ya no la empujan**, porque el
+socio español las resuelve:
 
-1. **Azure Artifact Signing está cerrado en ambos escenarios.** Colombia no está en la lista, y una
-   sociedad estadounidense nueva no cumple los tres años de historia. Que esto **no** empuje la
-   decisión hacia Estados Unidos: no desbloquea nada.
-2. **⚠️ Stripe NO opera en Colombia.** Verificado en la página oficial de Stripe: en América Latina
-   solo soportan **Brasil y México**. Colombia no aparece ni en la lista de disponibles ni en la de
-   "preview". Esto sí es un argumento fuerte para constituir en Estados Unidos, y está desarrollado
-   en la nota de `BACKLOG.md` sobre la pasarela de pago.
+1. **Cobrar.** Stripe no opera en Colombia — en América Latina solo Brasil y México, verificado en
+   su página oficial. **Resuelto: la cuenta de Stripe existe a través del socio español.**
+2. **Firmar Windows.** Azure no emite a Colombia, pero **sí a la Unión Europea**, y España está
+   dentro. **Resuelto por la misma vía.**
 
-Las CAs tradicionales (SSL.com, Certum) le venden a las dos. Así que, del lado de las firmas,
-decide por impuestos, banca y clientes.
+Así que la decisión de dónde constituir vuelve a ser lo que debía ser: **impuestos, banca y
+clientes.** Ni la pasarela ni la firma la condicionan ya.
+
+⚠️ **Lo que sí conviene pensar:** tanto el cobro como la firma quedarían colgando de la sociedad
+española. Eso concentra dos piezas críticas del negocio en una entidad que no controlas solo. No es
+un problema técnico, es un asunto societario — pero vale la pena que quede acordado por escrito
+entre socios antes de construir encima.
 
 ---
 

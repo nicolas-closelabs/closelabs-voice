@@ -107,10 +107,12 @@ Highlights acumulados:
 ## Distribución (por qué "no abre en otros Macs") — CI + firma
 
 > 📄 **Todo lo de firmar (Apple y Windows) vive en `FIRMA-Y-DISTRIBUCION.md`**: precios, pasos,
-> secretos, y lo que una persona o empresa **colombiana** puede y no puede hacer. Dos titulares:
-> **Azure Artifact Signing está cerrado para Colombia** (y constituir en EE.UU. tampoco lo abre —
-> piden 3 años de historia), y **Microsoft quitó en 2024 la reputación instantánea de los EV**, así
-> que firmar como persona natural no pierde nada frente a esperar a constituir. Leer antes de pagar.
+> secretos, y qué puede hacer cada entidad según su país. Tres titulares: **Azure Artifact Signing
+> no emite a Colombia pero SÍ a la UE**, así que el camino es la **sociedad española** del socio
+> (~$120/año, y el CI ya está cableado para ese servicio); **Microsoft quitó en 2024 la reputación
+> instantánea de los EV**, así que la identidad que elijamos no nos deja en desventaja; y lo caro
+> no es elegir identidad, es **cambiarla después** (la reputación del publisher se reinicia).
+> Leer antes de pagar.
 
 
 ⚠️ **Un `.dmg` compilado localmente NO se distribuye a otros equipos.** Dos razones (confirmadas):
