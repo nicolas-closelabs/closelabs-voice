@@ -12,7 +12,7 @@ App de escritorio (Tauri)
   ├─ Dictado → [online] Edge Function /transcribe → Groq Whisper   (audio Opus)
   │            [offline] Parakeet local (se descarga en segundo plano)
   ├─ Texto  → [online] Edge Function /format → Groq LLM (+ guardas locales)
-  └─ Reportar problema → Storage "log-reports" (logs sin texto dictado)
+  └─ Reportar problema → tabla problem_reports (logs limpiados en la app)
 
 Supabase (un solo proveedor: Auth + Postgres + Storage + Edge Functions)
   ├─ Tablas: user_profiles, subscriptions, devices, user_blocks, app_config,
@@ -77,12 +77,12 @@ cambia la URL.
 > sin reinstalar en el computador de ningún médico. Ver DECISIÓN 2026-09-19 en BACKLOG.md, con el
 > disparador de los ~20 médicos y el reemplazo ya medido.
 - [x] Migraciones SQL: `app_config` (fila única), `providers`, `devices`, `usage_events`, con RLS
-  y permisos mínimos para `service_role`. Falta el bucket `log-reports` (va con el reporte de
-  problemas). Proyecto **gdizmbuzepxnkiahbeoz**, São Paulo, Postgres 17.
+  y permisos mínimos para `service_role`. Proyecto **gdizmbuzepxnkiahbeoz**, São Paulo, Postgres 17.
 - [x] Edge Functions desplegadas: `register`, `dictate` (transcribe+formatea en UNA llamada),
   `transcribe` y `format` sueltas (para cuando transcribe el Parakeet local). Identidad por
   DISPOSITIVO con token revocable, cuota diaria, registro de uso sin audio ni texto, llave del
-  proveedor en los secretos. Falta: validar suscripción (Fase 2) y proveedor de respaldo.
+  proveedor en los secretos. La suscripción se valida desde la Fase 2, y DeepInfra y OpenAI
+  quedaron medidos como respaldo (cambiar es una línea de SQL).
 - [x] App apuntando al proxy. **El instalador ya no contiene ninguna llave** (verificado en el
   binario compilado). Una migración borra la llave vieja del disco de quien actualice.
 - [x] **Config remota EN LA APP.** Endpoint `/config`; la app pregunta al arrancar y cada 6 h.
@@ -96,8 +96,8 @@ cambia la URL.
   ⏸️ "Enviar comentarios…" en la bandeja: no se hizo, el botón en Ayuda cubre el caso.
 - [x] **Alertas de uso y errores del proveedor** (BACKLOG #4). Vistas de salud
   (`salud_ultima_hora`, `errores_recientes`, `uso_diario`) + correo automático: `pg_cron` revisa
-  cada 15 min y avisa a `admin@closelabs.co` cuando hay algo accionable. ⚠️ Falta solo la llave
-  de Resend para que los correos salgan.
+  cada 15 min y avisa a `admin@closelabs.co` cuando hay algo accionable. Resend configurado y
+  probado con correos reales.
 
 ### Fase 2 — Usuarios y suscripción · 🔨 EN CURSO (v0.7.0) — falta solo Stripe
 
