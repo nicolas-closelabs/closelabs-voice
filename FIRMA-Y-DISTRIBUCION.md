@@ -398,20 +398,22 @@ Correo a **Support@SSL.com** (o el chat de ventas) preguntando exactamente esto:
 
 ### ✅ Lo que respondió SSL.com (2026-09-21)
 
-Por el chat de su web (por el formato, parece su asistente automático; lo que dijo coincide con su
-documentación publicada):
+Por el chat de su web. ⚠️ Quien responde es **TrustBot, un agente de IA**, no una persona. Lo que
+dijo coincide con su documentación publicada, y la garantía de 30 días cubre el riesgo de que se
+equivoque:
 
 | Pregunta | Respuesta |
 |---|---|
 | ¿IV a persona natural en Colombia? | **Sí** |
 | ¿Aceptan cédula? | **Sí** — cédula, pasaporte, licencia; vigente, con foto y datos legibles |
-| ¿Llamada de verificación? | "Debe ser un número verificable" — ⚠️ **respuesta genérica, sin resolver** |
+| ¿Llamada de verificación? | **Resuelto.** No tiene que estar a tu nombre ni ser de un país concreto. En el pedido aparece *Perform Callback*; eliges llamada automática, SMS, programada o manual; te dan un **código de 4 dígitos** y lo escribes en el navegador. Menos de 2 minutos |
+| ¿Documento que pruebe que el número es tuyo? | **No hace falta** |
+| ¿Reembolso si no pasa? | **Garantía de devolución de 30 días** |
 | ¿Comprobante de dirección? | Factura de servicios, extracto bancario u otro documento oficial con la dirección |
 | ¿Tiempo de validación? | **2 a 3 días hábiles** desde que se envía todo completo |
 | ¿Precio de eSigner? | No lo supieron dar → usar el publicado: **$20/mes, 20 firmas (Tier 1)** |
 
-**Pendiente antes de pagar:** qué hace "verificable" a un celular colombiano, y si reembolsan si la
-validación no pasa.
+**✅ Todo resuelto. Luz verde para comprar** (IV de 1 año, con eSigner como almacenamiento).
 
 **Plan B si rebotan:** Certum (asumiendo el costo de automatización no oficial), o esperar a
 constituir en Estados Unidos y entrar como organización — donde el universo de CAs se abre entero.
@@ -430,7 +432,8 @@ constituir en Estados Unidos y entrar como organización — donde el universo d
    - Frente y reverso de la **cédula** (SSL.com confirmó que la aceptan) o del pasaporte.
    - **Selfie sosteniendo el documento** junto a la cara, mínimo 5 megapíxeles.
    - Comprobante de dirección: factura de servicios o extracto bancario reciente.
-   - Estar pendiente de la **llamada de verificación**: sin ella no emiten.
+   - **Llamada de verificación:** en el pedido aparece *Perform Callback*. Elegir SMS o llamada,
+     recibir un código de 4 dígitos y escribirlo en el navegador. Sin este paso no emiten.
 5. **Inscribir el certificado en eSigner.** Aparece un **código QR**, y junto a él un **"secret
    code"**.
    ⚠️ **COPIAR ESE SECRET CODE en un gestor de contraseñas ANTES de cerrar la pantalla.** Es lo que
