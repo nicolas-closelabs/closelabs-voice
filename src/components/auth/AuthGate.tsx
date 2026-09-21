@@ -44,8 +44,12 @@ const MENSAJES: Record<string, string> = {
 
 const explicar = (codigo: string) => MENSAJES[codigo] ?? MENSAJES.desconocido;
 
-const campo =
-  "w-full px-3.5 py-2.5 rounded-xl border border-brand-border bg-white text-[15px] focus:outline-none focus:border-brand-accent transition-colors disabled:opacity-50";
+const base =
+  "px-3.5 py-2.5 rounded-xl border border-brand-border bg-white text-[15px] focus:outline-none focus:border-brand-accent transition-colors disabled:opacity-50";
+const campo = `w-full ${base}`;
+
+/** Lo más largo que puede medir un celular en los países donde estamos, con holgura. */
+const MAX_TELEFONO = 12;
 
 export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   const [modo, setModo] = useState<Modo>("entrar");
@@ -190,7 +194,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
     ? correo.trim() &&
       clave.length >= 8 &&
       nombre.trim() &&
-      telefono.trim() &&
+      telefono.length >= 7 &&
       acepta
     : correo.trim() && clave.length > 0;
 
@@ -246,25 +250,33 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
               value={indicativo}
               onChange={(e) => setIndicativo(e.target.value)}
               disabled={ocupado}
-              className={`${campo} w-auto shrink-0`}
+              className={`${base} w-24 shrink-0`}
               aria-label="Indicativo del país"
             >
               {PAISES.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.code} {p.pais}
+                // Solo el indicativo: el nombre del país hacía el selector tan ancho que el
+                // número se quedaba sin sitio y no se veía lo que se estaba escribiendo.
+                <option key={p.code} value={p.code} title={p.pais}>
+                  {p.code}
                 </option>
               ))}
             </select>
             <input
               id="registro-telefono"
               type="tel"
+              inputMode="numeric"
               autoComplete="tel-national"
               required
-              placeholder="Celular"
+              maxLength={MAX_TELEFONO}
+              placeholder="Número de celular"
               value={telefono}
-              onChange={(e) => setTelefono(e.target.value.replace(/[^\d ]/g, ""))}
+              // Solo dígitos y con tope. Sin esto se coló un número repetido de 19 cifras: el
+              // campo estaba tan estrecho que no se veía el error al escribirlo.
+              onChange={(e) =>
+                setTelefono(e.target.value.replace(/\D/g, "").slice(0, MAX_TELEFONO))
+              }
               disabled={ocupado}
-              className={campo}
+              className={`${base} flex-1 min-w-0`}
             />
           </div>
         )}
