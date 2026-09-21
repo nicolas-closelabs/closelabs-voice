@@ -306,6 +306,13 @@ cuando lleva pista. Detalle en `BACKLOG.md` (2026-09-20).
   Falla hacia abierto siempre; ver la nota larga en el encabezado del archivo.
 - `src-tauri/src/problem_report.rs` — "Reportar un problema": limpia el log antes de que salga
   del computador. ⚠️ Al añadir una regla nueva ahí, la norma es: ante la duda, se borra.
+- `src-tauri/src/auth.rs` — cuenta del médico (entrar, registrarse, vincular el equipo). ⚠️ **La
+  sesión NO va al llavero del sistema**: va a `sesion.json` (0600) en la carpeta de datos. Sin
+  firma de Developer ID, el llavero de macOS ata el permiso al **hash del binario**, así que cada
+  versión nueva le exigía al médico la contraseña de su Mac nada más abrir la app — parece
+  malware. **No volver a meter `keyring` mientras las compilaciones sigan sin firmar.** El porqué
+  completo, y el argumento de por qué el costo de seguridad es casi nulo, están en el encabezado
+  del archivo.
 - `supabase/` — migraciones y Edge Functions. Proyecto `gdizmbuzepxnkiahbeoz` (São Paulo).
 - `src-tauri/src/groq_transcribe.rs` — ya no llama a Groq: quedan `build_whisper_prompt` (el
   diccionario como pista) y la cadena de formatos `UPLOAD_FORMATS` (Opus → FLAC → WAV).

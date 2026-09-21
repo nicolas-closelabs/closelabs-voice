@@ -10,23 +10,39 @@
 //! mitad de consulta. La sesión se usa para lo que sí tolera esperar: entrar, ver la suscripción,
 //! soltar un equipo.
 //!
-//! ⚠️ **El token de refresco va al llavero del sistema, no a los ajustes.** Da acceso completo a
-//! la cuenta del médico, y `settings_store.json` es un archivo de texto que se copia en cualquier
-//! respaldo. Es la misma lección que nos dejó el `device_token` escrito en los logs.
+//! ⚠️ **El token de refresco va a un archivo propio, NO al llavero del sistema.** Estuvo en el
+//! llavero y se sacó a propósito. Sin firma de Developer ID, macOS ata el permiso del llavero al
+//! hash exacto del binario: cada versión nueva es, para el llavero, una app desconocida leyendo
+//! un secreto ajeno, y le planta al médico una ventana pidiéndole la contraseña de su Mac. En la
+//! primera pantalla de un producto clínico eso parece malware, y el médico llama asustado o no
+//! vuelve a abrir la app. No es hipotético: apareció en cuanto se instaló la 0.7.0 encima de una
+//! compilación anterior.
+//!
+//! El costo real de seguridad es casi nulo: el `device_token` —la credencial que de verdad
+//! permite dictar— ya vive en texto plano en `settings_store.json`, en ESTA MISMA carpeta.
+//! Proteger el refresco con el llavero mientras la otra puerta queda abierta era pagar una
+//! ventana que asusta a cambio de nada. El archivo queda en 0600 y el refresco es revocable
+//! desde el servidor, que es la defensa que sí sirve si alguien copia el disco.
+//!
+//! ⚠️ Lo que NO cambia: el refresco sigue **fuera de `settings_store.json`**. Ese archivo se
+//! vuelca entero al log en cada arranque y viaja en los reportes de problema. Es la lección que
+//! nos dejó el `device_token` apareciendo en claro en los logs.
+//!
+//! Cuando firmemos con Developer ID se podrá reconsiderar el llavero, pero ya sin urgencia.
 
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use keyring::Entry;
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
 use crate::settings::get_settings;
 
-/// Identificadores del llavero. Cambiar estos valores equivale a cerrar la sesión de todo el
-/// mundo: el token guardado con los antiguos deja de encontrarse.
-const KEYRING_SERVICE: &str = "com.closelabs.voice";
-const KEYRING_ACCOUNT: &str = "sesion";
+/// Nombre del archivo de sesión dentro de la carpeta de datos de la app. Cambiarlo equivale a
+/// cerrar la sesión de todo el mundo: lo guardado con el nombre anterior deja de encontrarse.
+const ARCHIVO_SESION: &str = "sesion.json";
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(20);
@@ -35,7 +51,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(20);
 /// llega al servidor ya vencida.
 const MARGEN_CADUCIDAD: i64 = 60;
 
-/// Lo que se guarda en el llavero.
+/// Lo que se guarda en el archivo de sesión.
 #[derive(Serialize, Deserialize, Clone)]
 struct Sesion {
     access_token: String,
@@ -80,36 +96,62 @@ fn ahora() -> i64 {
         .unwrap_or(0)
 }
 
-fn entrada_llavero() -> Result<Entry, String> {
-    Entry::new(KEYRING_SERVICE, KEYRING_ACCOUNT).map_err(|e| format!("llavero: {e}"))
+fn ruta_sesion(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = crate::portable::app_data_dir(app).map_err(|e| format!("carpeta de datos: {e}"))?;
+    Ok(dir.join(ARCHIVO_SESION))
 }
 
-fn guardar_sesion(s: &Sesion) -> Result<(), String> {
+/// Deja el archivo legible solo por su dueño.
+///
+/// Se llama ANTES de escribir, no después: si se ajustara al final, el token quedaría un instante
+/// con los permisos que le tocaran por defecto. En Windows no hace falta — el perfil del usuario
+/// ya restringe el acceso y el modo POSIX no significa nada allá.
+fn solo_para_su_dueno(ruta: &Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Err(e) = fs::set_permissions(ruta, fs::Permissions::from_mode(0o600)) {
+            warn!("No se pudieron restringir los permisos de la sesión: {e}");
+        }
+    }
+    #[cfg(not(unix))]
+    let _ = ruta;
+}
+
+fn guardar_sesion(app: &AppHandle, s: &Sesion) -> Result<(), String> {
+    let ruta = ruta_sesion(app)?;
+    if let Some(padre) = ruta.parent() {
+        fs::create_dir_all(padre).map_err(|e| format!("carpeta de datos: {e}"))?;
+    }
     let json = serde_json::to_string(s).map_err(|e| format!("sesión: {e}"))?;
-    entrada_llavero()?
-        .set_password(&json)
-        .map_err(|e| format!("llavero: {e}"))
+
+    // Crear vacío y cerrar la puerta antes de meter el secreto adentro.
+    fs::write(&ruta, b"").map_err(|e| format!("sesión: {e}"))?;
+    solo_para_su_dueno(&ruta);
+    fs::write(&ruta, json).map_err(|e| format!("sesión: {e}"))
 }
 
-fn leer_sesion() -> Option<Sesion> {
-    let entrada = entrada_llavero().ok()?;
-    match entrada.get_password() {
-        Ok(json) => serde_json::from_str(&json).ok(),
+fn leer_sesion(app: &AppHandle) -> Option<Sesion> {
+    let ruta = ruta_sesion(app).ok()?;
+    match fs::read_to_string(&ruta) {
+        Ok(json) => serde_json::from_str(&json)
+            .map_err(|e| warn!("El archivo de sesión no se pudo entender: {e}"))
+            .ok(),
         // No hay sesión guardada: es el caso normal en una instalación nueva, no un error.
-        Err(keyring::Error::NoEntry) => None,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
         Err(e) => {
-            warn!("No se pudo leer la sesión del llavero: {e}");
+            warn!("No se pudo leer la sesión: {e}");
             None
         }
     }
 }
 
-fn borrar_sesion() {
-    if let Ok(entrada) = entrada_llavero() {
-        match entrada.delete_credential() {
-            Ok(()) | Err(keyring::Error::NoEntry) => {}
-            Err(e) => warn!("No se pudo borrar la sesión del llavero: {e}"),
-        }
+fn borrar_sesion(app: &AppHandle) {
+    let Ok(ruta) = ruta_sesion(app) else { return };
+    match fs::remove_file(&ruta) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => warn!("No se pudo borrar la sesión: {e}"),
     }
 }
 
@@ -224,7 +266,7 @@ impl EstadoCuenta {
 /// o pasó demasiado tiempo), se borra la sesión: es preferible pedirle que entre de nuevo a
 /// dejarlo con una sesión rota que falla en cada pantalla sin decir por qué.
 async fn token_valido(app: &AppHandle) -> Option<String> {
-    let sesion = leer_sesion()?;
+    let sesion = leer_sesion(app)?;
     if sesion.expires_at - MARGEN_CADUCIDAD > ahora() {
         return Some(sesion.access_token);
     }
@@ -246,7 +288,7 @@ async fn token_valido(app: &AppHandle) -> Option<String> {
         // sesión: un corte de su servidor no debe desconectar al médico.
         if res.status().is_client_error() {
             warn!("La sesión dejó de ser válida; hay que entrar de nuevo");
-            borrar_sesion();
+            borrar_sesion(app);
         }
         return None;
     }
@@ -259,7 +301,7 @@ async fn token_valido(app: &AppHandle) -> Option<String> {
         user_id: t.user.id,
         email: t.user.email.unwrap_or(sesion.email),
     };
-    let _ = guardar_sesion(&nueva);
+    let _ = guardar_sesion(app, &nueva);
     Some(t.access_token)
 }
 
@@ -340,7 +382,7 @@ pub async fn auth_sign_in(
         user_id: t.user.id,
         email: t.user.email.unwrap_or_else(|| email.trim().to_lowercase()),
     };
-    guardar_sesion(&sesion)?;
+    guardar_sesion(&app, &sesion)?;
     info!("Sesión iniciada");
 
     // Vincular este equipo. Si rebota por el tope, la sesión SE QUEDA abierta a propósito: el
@@ -393,7 +435,7 @@ async fn vincular_este_equipo(app: &AppHandle) -> Result<(), String> {
 #[specta::specta]
 pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
     // Primero el llavero. Si NO hay sesión guardada, el médico está fuera de verdad.
-    let Some(sesion) = leer_sesion() else {
+    let Some(sesion) = leer_sesion(&app) else {
         return Ok(EstadoCuenta::desconectado());
     };
 
@@ -573,7 +615,7 @@ pub async fn auth_sign_out(app: AppHandle) -> Result<(), String> {
             .send()
             .await;
     }
-    borrar_sesion();
+    borrar_sesion(&app);
     info!("Sesión cerrada");
     Ok(())
 }

@@ -237,6 +237,41 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## 2026-09-20 — El llavero de macOS le pedía al médico la contraseña de su Mac
+
+**Cómo salió:** instalando la 0.7.0 encima de una compilación anterior. Al abrir la app, antes de
+ver nada, apareció el diálogo del llavero: *"CloseLabs Voice wants to use your confidential
+information stored in com.closelabs.voice"*, con un campo pidiendo **la contraseña de inicio de
+sesión del Mac**. No un "Permitir" — la contraseña.
+
+**Por qué pasaba.** Nuestras compilaciones van **sin firmar** (`codesign` dice `Signature=adhoc`,
+`TeamIdentifier=not set`). Sin firma de Developer ID, macOS ata el permiso del llavero al **hash
+exacto del binario**. Cada versión nueva es, para el llavero, una app desconocida intentando leer
+el secreto de otra, y como no puede verificar identidad **escala a pedir la contraseña** en vez de
+ofrecer un simple Permitir. "Permitir siempre" solo vale hasta el siguiente build.
+
+**Quién lo habría visto.** Una instalación LIMPIA de 0.7.0 no lo ve (no hay nada guardado todavía).
+Pero lo habría visto **todo el mundo en la primera actualización**. A un médico, una ventana
+pidiéndole la contraseña de su computador le parece malware.
+
+**Qué se hizo.** Se sacó la sesión del llavero: ahora es `sesion.json` (0600) en la carpeta de
+datos de la app, y se quitó la dependencia `keyring`. El costo real de seguridad es casi nulo — el
+`device_token`, que es la credencial que de verdad permite dictar, **ya estaba en texto plano** en
+`settings_store.json`, en esa misma carpeta. Estábamos pagando una ventana que asusta a cambio de
+blindar la cerradura con la puerta abierta. Lo que sí importa se mantiene: el refresco sigue fuera
+de `settings_store.json`, que se vuelca entero al log en cada arranque y viaja en los reportes de
+problema.
+
+⚠️ **No volver a añadir `keyring` mientras las compilaciones sigan sin firmar.** Cuando haya
+Developer ID se puede reconsiderar, ya sin urgencia.
+
+**Efecto secundario:** quien tuviera sesión guardada en el llavero tiene que entrar una vez más.
+
+**Otra vez la misma lección:** esto no se veía leyendo el código. Salió **instalando el
+instalador de verdad**, encima de una versión anterior, como lo va a hacer un tester.
+
+---
+
 ## ESTADO AL 2026-09-21 — v0.7.0, primera versión con cuentas
 
 ### Lo que está vivo en producción ahora mismo

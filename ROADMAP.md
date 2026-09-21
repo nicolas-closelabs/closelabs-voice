@@ -7,7 +7,7 @@
 
 ```
 App de escritorio (Tauri)
-  ├─ Sesión Supabase (token en el llavero del sistema, renovación automática)
+  ├─ Sesión Supabase (token en archivo propio 0600, renovación automática)
   ├─ Config remota al abrir y cada X horas (versión mínima, bloqueo, mensajes)
   ├─ Dictado → [online] Edge Function /transcribe → Groq Whisper   (audio Opus)
   │            [offline] Parakeet local (se descarga en segundo plano)
@@ -117,9 +117,12 @@ cambia la URL.
   (perfil + prueba de 30 días) va en un disparador sobre `auth.users`: o pasa todo o no pasa nada.
 - [x] **Login, registro, recuperar contraseña, confirmación por correo.** Correos en español y con
   la marca, por Resend. Probado de punta a punta con una cuenta real.
-- [x] **Sesión en el llavero del sistema**, con renovación automática. ⚠️ El dictado NO usa la
-  sesión sino el token del dispositivo — ver el porqué en `auth.rs`. Y tener sesión guardada basta
-  para estar dentro: ni un corte de red ni una caída nuestra desconectan a nadie.
+- [x] **Sesión persistente**, con renovación automática. ⚠️ El dictado NO usa la sesión sino el
+  token del dispositivo — ver el porqué en `auth.rs`. Y tener sesión guardada basta para estar
+  dentro: ni un corte de red ni una caída nuestra desconectan a nadie.
+  ⚠️ **Estuvo en el llavero del sistema y se sacó a propósito** (2026-09-20): sin firma de
+  Developer ID, macOS le pedía al médico la contraseña de su Mac al abrir cada versión nueva.
+  Ahora es un archivo 0600 en la carpeta de datos. El porqué largo está en `auth.rs`.
 - [x] **3 dispositivos por cuenta**, con las dos puertas que evitan soporte: reinstalar el mismo
   computador no gasta cupo, y los equipos sin señales en 90 días lo sueltan solos.
 - [x] **Estados de suscripción** aplicados en el proxy (`authorize_device_v2`). `past_due` SÍ
