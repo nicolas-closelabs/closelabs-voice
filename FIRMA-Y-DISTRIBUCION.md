@@ -181,14 +181,41 @@ firmar. Comprobarlo en la primera instalación real y **no prometérselo a los m
 ## Etapa 2 — Empaquetar en MSIX (mediano plazo)
 
 MSIX es el formato nativo de la Store. Con él, **Microsoft firma el paquete gratis** y lo aloja en su
-CDN: **cero SmartScreen garantizado** en ese canal.
+CDN: **cero SmartScreen garantizado** en ese canal. Pero no es "otro formato de instalador": Windows
+pasa a instalar, actualizar y desinstalar la app, y la corre en un entorno controlado. Implica:
 
-- **Tauri no genera MSIX.** Hay que empaquetarlo aparte y mantener ese paso en el CI.
-- La app se declara como app de escritorio con acceso completo (*runFullTrust*). La certificación
-  revisa de cerca una app que captura atajos globales y escribe en otras aplicaciones.
-- **No reemplaza a SSL.com:** la descarga directa desde nuestra web sigue necesitando la firma propia.
+- **Autoarranque:** la entrada del registro que usa hoy el plugin de autostart no funciona dentro de
+  MSIX. Hay que declararlo en el manifiesto (*startup task*), y el médico puede apagarlo desde la
+  configuración de Windows.
+- **Archivos de la app** (ajustes, `sesion.json`, logs): Windows los redirige a una carpeta del
+  paquete. Casi siempre es transparente, pero hay que probarlo, y **al desinstalar se borra todo**,
+  sesión incluida.
+- **Carpeta de instalación de solo lectura.** Hoy no escribimos ahí, pero hay que confirmarlo.
+- **Actualizaciones:** las hace la Store, y cada versión pasa por la revisión de Microsoft (horas o
+  pocos días). Un arreglo urgente ya no sale el mismo día por ese canal.
+- **Dos variantes de Windows que mantener** (MSIX para la Store, `.exe` para descarga directa),
+  distintas en autoarranque y actualizaciones: el doble de pruebas por versión.
+- **Tauri no genera MSIX.** Hay que empaquetarlo aparte en el CI con las herramientas de Microsoft.
+  Varios días de trabajo, más las idas y vueltas de la certificación.
+- La app se declara con acceso completo (*runFullTrust*). La certificación revisa de cerca una app
+  que captura atajos globales y escribe en otras aplicaciones.
+- **No reemplaza a SSL.com:** la descarga directa sigue necesitando la firma propia.
 
-Vale la pena si la Store se vuelve el canal principal de instalación.
+Vale la pena cuando el producto esté más estable y la Store se vuelva un canal importante.
+
+## Decisión (2026-09-21): SSL.com primero, Store después
+
+Se consideró **Windows solo por la Store en MSIX, sin comprar SSL.com**: sin aviso de SmartScreen y
+$309/año menos. Se descartó por ahora porque:
+
+1. **La Store no siempre está disponible**: hay computadores de clínica con la tienda bloqueada por
+   su técnico de sistemas, o con versiones de Windows sin ella. Ahí el médico caería al `.exe` sin
+   firma, que es el peor caso (Smart App Control puede bloquearlo del todo).
+2. **Cada arreglo dependería de la revisión de Microsoft.** Con descarga directa firmada, una
+   versión nueva sale el mismo día.
+3. **Varios días de ingeniería** mientras la app todavía cambia mucho.
+
+Orden: **SSL.com → Store con el `.exe` firmado (Etapa 1) → MSIX (Etapa 2)** cuando se justifique.
 
 ---
 
