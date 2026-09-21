@@ -185,6 +185,47 @@ secretos `AZURE_*`; solo falta el `signCommand`).
 **Hoy no nos sirve.** Queda documentado para el día que CloseLabs se constituya en un país de la
 lista (España o Estados Unidos, por ejemplo).
 
+### ¿Y si hacemos una LLC en Estados Unidos? — probable, NO garantizado
+
+Pregunta de Nicolás (2026-09-21): *"¿estás 100% que si hago una LLC voy a poder firmar?"*
+Respuesta honesta: **no.**
+
+**Lo que está comprobado:**
+- Estados Unidos está en la lista de países para organizaciones.
+- Un empleado de Microsoft dice que **no hay antigüedad mínima**.
+- La documentación oficial no pone restricciones sobre la nacionalidad del dueño.
+
+**Lo que NO está comprobado, y por qué puede rebotar:**
+- La validación contrasta la sociedad contra **registros públicos**. Una LLC recién creada casi no
+  aparece en ellos, y en Microsoft Q&A hay varios casos de validaciones **fallidas sin razón**, con
+  la sospecha de que la sociedad era demasiado nueva o no tenía **D-U-N-S**.
+- Solo hay **tres intentos** para aportar documentos extra. Si se agotan, no hay más onboarding.
+- El requisito de los tres años sigue apareciendo en respuestas de 2026. Microsoft lo niega, pero
+  no hay forma de saber qué aplica el validador hasta intentarlo.
+- **No encontré ni un caso publicado de una LLC nueva con dueño extranjero aprobada.** Tampoco uno
+  rechazado por esa razón. Simplemente no hay datos.
+
+**Cuánto tarda, si todo sale bien:**
+
+| Paso | Tiempo |
+|---|---|
+| Registrar la LLC (Wyoming, Delaware, etc.) | Unos días |
+| EIN sin número de Seguro Social (formulario SS-4 por fax) | 4 días hábiles en el mejor caso, **2-4 semanas** lo normal |
+| D-U-N-S gratis (muy recomendable antes de validar) | Hasta 30 días hábiles; a menudo 1-2 semanas; 8 días pagando |
+| Validación de identidad en Azure | **1-20 días hábiles** |
+| **Total** | **~1 mes en el mejor caso, 2-3 meses lo realista** |
+
+**⚠️ Y lo más importante: no hacer una LLC para firmar.** Contra SSL.com, Azure ahorra unos
+$190/año. Una LLC con dueño extranjero cuesta más que eso cada año solo en mantenerla (agente
+registrado, tarifas estatales, contador). Además tiene obligaciones que hay que conocer, como el
+**formulario 5472 del IRS**, con una multa de **$25.000** si no se presenta. **Confirmarlo con un
+contador.** La LLC tiene sentido si CloseLabs se va a constituir allá por razones de negocio, y
+Azure sería un beneficio lateral. Nunca al revés.
+
+**La manera de salir de dudas sin arriesgar:** firmar ya con SSL.com, y si algún día existe la LLC
+por otras razones, intentar Azure en paralelo sin apagar SSL.com hasta tener la validación en
+*Completed*.
+
 ### ⚠️ Corrección al primer borrador de este documento
 
 La primera versión decía que hacía falta **tres años de historia verificable** y que por eso ni
