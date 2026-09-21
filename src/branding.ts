@@ -20,6 +20,14 @@ export const BRANDING = {
   /** Identificador del bundle (debe coincidir con tauri.conf.json). */
   bundleId: "com.closelabs.voice",
 
+  /**
+   * WhatsApp de soporte. Para cambiarlo, SOLO esta línea: todos los botones leen de aquí.
+   * Formato internacional sin "+" ni espacios (lo exige wa.me).
+   */
+  supportWhatsapp: "573102991182",
+  /** El mismo número, como se le muestra al médico. */
+  supportWhatsappDisplay: "+57 310 299 1182",
+
   /** Colores de marca (referencia; la fuente para CSS es src/styles/theme.css). */
   colors: {
     accent: "#A439FF",
@@ -45,3 +53,16 @@ export const BRANDING = {
 } as const;
 
 export type Branding = typeof BRANDING;
+
+/**
+ * Enlace para abrir un chat de soporte con el mensaje ya escrito.
+ *
+ * El mensaje va prellenado a propósito: para un médico poco familiarizado con la tecnología,
+ * "abrir WhatsApp y darle a enviar" es un paso; "abrir WhatsApp y pensar qué escribir" es
+ * donde se rinde.
+ */
+export function supportWhatsappUrl(
+  mensaje = "Hola, necesito ayuda con CloseLabs Voice.",
+): string {
+  return `https://wa.me/${BRANDING.supportWhatsapp}?text=${encodeURIComponent(mensaje)}`;
+}

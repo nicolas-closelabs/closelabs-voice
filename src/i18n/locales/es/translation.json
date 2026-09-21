@@ -605,7 +605,8 @@
   },
   "accessibility": {
     "permissionsDescription": "CloseLabs Voice necesita permisos de accesibilidad para escribir texto transcrito.",
-    "openSettings": "Abrir Ajustes del Sistema"
+    "openSettings": "Abrir Ajustes del Sistema",
+    "openWindowsSettings": "Abrir Configuración de Windows"
   },
   "errors": {
     "loadDirectory": "Error al cargar el directorio: {{error}}",
@@ -645,6 +646,7 @@
     "title": "Necesitas actualizar CloseLabs Voice",
     "download": "Descargar la versión nueva",
     "updateTitle": "Hay una versión nueva",
-    "updateBody": "La versión {{version}} ya está disponible. Puedes seguir dictando mientras tanto."
+    "updateBody": "La versión {{version}} ya está disponible. Puedes seguir dictando mientras tanto.",
+    "help": "¿Necesitas ayuda? Escríbenos por WhatsApp"
   }
 }

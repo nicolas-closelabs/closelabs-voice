@@ -26,7 +26,7 @@ const Logo: React.FC<LogoProps> = ({ width = 140, className = "" }) => {
         style={{ fontSize }}
         aria-label={BRANDING.appName}
       >
-        CloseLabs
+        {BRANDING.company}
       </span>
     );
   }

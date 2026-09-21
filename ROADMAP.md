@@ -143,11 +143,15 @@ cambia la URL.
 > están en condiciones de hacerlo sin ayuda.
 
 **Autoservicio (UX):**
-- [ ] 🔴 **Atajo equivocado en Windows.** Instrucciones y Ayuda dicen **⌥ + Espacio** (tecla de Mac)
-  e Inicio muestra **⌃ + Espacio** (símbolo de Mac); en Windows el atajo es **Ctrl + Espacio**. La
-  Ayuda además manda a "Ajustes del Sistema → Accesibilidad", que es de Mac.
-- [ ] 🔴 **Botón de WhatsApp.** "Contactar" abre la portada de closelabs.co; no hay ningún canal de
-  soporte en la app, y el reporte de problemas menciona un WhatsApp que no aparece por ningún lado.
+- [x] 🔴 **Atajo equivocado en Windows.** Instrucciones y Ayuda decían **⌥ + Espacio** (tecla de
+  Mac) e Inicio mostraba **⌃ + Espacio**; en Windows es **Ctrl + Espacio**. ✅ 2026-09-21: todas las
+  pantallas leen el atajo REAL del médico y lo escriben según su teclado (`shortcutLabels.ts` +
+  `useShortcutKeys`). La Ayuda habla de Configuración de Windows, la bandeja junto al reloj y
+  Ctrl + V; el botón del micrófono en Windows ya no dice "Ajustes del Sistema".
+- [x] 🔴 **Botón de WhatsApp** (+57 310 299 1182, en `branding.ts`). ✅ 2026-09-21: primero en
+  Ayuda; en TODAS las pantallas de cuenta (sin cuenta no se dicta, así que quien no logra entrar no
+  tenía ninguna salida); en la pantalla de versión bloqueada; y tras reportar un problema, con el
+  número del reporte ya escrito en el mensaje. Todos los mensajes van prellenados.
 - [ ] **Entrar solo después de confirmar el correo.** Hoy el enlace lleva a la portada de
   closelabs.co, y el médico tiene que volver a la app y escribir otra vez correo y contraseña.
 - [ ] **Tutorial interactivo del primer dictado** al terminar el registro: un cuadro de texto dentro

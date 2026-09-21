@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, MessageCircle } from "lucide-react";
 import { Button } from "./ui/Button";
+import { supportWhatsappUrl } from "../branding";
 
 interface VersionBlockedProps {
   message: string;
@@ -46,6 +47,20 @@ export default function VersionBlocked({
       {/* Sin internet el enlace no abre nada útil, así que la dirección queda a la vista para
           poder escribirla en otro equipo. */}
       <p className="text-xs text-brand-text-muted break-all">{downloadUrl}</p>
+
+      {/* Esta pantalla no tiene salida a propósito; por eso, al menos, a quién escribir. */}
+      <button
+        type="button"
+        onClick={() =>
+          void openUrl(
+            supportWhatsappUrl("Hola, CloseLabs Voice me pide actualizar y necesito ayuda."),
+          )
+        }
+        className="inline-flex items-center gap-1.5 text-sm text-brand-text-muted hover:text-[#128C7E] transition-colors"
+      >
+        <MessageCircle className="w-4 h-4" />
+        {t("blocked.help")}
+      </button>
     </div>
   );
 }

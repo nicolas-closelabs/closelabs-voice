@@ -1,31 +1,9 @@
 /* eslint-disable i18next/no-literal-string */
 import React from "react";
 import { Mic, Keyboard, ClipboardCheck, Loader2, Check } from "lucide-react";
-import { useSettings } from "../../../hooks/useSettings";
+import { useShortcutKeys } from "../../../hooks/useShortcutKeys";
 import { useModelStore } from "../../../stores/modelStore";
 import Logo from "../../icons/Logo";
-
-/** "option+space" → ["⌥", "Espacio"] para mostrar el atajo bonito. */
-function formatKeys(binding?: string): string[] {
-  if (!binding) return ["⌥", "Espacio"];
-  const map: Record<string, string> = {
-    option: "⌥",
-    alt: "⌥",
-    ctrl: "⌃",
-    control: "⌃",
-    cmd: "⌘",
-    command: "⌘",
-    super: "⌘",
-    meta: "⌘",
-    shift: "⇧",
-    space: "Espacio",
-    enter: "↩",
-  };
-  return binding
-    .split("+")
-    .map((k) => k.trim().toLowerCase())
-    .map((k) => map[k] ?? k.charAt(0).toUpperCase() + k.slice(1));
-}
 
 const Step: React.FC<{
   n: number;
@@ -46,13 +24,8 @@ const Step: React.FC<{
 );
 
 export const HomeSettings: React.FC = () => {
-  const { getSetting } = useSettings();
   const { models, downloadProgress } = useModelStore();
-
-  const bindings = getSetting("bindings") as
-    | Record<string, { current_binding?: string }>
-    | undefined;
-  const keys = formatKeys(bindings?.transcribe?.current_binding);
+  const { keys, text: atajo } = useShortcutKeys();
 
   const downloading = Object.values(downloadProgress)[0];
   const ready = models.some((m) => m.is_downloaded);
@@ -127,7 +100,7 @@ export const HomeSettings: React.FC = () => {
             n={1}
             icon={<Keyboard className="w-4 h-4" />}
             title="Presiona el atajo"
-            desc={`Usa ${keys.join(" + ")} en cualquier campo de texto.`}
+            desc={`Usa ${atajo} en cualquier campo de texto.`}
           />
           <Step
             n={2}

@@ -350,8 +350,10 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
                     onClick={handleGrantMicrophone}
                     className="px-4 py-2 rounded-lg bg-logo-primary hover:bg-logo-primary/90 text-white text-sm font-medium transition-colors"
                   >
+                    {/* En Windows no existen los "Ajustes del Sistema" (es el nombre de Mac): allá
+                        la app se llama Configuración. */}
                     {isWindows
-                      ? t("accessibility.openSettings")
+                      ? t("accessibility.openWindowsSettings")
                       : t("onboarding.permissions.grant")}
                   </button>
                 )}

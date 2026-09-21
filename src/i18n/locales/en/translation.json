@@ -608,7 +608,8 @@
   },
   "accessibility": {
     "permissionsDescription": "CloseLabs Voice needs accessibility permissions to type transcribed text.",
-    "openSettings": "Open System Settings"
+    "openSettings": "Open System Settings",
+    "openWindowsSettings": "Open Windows Settings"
   },
   "errors": {
     "loadDirectory": "Error loading directory: {{error}}",
@@ -645,6 +646,7 @@
     "title": "You need to update CloseLabs Voice",
     "download": "Download the new version",
     "updateTitle": "A new version is available",
-    "updateBody": "Version {{version}} is out. You can keep dictating in the meantime."
+    "updateBody": "Version {{version}} is out. You can keep dictating in the meantime.",
+    "help": "Need help? Message us on WhatsApp"
   }
 }

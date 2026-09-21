@@ -1,7 +1,9 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useState } from "react";
-import { Bug, Check, Loader2 } from "lucide-react";
+import { Bug, Check, Loader2, MessageCircle } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { commands } from "@/bindings";
+import { supportWhatsappUrl } from "../../../branding";
 
 type Estado =
   | { fase: "escribiendo" }
@@ -55,11 +57,26 @@ export const ReportProblem: React.FC = () => {
             Reporte enviado
           </div>
           <p className="text-sm text-brand-text-secondary mt-0.5">
-            Gracias. Si nos escribes por WhatsApp, menciona este número y
-            encontramos tu reporte de inmediato:
+            Gracias. Si quieres que te respondamos más rápido, avísanos por
+            WhatsApp: el mensaje ya lleva el número de tu reporte.
           </p>
-          <code className="text-xs text-brand-text-muted break-all">
-            {estado.id}
+          {/* Antes se le pedía al médico que copiara este código a mano. Nadie copia un UUID
+              de 36 caracteres; por eso ahora viaja dentro del mensaje de WhatsApp. */}
+          <button
+            onClick={() =>
+              void openUrl(
+                supportWhatsappUrl(
+                  `Hola, acabo de reportar un problema en CloseLabs Voice. Número de reporte: ${estado.id}`,
+                ),
+              )
+            }
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#25D366] text-white hover:bg-[#1EBE5A] transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Avisar por WhatsApp
+          </button>
+          <code className="block mt-2 text-xs text-brand-text-muted break-all">
+            Reporte {estado.id}
           </code>
           <button
             onClick={() => setEstado({ fase: "escribiendo" })}

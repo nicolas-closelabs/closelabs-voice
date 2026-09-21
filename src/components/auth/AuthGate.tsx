@@ -1,7 +1,9 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useState } from "react";
-import { Loader2, ArrowLeft, MailCheck } from "lucide-react";
+import { Loader2, ArrowLeft, MailCheck, MessageCircle } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { commands } from "@/bindings";
+import { supportWhatsappUrl } from "../../branding";
 import Logo from "../icons/Logo";
 
 interface AuthGateProps {
@@ -362,10 +364,27 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   );
 };
 
+/**
+ * ⚠️ El enlace de WhatsApp va en TODAS las pantallas de cuenta, y no es un adorno: la cuenta es
+ * obligatoria y no hay forma de dictar sin ella. Un médico que no logra registrarse o entrar no
+ * tiene ninguna otra salida — si no ve a quién escribir, cierra la app y no vuelve.
+ */
 const Marco: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="h-screen overflow-y-auto flex items-center justify-center px-8 py-10 select-none">
     <div className="w-full max-w-sm flex flex-col items-center text-center gap-4">
       {children}
+      <button
+        type="button"
+        onClick={() =>
+          void openUrl(
+            supportWhatsappUrl("Hola, tengo problemas para entrar a CloseLabs Voice."),
+          )
+        }
+        className="mt-4 inline-flex items-center gap-1.5 text-sm text-brand-text-muted hover:text-[#128C7E] transition-colors"
+      >
+        <MessageCircle className="w-4 h-4" />
+        ¿Problemas para entrar? Escríbenos por WhatsApp
+      </button>
     </div>
   </div>
 );

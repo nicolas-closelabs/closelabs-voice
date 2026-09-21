@@ -1,6 +1,7 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useState } from "react";
 import { ShieldCheck, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { useShortcutKeys } from "../../../hooks/useShortcutKeys";
 import "./Instructions.css";
 
 interface Step {
@@ -9,11 +10,16 @@ interface Step {
   demo: React.ReactNode;
 }
 
-const KeysDemo = () => (
+/** Dibuja las teclas del atajo REAL del médico (Ctrl + Espacio en Windows, ⌥ + Espacio en Mac). */
+const KeysDemo: React.FC<{ keys: string[] }> = ({ keys }) => (
   <div className="clv-keys clv-rise">
-    <span className="clv-key k1">⌥</span>
-    <span className="clv-plus">+</span>
-    <span className="clv-key k2">Espacio</span>
+    {keys.map((k, idx) => (
+      <React.Fragment key={idx}>
+        {idx > 0 && <span className="clv-plus">+</span>}
+        {/* Las dos animaciones se alternan: con 3 teclas, la tercera repite la primera. */}
+        <span className={`clv-key ${idx % 2 === 0 ? "k1" : "k2"}`}>{k}</span>
+      </React.Fragment>
+    ))}
   </div>
 );
 
@@ -57,11 +63,12 @@ const PrivateDemo = () => (
   </div>
 );
 
-const STEPS: Step[] = [
+function buildSteps(atajo: string, keys: string[]): Step[] {
+  return [
   {
     title: "1. Presiona el atajo",
-    desc: "En cualquier campo de texto (historia clínica, WhatsApp, correo…) presiona ⌥ + Espacio para empezar a grabar.",
-    demo: <KeysDemo />,
+    desc: `En cualquier campo de texto (historia clínica, WhatsApp, correo…) presiona ${atajo} para empezar a grabar.`,
+    demo: <KeysDemo keys={keys} />,
   },
   {
     title: "2. Habla natural",
@@ -70,8 +77,8 @@ const STEPS: Step[] = [
   },
   {
     title: "3. Vuelve a presionar el atajo",
-    desc: "Presiona ⌥ + Espacio otra vez para terminar de grabar.",
-    demo: <KeysDemo />,
+    desc: `Presiona ${atajo} otra vez para terminar de grabar.`,
+    demo: <KeysDemo keys={keys} />,
   },
   {
     title: "4. ¡Listo! Se pega solo",
@@ -89,9 +96,12 @@ const STEPS: Step[] = [
     demo: <PrivateDemo />,
   },
 ];
+}
 
 export const InstructionsSettings: React.FC = () => {
   const [i, setI] = useState(0);
+  const { keys, text: atajo } = useShortcutKeys();
+  const STEPS = buildSteps(atajo, keys);
   const step = STEPS[i];
   const last = i === STEPS.length - 1;
 
