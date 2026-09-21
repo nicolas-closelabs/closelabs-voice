@@ -136,7 +136,9 @@ Metal, ONNX estático), las une con `lipo` y `tauri bundle --target universal-ap
 dmg. ⚠️ **No usar `tauri build --target universal-apple-darwin` a secas:** compila ambas con las
 mismas variables de entorno y se pierde uno de los arreglos. El job verifica (y no publica si falla):
 las dos arquitecturas, F16C/FMA en Intel, que ARM no dependa del `.dylib`, firma, y arranque de ambas.
-Peso: ~39 MB. `build.yml` sigue sirviendo para compilar una sola arquitectura si hiciera falta.
+⚠️ El `.dylib` de ONNX se declara en `frameworks` **antes de compilar** Intel: así tauri-build enlaza
+el rpath `@executable_path/../Frameworks`; sin él la versión Intel se cierra al abrir (pasó en el 1er
+build). Peso: ~39 MB. `build.yml` sigue sirviendo para compilar una sola arquitectura si hiciera falta.
 
 **CI (la solución real, estilo Handy):** en `.github/workflows/` quedó un pipeline limpio:
 - **`build.yml`** — workflow reusable heredado de Handy (compila, baja el **ONNX Runtime x86_64**
