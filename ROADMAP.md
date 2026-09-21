@@ -156,10 +156,10 @@ cambia la URL.
   closelabs.co y había que volver a escribir correo y contraseña. ✅ 2026-09-21: la app reintenta
   entrar cada 30 s y al recuperar el foco, y la pantalla dice "cuando vuelvas aquí, entrarás solo";
   más un botón "Ya confirmé mi correo". Queda la página propia de confirmación en closelabs.co.
-- [ ] 🔴 **Verificar el límite de correos de Supabase** (Authentication → Rate Limits). El
-  `config.toml` tiene `email_sent = 2` por HORA para todo el proyecto: si ese es el valor real,
-  desde el tercer médico que se registre en la misma hora no le llega la confirmación. La CLI no
-  deja leerlo; hay que mirarlo en el panel. Techo de fondo: Resend gratis = 100 correos/día.
+- [x] **Límite de correos de Supabase.** El `config.toml` decía 2 por HORA para todo el proyecto
+  (desde el tercer registro en la misma hora no llegaba la confirmación). ✅ 2026-09-21: en el
+  servidor está en **60/hora**. Techo de fondo: Resend gratis = 100 correos/día — subir de plan
+  antes de una campaña grande.
 - [x] **Tutorial interactivo del primer dictado** (`PrimerDictado.tsx`). ✅ 2026-09-21: al terminar
   el onboarding de un usuario nuevo, dicta una frase de prueba en un cuadro DENTRO de la app. Cuatro
   pasos que se van marcando solos, y pistas concretas si se traba (no empezó a grabar, error de
