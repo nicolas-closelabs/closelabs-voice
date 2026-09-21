@@ -99,13 +99,38 @@ cambia la URL.
   cada 15 min y avisa a `admin@closelabs.co` cuando hay algo accionable. ⚠️ Falta solo la llave
   de Resend para que los correos salgan.
 
-### Fase 2 — Usuarios y suscripción (necesita: decisión de pagos + páginas web)
-- [ ] Login, registro (nombre, teléfono con indicativo, consentimiento de datos), recuperar contraseña, confirmación por email.
-- [ ] Token en el llavero del sistema, renovación automática; si el servidor responde 401 → renovar y reintentar.
-- [ ] Estados: trial, activa, vencida, cancelada, cuenta bloqueada, actualización obligatoria, sesión expirada (se sigue pudiendo dictar offline), cerrar sesión.
-- [ ] Límite de dispositivos por plan.
-- [ ] Webhook de pagos → tabla `subscriptions`.
-- [ ] Política de Tratamiento de Datos (Ley 1581, datos sensibles de salud) en la app y aceptación en el registro.
+### Fase 2 — Usuarios y suscripción · 🔨 EN CURSO (v0.7.0) — falta solo Stripe
+
+> **Decidido con el cliente el 2026-09-20:** Stripe · **$11/mes** · **30 días de prueba** ·
+> tarjeta al registrarse sin cobro · **3 dispositivos** por cuenta · teléfono obligatorio (además
+> de contacto, es base de contactos para otros productos de CloseLabs).
+>
+> **Cancelar no corta el servicio: lo corta el calendario.** Quien cancela el día 15 de una
+> prueba de 30 dicta hasta el 30; quien pagó un mes y cancela el día 10 dicta hasta el 30. Nunca
+> se pierde a mitad de período.
+>
+> ⚠️ **`require_account` está ENCENDIDO desde el 2026-09-20.** Una instalación sin cuenta ya no
+> dicta en la nube. Y el "seguir sin cuenta" se quitó de la app a petición del cliente, así que
+> **no queda válvula de escape**: si alguien no logra registrarse, la única salida es publicar
+> una versión nueva.
+- [x] **Base de datos**: `user_profiles`, `subscriptions`, `devices.user_id`, con RLS. El alta
+  (perfil + prueba de 30 días) va en un disparador sobre `auth.users`: o pasa todo o no pasa nada.
+- [x] **Login, registro, recuperar contraseña, confirmación por correo.** Correos en español y con
+  la marca, por Resend. Probado de punta a punta con una cuenta real.
+- [x] **Sesión en el llavero del sistema**, con renovación automática. ⚠️ El dictado NO usa la
+  sesión sino el token del dispositivo — ver el porqué en `auth.rs`. Y tener sesión guardada basta
+  para estar dentro: ni un corte de red ni una caída nuestra desconectan a nadie.
+- [x] **3 dispositivos por cuenta**, con las dos puertas que evitan soporte: reinstalar el mismo
+  computador no gasta cupo, y los equipos sin señales en 90 días lo sueltan solos.
+- [x] **Estados de suscripción** aplicados en el proxy (`authorize_device_v2`). `past_due` SÍ
+  dicta: un cobro rechazado suele ser una tarjeta vencida, no alguien que se va.
+- [x] **Pantallas**: bienvenida, registro con teléfono y consentimiento fechado, recuperar
+  contraseña, y "Mi cuenta" con suscripción y equipos.
+- [ ] **Stripe** — lo único grande que falta. Pasarela, webhook → `subscriptions`, pantalla de
+  tarjeta. Todo lo demás ya está esperándolo.
+- [ ] Política de Tratamiento de Datos (Ley 1581, datos sensibles de salud). Los enlaces de la app
+  ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
+- [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
 
 ### Fase 3 — Distribución profesional (necesita: cuentas Apple/Windows)
 - [ ] Firma + notarización macOS (Apple Developer) y firma Windows (Azure Trusted Signing).

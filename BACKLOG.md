@@ -237,6 +237,56 @@ diccionario se aplique al final, porque hoy corre en el cliente ENTRE las dos ll
 sin decidir antes lo de arriba: el diccionario es lo que más le importa a un médico y ya nos dio
 un susto (ver el arreglo de las palabras que se tragaba).
 
+## ESTADO AL 2026-09-21 — v0.7.0, primera versión con cuentas
+
+### Lo que está vivo en producción ahora mismo
+| Pieza | Estado |
+|---|---|
+| Proxy (Groq activo; DeepInfra y OpenAI probados en reserva) | ✅ |
+| Config remota: aviso de versión y bloqueo | ✅ probado en vivo |
+| Reportar un problema, con el log limpiado en la app | ✅ |
+| Alertas por correo a `admin@closelabs.co`, cada 15 min | ✅ probadas |
+| Cuentas: registro, sesión, 3 equipos, suscripción | ✅ v0.7.0 |
+| **`require_account` = TRUE** | ⚠️ encendido — sin cuenta no se dicta |
+
+### Configuración vigente (`app_config`)
+`transcribe_provider=groq` · `format_provider=groq` · `min_supported_version=0.5.0` ·
+`latest_version=0.6.0` (⚠️ **subir a 0.7.0 cuando se repartan los instaladores nuevos**) ·
+`require_account=true` · `max_devices=3` · `trial_days=30` · `device_idle_days=90` ·
+`daily_quota=500`
+
+### Bug del primer registro real
+El teléfono quedó guardado repetido (`+57 3212099169212099169`). El campo estaba aplastado contra
+el selector de país —que mostraba "+57 Colombia" y se comía el ancho— y no había tope. Arreglado
+en los dos lados: la pantalla (selector estrecho, solo dígitos, máximo 12) y el servidor (el
+disparador limpia y una restricción lo rechaza). El dato ya guardado se corrigió.
+
+**La lección, que se repitió tres veces hoy:** los bugs salieron al USAR el sistema, no al leer el
+código. El de las alertas apareció enviando un correo real; el de la ambigüedad de PL/pgSQL, al
+llamar a la función; este, en el primer registro de verdad.
+
+### Lo que falta de la Fase 2
+1. **Stripe** — pasarela, webhook → `subscriptions`, pantalla de tarjeta. Es lo único grande.
+2. **Documentos legales** (ver más abajo). Los enlaces ya apuntan a closelabs.co.
+3. **Páginas propias** para confirmar correo y recuperar contraseña (hoy usan las de Supabase).
+
+### Acciones del cliente
+- [ ] **Repartir los instaladores 0.7.0** a los testers y avisarles que ahora hay que crear cuenta.
+- [ ] **Subir `latest_version` a 0.7.0** cuando estén repartidos.
+- [ ] **Volver el repo a privado** (hoy público para el CI).
+- [ ] **Abogado:** Política de Tratamiento de Datos, autorización de transferencia internacional,
+      Términos con la cláusula de que la historia clínica es responsabilidad del médico, y
+      contrato de encargo de tratamiento. Preguntarle también si hay que registrar la base ante
+      la SIC.
+
+### Limpieza de disco (2026-09-20)
+`src-tauri/target/debug` ocupaba 14 GB. Se borró: son artefactos de desarrollo que se regeneran.
+La carpeta pasó de 17 GB a 2,7 GB. **No se tocaron** `~/.cargo/registry` (870 MB, compartido con
+otros proyectos Rust) ni `~/.cache/huggingface` (524 MB, el modelo sin conexión — borrarlo deja
+sin dictado offline hasta que se vuelva a bajar).
+
+---
+
 ## 2026-09-20 — Reinstalar ya no gasta un cupo de equipo
 
 Agujero encontrado **al explicarle al cliente** por qué la sesión se queda abierta cuando se
