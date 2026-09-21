@@ -18,7 +18,6 @@
 //! detener el dictado. Un problema nuestro de infraestructura jamás puede dejar mudo un
 //! consultorio: eso sería un daño peor que el que esta función previene.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::RwLock;
 use std::time::Duration;
 
@@ -52,8 +51,6 @@ pub struct UpdateNotice {
 
 #[derive(Deserialize)]
 struct ConfigResponse {
-    #[serde(default)]
-    require_account: bool,
     min_supported_version: String,
     #[serde(default)]
     latest_version: Option<String>,
@@ -64,18 +61,7 @@ struct ConfigResponse {
 /// `Some` mientras esta versión esté bloqueada. Lo lee el flujo del dictado antes de grabar.
 static BLOCKED: RwLock<Option<BlockState>> = RwLock::new(None);
 
-/// Si el servidor exige cuenta para dictar. Empieza en `false` y solo lo enciende el servidor:
-/// así las instalaciones que ya están en manos de los testers siguen funcionando hasta que la
-/// Fase 2 esté probada. Es el MISMO interruptor que aplica el servidor, para que la pantalla de
-/// la app y lo que permite el proxy no puedan contradecirse.
-static REQUIERE_CUENTA: AtomicBool = AtomicBool::new(false);
 
-/// Si la app debe pedir cuenta antes de dejar dictar.
-#[tauri::command]
-#[specta::specta]
-pub fn account_required() -> bool {
-    REQUIERE_CUENTA.load(Ordering::Relaxed)
-}
 
 /// `Some` si esta versión quedó por debajo del mínimo soportado.
 pub fn block_state() -> Option<BlockState> {
@@ -157,8 +143,6 @@ async fn check(app: &AppHandle) {
             return;
         }
     };
-
-    REQUIERE_CUENTA.store(cfg.require_account, Ordering::Relaxed);
 
     if is_older(&current, &cfg.min_supported_version) {
         let state = BlockState {

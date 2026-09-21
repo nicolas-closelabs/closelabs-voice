@@ -56,12 +56,7 @@ function App() {
   } | null>(null);
   // Sesión. `null` mientras se averigua; después, si hay cuenta o no.
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  // Si el servidor exige cuenta. Mientras esté en false se ofrece seguir sin ella, que es lo
-  // que deja dictar a los testers que ya tienen la app puesta.
-  const [accountRequired, setAccountRequired] = useState(false);
-  // El médico eligió seguir sin cuenta EN ESTA SESIÓN. No se guarda a propósito: al reabrir se
-  // le vuelve a ofrecer entrar, sin llegar a molestarlo a mitad de trabajo.
-  const [skippedAuth, setSkippedAuth] = useState(false);
+
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -170,17 +165,12 @@ function App() {
   // Sesión del médico. Se pregunta al montar y tras entrar o salir.
   const refreshAuth = async () => {
     try {
-      const [estado, exige] = await Promise.all([
-        commands.accountState(),
-        commands.accountRequired(),
-      ]);
-      setAccountRequired(exige);
+      const estado = await commands.accountState();
+      // ⚠️ `signed_in` es true cuando hay sesión GUARDADA, aunque ahora mismo no haya internet
+      // (ver `account_state` en auth.rs). Por eso esto no expulsa a nadie por un corte de red.
       setSignedIn(estado.status === "ok" ? estado.data.signed_in : false);
     } catch (e) {
-      // Sin red no se puede saber: se asume que no hay sesión, pero NO se exige cuenta. Un
-      // problema de conexión no puede dejar a un médico sin poder dictar sin conexión.
       console.warn("No se pudo leer el estado de la cuenta:", e);
-      setAccountRequired(false);
       setSignedIn(false);
     }
   };
@@ -415,15 +405,10 @@ function App() {
     return null;
   }
 
-  // Sin sesión: se ofrece entrar. Mientras el servidor no exija cuenta, se puede saltar — es lo
-  // que mantiene dictando a quien ya tenía la app instalada antes de que existieran las cuentas.
-  if (!signedIn && !(skippedAuth && !accountRequired)) {
-    return (
-      <AuthGate
-        onSignedIn={() => void refreshAuth()}
-        onSkip={accountRequired ? undefined : () => setSkippedAuth(true)}
-      />
-    );
+  // Sin sesión, no se entra. La cuenta es obligatoria: es lo que permite cobrar, limitar los
+  // equipos y cortarle el acceso a quien deje de pagar.
+  if (!signedIn) {
+    return <AuthGate onSignedIn={() => void refreshAuth()} />;
   }
 
   if (onboardingStep === "accessibility") {

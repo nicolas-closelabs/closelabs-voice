@@ -139,6 +139,44 @@ export const AccountSettings: React.FC = () => {
     );
   }
 
+  // Sesión válida pero sin poder hablar con el servidor. Se dice claro y sin alarmar: el médico
+  // sigue dentro, solo que ahora no sabemos el estado exacto de su suscripción.
+  if (estado.offline) {
+    return (
+      <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 py-4">
+        <div>
+          <h1 className="font-heading font-bold text-2xl">Mi cuenta</h1>
+          <p className="text-brand-text-secondary mt-1">{estado.email}</p>
+        </div>
+        <section className="rounded-2xl border border-brand-border bg-brand-surface p-5">
+          <div className="font-heading font-semibold text-[15px]">
+            Sin conexión con el servidor
+          </div>
+          <p className="text-sm text-brand-text-secondary mt-1 leading-relaxed">
+            Tu sesión sigue abierta y puedes dictar sin conexión. Cuando vuelva el
+            internet verás aquí tu suscripción y tus equipos.
+          </p>
+          <button
+            onClick={() => {
+              setCargando(true);
+              void recargar();
+            }}
+            className="mt-3 text-sm font-semibold text-brand-accent hover:underline"
+          >
+            Reintentar
+          </button>
+        </section>
+        <button
+          onClick={() => void salir()}
+          className="self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-text-secondary border border-brand-border hover:border-red-300 hover:text-red-600 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Cerrar sesión en este equipo
+        </button>
+      </div>
+    );
+  }
+
   const s = resumen(estado);
   const libres = estado.max_devices - estado.devices.length;
 

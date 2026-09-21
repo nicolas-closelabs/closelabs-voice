@@ -192,6 +192,9 @@ pub struct EstadoCuenta {
     pub cancel_at_period_end: bool,
     pub devices: Vec<Equipo>,
     pub max_devices: u32,
+    /// Hay sesión guardada pero no se pudo hablar con el servidor. La app sigue dentro: lo que
+    /// no sabe es el estado exacto de la suscripción.
+    pub offline: bool,
 }
 
 impl EstadoCuenta {
@@ -206,6 +209,7 @@ impl EstadoCuenta {
             cancel_at_period_end: false,
             devices: Vec::new(),
             max_devices: 0,
+            offline: false,
         }
     }
 }
@@ -388,11 +392,24 @@ async fn vincular_este_equipo(app: &AppHandle) -> Result<(), String> {
 #[tauri::command]
 #[specta::specta]
 pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
-    let Some(acceso) = token_valido(&app).await else {
-        return Ok(EstadoCuenta::desconectado());
-    };
+    // Primero el llavero. Si NO hay sesión guardada, el médico está fuera de verdad.
     let Some(sesion) = leer_sesion() else {
         return Ok(EstadoCuenta::desconectado());
+    };
+
+    // Hay sesión. ⚠️ Que no se pueda renovar AHORA no significa que esté fuera: puede estar sin
+    // internet, o nuestro servidor puede estar caído. Mandarlo a la pantalla de entrar en ese
+    // momento sería el peor error posible — se queda sin poder dictar ni siquiera sin conexión,
+    // por un problema que no es suyo. La sesión solo se borra cuando el servidor dice
+    // explícitamente que el refresco ya no vale (ver `token_valido`).
+    let Some(acceso) = token_valido(&app).await else {
+        debug!("Hay sesión guardada pero no se pudo verificar; se sigue dentro");
+        return Ok(EstadoCuenta {
+            signed_in: true,
+            email: Some(sesion.email),
+            offline: true,
+            ..EstadoCuenta::desconectado()
+        });
     };
 
     let url = format!("{}/account", get_settings(&app).proxy_base_url.trim_end_matches('/'));
@@ -401,11 +418,30 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
         .header("apikey", anon_key(&app))
         .bearer_auth(&acceso)
         .send()
-        .await
-        .map_err(|_| "sin_conexion".to_string())?;
+        .await;
 
+    let res = match res {
+        Ok(r) => r,
+        Err(e) => {
+            debug!("Sin conexión al leer la cuenta ({e}); se sigue dentro");
+            return Ok(EstadoCuenta {
+                signed_in: true,
+                email: Some(sesion.email),
+                offline: true,
+                ..EstadoCuenta::desconectado()
+            });
+        }
+    };
+
+    // El servidor no contestó bien, pero la sesión es válida: mismo criterio que arriba.
     if !res.status().is_success() {
-        return Err(format!("http_{}", res.status().as_u16()));
+        warn!("La cuenta devolvió {}; se sigue dentro", res.status());
+        return Ok(EstadoCuenta {
+            signed_in: true,
+            email: Some(sesion.email),
+            offline: true,
+            ..EstadoCuenta::desconectado()
+        });
     }
 
     #[derive(Deserialize)]
@@ -438,6 +474,7 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
 
     let r: Respuesta = res.json().await.map_err(|_| "servidor".to_string())?;
 
+
     // Cuál de los equipos es este. Se compara por etiqueta y plataforma porque la app no conoce
     // su propio id en la base — nunca se lo devolvemos, y no hace falta para nada más.
     let esta_etiqueta = gethostname::gethostname().to_string_lossy().to_string();
@@ -458,6 +495,7 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
             .as_ref()
             .map(|s| s.cancel_at_period_end)
             .unwrap_or(false),
+        offline: false,
         devices: r
             .devices
             .into_iter()

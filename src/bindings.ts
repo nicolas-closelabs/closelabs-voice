@@ -486,12 +486,6 @@ async getBlockState() : Promise<BlockState | null> {
     return await TAURI_INVOKE("get_block_state");
 },
 /**
- * Si la app debe pedir cuenta antes de dejar dictar.
- */
-async accountRequired() : Promise<boolean> {
-    return await TAURI_INVOKE("account_required");
-},
-/**
  * Crea la cuenta. No inicia sesión: falta confirmar el correo.
  */
 async authSignUp(email: string, password: string, fullName: string, phoneCountry: string, phone: string) : Promise<Result<null, string>> {
@@ -1035,7 +1029,12 @@ export type EstadoCuenta = { signed_in: boolean; email: string | null; full_name
 /**
  * `trialing`, `active`, `past_due`, `canceled`, `incomplete`.
  */
-status: string | null; trial_ends_at: string | null; current_period_end: string | null; cancel_at_period_end: boolean; devices: Equipo[]; max_devices: number }
+status: string | null; trial_ends_at: string | null; current_period_end: string | null; cancel_at_period_end: boolean; devices: Equipo[]; max_devices: number; 
+/**
+ * Hay sesión guardada pero no se pudo hablar con el servidor. La app sigue dentro: lo que
+ * no sabe es el estado exacto de la suscripción.
+ */
+offline: boolean }
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }

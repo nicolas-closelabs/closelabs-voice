@@ -7,11 +7,6 @@ import Logo from "../icons/Logo";
 interface AuthGateProps {
   /** Se llama cuando el médico entra. El contenedor recarga el estado de la cuenta. */
   onSignedIn: () => void;
-  /**
-   * Cuando el servidor NO exige cuenta todavía, se ofrece seguir sin ella. Es lo que deja a los
-   * testers que ya tienen la app puesta seguir dictando mientras se prueba la Fase 2.
-   */
-  onSkip?: () => void;
 }
 
 type Modo = "entrar" | "crear" | "recuperar" | "revisa-correo" | "correo-enviado";
@@ -52,7 +47,7 @@ const explicar = (codigo: string) => MENSAJES[codigo] ?? MENSAJES.desconocido;
 const campo =
   "w-full px-3.5 py-2.5 rounded-xl border border-brand-border bg-white text-[15px] focus:outline-none focus:border-brand-accent transition-colors disabled:opacity-50";
 
-export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn, onSkip }) => {
+export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   const [modo, setModo] = useState<Modo>("entrar");
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +196,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn, onSkip }) => {
 
   return (
     <Marco>
-      <Logo className="w-9 h-9 mb-1" />
+      <Logo width={170} className="mb-1" />
       <h1 className="font-heading text-xl font-bold">
         {creando ? "Crea tu cuenta" : "Inicia sesión"}
       </h1>
@@ -297,8 +292,27 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn, onSkip }) => {
               className="mt-0.5 w-4 h-4 shrink-0 accent-brand-accent cursor-pointer"
             />
             <span>
-              Acepto los Términos y la Política de Tratamiento de Datos de
-              CloseLabs.
+              Acepto los{" "}
+              <a
+                href="https://closelabs.co/terminos"
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-brand-accent hover:underline"
+              >
+                Términos
+              </a>{" "}
+              y la{" "}
+              <a
+                href="https://closelabs.co/privacidad"
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-brand-accent hover:underline"
+              >
+                Política de Tratamiento de Datos
+              </a>{" "}
+              de CloseLabs.
             </span>
           </label>
         )}
@@ -331,16 +345,6 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn, onSkip }) => {
         >
           {creando ? "Ya tengo cuenta" : "Crear una cuenta"}
         </button>
-        {onSkip && (
-          // Solo aparece mientras el servidor no exija cuenta. Es lo que deja a los testers que
-          // ya tienen la app puesta seguir dictando mientras se prueba la Fase 2.
-          <button
-            onClick={onSkip}
-            className="text-brand-text-muted hover:text-brand-text-secondary mt-1"
-          >
-            Por ahora, seguir sin cuenta
-          </button>
-        )}
       </div>
     </Marco>
   );
