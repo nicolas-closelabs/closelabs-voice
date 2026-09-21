@@ -135,6 +135,44 @@ cambia la URL.
   ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
 - [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
 
+### Fase 2.5 — Listo para autoservicio y para producción · 📋 PLANEADO (2026-09-21)
+
+> **El público manda:** médicos de 40-50 años o más, poco familiarizados con la tecnología, casi
+> todos en **Windows**. Nicolás va a mandar un link y tienen que poder instalar, crear la cuenta y
+> dictar **solos**. Auditoría del flujo real (código, no suposiciones) del 2026-09-21: hoy **no**
+> están en condiciones de hacerlo sin ayuda.
+
+**Autoservicio (UX):**
+- [ ] 🔴 **Atajo equivocado en Windows.** Instrucciones y Ayuda dicen **⌥ + Espacio** (tecla de Mac)
+  e Inicio muestra **⌃ + Espacio** (símbolo de Mac); en Windows el atajo es **Ctrl + Espacio**. La
+  Ayuda además manda a "Ajustes del Sistema → Accesibilidad", que es de Mac.
+- [ ] 🔴 **Botón de WhatsApp.** "Contactar" abre la portada de closelabs.co; no hay ningún canal de
+  soporte en la app, y el reporte de problemas menciona un WhatsApp que no aparece por ningún lado.
+- [ ] **Entrar solo después de confirmar el correo.** Hoy el enlace lleva a la portada de
+  closelabs.co, y el médico tiene que volver a la app y escribir otra vez correo y contraseña.
+- [ ] **Tutorial interactivo del primer dictado** al terminar el registro: un cuadro de texto dentro
+  de la app, "presiona Ctrl + Espacio y di esta frase", y el texto aparece. Enseña haciendo y de
+  paso comprueba micrófono, atajo y pegado antes de que lo intente frente a un paciente.
+- [ ] **Guía visual del permiso de Accesibilidad (Mac)**: una imagen de dónde exactamente hacer clic.
+- [ ] **Página de descarga en closelabs.co** con un botón por sistema y una guía de instalación con
+  capturas de los avisos de Windows y macOS. En Mac, el médico no sabe si su chip es Apple Silicon
+  o Intel: build universal, o instrucciones de cómo saberlo. En Windows, repartir solo el `.exe`.
+- [ ] Probar **Ctrl + Espacio** en los programas de historia clínica que usan los médicos (Word y
+  Excel usan esa combinación para otras cosas).
+- [ ] **Prueba con 2 médicos reales** de 50+ años: mandarles el link, no ayudarles, y mirar dónde se
+  traban. Encuentra lo que ninguna revisión de código encuentra.
+
+**Producción con más de 20 médicos (proveedores):**
+- [ ] **Respaldo automático en el proxy.** Hoy cambiar de proveedor es manual (una fila de SQL): si
+  el principal se cae a media mañana, todos fallan hasta que alguien vea la alerta y edite la
+  fila. El proxy debe reintentar con el secundario dentro del mismo dictado, con timeouts cortos
+  (eso también cubre los cuelgues de DeepInfra).
+- [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
+- [ ] Recomendación provisional: **transcribir con OpenAI** (`gpt-4o-mini-transcribe`, la mejor
+  calidad medida, ~$1,30/médico/mes) con DeepInfra y luego Groq de respaldo; **formatear con
+  DeepInfra** (`gpt-oss-20b`, 16/16, cero errores de JSON) con Groq de respaldo.
+- [ ] Que el abogado revise la política de datos de cada proveedor (datos de salud).
+
 ### Fase 3 — Distribución profesional (necesita: cuentas Apple/Windows)
 - [ ] **Firma Windows con SSL.com IV + eSigner** a nombre de Nicolás (~$309/año). Luz verde desde
   2026-09-21; va primero porque casi todos los médicos usan Windows.
