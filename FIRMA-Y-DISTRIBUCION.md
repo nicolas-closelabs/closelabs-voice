@@ -2,7 +2,7 @@
 
 > Todo lo que hay que saber para firmar la app en macOS y Windows, con lo investigado el
 > **2026-09-20**, incluida la parte que más nos afecta: **qué puede y qué no puede hacer una
-> persona o empresa colombiana** — y qué se abre gracias al **socio español**.
+> persona o empresa colombiana**, sin ninguna sociedad constituida.
 >
 > Léelo antes de pagar nada.
 
