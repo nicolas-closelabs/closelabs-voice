@@ -3,10 +3,11 @@ name: "CloseLabs Voice — Build"
 # Pipeline de CloseLabs Voice. Compila los instaladores en la nube (runners de
 # GitHub) para cada arquitectura y los deja descargables como artefactos.
 #
-# FASE 1 (actual): macOS Apple Silicon + Intel, SIN firma (sign-binaries: false).
-#   Los .dmg abren con el truco `xattr -cr` en el Mac del tester. Resuelve el
-#   problema de "no corre en Intel" (el runner cross-compila x86_64 + baja el
-#   ONNX Runtime en su propio entorno aislado, no en tu Mac).
+# macOS: UN SOLO .dmg universal (Intel + Apple Silicon dentro; macOS escoge al abrir).
+#   El médico no sabe qué chip tiene. Detalle y verificaciones en build-macos-universal.yml.
+#
+# FASE 1 (actual): SIN firma (sign-binaries: false). El .dmg abre con el truco
+#   `xattr -cr` en el Mac del tester.
 #
 # FASE 2 (cuando exista la cuenta Apple Developer): poner los secretos APPLE_*
 #   y cambiar sign-binaries a true → los .dmg quedan firmados + notarizados y
@@ -26,21 +27,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  macos:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build-macos-universal.yml
+    with:
+      asset-prefix: "closelabs-voice"
+      # FASE 2: cambiar a true cuando estén los secretos APPLE_* de notarización.
+      sign-binaries: false
+    secrets: inherit
+
+  windows:
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Apple Silicon (M1/M2/M3) — build nativo arm64
-          - platform: "macos-latest"
-            target: "aarch64-apple-darwin"
-            args: "--target aarch64-apple-darwin"
-          # Intel — cross-compilado x86_64 en el runner arm (baja el ONNX Runtime x86_64)
-          - platform: "macos-latest"
-            target: "x86_64-apple-darwin"
-            args: "--target x86_64-apple-darwin"
           # Windows x64 — instalador .exe (NSIS). Sin firma: se abre con
           # "Más info → Ejecutar de todas formas" (SmartScreen). Firma = Fase 2.
           - platform: "windows-latest"

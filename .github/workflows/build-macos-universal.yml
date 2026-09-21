@@ -1,0 +1,225 @@
+name: "Build macOS Universal"
+
+# UN SOLO instalador para todos los Mac (Intel y Apple Silicon). El médico no sabe
+# qué chip tiene su equipo; con dos .dmg, el que se equivoca ve una app que no abre.
+#
+# Cómo funciona: el ejecutable lleva DENTRO las dos versiones completas (un "fat
+# binary") y macOS escoge al abrir la que corresponde al chip. Nada se decide en
+# nuestro código.
+#
+# ⚠️ Por qué NO se usa `tauri build --target universal-apple-darwin` a secas: compila
+# las dos arquitecturas en una pasada con las MISMAS variables de entorno, y cada una
+# necesita las suyas (ver el job `slice`). Con eso se perdía uno de los dos arreglos
+# que ya nos costaron caro. En vez de eso:
+#   1. `slice`: cada arquitectura se compila por separado, EXACTAMENTE como cuando
+#      había dos instaladores, en paralelo.
+#   2. `universal`: se unen con `lipo` y `tauri bundle` arma el .app/.dmg de siempre
+#      (mismo diseño de dmg, mismo Info.plist, y en Fase 2 la misma firma+notarización).
+#   3. Se verifica que ningún arreglo se haya perdido. Si algo falla, no hay instalador.
+
+on:
+  workflow_call:
+    inputs:
+      asset-prefix:
+        required: false
+        type: string
+        default: "closelabs-voice"
+      sign-binaries:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  ORT_VERSION: "1.24.2"
+
+jobs:
+  slice:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [aarch64-apple-darwin, x86_64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          key: macos-slice-${{ matrix.target }}
+
+      - run: bun install
+
+      # Fix 'ld: library clang_rt.osx not found': en los Xcode recientes del runner,
+      # libclang_rt.osx.a vive en una ruta versionada que el linker no busca.
+      - name: Fix clang_rt link path
+        run: |
+          RT="$(find "$(xcode-select -p)" -name 'libclang_rt.osx.a' 2>/dev/null | head -1)"
+          if [ -n "$RT" ]; then
+            echo "LIBRARY_PATH=$(dirname "$RT")${LIBRARY_PATH:+:$LIBRARY_PATH}" >> "$GITHUB_ENV"
+          fi
+
+      # ---- Solo Intel: los arreglos que hacen que funcione (NO tocar sin leer) ----
+      #   ONNX Runtime: ort-sys no trae prebuilt estático para x86_64-apple-darwin, así
+      #     que se enlaza DINÁMICO y el .dylib viaja en Contents/Frameworks/. En ARM va
+      #     estático dentro del ejecutable y no busca ningún .dylib.
+      #   GGML_NATIVE=OFF — se CROSS-compila en un runner ARM; con ON, ggml se afinaba a
+      #     un CPU mal detectado y la app se colgaba al transcribir en Intel.
+      #   TRANSCRIBE_METAL=OFF — Metal de ggml es inestable en GPUs de Mac Intel. En Intel,
+      #     CPU. En ARM Metal se queda (va perfecto).
+      #   AVX/AVX2/FMA/F16C=ON — CRÍTICO. Sin esto ggml sale sin vectorizar (0 instrucciones
+      #     F16C) y transcribir 2,5 s de audio tardaba ~48 s. Baseline Haswell (2013+).
+      #     El job `universal` comprueba que sigan ahí.
+      - name: Download ONNX Runtime (Intel)
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          curl -fL -o ort.tgz "https://blob.handy.computer/onnxruntime-osx-x86_64-${ORT_VERSION}.tgz"
+          tar xzf ort.tgz
+          ORT_DIR="$(pwd)/onnxruntime-osx-x86_64-${ORT_VERSION}"
+          echo "ORT_LIB_LOCATION=$ORT_DIR/lib" >> "$GITHUB_ENV"
+          echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
+          echo "TRANSCRIBE_CMAKE_ARGS=-DGGML_NATIVE=OFF -DTRANSCRIBE_METAL=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON" >> "$GITHUB_ENV"
+          mkdir -p slice-out
+          cp "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" slice-out/
+
+      # Sin empaquetar: solo el ejecutable. El empaquetado (y la firma) va en `universal`.
+      # ⚠️ Ya NO se inyecta ninguna llave de proveedor (Fase 1 del proxy).
+      - name: Build ${{ matrix.target }}
+        run: bun tauri build --target ${{ matrix.target }} --no-bundle --ci
+
+      - name: Collect binary
+        run: |
+          mkdir -p slice-out
+          cp "src-tauri/target/${{ matrix.target }}/release/closelabs-voice" slice-out/
+          lipo -info slice-out/closelabs-voice
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slice-${{ matrix.target }}
+          path: slice-out/
+          retention-days: 1
+
+  universal:
+    needs: slice
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      # `tauri bundle` lee el proyecto de Cargo aunque no compile nada.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: bun install
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: slice-aarch64-apple-darwin
+          path: slices/arm64
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: slice-x86_64-apple-darwin
+          path: slices/x86_64
+
+      - name: Merge both architectures (lipo)
+        run: |
+          OUT=src-tauri/target/universal-apple-darwin/release
+          mkdir -p "$OUT"
+          lipo -create slices/arm64/closelabs-voice slices/x86_64/closelabs-voice \
+            -output "$OUT/closelabs-voice"
+          # upload-artifact no conserva el bit de ejecución.
+          chmod +x "$OUT/closelabs-voice"
+          lipo -info "$OUT/closelabs-voice"
+          # El .dylib de ONNX solo lo usa la versión Intel; la ARM ni lo mira.
+          DYLIB="$(pwd)/slices/x86_64/libonnxruntime.${ORT_VERSION}.dylib"
+          test -f "$DYLIB"
+          jq --arg lib "$DYLIB" '.bundle.macOS.frameworks = [$lib]' \
+            src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
+      - name: import Apple Developer Certificate
+        if: inputs.sign-binaries
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo $APPLE_CERTIFICATE | base64 --decode > certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          CERT_ID=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | awk -F'"' '{print $2}')
+          echo "CERT_ID=$CERT_ID" >> "$GITHUB_ENV"
+
+      # FASE 1 (sin firma): NO se define ninguna variable APPLE_*. Si se define
+      # APPLE_CERTIFICATE aunque sea vacía, Tauri intenta importar un cert vacío y falla.
+      - name: Bundle universal (unsigned)
+        if: ${{ !inputs.sign-binaries }}
+        run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
+
+      # FASE 2: firma y notariza el .app universal entero (las dos versiones y el .dylib).
+      - name: Bundle universal (signed + notarized)
+        if: inputs.sign-binaries
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+        run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
+
+      # Si cualquiera de estas comprobaciones falla, NO se publica el instalador.
+      - name: Verify nothing was lost in the merge
+        run: |
+          set -euo pipefail
+          BUNDLE=src-tauri/target/universal-apple-darwin/release/bundle
+          APP="$BUNDLE/macos/CloseLabs Voice.app"
+          BIN="$APP/Contents/MacOS/closelabs-voice"
+          fail() { echo "::error::$1"; exit 1; }
+
+          echo "== Las dos arquitecturas =="
+          ARCHS="$(lipo -archs "$BIN")"; echo "$ARCHS"
+          [[ "$ARCHS" == *arm64* && "$ARCHS" == *x86_64* ]] || fail "falta una arquitectura: $ARCHS"
+
+          echo "== Intel: vectorización (bug de los 48 s) =="
+          F16C=$(otool -tv -arch x86_64 "$BIN" | grep -c vcvtph2ps || true)
+          FMA=$(otool -tv -arch x86_64 "$BIN" | grep -c vfmadd || true)
+          echo "F16C=$F16C FMA=$FMA"
+          [ "$F16C" -gt 0 ] || fail "la versión Intel perdió F16C: volvería a tardar ~48 s"
+          [ "$FMA" -gt 0 ] || fail "la versión Intel perdió FMA/AVX2"
+
+          echo "== ONNX Runtime =="
+          otool -arch arm64 -L "$BIN" | grep -q libonnxruntime \
+            && fail "la versión ARM depende del .dylib de ONNX (debería ir estático)"
+          otool -arch x86_64 -L "$BIN" | grep '@rpath/' | awk '{print $1}' | while read -r dep; do
+            [ -f "$APP/Contents/Frameworks/$(basename "$dep")" ] || fail "falta $(basename "$dep") en Frameworks/"
+            echo "OK: $(basename "$dep")"
+          done
+
+          echo "== Firma =="
+          codesign --verify --deep --strict "$APP"
+
+          echo "== Arranque (versión ARM) =="
+          arch -arm64 "$BIN" --list-devices
+
+          echo "== Arranque (versión Intel, vía Rosetta) =="
+          if arch -x86_64 /usr/bin/true 2>/dev/null; then
+            arch -x86_64 "$BIN" --list-devices
+          else
+            echo "::warning::el runner no tiene Rosetta; no se pudo arrancar la versión Intel"
+          fi
+
+          ls -la "$BUNDLE/dmg/"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.asset-prefix }}-macos-universal
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          retention-days: 30

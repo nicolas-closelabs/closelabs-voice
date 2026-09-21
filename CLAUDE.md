@@ -128,6 +128,16 @@ Highlights acumulados:
 **Bypass temporal (solo testers técnicos):** `xattr -cr "/Applications/CloseLabs Voice.app"`
 quita la cuarentena. **NO sirve para médicos 0-techie** (requiere Terminal).
 
+**macOS = UN SOLO `.dmg` universal (desde 2026-09-21).** Antes había uno para Intel y otro para
+Apple Silicon, y el médico no sabe qué chip tiene. El ejecutable lleva las dos versiones y macOS
+escoge al abrir. Lo arma `build-macos-universal.yml`: compila cada arquitectura **por separado y en
+paralelo, con sus mismos arreglos de siempre** (Intel: ONNX dinámico, Metal OFF, AVX2/F16C ON; ARM:
+Metal, ONNX estático), las une con `lipo` y `tauri bundle --target universal-apple-darwin` arma el
+dmg. ⚠️ **No usar `tauri build --target universal-apple-darwin` a secas:** compila ambas con las
+mismas variables de entorno y se pierde uno de los arreglos. El job verifica (y no publica si falla):
+las dos arquitecturas, F16C/FMA en Intel, que ARM no dependa del `.dylib`, firma, y arranque de ambas.
+Peso: ~39 MB. `build.yml` sigue sirviendo para compilar una sola arquitectura si hiciera falta.
+
 **CI (la solución real, estilo Handy):** en `.github/workflows/` quedó un pipeline limpio:
 - **`build.yml`** — workflow reusable heredado de Handy (compila, baja el **ONNX Runtime x86_64**
   para el slice Intel — `ort-sys` no trae prebuilt de `x86_64-apple-darwin`—, firma/notariza si
