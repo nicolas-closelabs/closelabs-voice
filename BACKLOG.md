@@ -250,6 +250,13 @@ países de su lista; los individuos solo pueden ser de EE.UU. o Canadá. Ni Nico
 califican (hay reportes de autónomos a los que el flujo solo les ofrece verificación personal).
 **Decisión: SSL.com IV a nombre de Nicolás, ~$309/año.** La identidad queda bajo su control.
 
+✅ **2026-09-21 — SSL.com confirmó todo y hay luz verde para comprar:** emiten IV a persona natural
+en Colombia, aceptan cédula, la verificación telefónica es un código de 4 dígitos por SMS o llamada
+(el número no tiene que estar a nombre de nadie), validan en 2-3 días hábiles y hay garantía de
+devolución de 30 días. Lo respondió su agente de IA (TrustBot); coincide con su documentación.
+**Siguiente paso: Nicolás compra y carga los cuatro secretos `ES_*`; Claude monta el `signCommand`
+ese mismo día.** El paso a paso está en `FIRMA-Y-DISTRIBUCION.md`, reescrito limpio.
+
 ⚠️ **Dos correcciones en el mismo día**, las dos por fiarme de resúmenes de búsqueda:
 1. Escribí que Azure exigía **tres años de antigüedad**. Falso: salió de una respuesta generada por
    IA en Microsoft Q&A; un empleado de Microsoft respondió en ese mismo hilo que **no hay antigüedad

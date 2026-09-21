@@ -136,7 +136,10 @@ cambia la URL.
 - [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
 
 ### Fase 3 — Distribución profesional (necesita: cuentas Apple/Windows)
-- [ ] Firma + notarización macOS (Apple Developer) y firma Windows (Azure Trusted Signing).
+- [ ] **Firma Windows con SSL.com IV + eSigner** a nombre de Nicolás (~$309/año). Luz verde desde
+  2026-09-21; va primero porque casi todos los médicos usan Windows.
+- [ ] Firma + notarización macOS (Apple Developer, persona natural, $99/año).
+  Todo el detalle en `FIRMA-Y-DISTRIBUCION.md`.
 - [ ] Actualización automática: clave del updater, `latest.json` en un host público, "Actualización lista, reinicia".
 - [ ] Build Windows probado de punta a punta.
 
@@ -160,8 +163,8 @@ cambia la URL.
 |---|---|---|
 | 1 | Crear proyecto Supabase (org CloseLabs) y compartir URL + anon key; service role solo como secreto | Fase 1 |
 | 2 | ~~Plan B de proveedor~~ **RESUELTO 2026-09-20**: DeepInfra y OpenAI medidos y configurados; cambiar es una línea de SQL. Sigue pendiente Groq: **habilitar facturación (tier pago)** — el gratis tiene un techo de 8.000 tokens/minuto para toda la cuenta, o sea ~6 dictados por minuto entre TODOS los médicos; con eso no se puede vender. Además: **Zero Data Retention**, límite de gasto y alertas; key de OpenAI como plan B | Fase 1 |
-| 3 | Decidir pasarela de pago (Wompi / Mercado Pago / Stripe / Paddle o Lemon Squeezy), precio, días de trial y dispositivos por plan | Fase 2 |
+| 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe (vía la cuenta del socio español; Stripe no opera en Colombia), $11/mes, 30 días de prueba, 3 dispositivos | Fase 2 |
 | 4 | Páginas en closelabs.co: confirmar email, recuperar contraseña, suscripción | Fase 2 |
 | 5 | Abogado: política de datos sensibles (salud), transferencia internacional (Groq/Supabase en EE. UU.) | Fase 2 |
-| 6 | Apple Developer ($99/año) + Azure Trusted Signing | Fase 3 |
+| 6 | Comprar SSL.com IV + eSigner (Windows, ~$309/año) y Apple Developer ($99/año). Azure Trusted Signing descartado: exige una sociedad | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |

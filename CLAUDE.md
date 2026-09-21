@@ -251,7 +251,7 @@ Atajo global (toggle) → grabar audio
 | Refine | Nube Groq, offline→raw | Cero RAM/peso local; costo trivial cobrando $30; potente |
 | API key refine | Embebida (v1), límite de gasto + endpoint configurable | Rápido de montar (como Aztec); migrar a proxy = solo cambiar URL |
 | Modelo | Descarga automática 1er arranque (no bundled) | Instalador liviano; UX sin fricción |
-| Firma | Sin firma por ahora, pipeline listo | $0; el cliente aún no tiene certificados. Roadmap: firmar |
+| Firma | Windows: SSL.com IV + eSigner. macOS: Apple Developer. Ambas a nombre de Nicolás | No existe sociedad; son las únicas que no la exigen. Ver `FIRMA-Y-DISTRIBUCION.md` |
 
 Investigamos a fondo **Aztec Voice** (`co.azteclab.voice`), otro fork de Handy que el cliente
 admira: transcripción híbrida (Groq Whisper online / Parakeet offline), refine con Groq
@@ -348,8 +348,8 @@ cuando lleva pista. Detalle en `BACKLOG.md` (2026-09-20).
 
 ## Roadmap (fuera del v1)
 
-- Firmar + notarizar (cero advertencias): Apple Developer ($99/año) + Windows Azure Trusted
-  Signing (~$10/mes).
+- Firmar: Windows con SSL.com IV + eSigner (~$309/año) y macOS con Apple Developer ($99/año).
+  Detalle en `FIRMA-Y-DISTRIBUCION.md`.
 - Proxy propio de refine (sacar la key del binario, medir uso, gating de suscripción).
 - Capa de cuentas/suscripción (estilo Aztec/Supabase) para cobrar.
 - Opción de Whisper turbo local para equipos potentes.
