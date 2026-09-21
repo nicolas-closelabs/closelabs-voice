@@ -396,6 +396,23 @@ Correo a **Support@SSL.com** (o el chat de ventas) preguntando exactamente esto:
    Tier 1 cuentan por archivo firmado?
 6. ¿Cuánto tarda la validación, en días hábiles?
 
+### ✅ Lo que respondió SSL.com (2026-09-21)
+
+Por el chat de su web (por el formato, parece su asistente automático; lo que dijo coincide con su
+documentación publicada):
+
+| Pregunta | Respuesta |
+|---|---|
+| ¿IV a persona natural en Colombia? | **Sí** |
+| ¿Aceptan cédula? | **Sí** — cédula, pasaporte, licencia; vigente, con foto y datos legibles |
+| ¿Llamada de verificación? | "Debe ser un número verificable" — ⚠️ **respuesta genérica, sin resolver** |
+| ¿Comprobante de dirección? | Factura de servicios, extracto bancario u otro documento oficial con la dirección |
+| ¿Tiempo de validación? | **2 a 3 días hábiles** desde que se envía todo completo |
+| ¿Precio de eSigner? | No lo supieron dar → usar el publicado: **$20/mes, 20 firmas (Tier 1)** |
+
+**Pendiente antes de pagar:** qué hace "verificable" a un celular colombiano, y si reembolsan si la
+validación no pasa.
+
 **Plan B si rebotan:** Certum (asumiendo el costo de automatización no oficial), o esperar a
 constituir en Estados Unidos y entrar como organización — donde el universo de CAs se abre entero.
 
@@ -410,7 +427,7 @@ constituir en Estados Unidos y entrar como organización — donde el universo d
    Recomendación: **1 año** para empezar. El descuento de 3 años ahorra ~$59, y todavía no sabemos
    si la validación pasa ni si más adelante migraremos a Azure.
 4. **Validación de identidad:**
-   - Frente y reverso del **pasaporte** (la apuesta más segura; la cédula queda como alternativa).
+   - Frente y reverso de la **cédula** (SSL.com confirmó que la aceptan) o del pasaporte.
    - **Selfie sosteniendo el documento** junto a la cara, mínimo 5 megapíxeles.
    - Comprobante de dirección: factura de servicios o extracto bancario reciente.
    - Estar pendiente de la **llamada de verificación**: sin ella no emiten.
