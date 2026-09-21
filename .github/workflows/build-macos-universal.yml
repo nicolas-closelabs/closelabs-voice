@@ -86,6 +86,14 @@ jobs:
           echo "TRANSCRIBE_CMAKE_ARGS=-DGGML_NATIVE=OFF -DTRANSCRIBE_METAL=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON" >> "$GITHUB_ENV"
           mkdir -p slice-out
           cp "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" slice-out/
+          # ⚠️ Declarar el .dylib ANTES de compilar, no solo al empaquetar: tauri-build ve
+          # `frameworks` en la config y enlaza el rpath @executable_path/../Frameworks.
+          # Sin eso el .dylib va dentro del .app pero la versión Intel no lo encuentra y
+          # se cierra al abrir (pasó en el primer build universal; lo atrapó el arranque
+          # vía Rosetta del job `universal`).
+          jq --arg lib "$ORT_DIR/lib/libonnxruntime.${ORT_VERSION}.dylib" \
+            '.bundle.macOS.frameworks = [$lib]' \
+            src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
 
       # Sin empaquetar: solo el ejecutable. El empaquetado (y la firma) va en `universal`.
       # ⚠️ Ya NO se inyecta ninguna llave de proveedor (Fase 1 del proxy).
@@ -97,6 +105,10 @@ jobs:
           mkdir -p slice-out
           cp "src-tauri/target/${{ matrix.target }}/release/closelabs-voice" slice-out/
           lipo -info slice-out/closelabs-voice
+          if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
+            otool -l slice-out/closelabs-voice | grep -q '@executable_path/../Frameworks' \
+              || { echo "::error::la versión Intel no tiene el rpath a Frameworks/: no encontrará ONNX"; exit 1; }
+          fi
 
       - uses: actions/upload-artifact@v7
         with:
@@ -198,6 +210,8 @@ jobs:
           echo "== ONNX Runtime =="
           otool -arch arm64 -L "$BIN" | grep -q libonnxruntime \
             && fail "la versión ARM depende del .dylib de ONNX (debería ir estático)"
+          otool -arch x86_64 -l "$BIN" | grep -q '@executable_path/../Frameworks' \
+            || fail "la versión Intel no tiene el rpath a Frameworks/"
           otool -arch x86_64 -L "$BIN" | grep '@rpath/' | awk '{print $1}' | while read -r dep; do
             [ -f "$APP/Contents/Frameworks/$(basename "$dep")" ] || fail "falta $(basename "$dep") en Frameworks/"
             echo "OK: $(basename "$dep")"
