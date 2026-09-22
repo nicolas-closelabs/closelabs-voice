@@ -52,28 +52,28 @@ export const SECTIONS_CONFIG = {
     component: DictionarySettings,
     enabled: () => true,
   },
-  general: {
-    labelKey: "sidebar.config",
-    icon: Settings,
-    component: GeneralSettings,
-    enabled: () => true,
-  },
   instructions: {
     labelKey: "sidebar.instructions",
     icon: GraduationCap,
     component: InstructionsSettings,
     enabled: () => true,
   },
-  about: {
-    labelKey: "sidebar.about",
-    icon: Info,
-    component: AboutSettings,
-    enabled: () => true,
-  },
   account: {
     labelKey: "sidebar.account",
     icon: UserRound,
     component: AccountSettings,
+    enabled: () => true,
+  },
+  general: {
+    labelKey: "sidebar.config",
+    icon: Settings,
+    component: GeneralSettings,
+    enabled: () => true,
+  },
+  about: {
+    labelKey: "sidebar.about",
+    icon: Info,
+    component: AboutSettings,
     enabled: () => true,
   },
   help: {
