@@ -5,7 +5,6 @@ import { commands } from "@/bindings";
 import { getTranslatedModelName } from "../../lib/utils/modelTranslation";
 import { useModelStore } from "../../stores/modelStore";
 import ModelStatusButton from "./ModelStatusButton";
-import ModelDropdown from "./ModelDropdown";
 import DownloadProgressDisplay from "./DownloadProgressDisplay";
 
 import { ModelStateEvent } from "@/lib/types/events";
@@ -204,9 +203,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onError }) => {
 
     switch (modelStatus) {
       case "ready":
-        return currentModelInfo
-          ? getTranslatedModelName(currentModelInfo, t)
-          : t("modelSelector.modelReady");
+        return t("modelSelector.listoParaDictar");
       case "loading":
         return currentModelInfo
           ? t("modelSelector.loading", {
@@ -222,15 +219,11 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onError }) => {
       case "error":
         return modelError || t("modelSelector.modelError");
       case "unloaded":
-        return currentModelInfo
-          ? getTranslatedModelName(currentModelInfo, t)
-          : t("modelSelector.modelUnloaded");
+        return t("modelSelector.listoParaDictar");
       case "none":
         return t("modelSelector.noModelDownloadRequired");
       default:
-        return currentModelInfo
-          ? getTranslatedModelName(currentModelInfo, t)
-          : t("modelSelector.modelUnloaded");
+        return t("modelSelector.listoParaDictar");
     }
   };
 
@@ -244,23 +237,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onError }) => {
 
   return (
     <>
-      {/* Model Status and Switcher */}
+      {/* CloseLabs: solo el estado, sin menú. Hay un único modelo (el local de respaldo) y el
+          menú heredado de Handy dejaba "activar" algo que no se puede cambiar, con un texto
+          ("funciona sin internet") que confunde: el dictado principal es en la nube. */}
       <div className="relative" ref={dropdownRef}>
         <ModelStatusButton
           status={getDisplayStatus()}
           displayText={getModelDisplayText()}
-          isDropdownOpen={showModelDropdown}
-          onClick={() => setShowModelDropdown(!showModelDropdown)}
         />
-
-        {/* Model Dropdown */}
-        {showModelDropdown && (
-          <ModelDropdown
-            models={models}
-            currentModelId={displayModelId}
-            onModelSelect={handleModelSelect}
-          />
-        )}
       </div>
 
       {/* Download Progress Bar for Models */}

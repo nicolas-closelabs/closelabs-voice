@@ -129,6 +129,7 @@
     }
   },
   "modelSelector": {
+    "listoParaDictar": "Ready to dictate",
     "custom": "Custom",
     "legacy": "Legacy",
     "streaming": "Streaming",

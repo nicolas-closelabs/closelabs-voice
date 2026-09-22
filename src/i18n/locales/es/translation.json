@@ -129,6 +129,7 @@
     }
   },
   "modelSelector": {
+    "listoParaDictar": "Listo para dictar",
     "custom": "Personalizado",
     "streaming": "Streaming",
     "active": "Activo",
