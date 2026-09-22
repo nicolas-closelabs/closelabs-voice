@@ -167,9 +167,26 @@ cambia la URL.
   de prueba"). ⚠️ Solo se puede probar con instalador: la versión de desarrollo no recibe el
   permiso de Accesibilidad en Mac.
 - [ ] **Guía visual del permiso de Accesibilidad (Mac)**: una imagen de dónde exactamente hacer clic.
-- [ ] **Página de descarga en closelabs.co** con un botón por sistema y una guía de instalación con
-  capturas de los avisos de Windows y macOS. En Mac, el médico no sabe si su chip es Apple Silicon
-  o Intel: build universal, o instrucciones de cómo saberlo. En Windows, repartir solo el `.exe`.
+- [~] **Página closelabs.co/voice (convencer e instalar)** — 🔨 EN CURSO (2026-09-21), en otra
+  sesión dedicada al diseño de páginas. Estado:
+  - **Descargas:** repo PÚBLICO `nicolas-closelabs/closelabs-voice-releases`, solo con instaladores
+    (el código sigue privado). **v0.8.0 publicada.** Enlaces permanentes con nombres fijos
+    (`…/releases/latest/download/CloseLabs-Voice-Windows.exe` y `…-Mac.dmg`, universal): publicar
+    una versión nueva = subir un release con esos nombres; la página no se toca.
+  - **Web:** Lovable + Vercel, repo `nicolas20w/closelabs` (Nicolás invitó a `nicolas-closelabs`
+    como colaborador), clon local en `../closelabs-web`, rama `voice-descarga`. ⚠️ Vercel Hobby solo
+    despliega commits cuya autoría sea la cuenta dueña: en ese clon `git config --local` quedó como
+    `nicolas20w <nicolaswalteros@gmail.com>`. Las vistas previas piden login de Vercel. ⚠️ `main`
+    sincroniza con Lovable: publicar = unir la rama con `main`, solo con aprobación del cliente.
+  - **Diseño con Impeccable** (github.com/pbakaus/impeccable, pedido por el cliente): PRODUCT.md,
+    dirección «La nota de voz» elegida por el cliente, contrato en
+    `.impeccable/surfaces/src-pages-voice-tsx.md`, detector con 0 hallazgos, referencia de estructura
+    wisprflow.ai. ⚠️ **Falta para cerrar:** la revisión final independiente y `DESIGN.md`
+    (documenter). Impeccable se clonó en el scratchpad de la sesión: volver a clonarlo si no está.
+  - **Pendiente del cliente:** testimonios reales de testers (la página no muestra ninguno hasta
+    tenerlos) y aprobar la publicación. `/terminos` y `/privacidad` siguen sin existir (abogado).
+  - ⚠️ En Mac la instalación falla hasta firmar con Apple; el cliente decidió **no** mostrar parches
+    en la página y lanzar cuando la instalación esté bien.
 - [ ] Probar **Ctrl + Espacio** en los programas de historia clínica que usan los médicos (Word y
   Excel usan esa combinación para otras cosas).
 - [ ] **Prueba con 2 médicos reales** de 50+ años: mandarles el link, no ayudarles, y mirar dónde se
