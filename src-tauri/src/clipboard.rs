@@ -5,6 +5,7 @@ use crate::settings::{get_settings, AutoSubmitKey, ClipboardHandling, PasteMetho
 use enigo::{Direction, Enigo, Key, Keyboard};
 use log::info;
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
@@ -15,6 +16,22 @@ use crate::utils::{is_kde_wayland, is_wayland};
 /// Espera antes de devolver el portapapeles original. Apps Electron/Chromium leen el
 /// portapapeles de forma asíncrona: restaurarlo demasiado pronto pega el contenido VIEJO.
 const CLIPBOARD_RESTORE_DELAY_MS: u64 = 200;
+
+/// Si la ventana principal de la app está al frente. Lo mantiene `lib.rs` con los eventos de foco.
+///
+/// ⚠️ Por qué importa: el pegado corre en el hilo PRINCIPAL y lo tiene ocupado mientras pone el
+/// texto en el portapapeles, simula Cmd+V y, 200 ms después, devuelve el portapapeles anterior.
+/// Cualquier otra app atiende ese Cmd+V al instante, pero NUESTRA ventana no puede atenderlo hasta
+/// que el hilo quede libre, y para entonces el portapapeles ya volvió a lo de antes: dentro de la
+/// app no se pegaba nada. Pasaba en "Tu primer dictado", justo lo primero que hace un médico nuevo.
+/// Por eso, dentro de nuestra ventana el texto se le entrega directo a la página (evento
+/// `dictado-en-la-app`), sin portapapeles ni teclas simuladas. Así además funciona antes de dar el
+/// permiso de Accesibilidad.
+static VENTANA_PRINCIPAL_ENFOCADA: AtomicBool = AtomicBool::new(false);
+
+pub fn marcar_ventana_principal_enfocada(enfocada: bool) {
+    VENTANA_PRINCIPAL_ENFOCADA.store(enfocada, Ordering::Relaxed);
+}
 
 /// macOS: `true` si la app tiene permiso de Accesibilidad (necesario para simular Cmd+V).
 #[cfg(target_os = "macos")]
@@ -628,6 +645,15 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
         "Using paste method: {:?}, delay: {}ms",
         paste_method, paste_delay_ms
     );
+
+    // El médico está dictando dentro de nuestra propia ventana (ver VENTANA_PRINCIPAL_ENFOCADA).
+    if paste_method != PasteMethod::None && VENTANA_PRINCIPAL_ENFOCADA.load(Ordering::Relaxed) {
+        info!("Ventana propia al frente: el texto se entrega directo a la página");
+        app_handle
+            .emit("dictado-en-la-app", text)
+            .map_err(|e| format!("Failed to deliver text to own window: {}", e))?;
+        return Ok(());
+    }
 
     // macOS sin permiso de Accesibilidad: el Cmd+V simulado no llega a ninguna app. En vez de
     // fallar en silencio, dejamos el texto en el portapapeles y avisamos al médico.

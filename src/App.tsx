@@ -10,6 +10,8 @@ import {
   requestAccessibilityPermission,
 } from "tauri-plugin-macos-permissions-api";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { insertarDictado } from "@/lib/utils/insertarDictado";
 import { ModelStateEvent, RecordingErrorEvent } from "./lib/types/events";
 import "./App.css";
 import AccessibilityPermissions from "./components/AccessibilityPermissions";
@@ -149,6 +151,22 @@ function App() {
     const unlisten = listen("paste-error", () => {
       toast.error(t("errors.pasteFailedTitle"), {
         description: t("errors.pasteFailed"),
+      });
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
+  // Dictado hecho con la ventana de la app al frente: el backend no puede pegarlo con teclas
+  // simuladas (ver `clipboard.rs`), así que lo escribimos nosotros. Si el cursor no está en
+  // ningún campo, el texto queda copiado para que no se pierda.
+  useEffect(() => {
+    const unlisten = listen<string>("dictado-en-la-app", async (e) => {
+      if (insertarDictado(e.payload)) return;
+      await writeText(e.payload).catch(() => {});
+      toast.info(t("errors.dictadoCopiadoTitle"), {
+        description: t("errors.dictadoCopiado"),
       });
     });
     return () => {

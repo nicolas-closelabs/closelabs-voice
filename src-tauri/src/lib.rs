@@ -922,6 +922,9 @@ pub fn run(cli_args: CliArgs) {
                 api.prevent_close();
                 let _res = window.hide();
             }
+            tauri::WindowEvent::Focused(enfocada) if window.label() == "main" => {
+                clipboard::marcar_ventana_principal_enfocada(*enfocada);
+            }
             tauri::WindowEvent::ThemeChanged(theme) => {
                 log::info!("Theme changed to: {:?}", theme);
                 // Update tray icon to match new theme, maintaining idle state

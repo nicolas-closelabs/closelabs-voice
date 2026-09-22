@@ -624,6 +624,8 @@
     "modelLoadFailedUnknown": "modelo desconocido",
     "pasteFailedTitle": "Error al pegar el texto",
     "pasteFailed": "No se pudo pegar el texto en la aplicación activa.",
+    "dictadoCopiadoTitle": "Tu texto quedó copiado",
+    "dictadoCopiado": "Haz clic donde quieras escribir y pégalo.",
     "pasteNeedsManualTitle": "Falta un permiso para pegar",
     "pasteNeedsManual": "No tengo permiso de Accesibilidad para pegar automáticamente. Tu texto está en el portapapeles: pégalo con Cmd+V.",
     "grantAccessibility": "Dar permiso",

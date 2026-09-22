@@ -2,7 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Check, Loader2, Mic, MessageCircle } from "lucide-react";
+import { BookOpen, Check, Loader2, Mic, MessageCircle, X } from "lucide-react";
+import { useSettings } from "../../hooks/useSettings";
 import { useShortcutKeys } from "../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../lib/utils/shortcutLabels";
 import { supportWhatsappUrl } from "../../branding";
@@ -18,8 +19,12 @@ import Logo from "../icons/Logo";
  * fallaba —el micrófono, el atajo, el pegado—, fallaba ahí, sin explicación.
  *
  * Aquí dictan una frase de prueba en un cuadro de texto DENTRO de la app. Así aprenden haciendo,
- * y de paso se comprueba todo el camino real (micrófono → atajo → transcripción → pegado). Si se
+ * y de paso se comprueba el micrófono, el atajo y la transcripción. ⚠️ El pegado NO es el mismo que
+ * afuera: dentro de nuestra ventana el texto llega por el evento `dictado-en-la-app` (ver
+ * `clipboard.rs`, VENTANA_PRINCIPAL_ENFOCADA), porque el Cmd+V simulado nunca llegaba aquí. Si se
  * traba, la pantalla dice qué hacer, usando los eventos que ya emite el backend.
+ *
+ * Dos pasos: el dictado de prueba y luego el diccionario (`PasoDiccionario`).
  *
  * Se muestra una sola vez, al terminar el registro. Se puede repetir desde Inicio.
  */
@@ -46,8 +51,7 @@ function marcarHecho() {
   }
 }
 
-const FRASE =
-  "Paciente de cuarenta y cinco años con dolor abdominal de tres días de evolución.";
+const FRASE = "Paciente de 45 años con dolor abdominal.";
 
 /** Si en este tiempo no empezó a grabar, se le explica cómo presionar el atajo. */
 const PISTA_SIN_GRABAR_MS = 25_000;
@@ -84,12 +88,18 @@ function comoPresionar(keys: string[]): string {
  */
 const tieneDictado = (texto: string) => /\p{L}{2,}/u.test(texto);
 
-const Teclas: React.FC<{ keys: string[] }> = ({ keys }) => (
-  <span className="inline-flex items-center gap-1.5 align-middle">
+const Teclas: React.FC<{ keys: string[]; grande?: boolean }> = ({ keys, grande }) => (
+  <span className={`inline-flex items-center align-middle ${grande ? "gap-3" : "gap-1.5"}`}>
     {keys.map((k, i) => (
       <React.Fragment key={i}>
-        {i > 0 && <span className="text-brand-text-muted">+</span>}
-        <kbd className="px-2.5 py-1 rounded-lg border border-brand-border bg-white font-heading text-base font-semibold shadow-[0_1px_0_rgba(26,22,32,0.05)]">
+        {i > 0 && (
+          <span className={`text-brand-text-muted ${grande ? "text-2xl" : ""}`}>+</span>
+        )}
+        <kbd
+          className={`rounded-lg border border-brand-border bg-white font-heading font-semibold shadow-[0_2px_0_rgba(26,22,32,0.08)] ${
+            grande ? "px-5 py-3 text-3xl rounded-xl" : "px-2.5 py-1 text-base"
+          }`}
+        >
           {k}
         </kbd>
       </React.Fragment>
@@ -101,8 +111,8 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const { keys, os } = useShortcutKeys();
   const [texto, setTexto] = useState("");
   const [fase, setFase] = useState<Fase>("esperando");
+  const [etapa, setEtapa] = useState<"dictar" | "diccionario">("dictar");
   const [pista, setPista] = useState<string | null>(null);
-  const [enfocado, setEnfocado] = useState(true);
   const cuadro = useRef<HTMLTextAreaElement>(null);
   const faseRef = useRef<Fase>("esperando");
   faseRef.current = fase;
@@ -126,7 +136,7 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     const t = setTimeout(() => {
       if (faseRef.current === "esperando") {
         setPista(
-          `¿No pasa nada? ${comoPresionar(keys)} Primero haz clic dentro del cuadro blanco.`,
+          `¿No pasa nada? ${comoPresionar(keys)}`,
         );
       }
     }, PISTA_SIN_GRABAR_MS);
@@ -153,7 +163,7 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
           if (faseRef.current !== "listo") {
             setFase("esperando");
             setPista(
-              "El texto no apareció en el cuadro. Haz clic dentro del cuadro blanco y vuelve a intentarlo.",
+              "El texto no apareció. Vuelve a intentarlo.",
             );
           }
         }, PISTA_SIN_TEXTO_MS);
@@ -172,12 +182,12 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
       }),
       listen("paste-needs-manual", () => {
         setPista(
-          `Tu texto quedó copiado. Haz clic en el cuadro blanco y presiona ${pasteShortcut(os)} para pegarlo.`,
+          `Tu texto quedó copiado. Haz clic en el cuadro y presiona ${pasteShortcut(os)} para pegarlo.`,
         );
       }),
       listen("paste-error", () => {
         setPista(
-          `Tu texto quedó copiado. Haz clic en el cuadro blanco y presiona ${pasteShortcut(os)} para pegarlo.`,
+          `Tu texto quedó copiado. Haz clic en el cuadro y presiona ${pasteShortcut(os)} para pegarlo.`,
         );
       }),
     ];
@@ -197,133 +207,86 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     return () => window.removeEventListener("focus", alVolver);
   }, []);
 
-  const pasos = [
-    <>Haz clic dentro del cuadro blanco de abajo.</>,
-    <>
-      Presiona <Teclas keys={keys} /> para empezar a grabar.
-    </>,
-    <>
-      Di en voz alta: <em className="not-italic font-semibold text-brand-text">«{FRASE}»</em>
-    </>,
-    <>
-      Vuelve a presionar <Teclas keys={keys} /> para terminar.
-    </>,
-  ];
-  // El paso en curso, según lo que va pasando. Si el cursor salió del cuadro, se vuelve al paso 1:
-  // el texto caería en otro lado.
-  const pasoActual =
-    fase === "esperando" ? (enfocado ? 1 : 0) : fase === "grabando" ? 2 : 3;
+  // Una sola instrucción a la vez, grande. El público se pierde con listas de pasos: la primera
+  // versión tenía cuatro tarjetas numeradas, avisos y enlaces, y resultó abrumadora.
+  const instruccion =
+    fase === "grabando" ? (
+      <>
+        <span className="grid place-items-center w-16 h-16 rounded-full bg-brand-accent text-white">
+          <Mic className="w-8 h-8 animate-pulse" />
+        </span>
+        <p className="font-heading text-2xl font-bold">Te escucho…</p>
+        <p className="text-[18px] text-brand-text-secondary">
+          Cuando termines, presiona otra vez
+        </p>
+        <Teclas keys={keys} grande />
+      </>
+    ) : fase === "procesando" ? (
+      <>
+        <Loader2 className="w-12 h-12 animate-spin text-brand-accent" />
+        <p className="font-heading text-2xl font-bold">Escribiendo…</p>
+      </>
+    ) : fase === "listo" ? (
+      <>
+        <span className="grid place-items-center w-16 h-16 rounded-full bg-green-500 text-white">
+          <Check className="w-9 h-9" strokeWidth={3} />
+        </span>
+        <p className="font-heading text-2xl font-bold">¡Listo! Así de fácil</p>
+        <p className="text-[18px] text-brand-text-secondary max-w-md">
+          Hazlo igual en tu historia clínica o donde escribas: haz clic ahí y presiona{" "}
+          <Teclas keys={keys} />
+        </p>
+      </>
+    ) : (
+      <>
+        <p className="text-[18px] text-brand-text-secondary">Presiona</p>
+        <Teclas keys={keys} grande />
+        <p className="text-[18px] text-brand-text-secondary max-w-md">
+          y di en voz alta:{" "}
+          <span className="font-semibold text-brand-text">«{FRASE}»</span>
+        </p>
+      </>
+    );
+
+  if (etapa === "diccionario") return <PasoDiccionario onDone={terminar} />;
 
   return (
     <div className="h-screen overflow-y-auto flex justify-center px-8 py-10 select-none">
-      <div className="w-full max-w-xl flex flex-col gap-6">
-        <div className="flex flex-col items-center text-center gap-2">
-          <Logo width={150} />
-          <h1 className="font-heading text-2xl font-bold mt-2">
-            {fase === "listo" ? "¡Perfecto! Así de fácil" : "Tu primer dictado"}
-          </h1>
-          <p className="text-[17px] text-brand-text-secondary">
-            {fase === "listo"
-              ? "Tu voz se convirtió en texto, con la puntuación puesta sola."
-              : "Probemos juntos. Toma menos de un minuto."}
-          </p>
+      <div className="w-full max-w-xl flex flex-col gap-8">
+        <div className="flex flex-col items-center gap-3">
+          <Logo width={130} />
+          <h1 className="font-heading text-[28px] font-bold">Probemos tu voz</h1>
         </div>
 
-        {fase !== "listo" && (
-          <ol className="flex flex-col gap-3">
-            {pasos.map((p, i) => (
-              <li
-                key={i}
-                className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-[16px] leading-relaxed transition-colors ${
-                  i === pasoActual
-                    ? "border-brand-accent bg-brand-surface"
-                    : "border-brand-border bg-white"
-                }`}
-              >
-                <span
-                  className={`grid place-items-center w-7 h-7 shrink-0 rounded-full text-sm font-semibold font-heading ${
-                    i <= pasoActual
-                      ? "bg-brand-accent text-white"
-                      : "bg-brand-accent-soft text-brand-accent"
-                  }`}
-                >
-                  {i < pasoActual ? <Check className="w-4 h-4" strokeWidth={3} /> : i + 1}
-                </span>
-                <span className="text-brand-text-secondary">{p}</span>
-              </li>
-            ))}
-          </ol>
-        )}
+        <div
+          className="flex flex-col items-center text-center gap-4 min-h-[220px] justify-center"
+          aria-live="polite"
+        >
+          {instruccion}
+        </div>
 
-        {/* El cuadro donde cae el dictado. Es un campo de texto normal a propósito: así se prueba
-            el pegado real, el mismo que después irá a la historia clínica. */}
+        {/* El cuadro donde cae el dictado. `data-dictado-destino`: el texto llega aquí aunque el
+            cursor no esté dentro (ver insertarDictado.ts). */}
         <textarea
           ref={cuadro}
           id="primer-dictado"
+          data-dictado-destino
           autoFocus
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          onFocus={() => setEnfocado(true)}
-          onBlur={() => setEnfocado(false)}
-          placeholder="Aquí aparecerá tu texto…"
-          rows={4}
-          className={`w-full rounded-2xl border-2 bg-white px-4 py-3 text-[17px] leading-relaxed resize-none focus:outline-none transition-colors select-text ${
-            fase === "listo" ? "border-green-500" : "border-brand-accent"
+          placeholder="Aquí aparecerá lo que digas"
+          rows={3}
+          className={`w-full rounded-2xl border-2 bg-white px-4 py-3 text-[18px] leading-relaxed resize-none focus:outline-none transition-colors select-text ${
+            fase === "listo" ? "border-green-500" : "border-brand-border"
           }`}
         />
 
-        {fase === "grabando" && (
-          <div className="flex items-center justify-center gap-2 text-[16px] font-medium text-brand-accent">
-            <Mic className="w-5 h-5 animate-pulse" />
-            Te estoy escuchando… cuando termines, presiona <Teclas keys={keys} />
-          </div>
-        )}
-        {fase === "procesando" && (
-          <div className="flex items-center justify-center gap-2 text-[16px] text-brand-text-secondary">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Escribiendo tu texto…
-          </div>
-        )}
-
         {pista && (
-          <p
+          <div
             role="alert"
-            className="text-[15px] leading-relaxed text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3"
+            className="flex flex-col items-center gap-2 text-center text-[16px] leading-relaxed text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3"
           >
             {pista}
-          </p>
-        )}
-
-        {fase === "listo" ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-[16px] leading-relaxed text-brand-text-secondary text-center">
-              Ahora hazlo igual en tu historia clínica, WhatsApp o donde escribas:{" "}
-              <strong className="text-brand-text">
-                haz clic donde quieras escribir y presiona <Teclas keys={keys} />
-              </strong>
-              .
-            </p>
-            <button
-              type="button"
-              onClick={terminar}
-              className="w-full px-4 py-3 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
-            >
-              Empezar a usar CloseLabs Voice
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTexto("");
-                setFase("esperando");
-                cuadro.current?.focus();
-              }}
-              className="text-sm font-semibold text-brand-accent hover:underline"
-            >
-              Probar otra vez
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3">
             <button
               type="button"
               onClick={() =>
@@ -333,20 +296,158 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
                   ),
                 )
               }
-              className="inline-flex items-center gap-1.5 text-sm text-brand-text-muted hover:text-[#128C7E] transition-colors"
+              className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#128C7E] hover:underline"
             >
               <MessageCircle className="w-4 h-4" />
-              ¿Necesitas ayuda? Escríbenos por WhatsApp
-            </button>
-            <button
-              type="button"
-              onClick={terminar}
-              className="text-sm text-brand-text-muted hover:underline"
-            >
-              Saltar por ahora
+              Pedir ayuda por WhatsApp
             </button>
           </div>
         )}
+
+        {fase === "listo" ? (
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setEtapa("diccionario")}
+              className="w-full px-4 py-4 rounded-xl text-[18px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
+            >
+              Siguiente
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTexto("");
+                setFase("esperando");
+                cuadro.current?.focus();
+              }}
+              className="text-[15px] text-brand-text-muted hover:underline"
+            >
+              Probar otra vez
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={terminar}
+            className="self-center text-[15px] text-brand-text-muted hover:underline"
+          >
+            Saltar por ahora
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Segundo paso: el diccionario. Es lo que más mejora la calidad para un médico (nombres de
+ * medicamentos, de colegas, de su clínica) y antes no aparecía en ningún lado: había que
+ * descubrir la sección por cuenta propia. Aquí agrega su primera palabra en el mismo momento en
+ * que acaba de ver funcionar el dictado. Usa el mismo ajuste que la sección Diccionario
+ * (`custom_words`) y las mismas reglas que `CustomWords.tsx`.
+ */
+const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+  const { getSetting, updateSetting } = useSettings();
+  const palabras = getSetting("custom_words") || [];
+  const [nueva, setNueva] = useState("");
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  const agregar = () => {
+    const limpia = nueva.trim().replace(/[<>"'&]/g, "");
+    if (!limpia) return;
+    if (limpia.split(/\s+/).length > 3 || limpia.length > 50) {
+      setAviso("Escribe una palabra o un nombre corto, de máximo tres palabras.");
+      return;
+    }
+    if (palabras.includes(limpia)) {
+      setAviso(`«${limpia}» ya está en tu diccionario.`);
+      return;
+    }
+    updateSetting("custom_words", [...palabras, limpia]);
+    setNueva("");
+    setAviso(null);
+  };
+
+  return (
+    <div className="h-screen overflow-y-auto flex justify-center px-8 py-10 select-none">
+      <div className="w-full max-w-xl flex flex-col gap-8">
+        <div className="flex flex-col items-center text-center gap-3">
+          <Logo width={130} />
+          <span className="grid place-items-center w-16 h-16 mt-2 rounded-full bg-brand-accent-soft text-brand-accent">
+            <BookOpen className="w-8 h-8" />
+          </span>
+          <h1 className="font-heading text-[28px] font-bold">Enséñale tus palabras</h1>
+          <p className="text-[18px] leading-relaxed text-brand-text-secondary max-w-md">
+            Si escribe mal un medicamento, un nombre o una palabra que usas mucho, agrégala aquí y
+            la escribirá bien siempre.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            <input
+              id="primer-dictado-palabra"
+              type="text"
+              autoFocus
+              value={nueva}
+              onChange={(e) => setNueva(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  agregar();
+                }
+              }}
+              placeholder="Ej.: Losartán"
+              className="flex-1 min-w-0 rounded-xl border-2 border-brand-border bg-white px-4 py-3 text-[18px] focus:outline-none focus:border-brand-accent select-text"
+            />
+            <button
+              type="button"
+              onClick={agregar}
+              disabled={!nueva.trim()}
+              className="px-5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary disabled:opacity-40 transition-colors"
+            >
+              Agregar
+            </button>
+          </div>
+          {aviso && <p className="text-[15px] text-amber-900">{aviso}</p>}
+          {palabras.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {palabras.map((p) => (
+                <span
+                  key={p}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-surface border border-brand-border pl-3 pr-2 py-1 text-[16px]"
+                >
+                  {p}
+                  <button
+                    type="button"
+                    aria-label={`Quitar ${p}`}
+                    onClick={() =>
+                      updateSetting(
+                        "custom_words",
+                        palabras.filter((x) => x !== p),
+                      )
+                    }
+                    className="text-brand-text-muted hover:text-brand-text"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="text-[15px] text-brand-text-muted">
+            Puedes agregar más cuando quieras en <strong>Diccionario</strong>, en el menú de la
+            izquierda.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDone}
+          className="w-full px-4 py-4 rounded-xl text-[18px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
+        >
+          Empezar a usar CloseLabs Voice
+        </button>
       </div>
     </div>
   );
