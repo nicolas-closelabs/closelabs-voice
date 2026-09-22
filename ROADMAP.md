@@ -183,6 +183,10 @@ cambia la URL.
   al siguiente (lo usa la cadena Opus → FLAC → WAV de la app). Prueba con 13 escenarios en
   `supabase/functions/_tests/respaldo.test.ts`. Motivo medido: el formateo de Groq falló en
   6 de 23 dictados el 21 y en 23 de 81 el 19 — todos pegados sin puntuar.
+  **Probado EN VIVO el 2026-09-21** con un principal roto a propósito (ruta 404) y 2 dictados
+  reales: los dos salieron bien, atendidos por DeepInfra, y el diccionario siguió funcionando
+  ("CloseLabs", "CloseLabs Voice", "Aztec Voice" bien escritos). El proveedor roto falló en
+  ~100 ms y el dictado completo costó ~3 s más. Configuración restaurada al terminar.
 - [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
 - [ ] Recomendación provisional: **transcribir con OpenAI** (`gpt-4o-mini-transcribe`, la mejor
   calidad medida, ~$1,30/médico/mes) con DeepInfra y luego Groq de respaldo; **formatear con
