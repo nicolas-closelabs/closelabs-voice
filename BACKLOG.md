@@ -17,11 +17,11 @@
 
 ## PENDIENTES para el próximo build (fixes de código)
 
-1. **Overlay — animación del micrófono congelada (Intel).** Al hablar, el indicador de audio del
+1. ✅ **CONFIRMADO RESUELTO (2026-09-22, Nicolás en Mac Intel con la 0.8.0).** **Overlay — animación del micrófono congelada (Intel).** Al hablar, el indicador de audio del
    overlay no se mueve (parece que no escucha), pero SÍ graba y transcribe. Es **solo visual**.
    Revisar la animación de nivel de audio en Intel (`src/overlay/RecordingOverlay.*`).
 
-2. **App no queda en el Dock (Intel) — "dock glitch".** La app no aparece en el Dock de abajo;
+2. ✅ **CONFIRMADO RESUELTO (2026-09-22, Nicolás en Mac Intel con la 0.8.0).** **App no queda en el Dock (Intel) — "dock glitch".** La app no aparece en el Dock de abajo;
    para volver a ella hay que ir a Aplicaciones y reabrir. Muy incómodo. Revisar activation policy
    / Dock (macOS `ActivationPolicy::Regular`, `show_main_window`, `--start-hidden`) — especialmente
    en Intel.
@@ -141,6 +141,43 @@
     **sin confirmar**; se probó una variante que pedía JSON explícitamente y no hubo diferencia
     medible. Dejar la guarda de respaldo como está y volver a mirar si reaparece con el tier pago
     (puede que el 400 fuera el disfraz de un throttle).
+
+## 2026-09-22 — El dictado no se escribía dentro de la propia app
+
+El tutorial "Tu primer dictado" nunca funcionaba (lo encontró Nicolás en Mac Intel con la 0.8.0), y
+tampoco dictar en cualquier campo de la app. Causa: `clipboard::paste` corre en el hilo PRINCIPAL y
+lo ocupa mientras pone el texto en el portapapeles, simula Cmd+V y, 200 ms después, devuelve el
+portapapeles anterior. Cualquier otra app atiende el Cmd+V al instante; nuestra ventana solo cuando
+el hilo queda libre, y para entonces el portapapeles ya volvió a lo de antes. Afecta igual a Windows.
+Arreglo: `lib.rs` sigue el foco de la ventana `main`; si está al frente, el texto va por el evento
+`dictado-en-la-app` y la página lo escribe (`insertarDictado.ts`: el campo con el cursor o, si no
+hay, el marcado `data-dictado-destino`). No necesita permiso de Accesibilidad.
+
+En la misma versión (0.8.1): tutorial de una sola instrucción grande a la vez + paso del
+diccionario; menú Inicio, Diccionario, Instrucciones, Mi cuenta, Configuración, Acerca de, Ayuda.
+
+## 2026-09-22 — Autocorrecciones ("mentira") y la prueba de proveedores de formateo
+
+Nicolás dijo "mentira" para corregirse y quedó escrito. El prompt solo reconocía "digo", "mejor
+dicho" y "o sea no". Se añadieron mentira/mentiras, perdón, no perdón, corrijo, me equivoqué, no
+espera, no no, con ejemplos SIN comas (así llega el dictado) y la regla de que solo se retracta lo
+que el reemplazo sustituye (la primera versión borró "Se solicita" en "se solicita radiografía de
+tórax mentira ecografía…").
+
+⚠️ **Probar prompts IGUAL que la app:** el `${output}` se quita y el texto va como mensaje de
+usuario. Una prueba que metía el texto también en el prompt dio salidas sin mayúscula ni punto y
+casi lleva a un diagnóstico falso contra DeepInfra.
+
+Medición (33 dictados con autocorrecciones, prompt final):
+| Proveedor | Aciertos | Formateo (mediana) | Nota |
+|---|---|---|---|
+| Groq gpt-oss-20b | 13/13 atendidos | ~1,4 s | se topa el techo del plan gratis en ráfagas |
+| DeepInfra, reasoning `low` | 26/33 | ~3,2 s | **invirtió correcciones** ("se remite a cardiología") |
+| DeepInfra, reasoning `medium` | 31/33 | ~4,5 s | fallas inofensivas |
+
+Quedó: Groq principal, DeepInfra respaldo en `medium` (migración `20260922000002`). En 24 h Groq
+tuvo 71 `rate_limit` de 147 formateos, casi todos por las ráfagas de prueba. Con más médicos hay
+que decidir: Groq pago (si reabre), o DeepInfra `medium` aceptando ~3 s más, o probar otro modelo.
 
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
@@ -344,8 +381,8 @@ llamar a la función; este, en el primer registro de verdad.
 3. **Páginas propias** para confirmar correo y recuperar contraseña (hoy usan las de Supabase).
 
 ### Acciones del cliente
-- [ ] **Repartir los instaladores 0.8.0** (no la 0.7.0: le faltan el atajo correcto en Windows, el WhatsApp y el tutorial) y avisar que ahora hay que crear cuenta. Están en el Escritorio y en el repo público de descargas.
-- [ ] **Subir `latest_version` a 0.8.0** cuando estén repartidos.
+- [ ] **Repartir los instaladores 0.8.1** (la 0.8.0 no escribía el dictado dentro de la propia app: el tutorial nunca funcionaba) y avisar que ahora hay que crear cuenta. Están en el Escritorio y en el repo público de descargas.
+- [ ] **Subir `latest_version` a 0.8.1** cuando estén repartidos.
 - [ ] **Volver el repo a privado** (hoy público para el CI).
 - [ ] **Abogado:** Política de Tratamiento de Datos, autorización de transferencia internacional,
       Términos con la cláusula de que la historia clínica es responsabilidad del médico, y

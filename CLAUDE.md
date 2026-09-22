@@ -4,8 +4,12 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.8.0)
+## Estado actual (v0.8.1)
 
+> **v0.8.1 — el dictado se escribe DENTRO de la app** (antes nunca: el tutorial no funcionaba; ver
+> `VENTANA_PRINCIPAL_ENFOCADA` en `clipboard.rs`), tutorial de una instrucción a la vez + paso del
+> diccionario, nuevo orden del menú y más señales de autocorrección ("mentira", "perdón"…).
+>
 > **v0.8.0 — AUTOSERVICIO.** El público son médicos de 40-50 años o más, poco familiarizados con la
 > tecnología y casi todos en **Windows**; tienen que poder instalar, registrarse y dictar solos.
 > Atajo correcto por sistema en toda la app (`shortcutLabels.ts` + `useShortcutKeys` — ⚠️ nunca

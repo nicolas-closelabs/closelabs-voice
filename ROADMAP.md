@@ -205,9 +205,11 @@ cambia la URL.
   ("CloseLabs", "CloseLabs Voice", "Aztec Voice" bien escritos). El proveedor roto falló en
   ~100 ms y el dictado completo costó ~3 s más. Configuración restaurada al terminar.
 - [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
+  ⚠️ 2026-09-22: DeepInfra con reasoning `low` INVIERTE autocorrecciones ("se remite a cardiología
+  me equivoqué a neurología" → cardiología). Con `medium` acierta pero tarda ~4,5 s. Detalle en BACKLOG.
 - [ ] Recomendación provisional: **transcribir con OpenAI** (`gpt-4o-mini-transcribe`, la mejor
   calidad medida, ~$1,30/médico/mes) con DeepInfra y luego Groq de respaldo; **formatear con
-  DeepInfra** (`gpt-oss-20b`, 16/16, cero errores de JSON) con Groq de respaldo.
+  DeepInfra** (`gpt-oss-20b`, 16/16, cero errores de JSON) con Groq de respaldo. ⚠️ Revisado el 2026-09-22: no con reasoning `low` (ver arriba).
 - [ ] Que el abogado revise la política de datos de cada proveedor (datos de salud).
 
 ### Fase 3 — Distribución profesional (necesita: cuentas Apple/Windows)
