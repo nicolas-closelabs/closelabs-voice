@@ -135,7 +135,7 @@ cambia la URL.
   ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
 - [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
 
-### Fase 2.5 — Listo para autoservicio y para producción · 📋 PLANEADO (2026-09-21)
+### Fase 2.5 — Listo para autoservicio y para producción · 🔨 EN CURSO (v0.8.x)
 
 > **El público manda:** médicos de 40-50 años o más, poco familiarizados con la tecnología, casi
 > todos en **Windows**. Nicolás va a mandar un link y tienen que poder instalar, crear la cuenta y
@@ -166,6 +166,11 @@ cambia la URL.
   micrófono o de internet, el texto no llegó al cuadro). Se repite desde Inicio ("Hacer un dictado
   de prueba"). ⚠️ Solo se puede probar con instalador: la versión de desarrollo no recibe el
   permiso de Accesibilidad en Mac.
+- [x] **Cuentas que no se pisan en un mismo computador — HECHO 2026-09-23 (v0.8.2).** Una cuenta
+  nueva veía "0 de 3 equipos" y sus dictados se le cobraban a la cuenta anterior; cerrar sesión no
+  sacaba de la app y seguía dictando; el tutorial no salía. Detalle en BACKLOG.
+- [x] **El dictado se escribe DENTRO de la app — HECHO 2026-09-22 (v0.8.1).** El tutorial nunca
+  había funcionado: el Cmd+V simulado no llegaba a nuestra propia ventana.
 - [ ] **Guía visual del permiso de Accesibilidad (Mac)**: una imagen de dónde exactamente hacer clic.
 - [~] **Página closelabs.co/voice (convencer e instalar)** — 🔨 EN CURSO (2026-09-21), en otra
   sesión dedicada al diseño de páginas. Estado:
@@ -230,6 +235,63 @@ cambia la URL.
 - [ ] Auto-diccionario (macOS): aprende de las correcciones. Con salvaguardas: no aprender nombres de pacientes y confirmación del médico.
 - [ ] Inicio con los dictados de la sesión (solo en memoria) + clic para copiar.
 - [ ] Instrucciones con videos cortos.
+
+### Fase 5 — Canal gMedic (socio distribuidor) · ❓ SIN DECIDIR (propuesta enviada 2026-09-23)
+
+> **No arranca hasta que gMedic acepte.** gMedic es un software de historias clínicas que vio Voice
+> y quiere ofrecerlo a sus médicos. Nada de esta fase se construye "por si acaso": el orden está
+> pensado para gastar lo mínimo hasta que el piloto demuestre uso real.
+>
+> **Modelo acordado en la propuesta:** público US$12/médico/mes en TODOS los canales (para no
+> competir contra la venta directa); gMedic paga US$8 (US$7 pasando 100 médicos activos) y se queda
+> con la diferencia; gMedic vende, cobra y atiende primera línea; instalador con su marca sin costo.
+> Costo nuestro medido: ~$2/médico/mes con uso alto. Propuesta completa (página privada):
+> https://claude.ai/code/artifact/34686f8d-8457-49c9-bdf5-b405955a43fd
+
+**1. Enlace propio (`closelabs-voice://`) — lo primero, 1-2 días.**
+- [ ] Registrar el esquema (`tauri-plugin-deep-link`) en Windows y macOS + instancia única.
+- [ ] Acciones: abrir/enfocar, empezar a dictar, y **activar la cuenta con un código de un solo uso**
+  emitido por gMedic (el médico no escribe correo ni contraseña — es donde más se pierde un usuario
+  nuevo). El código se canjea contra nuestro backend; caduca en minutos y se usa una vez.
+- [ ] En la web de gMedic: si en ~2 s no abre, ofrecer la descarga (no hay forma fiable de saber si
+  está instalada).
+- ⚠️ Nada de esto es indispensable: la app ya escribe dentro de gMedic en el navegador sin integración.
+
+**2. Canal local (WebSocket) — SEGUNDA etapa, solo si el piloto funciona.**
+- [ ] Servidor local en la app + conexión desde la página de gMedic: estado en vivo y **entrega del
+  texto directamente** en vez de simular Ctrl/Cmd+V.
+- [ ] Por qué vale la pena: **en Mac desaparece el permiso de Accesibilidad** dentro de gMedic (el
+  paso más frágil de la instalación) y el texto nunca cae en el campo equivocado.
+- [ ] Requisito: seguridad seria (origen permitido, llave por sesión, nada de escuchar en red).
+- ⚠️ Necesita desarrollo del lado de gMedic; el enlace NO se reemplaza (el WebSocket no puede
+  arrancar la app si está cerrada).
+
+**3. Usuarios y pagos los maneja gMedic.**
+- [x] **Cortar el acceso a quien no paga — HECHO 2026-09-23 (v0.8.3).** El respaldo local se
+  activaba con CUALQUIER error, incluidos 'no pagó' y 'se acabó la prueba': bastaba apagar el wifi
+  para dictar gratis para siempre. Era condición para cualquier trato donde otro cobre. Ver BACKLOG.
+- [ ] **Manual primero, a propósito** (decisión de Nicolás, 2026-09-23): gMedic manda la lista de
+  activos y avisa las bajas cuando pasan; nosotros encendemos y apagamos. Ya se puede hacer hoy con
+  la base tal como está: cero código, cero piezas nuevas que se rompan.
+- [ ] Reporte mensual de uso por médico para conciliar la factura (sale de `usage_events`).
+- [ ] Automatizar con una API para socios (crear/activar/suspender cupos) **solo pasando ~100
+  médicos**, cuando los 10 minutos al mes dejen de ser suficientes.
+
+**4. Instalador "gMedic Voice, by CloseLabs" — sin costo para él.**
+- [ ] Segundo instalador: nombre, ícono, identificador de paquete y textos propios (`branding.ts`
+  ya centraliza casi todo; falta parametrizar el bundle y los íconos en el CI).
+- [ ] La matriz del CI compila y publica las dos marcas en cada versión.
+- ⚠️ **El "by CloseLabs" no es cortesía:** al instalar, Windows y macOS muestran quién FIRMA, y la
+  firma es nuestra. Que el nombre visible coincida con el firmante evita desconfianza al instalar.
+- ⚠️ Costo permanente: cada versión se compila y se prueba dos veces.
+
+**Condiciones y riesgos (para la negociación, no para el código):**
+- [ ] **Las firmas (Fase 3) son requisito para abrir comercialmente.** Sus médicos instalan; hoy
+  Windows advierte y Mac no abre. El piloto se puede hacer acompañado, la apertura no.
+- [ ] Contrato: gMedic responsable del tratamiento, CloseLabs encargado (Ley 1581).
+- [ ] Soporte de primera línea a cargo de gMedic, con acuerdo de qué se escala.
+- [ ] Concentración: si trae 200 médicos y se va, quedamos en cero → mínimo mensual al renegociar.
+- [ ] Por definir con él: IVA dentro o fuera de los US$12, moneda de facturación y tasa de cambio.
 
 ## Cómo le ganamos a Aztec (no solo igualarlo)
 1. **Vocabulario médico precargado por especialidad:** en el onboarding el médico elige su especialidad y se precargan en la pista de Whisper los fármacos y términos más usados. Aztec depende de que el usuario los escriba o de que los aprenda con el tiempo.

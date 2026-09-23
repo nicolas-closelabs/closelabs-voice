@@ -4,8 +4,12 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.8.2)
+## Estado actual (v0.8.3)
 
+> **v0.8.3 — sin pagar no se dicta** (el respaldo local se activaba también con "no pagó": apagar
+> el wifi daba dictado gratis; ver `CODIGOS_SIN_PERMISO` en `proxy.rs`) y el ícono con las
+> proporciones de macOS. Preparación del canal gMedic: ver Fase 5 del ROADMAP.
+>
 > **v0.8.2 — cuentas que no se pisan.** Cada cuenta tiene su propia ficha de equipo en el mismo
 > computador (antes la segunda cuenta veía "0 de 3" y sus dictados se le cobraban a la primera),
 > cerrar sesión saca de la app Y corta el dictado (se autoriza con el token del equipo, no con la

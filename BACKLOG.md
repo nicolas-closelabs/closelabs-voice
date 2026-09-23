@@ -211,6 +211,20 @@ extremo desde Colombia), **~$0,00025 por dictado** (1.649 tokens de entrada, 411
 Regla nueva del prompt: la autocorrección también quita la preposición ("se remite a cardiología
 me equivoqué a neurología" → "Se remite a neurología"); nunca deben quedar las dos opciones.
 
+## 2026-09-23 — Sin pagar no se dicta (agujero encontrado preparando el trato con gMedic)
+
+`try_cloud_transcription` caía al Parakeet LOCAL ante **cualquier** error del proxy. El respaldo
+existe para que un corte de internet no deje al médico tirado en consulta, pero también se
+activaba con `no_account`, `trial_ended`, `subscription_inactive` y `quota_exceeded`: **bastaba
+apagar el wifi para dictar gratis para siempre**. Nadie lo había notado porque ningún tester había
+dejado de pagar.
+
+Arreglo: `proxy::CODIGOS_SIN_PERMISO` separa "no puedes dictar" de "falló algo". Con esos códigos
+no hay motor local: se abre la ventana, se explica el motivo con palabras (i18n `errors.sinPermiso.*`)
+y se lleva a Mi cuenta. Los fallos técnicos siguen cayendo al local, igual que antes.
+
+⚠️ Al añadir un código de denegación nuevo en `_shared/auth.ts`, añadirlo TAMBIÉN a esa lista.
+
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
 **Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq
