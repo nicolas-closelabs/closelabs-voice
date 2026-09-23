@@ -204,6 +204,11 @@ cambia la URL.
   reales: los dos salieron bien, atendidos por DeepInfra, y el diccionario siguió funcionando
   ("CloseLabs", "CloseLabs Voice", "Aztec Voice" bien escritos). El proveedor roto falló en
   ~100 ms y el dictado completo costó ~3 s más. Configuración restaurada al terminar.
+- [x] **Formatear: OpenRouter (servidor Groq)** — EN PRODUCCIÓN 2026-09-23. Resuelve el techo del
+  plan gratis de Groq sin perder calidad ni velocidad (32/32, ~2 s, ~$0,00025/dictado).
+- [ ] **Transcribir: falta decidir.** Sigue en Groq gratis (~2.000 dictados/día entre TODOS). Antes
+  de producción hay que pasarlo a OpenAI (`gpt-4o-mini-transcribe`, ~$1,30/médico/mes); OpenRouter
+  NO ofrece transcripción de audio.
 - [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
   ⚠️ 2026-09-22: DeepInfra con reasoning `low` INVIERTE autocorrecciones ("se remite a cardiología
   me equivoqué a neurología" → cardiología). Con `medium` acierta pero tarda ~4,5 s. Detalle en BACKLOG.

@@ -179,6 +179,38 @@ Quedó: Groq principal, DeepInfra respaldo en `medium` (migración `202609220000
 tuvo 71 `rate_limit` de 147 formateos, casi todos por las ráfagas de prueba. Con más médicos hay
 que decidir: Groq pago (si reabre), o DeepInfra `medium` aceptando ~3 s más, o probar otro modelo.
 
+## 2026-09-23 — Cuentas en el mismo computador, cerrar sesión, y OpenRouter
+
+**Tres fallos encontrados USANDO la app (otra vez: no aparecieron leyendo el código).**
+
+1. **Cuenta nueva en un computador ya usado: "0 de 3 equipos".** La ficha de equipo pertenece a la
+   primera cuenta que la vinculó y `link_device` devuelve `de_otra_cuenta` (bien: no se le quita a
+   nadie en silencio, y dos médicos pueden compartir el computador del consultorio). La app se
+   quedaba callada. **Y era peor:** el dictado se autoriza con el token del EQUIPO, así que los
+   dictados de la cuenta nueva se le cargaban a la vieja. Ahora, ante `de_otra_cuenta`, la app
+   registra una instalación nueva y la vincula a la cuenta actual (`olvidar_device_token`).
+2. **Cerrar sesión no sacaba de la app.** Solo se refrescaba el panel de cuenta; la app seguía
+   entera y DICTANDO hasta reiniciarla. Ahora `auth_sign_out` emite `sesion-cerrada` (la interfaz
+   vuelve a la pantalla de entrar) y el atajo no graba sin sesión (`sin_sesion` en actions.rs).
+3. **El tutorial no salía para la cuenta nueva.** La marca era del computador; al pasarla a por
+   cuenta, la 0.8.1 intentó heredar la vieja y se la quedaba la primera cuenta que preguntara —
+   justo la nueva. Se quitó la herencia y la clave pasó a `v2`. Además el tutorial no cabía en la
+   ventana mínima (680x570): el flex aplastaba el cuadro de texto hasta dejarlo en una raya.
+
+**Formateo → OpenRouter (servidor Groq), EN PRODUCCIÓN.** Groq es el mejor y el más rápido, pero
+su plan gratis tumbó 19 de 36 peticiones por `rate_limit` y los upgrades siguen pausados.
+OpenRouter vende el mismo modelo servido por Groq, sin tope por cuenta. Medido hoy: **32/32** en
+las frases con autocorrección y **15/15** en frases nuevas, 1,0 s de proceso (~2,0 s extremo a
+extremo desde Colombia), **~$0,00025 por dictado** (1.649 tokens de entrada, 411 de salida) →
+~$0,74/mes para un médico que dicte 3.000 veces. Respaldo: Groq directo y luego DeepInfra.
+⚠️ La cuenta de OpenRouter necesita SALDO: sin créditos responde 402 y todo cae al respaldo.
+`providers.extra_body` (jsonb) lleva el `provider` de OpenRouter: `order: [groq]`,
+`allow_fallbacks: false` (no queremos que cambie de servidor a nuestras espaldas) y
+`data_collection: deny`.
+
+Regla nueva del prompt: la autocorrección también quita la preposición ("se remite a cardiología
+me equivoqué a neurología" → "Se remite a neurología"); nunca deben quedar las dos opciones.
+
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
 **Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq
@@ -381,8 +413,8 @@ llamar a la función; este, en el primer registro de verdad.
 3. **Páginas propias** para confirmar correo y recuperar contraseña (hoy usan las de Supabase).
 
 ### Acciones del cliente
-- [ ] **Repartir los instaladores 0.8.1** (la 0.8.0 no escribía el dictado dentro de la propia app: el tutorial nunca funcionaba) y avisar que ahora hay que crear cuenta. Están en el Escritorio y en el repo público de descargas.
-- [ ] **Subir `latest_version` a 0.8.1** cuando estén repartidos.
+- [ ] **Repartir los instaladores 0.8.2** (la 0.8.0 no escribía el dictado dentro de la propia app: el tutorial nunca funcionaba) y avisar que ahora hay que crear cuenta. Están en el Escritorio y en el repo público de descargas.
+- [ ] **Subir `latest_version` a 0.8.2** cuando estén repartidos.
 - [ ] **Volver el repo a privado** (hoy público para el CI).
 - [ ] **Abogado:** Política de Tratamiento de Datos, autorización de transferencia internacional,
       Términos con la cláusula de que la historia clínica es responsabilidad del médico, y
