@@ -112,12 +112,19 @@
         "recommended": "recommended",
         "bluetoothWarning": "Bluetooth headphones (AirPods and similar) take 1-2 seconds to wake up, so the first words can be lost. For instant response, use your computer's microphone.",
         "title": "Microphone Access",
-        "description": "Required to hear your voice for transcription."
+        "description": "Required to hear your voice for transcription.",
+        "boton": "Allow the microphone",
+        "avisoMac": "When you press the button, your Mac will ask whether to allow the microphone. Answer “Allow”.",
+        "avisoWindows": "Windows Settings will open. Turn on microphone access for desktop apps."
       },
       "accessibility": {
         "title": "Accessibility Access",
-        "description": "Required to type transcribed text into your applications."
+        "description": "Required to type transcribed text into your applications.",
+        "boton": "Got it, open System Settings"
       },
+      "step": "Step {{actual}} of {{total}}",
+      "waitingMic": "Waiting for your answer…",
+      "waitingAcc": "We're still here. Turn on the switch and this screen will continue on its own.",
       "grant": "Grant Permission",
       "granted": "Granted",
       "waiting": "Waiting...",
@@ -629,16 +636,16 @@
     "pasteFailedTitle": "Failed to Paste Text",
     "pasteFailed": "Text could not be pasted into the active application.",
     "sinPermiso": {
-          "trial_endedTitulo": "Your trial has ended",
-          "trial_ended": "Activate your subscription in My account to keep dictating.",
-          "subscription_inactiveTitulo": "Your subscription is not active",
-          "subscription_inactive": "Check your payment in My account to keep dictating.",
-          "subscription_missingTitulo": "We couldn't find your subscription",
-          "subscription_missing": "Message us on WhatsApp from Help and we'll look into it.",
-          "quota_exceededTitulo": "You've reached today's dictation limit",
-          "quota_exceeded": "It will be available again tomorrow.",
-          "no_accountTitulo": "Sign in again",
-          "no_account": "Sign out and sign back in to keep dictating."
+      "trial_endedTitulo": "Your trial has ended",
+      "trial_ended": "Activate your subscription in My account to keep dictating.",
+      "subscription_inactiveTitulo": "Your subscription is not active",
+      "subscription_inactive": "Check your payment in My account to keep dictating.",
+      "subscription_missingTitulo": "We couldn't find your subscription",
+      "subscription_missing": "Message us on WhatsApp from Help and we'll look into it.",
+      "quota_exceededTitulo": "You've reached today's dictation limit",
+      "quota_exceeded": "It will be available again tomorrow.",
+      "no_accountTitulo": "Sign in again",
+      "no_account": "Sign out and sign back in to keep dictating."
     },
     "dictadoCopiadoTitle": "Your text was copied",
     "dictadoCopiado": "Click where you want to write and paste it.",

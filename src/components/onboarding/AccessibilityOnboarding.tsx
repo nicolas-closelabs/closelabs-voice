@@ -305,110 +305,106 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
     );
   }
 
-  // Show permissions request screen
-  return (
-    <div className="min-h-screen w-screen overflow-y-auto flex flex-col p-6 gap-5 items-center justify-center">
-      <div className="flex flex-col items-center gap-2">
-        <Logo width={160} />
-      </div>
+  // Un permiso a la vez, y en macOS la guía ANTES de abrir Ajustes del Sistema.
+  //
+  // ⚠️ Por qué: antes se mostraban los dos permisos juntos y la guía visual aparecía DESPUÉS de
+  // presionar "Conceder permiso". Para entonces el médico ya estaba mirando la ventana del
+  // sistema y no volvía a la nuestra: la ayuda llegaba tarde. Ahora primero ve el dibujo de lo
+  // que va a pasar, y el botón abre Ajustes cuando él dice que está listo.
+  const pasoActual = permissions.microphone !== "granted" ? "microfono" : "accesibilidad";
+  const totalPasos = isMacOS ? 2 : 1;
+  const numeroPaso = pasoActual === "microfono" ? 1 : 2;
 
-      <div className="max-w-md w-full flex flex-col items-center gap-4">
-        <div className="text-center mb-2">
-          <h2 className="text-xl font-semibold text-text mb-2">
-            {t("onboarding.permissions.title")}
-          </h2>
-          <p className="text-text/70">
-            {t("onboarding.permissions.description")}
-          </p>
+  return (
+    <div className="min-h-screen w-screen overflow-y-auto flex justify-center px-6 py-7">
+      <div className="w-full max-w-md flex flex-col items-center gap-5">
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          <Logo width={130} />
+          <span className="text-[13px] font-semibold text-brand-text-muted">
+            {t("onboarding.permissions.step", { actual: numeroPaso, total: totalPasos })}
+          </span>
         </div>
 
-        {/* Microphone Permission Card */}
-        {showMicrophonePermission && (
-          <div className="w-full p-4 rounded-lg bg-white/5 border border-mid-gray/20">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-logo-primary/20 shrink-0">
-                <Mic className="w-6 h-6 text-logo-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-text">
-                  {t("onboarding.permissions.microphone.title")}
-                </h3>
-                <p className="text-sm text-text/60 mb-3">
-                  {t("onboarding.permissions.microphone.description")}
+        {pasoActual === "microfono" ? (
+          <Paso
+            icono={<Mic className="w-7 h-7 text-brand-accent" />}
+            titulo={t("onboarding.permissions.microphone.title")}
+            descripcion={t("onboarding.permissions.microphone.description")}
+          >
+            {permissions.microphone === "waiting" ? (
+              <Esperando texto={t("onboarding.permissions.waitingMic")} />
+            ) : (
+              <>
+                <p className="text-[15px] leading-relaxed text-brand-text-secondary">
+                  {isWindows
+                    ? t("onboarding.permissions.microphone.avisoWindows")
+                    : t("onboarding.permissions.microphone.avisoMac")}
                 </p>
-                {permissions.microphone === "granted" ? (
-                  <div className="flex items-center gap-2 text-emerald-400 text-sm">
-                    <Check className="w-4 h-4" />
-                    {t("onboarding.permissions.granted")}
-                  </div>
-                ) : permissions.microphone === "waiting" ? (
-                  <div className="flex items-center gap-2 text-text/50 text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t("onboarding.permissions.waiting")}
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleGrantMicrophone}
-                    className="px-4 py-2 rounded-lg bg-logo-primary hover:bg-logo-primary/90 text-white text-sm font-medium transition-colors"
-                  >
-                    {/* En Windows no existen los "Ajustes del Sistema" (es el nombre de Mac): allá
-                        la app se llama Configuración. */}
-                    {isWindows
-                      ? t("accessibility.openWindowsSettings")
-                      : t("onboarding.permissions.grant")}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Accessibility Permission Card */}
-        {showAccessibilityPermission && (
-          <div className="w-full p-4 rounded-lg bg-white/5 border border-mid-gray/20">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-logo-primary/20 shrink-0">
-                <Keyboard className="w-6 h-6 text-logo-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-text">
-                  {t("onboarding.permissions.accessibility.title")}
-                </h3>
-                <p className="text-sm text-text/60 mb-3">
-                  {t("onboarding.permissions.accessibility.description")}
-                </p>
-                {permissions.accessibility === "granted" ? (
-                  <div className="flex items-center gap-2 text-emerald-400 text-sm">
-                    <Check className="w-4 h-4" />
-                    {t("onboarding.permissions.granted")}
-                  </div>
-                ) : permissions.accessibility === "waiting" ? (
-                  <div className="flex items-center gap-2 text-text/50 text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t("onboarding.permissions.waiting")}
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleGrantAccessibility}
-                    className="px-4 py-2 rounded-lg bg-logo-primary hover:bg-logo-primary/90 text-white text-sm font-medium transition-colors"
-                  >
-                    {t("onboarding.permissions.grant")}
-                  </button>
-                )}
-                {/* La guía aparece cuando ya se abrió Ajustes del Sistema: ahí es cuando el médico
-                    está mirando una ventana llena de opciones sin saber qué tocar. */}
-                {permissions.accessibility === "waiting" && (
-                  <div className="mt-3">
-                    <GuiaAccesibilidadMac />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                <BotonGrande onClick={handleGrantMicrophone}>
+                  {isWindows
+                    ? t("accessibility.openWindowsSettings")
+                    : t("onboarding.permissions.microphone.boton")}
+                </BotonGrande>
+              </>
+            )}
+          </Paso>
+        ) : (
+          <Paso
+            icono={<Keyboard className="w-7 h-7 text-brand-accent" />}
+            titulo={t("onboarding.permissions.accessibility.title")}
+            descripcion={t("onboarding.permissions.accessibility.description")}
+          >
+            <GuiaAccesibilidadMac />
+            {permissions.accessibility === "waiting" ? (
+              <Esperando texto={t("onboarding.permissions.waitingAcc")} />
+            ) : (
+              <BotonGrande onClick={handleGrantAccessibility}>
+                {t("onboarding.permissions.accessibility.boton")}
+              </BotonGrande>
+            )}
+          </Paso>
         )}
       </div>
     </div>
   );
 };
+
+/** La tarjeta de un paso: ícono, título, explicación y lo que toque hacer. */
+const Paso: React.FC<{
+  icono: React.ReactNode;
+  titulo: string;
+  descripcion: string;
+  children: React.ReactNode;
+}> = ({ icono, titulo, descripcion, children }) => (
+  <div className="w-full flex flex-col gap-4">
+    <div className="flex flex-col items-center text-center gap-2">
+      <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft shrink-0">
+        {icono}
+      </span>
+      <h2 className="font-heading text-2xl font-bold text-brand-text">{titulo}</h2>
+      <p className="text-[16px] leading-relaxed text-brand-text-secondary">{descripcion}</p>
+    </div>
+    {children}
+  </div>
+);
+
+const BotonGrande: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({
+  onClick,
+  children,
+}) => (
+  <button
+    onClick={onClick}
+    className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
+  >
+    {children}
+  </button>
+);
+
+const Esperando: React.FC<{ texto: string }> = ({ texto }) => (
+  <div className="flex items-center justify-center gap-2 text-[15px] text-brand-text-secondary">
+    <Loader2 className="w-5 h-5 animate-spin text-brand-accent" />
+    {texto}
+  </div>
+);
 
 export default AccessibilityOnboarding;

@@ -112,12 +112,19 @@
         "recommended": "recomendado",
         "bluetoothWarning": "Los audífonos Bluetooth (AirPods y similares) tardan 1 o 2 segundos en activarse, y se pueden perder las primeras palabras. Para que responda al instante, usa el micrófono del computador.",
         "title": "Acceso al Micrófono",
-        "description": "Necesario para escuchar tu voz para la transcripción."
+        "description": "Necesario para escuchar tu voz para la transcripción.",
+        "boton": "Permitir el micrófono",
+        "avisoMac": "Al tocar el botón, tu Mac te va a preguntar si permites el micrófono. Responde «Permitir».",
+        "avisoWindows": "Se abrirá la Configuración de Windows. Enciende el acceso al micrófono para aplicaciones de escritorio."
       },
       "accessibility": {
         "title": "Acceso de Accesibilidad",
-        "description": "Necesario para escribir el texto transcrito en tus aplicaciones."
+        "description": "Necesario para escribir el texto transcrito en tus aplicaciones.",
+        "boton": "Ya entendí, abrir Ajustes del Sistema"
       },
+      "step": "Paso {{actual}} de {{total}}",
+      "waitingMic": "Esperando tu respuesta…",
+      "waitingAcc": "Aquí seguimos. Enciende el interruptor y esta pantalla continúa sola.",
       "grant": "Conceder Permiso",
       "granted": "Concedido",
       "waiting": "Esperando...",
@@ -626,16 +633,16 @@
     "pasteFailedTitle": "Error al pegar el texto",
     "pasteFailed": "No se pudo pegar el texto en la aplicación activa.",
     "sinPermiso": {
-          "trial_endedTitulo": "Se acabaron tus días de prueba",
-          "trial_ended": "Activa tu suscripción en Mi cuenta para seguir dictando.",
-          "subscription_inactiveTitulo": "Tu suscripción no está activa",
-          "subscription_inactive": "Revisa tu pago en Mi cuenta para seguir dictando.",
-          "subscription_missingTitulo": "No encontramos tu suscripción",
-          "subscription_missing": "Escríbenos por WhatsApp desde Ayuda y lo revisamos.",
-          "quota_exceededTitulo": "Llegaste al límite de dictados de hoy",
-          "quota_exceeded": "Mañana vuelve a estar disponible.",
-          "no_accountTitulo": "Vuelve a entrar a tu cuenta",
-          "no_account": "Cierra sesión y entra de nuevo para seguir dictando."
+      "trial_endedTitulo": "Se acabaron tus días de prueba",
+      "trial_ended": "Activa tu suscripción en Mi cuenta para seguir dictando.",
+      "subscription_inactiveTitulo": "Tu suscripción no está activa",
+      "subscription_inactive": "Revisa tu pago en Mi cuenta para seguir dictando.",
+      "subscription_missingTitulo": "No encontramos tu suscripción",
+      "subscription_missing": "Escríbenos por WhatsApp desde Ayuda y lo revisamos.",
+      "quota_exceededTitulo": "Llegaste al límite de dictados de hoy",
+      "quota_exceeded": "Mañana vuelve a estar disponible.",
+      "no_accountTitulo": "Vuelve a entrar a tu cuenta",
+      "no_account": "Cierra sesión y entra de nuevo para seguir dictando."
     },
     "dictadoCopiadoTitle": "Tu texto quedó copiado",
     "dictadoCopiado": "Haz clic donde quieras escribir y pégalo.",

@@ -42,6 +42,15 @@ export const GuiaAccesibilidadMac: React.FC = () => (
       Si te pide la contraseña de tu Mac o tu huella, es normal: la pide el sistema, no nosotros.
       Cuando lo enciendas, vuelve aquí; esta pantalla sigue sola.
     </p>
+
+    {/* Le pasa a TODOS los que actualizan: el permiso de macOS va atado a la versión exacta del
+        programa, así que tras instalar una versión nueva el interruptor se ve encendido pero ya
+        no vale. Sin este aviso, el médico jura que ya lo dio y se queda trancado. Desaparece
+        cuando firmemos la app con Developer ID. */}
+    <p className="text-[13px] leading-snug text-brand-text-muted">
+      <strong className="text-brand-text">¿Ya aparece encendido?</strong> Apágalo y vuelve a
+      encenderlo. Al instalar una versión nueva, el permiso anterior deja de servir.
+    </p>
   </div>
 );
 
