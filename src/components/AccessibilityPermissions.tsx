@@ -5,6 +5,7 @@ import {
   checkAccessibilityPermission,
   requestAccessibilityPermission,
 } from "tauri-plugin-macos-permissions-api";
+import GuiaAccesibilidadMac from "./onboarding/GuiaAccesibilidadMac";
 
 // Define permission state type
 type PermissionState = "request" | "verify" | "granted";
@@ -85,7 +86,7 @@ const AccessibilityPermissions: React.FC = () => {
   const config = buttonConfig[permissionState] as ButtonConfig;
 
   return (
-    <div className="p-4 w-full rounded-lg border border-mid-gray">
+    <div className="p-4 w-full rounded-lg border border-mid-gray flex flex-col gap-3">
       <div className="flex justify-between items-center gap-2">
         <div className="">
           <p className="text-sm font-medium">
@@ -99,6 +100,9 @@ const AccessibilityPermissions: React.FC = () => {
           {config.text}
         </button>
       </div>
+      {/* Mismo apoyo visual que en el onboarding: cuando ya se abrió Ajustes del Sistema, el
+          médico está frente a una ventana llena de opciones sin saber qué tocar. */}
+      {permissionState === "verify" && <GuiaAccesibilidadMac />}
     </div>
   );
 };

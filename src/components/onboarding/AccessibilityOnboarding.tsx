@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { commands } from "@/bindings";
 import { useSettingsStore } from "@/stores/settingsStore";
 import Logo from "../icons/Logo";
+import GuiaAccesibilidadMac from "./GuiaAccesibilidadMac";
 import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
 
 interface AccessibilityOnboardingProps {
@@ -306,9 +307,9 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
 
   // Show permissions request screen
   return (
-    <div className="h-screen w-screen flex flex-col p-6 gap-6 items-center justify-center">
+    <div className="min-h-screen w-screen overflow-y-auto flex flex-col p-6 gap-5 items-center justify-center">
       <div className="flex flex-col items-center gap-2">
-        <Logo width={200} />
+        <Logo width={160} />
       </div>
 
       <div className="max-w-md w-full flex flex-col items-center gap-4">
@@ -393,6 +394,13 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
                   >
                     {t("onboarding.permissions.grant")}
                   </button>
+                )}
+                {/* La guía aparece cuando ya se abrió Ajustes del Sistema: ahí es cuando el médico
+                    está mirando una ventana llena de opciones sin saber qué tocar. */}
+                {permissions.accessibility === "waiting" && (
+                  <div className="mt-3">
+                    <GuiaAccesibilidadMac />
+                  </div>
                 )}
               </div>
             </div>

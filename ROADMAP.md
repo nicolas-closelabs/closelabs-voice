@@ -192,8 +192,8 @@ cambia la URL.
     tenerlos) y aprobar la publicación. `/terminos` y `/privacidad` siguen sin existir (abogado).
   - ⚠️ En Mac la instalación falla hasta firmar con Apple; el cliente decidió **no** mostrar parches
     en la página y lanzar cuando la instalación esté bien.
-- [ ] Probar **Ctrl + Espacio** en los programas de historia clínica que usan los médicos (Word y
-  Excel usan esa combinación para otras cosas).
+- [x] **Ctrl + Espacio probado en los programas de historia clínica — OK 2026-09-23** (Nicolás lo
+  probó, incluido gMedic): no choca con nada.
 - [ ] **Prueba con 2 médicos reales** de 50+ años: mandarles el link, no ayudarles, y mirar dónde se
   traban. Encuentra lo que ninguna revisión de código encuentra.
 
@@ -211,9 +211,12 @@ cambia la URL.
   ~100 ms y el dictado completo costó ~3 s más. Configuración restaurada al terminar.
 - [x] **Formatear: OpenRouter (servidor Groq)** — EN PRODUCCIÓN 2026-09-23. Resuelve el techo del
   plan gratis de Groq sin perder calidad ni velocidad (32/32, ~2 s, ~$0,00025/dictado).
-- [ ] **Transcribir: falta decidir.** Sigue en Groq gratis (~2.000 dictados/día entre TODOS). Antes
-  de producción hay que pasarlo a OpenAI (`gpt-4o-mini-transcribe`, ~$1,30/médico/mes); OpenRouter
-  NO ofrece transcripción de audio.
+- [x] **Transcribir: nos quedamos en Groq gratis, con OpenAI de primer respaldo** (decisión de
+  Nicolás, 2026-09-23). El plan gratis aguanta ~2.000 dictados/día entre TODOS; OpenAI ya está
+  configurado y entra solo si Groq falla. ⚠️ Se reabre cuando el volumen se acerque a ese techo:
+  mirar `usage_events` por día. OpenRouter NO ofrece transcripción de audio.
+  ⚠️ El respaldo se reordenó a **openai → deepinfra**: el Whisper de DeepInfra no acepta la pista
+  de vocabulario, así que cuando entraba se perdía el diccionario del médico.
 - [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
   ⚠️ 2026-09-22: DeepInfra con reasoning `low` INVIERTE autocorrecciones ("se remite a cardiología
   me equivoqué a neurología" → cardiología). Con `medium` acierta pero tarda ~4,5 s. Detalle en BACKLOG.
@@ -241,6 +244,10 @@ cambia la URL.
 > **No arranca hasta que gMedic acepte.** gMedic es un software de historias clínicas que vio Voice
 > y quiere ofrecerlo a sus médicos. Nada de esta fase se construye "por si acaso": el orden está
 > pensado para gastar lo mínimo hasta que el piloto demuestre uso real.
+>
+> ⚠️ **En este canal NO hay 30 días gratis** (decisión de Nicolás, 2026-09-23): quien quiere, paga.
+> La prueba gratis sigue existiendo solo en la venta directa. Implica marcar al médico que entra por
+> gMedic para que la suscripción arranque activa y sin periodo de prueba.
 >
 > **Modelo acordado en la propuesta:** público US$12/médico/mes en TODOS los canales (para no
 > competir contra la venta directa); gMedic paga US$8 (US$7 pasando 100 médicos activos) y se queda
