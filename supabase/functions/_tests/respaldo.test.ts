@@ -112,8 +112,35 @@ await caso("Groq COLGADO → DeepInfra dentro de los 30 s de la app", { groq: "c
 // Regresión del 2026-09-22: el techo de salida en 2.000 tokens truncaba TODO dictado de más de
 // ~73 s. Llegaba como HTTP 200 con el JSON a medias, se contaba como `empty_result` y se probaba
 // un respaldo que sirve el mismo modelo y trunca igual. El médico recibía texto sin puntuar.
-await caso("dictado que no cabe: truncado, NO prueba el respaldo", { groq: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F"]);
-await caso("truncado no se confunde con empty_result", { groq: "truncado", deepinfra: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F"]);
+//
+// Desde el 2026-09-23 el techo es adaptable: al trozo que se corta se le repite UNA vez con el
+// techo amplio (el razonamiento del modelo es muy variable), y solo si vuelve a cortarse se da
+// por perdido. Por eso son DOS llamadas al mismo proveedor, y ninguna al respaldo: cambiar de
+// proveedor no sirve, todos sirven el mismo modelo y truncarían igual.
+await caso("dictado que no cabe: se repite con techo amplio y NO prueba el respaldo", { groq: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F", "groq:F"]);
+await caso("truncado no se confunde con empty_result", { groq: "truncado", deepinfra: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F", "groq:F"]);
+
+// --- Corte del dictado largo (2026-09-23) ---------------------------------------------------
+{
+  const { partirDictado } = await import("../_shared/format.ts");
+  const corto = "Paciente de 45 años con dolor abdominal.";
+  console.log(
+    partirDictado(corto).length === 1
+      ? "✅ un dictado corto no se parte"
+      : "❌ un dictado corto NO debería partirse",
+  );
+
+  const frase = "Paciente con dolor torácico de dos días de evolución irradiado al brazo izquierdo. ";
+  const largo = frase.repeat(40); // ~3.300 caracteres
+  const trozos = partirDictado(largo);
+  const terminanEnPunto = trozos.slice(0, -1).every((t) => t.trim().endsWith("."));
+  const sinPerder = trozos.join(" ").replace(/\s+/g, " ").trim() === largo.replace(/\s+/g, " ").trim();
+  console.log(
+    trozos.length > 1 && terminanEnPunto && sinPerder
+      ? `✅ el dictado largo se parte en ${trozos.length} trozos, en finales de frase y sin perder texto`
+      : `❌ corte mal hecho: ${trozos.length} trozos, finales=${terminanEnPunto}, íntegro=${sinPerder}`,
+  );
+}
 
 console.log(fallas ? `\n❌ ${fallas} caso(s) fallaron` : "\n✅ todos los casos pasan");
 process.exit(fallas ? 1 : 0);
