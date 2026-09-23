@@ -20,7 +20,7 @@ const env: Record<string, string> = {
 };
 (globalThis as any).Deno = { env: { get: (k: string) => env[k] } };
 
-type Comportamiento = "ok" | "429" | "500" | "400" | "vacio" | "cuelga" | "400-siempre";
+type Comportamiento = "ok" | "429" | "500" | "400" | "vacio" | "cuelga" | "400-siempre" | "truncado";
 const conducta: Record<string, Comportamiento> = {};
 let llamadas: string[] = [];
 
@@ -54,7 +54,15 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   if (c === "500") return json({ error: "x" }, 500);
   if (c === "400" || c === "400-siempre") return json({ error: "x" }, 400);
   if (tipo === "T") return json({ text: c === "vacio" ? "" : `texto de ${prov}` });
-  return json({ choices: [{ message: { content: JSON.stringify({ transcription: `limpio por ${prov}` }) } }], usage: {} });
+  if (c === "truncado") {
+    // Lo que devuelve de verdad un modelo al topar max_tokens con json_schema: HTTP 200,
+    // finish_reason "length" y el JSON cortado a media cadena.
+    return json({
+      choices: [{ message: { content: '{"transcription":"Paciente de 58 anos con dolor torac' }, finish_reason: "length" }],
+      usage: { prompt_tokens: 1800, completion_tokens: 8000 },
+    });
+  }
+  return json({ choices: [{ message: { content: JSON.stringify({ transcription: `limpio por ${prov}` }) } }], finish_reason: "stop", usage: {} });
 }) as typeof fetch;
 
 const { transcribeAudio } = await import(`${FN}/transcribe.ts`);
@@ -99,7 +107,13 @@ console.log("— FORMATEO —");
 await caso("principal bien", {}, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "groq", ["groq:F"]);
 await caso("Groq 500 → DeepInfra", { groq: "500" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "deepinfra:F"]);
 await caso("Groq no cierra el JSON 2 veces → DeepInfra", { groq: "400-siempre" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "groq:F", "deepinfra:F"]);
-await caso("Groq COLGADO → DeepInfra dentro de los 15 s de la app", { groq: "cuelga" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "deepinfra:F"]);
+await caso("Groq COLGADO → DeepInfra dentro de los 30 s de la app", { groq: "cuelga" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "deepinfra:F"]);
+
+// Regresión del 2026-09-22: el techo de salida en 2.000 tokens truncaba TODO dictado de más de
+// ~73 s. Llegaba como HTTP 200 con el JSON a medias, se contaba como `empty_result` y se probaba
+// un respaldo que sirve el mismo modelo y trunca igual. El médico recibía texto sin puntuar.
+await caso("dictado que no cabe: truncado, NO prueba el respaldo", { groq: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F"]);
+await caso("truncado no se confunde con empty_result", { groq: "truncado", deepinfra: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F"]);
 
 console.log(fallas ? `\n❌ ${fallas} caso(s) fallaron` : "\n✅ todos los casos pasan");
 process.exit(fallas ? 1 : 0);

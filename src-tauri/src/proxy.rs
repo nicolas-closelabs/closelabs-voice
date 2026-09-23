@@ -25,8 +25,14 @@ use crate::settings::{get_settings, write_settings};
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 /// El alta solo ocurre una vez y es un JSON diminuto.
 const REGISTER_TIMEOUT: Duration = Duration::from_secs(10);
-/// Tope del formateo, igual que el del servidor: pasado esto se pega el texto crudo.
-const FORMAT_TIMEOUT: Duration = Duration::from_secs(15);
+/// Tope del formateo, igual que el del servidor (`PRESUPUESTO_MS` en `_shared/format.ts`): pasado
+/// esto se pega el texto crudo.
+///
+/// ⚠️ Subido de 15 s a 30 s el 2026-09-22. El formateo tarda en proporción al LARGO del dictado
+/// (~830 tokens por segundo medidos contra Groq), y con el techo de salida en 8.000 tokens un
+/// dictado de 5 minutos necesita ~9 s solo de generación, más el respaldo si el principal falla.
+/// Con 15 s la app cortaba por su cuenta un formateo que el servidor iba a entregar.
+const FORMAT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Tope de tiempo de una subida: base generosa más medio segundo por cada segundo de dictado,
 /// porque subir por el internet de una clínica es lento. Con tope, para que un dictado largo no

@@ -8,20 +8,50 @@ import { resolveRoutes, type Route } from "./routing.ts";
 import { logUsage, type ErrorCode } from "./usage.ts";
 
 /**
- * Tiempo total para formatear, contando el respaldo. La app le da 15 s a esta parte
+ * Tiempo total para formatear, contando el respaldo. La app le da 30 s a esta parte
  * (`FORMAT_TIMEOUT` en proxy.rs) y después pega el texto crudo; se deja margen para la respuesta.
+ *
+ * ⚠️ Subido de 12 s a 25 s el 2026-09-22 junto con `MAX_OUTPUT_TOKENS`: el tiempo de formateo lo
+ * manda el LARGO de la salida, no el proveedor. Medido contra Groq real: ~830 tokens por segundo,
+ * así que un dictado de 5 min (~7.500 tokens de salida) necesita ~9 s solo de generación. Con el
+ * presupuesto viejo el respaldo ni alcanzaba a intentarlo.
  */
-const PRESUPUESTO_MS = 12_000;
+const PRESUPUESTO_MS = 25_000;
 
 /**
- * Lo máximo que se le espera a un proveedor que NO es el último. Normalmente formatea en 1-2 s
- * (medido: DeepInfra 1,66 s, Groq 1,09 s), y el reintento sin esquema de Groq suma ~2,3 s.
+ * Lo máximo que se le espera a un proveedor que NO es el último. Un dictado corto se formatea en
+ * 1-2 s (medido: DeepInfra 1,66 s, Groq 1,09 s), pero uno largo tarda en proporción a su salida:
+ * el de 60 s medido en producción gastó 1.877 tokens y tardó 2,3 s. 12 s cubre el dictado más
+ * largo que cabe en `MAX_OUTPUT_TOKENS` sin dejar al respaldo sin turno.
  */
-const TOPE_INTENTO_MS = 7_000;
+const TOPE_INTENTO_MS = 12_000;
 const MINIMO_INTENTO_MS = 2_000;
 
-/** El formateador devuelve el mismo dictado: nunca necesita más que eso. */
-const MAX_OUTPUT_TOKENS = 2_000;
+/**
+ * Techo de tokens de salida.
+ *
+ * ⚠️ **Esto tumbaba TODOS los dictados de más de ~73 segundos.** Con el techo viejo de 2.000, el
+ * modelo se quedaba sin cupo a mitad de la respuesta, devolvía **HTTP 200** con
+ * `finish_reason: "length"` y el JSON cortado por la mitad; `JSON.parse` fallaba, el texto salía
+ * vacío y se reportaba como `empty_result`. Como es un 200, el reintento sin esquema tampoco
+ * saltaba (solo mira el 400), y el respaldo no servía de nada: los tres proveedores sirven el
+ * MISMO `gpt-oss-20b` y se truncaban en el mismo punto. El médico recibía texto sin puntuar justo
+ * en los dictados largos, que son los que más falta le hacen.
+ *
+ * El techo se calculó con los dictados reales del 2026-09-22 (regresión sobre 10 medidos):
+ *
+ *     tokens de salida ≈ 240 + 24,2 × segundos de audio
+ *
+ * — o sea 2.000 se agotan a los 73 s, y uno de 60 s medido gastó 1.877, el 94% del viejo techo.
+ * 8.000 cubre **5,3 minutos** de dictado seguido. No se pone más alto porque el techo también es
+ * la red de seguridad contra un modelo que se va en un bucle de razonamiento: pasado ese punto
+ * preferimos cortar y pegar el texto crudo COMPLETO. El límite del endpoint de Groq es 65.536,
+ * así que 8.000 entra de sobra.
+ *
+ * Costo: solo se paga lo generado. A $0,30 por millón de tokens de salida, subir el techo no
+ * cuesta nada por sí solo — un dictado de 1,5 min sale en $0,0019 contando transcripción.
+ */
+const MAX_OUTPUT_TOKENS = 8_000;
 
 const SCHEMA = {
   type: "object",
@@ -51,9 +81,9 @@ export async function formatText(
     return { ok: false, code: "provider_error", status: 503 };
   }
 
-  // Todo fallo aquí es del proveedor (la entrada ya se validó arriba), así que siempre vale la
-  // pena probar el siguiente. Si no queda ninguno, la app pega el texto crudo: peor que puntuado,
-  // pero el dictado no se pierde.
+  // Casi todo fallo aquí es del proveedor (la entrada ya se validó arriba), así que vale la pena
+  // probar el siguiente. La excepción es `truncated`, que se corta abajo. Si no queda ninguno, la
+  // app pega el texto crudo: peor que puntuado, pero el dictado no se pierde.
   const limite = Date.now() + PRESUPUESTO_MS;
   let ultimo: FormatResult = { ok: false, code: "provider_error", status: 502 };
   for (let n = 0; n < routes.length; n++) {
@@ -69,6 +99,13 @@ export async function formatText(
       return r;
     }
     ultimo = r;
+    // `truncated` no es un fallo del proveedor: es que el dictado no cabe en el techo de salida.
+    // Los del respaldo sirven el mismo modelo con el mismo techo, así que probarlos solo hace
+    // esperar al médico para truncar otras dos veces — medido: 12 s de espera para nada.
+    if (r.code === "truncated") {
+      console.error("el dictado excede MAX_OUTPUT_TOKENS; el respaldo truncaría igual");
+      return r;
+    }
     if (!esUltimo) {
       console.warn(`${routes[n].provider} falló (${r.code}) al formatear; se prueba el siguiente`);
     }
@@ -161,6 +198,25 @@ async function formatearCon(
   }
 
   const body = await res.json().catch(() => null);
+
+  // El modelo se quedó sin cupo de salida y lo que llegó está cortado a media frase. Se mira
+  // ANTES de interpretar nada, porque un JSON truncado no se puede parsear y acabaría contado
+  // como `empty_result` — que manda a probar proveedores que van a truncar exactamente igual.
+  //
+  // ⚠️ No se rescata el texto a medias, ni reintentando sin esquema estricto: esto es una
+  // historia clínica. Media nota que PARECE completa es peor que una nota sin puntuar — lo
+  // segundo el médico lo ve de inmediato, lo primero puede que no lo vea nunca. Al fallar, la
+  // app pega la transcripción cruda ENTERA, que es lo correcto.
+  if (String(body?.choices?.[0]?.finish_reason ?? "") === "length") {
+    console.error(`${route.provider} truncó la respuesta: el dictado no cabe en max_tokens`);
+    logUsage({
+      deviceId, kind: "format", provider: route.provider, model: route.model,
+      tokensIn: body?.usage?.prompt_tokens, tokensOut: body?.usage?.completion_tokens,
+      latencyMs: performance.now() - started, ok: false, errorCode: "truncated",
+    });
+    return { ok: false, code: "truncated", status: 502 };
+  }
+
   const content = String(body?.choices?.[0]?.message?.content ?? "");
   let cleaned: string;
   if (strict) {

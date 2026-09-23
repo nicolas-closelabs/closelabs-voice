@@ -29,6 +29,12 @@ export type ErrorCode =
   | "bad_request"
   | "auth"
   | "empty_result"
+  // El modelo se quedó sin cupo de salida a mitad de la respuesta (`finish_reason: "length"`).
+  // Tiene código propio, y no se mezcla con `empty_result`, por dos razones: es lo ÚNICO que no
+  // se arregla probando otro proveedor (todos sirven el mismo modelo y truncan igual), y es la
+  // señal que dice cuándo hay que subir `MAX_OUTPUT_TOKENS`. Si esto aparece en
+  // `errores_recientes`, es que hay médicos dictando más largo de lo que cabe en el techo.
+  | "truncated"
   | "quota_exceeded"
   // Estados de cuenta (Fase 2). La app los traduce a un mensaje; ninguno es culpa del médico
   // en el sentido de "hiciste algo mal", así que todos llevan explicación en la interfaz.

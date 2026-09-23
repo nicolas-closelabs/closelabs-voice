@@ -235,6 +235,14 @@ async fn post_process_transcription(
             warn!("Refine omitido ({code}); se pega la transcripción cruda");
             return None;
         }
+        // `truncated` = el dictado no cabe en el techo de salida del modelo. Reintentar da
+        // exactamente el mismo resultado, así que se pega el texto crudo COMPLETO de una vez en
+        // lugar de hacer esperar al médico. Si esto se ve seguido en `errores_recientes`, lo que
+        // toca es subir `MAX_OUTPUT_TOKENS` en el servidor, no reintentar aquí.
+        if code == "truncated" {
+            warn!("El dictado excede el techo del formateador; se pega la transcripción cruda");
+            return None;
+        }
         // El cupo agotado y el límite del proveedor tampoco se arreglan reintentando al instante.
         if code == "quota_exceeded" || code == "rate_limit" {
             warn!("Refine omitido ({code}); se pega la transcripción cruda");

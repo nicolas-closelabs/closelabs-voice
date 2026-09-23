@@ -6,6 +6,25 @@
 
 ## Estado actual (v0.8.3)
 
+> **SIN PUBLICAR — el techo de salida tumbaba todos los dictados largos.** `MAX_OUTPUT_TOKENS`
+> estaba en 2.000 y el modelo se quedaba sin cupo a mitad de la respuesta: devolvía **HTTP 200**
+> con `finish_reason: "length"` y el JSON cortado, `JSON.parse` fallaba y se reportaba como
+> `empty_result`. Al ser 200, el reintento sin esquema (que solo mira el 400) no saltaba, y el
+> respaldo tampoco servía: **los tres proveedores sirven el mismo `gpt-oss-20b` y truncan en el
+> mismo punto**. Resultado: el médico recibía texto crudo justo en los dictados largos.
+> Medido sobre 10 dictados reales del 2026-09-22: `salida ≈ 240 + 24,2 × segundos de audio`, o sea
+> **el techo se agotaba a los 73 s**; un dictado de 60 s gastó 1.877 tokens (94% del techo) y otro
+> de 84 s se cayó en los tres proveedores. Arreglo: techo a **8.000** (5,3 min de dictado),
+> código de error propio **`truncated`** que NO gasta la cadena de respaldo ni se reintenta en la
+> app, y presupuestos de tiempo al alza (`PRESUPUESTO_MS` 12→25 s, `TOPE_INTENTO_MS` 7→12 s,
+> `FORMAT_TIMEOUT` en `proxy.rs` 15→30 s) porque formatear tarda en proporción al largo de la
+> salida (~830 tokens/s medidos contra Groq).
+> ⚠️ **Nunca rescatar el texto truncado**: media historia clínica que PARECE completa es peor que
+> una nota sin puntuar. Al fallar se pega la transcripción cruda ENTERA.
+> ⚠️ **Más allá de 5,3 min no se arregla subiendo el techo**: 32.000 tokens serían ~38 s de espera
+> para el médico. Ese caso pide **partir el dictado en trozos**, no un techo más alto. Vigilar
+> `truncated` en `errores_recientes` para saber si hace falta.
+
 > **v0.8.3 — sin pagar no se dicta** (el respaldo local se activaba también con "no pagó": apagar
 > el wifi daba dictado gratis; ver `CODIGOS_SIN_PERMISO` en `proxy.rs`) y el ícono con las
 > proporciones de macOS. Preparación del canal gMedic: ver Fase 5 del ROADMAP.
