@@ -159,9 +159,21 @@ async fn try_cloud_dictation(
             warn!("Dictado en la nube vacío; fallback a Parakeet local");
             None
         }
+        Err(code) if crate::proxy::es_sin_permiso(&code) => {
+            // No es un fallo: el servidor dice que esta cuenta no puede dictar (no pagó, se acabó
+            // la prueba, se pasó del cupo). Caer al motor local aquí sería regalar el producto a
+            // quien dejó de pagar: basta con apagar el wifi. Se avisa y no se dicta.
+            warn!("Dictado denegado por la cuenta ({code}); no se usa el motor local");
+            let _ = app.emit("dictado-sin-permiso", code);
+            crate::show_main_window(app);
+            Some(crate::proxy::Dictation {
+                raw: String::new(),
+                formatted: None,
+            })
+        }
         Err(code) => {
-            // `code` es nuestro vocabulario cerrado ('rate_limit', 'quota_exceeded', 'timeout'…),
-            // nunca el mensaje del proveedor, que podría traer eco del dictado.
+            // `code` es nuestro vocabulario cerrado ('rate_limit', 'timeout'…), nunca el mensaje
+            // del proveedor, que podría traer eco del dictado.
             warn!("Dictado en la nube falló ({code}); fallback a Parakeet local");
             None
         }

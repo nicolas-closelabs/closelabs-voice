@@ -628,6 +628,18 @@
     "modelLoadFailedUnknown": "unknown model",
     "pasteFailedTitle": "Failed to Paste Text",
     "pasteFailed": "Text could not be pasted into the active application.",
+    "sinPermiso": {
+          "trial_endedTitulo": "Your trial has ended",
+          "trial_ended": "Activate your subscription in My account to keep dictating.",
+          "subscription_inactiveTitulo": "Your subscription is not active",
+          "subscription_inactive": "Check your payment in My account to keep dictating.",
+          "subscription_missingTitulo": "We couldn't find your subscription",
+          "subscription_missing": "Message us on WhatsApp from Help and we'll look into it.",
+          "quota_exceededTitulo": "You've reached today's dictation limit",
+          "quota_exceeded": "It will be available again tomorrow.",
+          "no_accountTitulo": "Sign in again",
+          "no_account": "Sign out and sign back in to keep dictating."
+    },
     "dictadoCopiadoTitle": "Your text was copied",
     "dictadoCopiado": "Click where you want to write and paste it.",
     "pasteNeedsManualTitle": "Permission needed to paste",

@@ -90,6 +90,26 @@ async fn error_code(res: reqwest::Response) -> String {
     }
 }
 
+/// Códigos con los que el servidor dice "esta cuenta NO puede dictar" (no pagó, se acabó la
+/// prueba, se pasó del cupo, el equipo está revocado).
+///
+/// ⚠️ Son distintos de un fallo técnico, y el trato tiene que ser distinto: ante un fallo técnico
+/// (sin internet, proveedor caído) se cae al motor LOCAL, porque dejar al médico sin dictar en
+/// plena consulta es peor. Pero con estos códigos ese respaldo se vuelve un agujero: quien deja
+/// de pagar seguiría dictando gratis para siempre, con solo apagar el wifi. Aquí se corta.
+pub const CODIGOS_SIN_PERMISO: [&str; 6] = [
+    "unauthorized",
+    "no_account",
+    "subscription_missing",
+    "trial_ended",
+    "subscription_inactive",
+    "quota_exceeded",
+];
+
+pub fn es_sin_permiso(code: &str) -> bool {
+    CODIGOS_SIN_PERMISO.contains(&code)
+}
+
 /// Token de esta instalación. La primera vez lo pide al servidor y lo guarda en los ajustes.
 ///
 /// Devuelve `None` si no se pudo registrar (sin internet, servidor caído): el llamador cae al

@@ -426,6 +426,29 @@ function App() {
     }
   }, [onboardingStep, correo]);
 
+  // El servidor dice que esta cuenta no puede dictar (no pagó, se acabó la prueba, cupo del día).
+  // Se explica con palabras y se lleva a Mi cuenta, que es donde puede resolverlo.
+  useEffect(() => {
+    const unlisten = listen<string>("dictado-sin-permiso", (e) => {
+      const motivo = e.payload;
+      const clave =
+        motivo === "trial_ended" ||
+        motivo === "subscription_inactive" ||
+        motivo === "subscription_missing" ||
+        motivo === "quota_exceeded"
+          ? motivo
+          : "no_account";
+      toast.error(t(`errors.sinPermiso.${clave}Titulo`), {
+        description: t(`errors.sinPermiso.${clave}`),
+        duration: 12000,
+      });
+      setCurrentSection("account");
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
   // Cerrar sesión (o dictar sin sesión) devuelve a la pantalla de entrar. Antes había que
   // reiniciar la app: quedaba entera y dictando aunque dijera que la sesión estaba cerrada.
   useEffect(() => {
