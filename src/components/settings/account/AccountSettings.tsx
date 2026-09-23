@@ -133,7 +133,7 @@ export const AccountSettings: React.FC = () => {
       <div className="max-w-2xl w-full mx-auto flex flex-col gap-4 py-4">
         <h1 className="font-heading font-bold text-2xl">Mi cuenta</h1>
         <p className="text-brand-text-secondary">
-          No has iniciado sesión. Cierra y vuelve a abrir CloseLabs Voice para entrar.
+          No has iniciado sesión.
         </p>
       </div>
     );

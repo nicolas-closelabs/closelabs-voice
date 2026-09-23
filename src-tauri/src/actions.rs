@@ -449,9 +449,24 @@ fn blocked_by_server(app: &AppHandle) -> bool {
     }
 }
 
+/// Sin sesión no se dicta.
+///
+/// ⚠️ El dictado se autoriza con el token del EQUIPO, no con la sesión: al cerrar sesión, el
+/// atajo seguía funcionando y los dictados se le cargaban igual a la cuenta. Aquí se corta en la
+/// app y se avisa a la interfaz, que lleva a la pantalla de entrar.
+fn sin_sesion(app: &AppHandle) -> bool {
+    if crate::auth::hay_sesion(app) {
+        return false;
+    }
+    warn!("Dictado detenido: no hay sesión abierta");
+    crate::show_main_window(app);
+    let _ = app.emit("sesion-cerrada", ());
+    true
+}
+
 impl ShortcutAction for TranscribeAction {
     fn start(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
-        if blocked_by_server(app) {
+        if blocked_by_server(app) || sin_sesion(app) {
             return;
         }
         let start_time = Instant::now();

@@ -36,7 +36,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::settings::get_settings;
 
@@ -395,7 +395,27 @@ pub async fn auth_sign_in(
 }
 
 /// Vincula el dispositivo actual a la sesión abierta.
+///
+/// ⚠️ Un mismo computador puede pasar por varias cuentas: el médico se equivocó al registrarse, o
+/// dos médicos comparten el computador del consultorio. El token de instalación pertenece a la
+/// PRIMERA cuenta que lo vinculó, y el servidor no se lo quita a nadie en silencio
+/// (`de_otra_cuenta` en `link_device`). Antes eso dejaba a la cuenta nueva con "0 de 3 equipos"
+/// aunque estuviera usando la app, y peor: los dictados se le cobraban a la cuenta vieja, que es
+/// la dueña del token. Por eso, cuando el equipo es de otra cuenta, esta instalación se registra
+/// DE NUEVO (token nuevo, fila nueva) y se vincula con él. La cuenta anterior conserva el suyo.
 async fn vincular_este_equipo(app: &AppHandle) -> Result<(), String> {
+    match intentar_vincular(app).await {
+        Err(e) if e == "de_otra_cuenta" => {
+            warn!("Este equipo era de otra cuenta: se registra de nuevo para la actual");
+            crate::proxy::olvidar_device_token(app);
+            intentar_vincular(app).await
+        }
+        otro => otro,
+    }
+}
+
+/// Un intento de vincular. El motivo que devuelve el servidor viaja tal cual en el error.
+async fn intentar_vincular(app: &AppHandle) -> Result<(), String> {
     let token_dispositivo = crate::proxy::ensure_device_token(app)
         .await
         .ok_or_else(|| "sin_token_de_dispositivo".to_string())?;
@@ -417,10 +437,24 @@ async fn vincular_este_equipo(app: &AppHandle) -> Result<(), String> {
         .await
         .map_err(|_| "sin_conexion".to_string())?;
 
-    // 409 = tope de equipos alcanzado. No es un fallo del programa: la interfaz lo muestra y el
-    // médico suelta uno.
+    // 409 = el servidor no pudo vincular y dice por qué: el tope de equipos de esta cuenta
+    // (la interfaz lo muestra y el médico suelta uno) o que el equipo es de otra cuenta.
     if res.status() == reqwest::StatusCode::CONFLICT {
-        return Err("tope_alcanzado".to_string());
+        #[derive(Deserialize)]
+        struct Rechazo {
+            #[serde(default)]
+            motivo: String,
+        }
+        let motivo = res
+            .json::<Rechazo>()
+            .await
+            .map(|r| r.motivo)
+            .unwrap_or_default();
+        return Err(if motivo.is_empty() {
+            "tope_alcanzado".to_string()
+        } else {
+            motivo
+        });
     }
     if !res.status().is_success() {
         return Err(format!("http_{}", res.status().as_u16()));
@@ -555,6 +589,12 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
     })
 }
 
+/// Si hay una sesión guardada en este equipo. No dice si el token sigue vigente: para eso está
+/// `account_state`. Sirve para lo que se decide sin internet, como dejar dictar o no.
+pub fn hay_sesion(app: &AppHandle) -> bool {
+    leer_sesion(app).is_some()
+}
+
 /// Suelta un equipo para hacerle sitio a otro. El servidor comprueba que sea de quien lo pide.
 #[tauri::command]
 #[specta::specta]
@@ -617,6 +657,9 @@ pub async fn auth_sign_out(app: AppHandle) -> Result<(), String> {
     }
     borrar_sesion(&app);
     info!("Sesión cerrada");
+    // La interfaz vuelve a la pantalla de entrar. Sin esto, cerrar sesión solo cambiaba el panel
+    // de cuenta y la app seguía entera y dictando hasta reiniciarla.
+    let _ = app.emit("sesion-cerrada", ());
     Ok(())
 }
 

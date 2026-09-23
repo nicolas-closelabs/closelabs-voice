@@ -32,20 +32,31 @@ import Logo from "../icons/Logo";
 /** Evento para abrir el tutorial desde cualquier pantalla (el botón de Inicio). */
 export const ABRIR_PRIMER_DICTADO = "clv:abrir-primer-dictado";
 
-const CLAVE_HECHO = "closelabs.primerDictado";
+/**
+ * ⚠️ La marca va POR CUENTA, no por computador. Con una sola marca global, quien creaba una
+ * segunda cuenta en el mismo equipo (el médico que se equivocó al registrarse, o dos médicos que
+ * comparten el computador del consultorio) nunca veía el tutorial. Tampoco se hereda la marca
+ * vieja: no hay forma de saber de qué cuenta era, y se la quedaba la primera que preguntara —
+ * justo la cuenta nueva que sí necesitaba el tutorial. Quien ya lo hizo lo verá una vez más y
+ * puede saltarlo.
+ */
+// `v2`: la 0.8.1 intentó heredar la marca vieja del computador y se la quedó la cuenta
+// equivocada. Cambiar el prefijo deja a todos con la marca limpia, una sola vez.
+const clave = (cuenta: string) =>
+  `closelabs.primerDictado.v2.${cuenta.trim().toLowerCase()}`;
 
-export function primerDictadoHecho(): boolean {
+export function primerDictadoHecho(cuenta: string): boolean {
   try {
-    return localStorage.getItem(CLAVE_HECHO) === "hecho";
+    return localStorage.getItem(clave(cuenta)) === "hecho";
   } catch {
     // Sin almacenamiento no se sabe: mejor no volver a mostrarlo en cada arranque.
     return true;
   }
 }
 
-function marcarHecho() {
+function marcarHecho(cuenta: string) {
   try {
-    localStorage.setItem(CLAVE_HECHO, "hecho");
+    localStorage.setItem(clave(cuenta), "hecho");
   } catch {
     /* sin almacenamiento, no pasa nada: solo se volvería a ofrecer */
   }
@@ -107,7 +118,10 @@ const Teclas: React.FC<{ keys: string[]; grande?: boolean }> = ({ keys, grande }
   </span>
 );
 
-export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = ({
+  cuenta,
+  onDone,
+}) => {
   const { keys, os } = useShortcutKeys();
   const [texto, setTexto] = useState("");
   const [fase, setFase] = useState<Fase>("esperando");
@@ -118,7 +132,7 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   faseRef.current = fase;
 
   const terminar = () => {
-    marcarHecho();
+    marcarHecho(cuenta);
     onDone();
   };
 
@@ -212,10 +226,10 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const instruccion =
     fase === "grabando" ? (
       <>
-        <span className="grid place-items-center w-16 h-16 rounded-full bg-brand-accent text-white">
-          <Mic className="w-8 h-8 animate-pulse" />
+        <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent text-white">
+          <Mic className="w-7 h-7 animate-pulse" />
         </span>
-        <p className="font-heading text-2xl font-bold">Te escucho…</p>
+        <p className="font-heading text-xl font-bold">Te escucho…</p>
         <p className="text-[18px] text-brand-text-secondary">
           Cuando termines, presiona otra vez
         </p>
@@ -223,15 +237,15 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
       </>
     ) : fase === "procesando" ? (
       <>
-        <Loader2 className="w-12 h-12 animate-spin text-brand-accent" />
-        <p className="font-heading text-2xl font-bold">Escribiendo…</p>
+        <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
+        <p className="font-heading text-xl font-bold">Escribiendo…</p>
       </>
     ) : fase === "listo" ? (
       <>
-        <span className="grid place-items-center w-16 h-16 rounded-full bg-green-500 text-white">
-          <Check className="w-9 h-9" strokeWidth={3} />
+        <span className="grid place-items-center w-14 h-14 rounded-full bg-green-500 text-white">
+          <Check className="w-8 h-8" strokeWidth={3} />
         </span>
-        <p className="font-heading text-2xl font-bold">¡Listo! Así de fácil</p>
+        <p className="font-heading text-xl font-bold">¡Listo! Así de fácil</p>
         <p className="text-[18px] text-brand-text-secondary max-w-md">
           Hazlo igual en tu historia clínica o donde escribas: haz clic ahí y presiona{" "}
           <Teclas keys={keys} />
@@ -251,15 +265,17 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   if (etapa === "diccionario") return <PasoDiccionario onDone={terminar} />;
 
   return (
-    <div className="h-screen overflow-y-auto flex justify-center px-8 py-10 select-none">
-      <div className="w-full max-w-xl flex flex-col gap-8">
-        <div className="flex flex-col items-center gap-3">
-          <Logo width={130} />
-          <h1 className="font-heading text-[28px] font-bold">Probemos tu voz</h1>
+    // min-h-screen (no h-screen) y `shrink-0` en cada bloque: con la ventana en su tamaño
+    // mínimo (680x570) el flex aplastaba el cuadro de texto hasta dejarlo en una raya.
+    <div className="min-h-screen flex justify-center px-8 py-7 select-none">
+      <div className="w-full max-w-xl flex flex-col gap-5">
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          <Logo width={110} />
+          <h1 className="font-heading text-2xl font-bold">Probemos tu voz</h1>
         </div>
 
         <div
-          className="flex flex-col items-center text-center gap-4 min-h-[220px] justify-center"
+          className="flex flex-col items-center text-center gap-3 shrink-0"
           aria-live="polite"
         >
           {instruccion}
@@ -275,8 +291,8 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           placeholder="Aquí aparecerá lo que digas"
-          rows={3}
-          className={`w-full rounded-2xl border-2 bg-white px-4 py-3 text-[18px] leading-relaxed resize-none focus:outline-none transition-colors select-text ${
+          rows={2}
+          className={`w-full shrink-0 min-h-[5.5rem] rounded-2xl border-2 bg-white px-4 py-3 text-[17px] leading-relaxed resize-none focus:outline-none transition-colors select-text ${
             fase === "listo" ? "border-green-500" : "border-brand-border"
           }`}
         />
@@ -309,7 +325,7 @@ export const PrimerDictado: React.FC<{ onDone: () => void }> = ({ onDone }) => {
             <button
               type="button"
               onClick={() => setEtapa("diccionario")}
-              className="w-full px-4 py-4 rounded-xl text-[18px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
+              className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
             >
               Siguiente
             </button>
@@ -369,21 +385,21 @@ const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   };
 
   return (
-    <div className="h-screen overflow-y-auto flex justify-center px-8 py-10 select-none">
-      <div className="w-full max-w-xl flex flex-col gap-8">
-        <div className="flex flex-col items-center text-center gap-3">
-          <Logo width={130} />
-          <span className="grid place-items-center w-16 h-16 mt-2 rounded-full bg-brand-accent-soft text-brand-accent">
-            <BookOpen className="w-8 h-8" />
+    <div className="min-h-screen flex justify-center px-8 py-7 select-none">
+      <div className="w-full max-w-xl flex flex-col gap-5">
+        <div className="flex flex-col items-center text-center gap-2 shrink-0">
+          <Logo width={110} />
+          <span className="grid place-items-center w-14 h-14 mt-1 rounded-full bg-brand-accent-soft text-brand-accent">
+            <BookOpen className="w-7 h-7" />
           </span>
-          <h1 className="font-heading text-[28px] font-bold">Enséñale tus palabras</h1>
-          <p className="text-[18px] leading-relaxed text-brand-text-secondary max-w-md">
+          <h1 className="font-heading text-2xl font-bold">Enséñale tus palabras</h1>
+          <p className="text-[17px] leading-relaxed text-brand-text-secondary max-w-md">
             Si escribe mal un medicamento, un nombre o una palabra que usas mucho, agrégala aquí y
             la escribirá bien siempre.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 shrink-0">
           <div className="flex gap-2">
             <input
               id="primer-dictado-palabra"
@@ -398,7 +414,7 @@ const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
                 }
               }}
               placeholder="Ej.: Losartán"
-              className="flex-1 min-w-0 rounded-xl border-2 border-brand-border bg-white px-4 py-3 text-[18px] focus:outline-none focus:border-brand-accent select-text"
+              className="flex-1 min-w-0 rounded-xl border-2 border-brand-border bg-white px-4 py-3 text-[17px] focus:outline-none focus:border-brand-accent select-text"
             />
             <button
               type="button"
@@ -444,7 +460,7 @@ const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
         <button
           type="button"
           onClick={onDone}
-          className="w-full px-4 py-4 rounded-xl text-[18px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
+          className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
         >
           Empezar a usar CloseLabs Voice
         </button>

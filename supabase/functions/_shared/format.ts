@@ -108,6 +108,8 @@ async function formatearCon(
     // Solo si el proveedor lo aprovecha: en DeepInfra 'low' acierta igual y tarda la mitad; en
     // Groq empeora los 400, por eso allá la columna va nula.
     if (route.reasoningEffort) payload.reasoning_effort = route.reasoningEffort;
+    // Lo que el proveedor necesite además del estándar de OpenAI (OpenRouter: qué servidor usar).
+    if (route.extraBody) Object.assign(payload, route.extraBody);
     return payload;
   }
 

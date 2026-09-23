@@ -62,8 +62,10 @@ function App() {
   } | null>(null);
   // Sesión. `null` mientras se averigua; después, si hay cuenta o no.
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  // "Tu primer dictado". Se abre solo una vez, al terminar el onboarding de un usuario NUEVO
-  // (quien ya usaba la app no lo ve al actualizar), y desde el botón de Inicio cuando se quiera.
+  // Correo de la cuenta abierta: el tutorial se marca como hecho POR CUENTA, no por computador.
+  const [correo, setCorreo] = useState<string | null>(null);
+  // "Tu primer dictado". Se abre una sola vez por CUENTA, al entrar, y desde el botón de Inicio
+  // cuando se quiera. Quien ya lo hizo antes de la 0.8.1 conserva su marca (ver PrimerDictado).
   const [primerDictado, setPrimerDictado] = useState(false);
 
 
@@ -194,6 +196,7 @@ function App() {
       // ⚠️ `signed_in` es true cuando hay sesión GUARDADA, aunque ahora mismo no haya internet
       // (ver `account_state` en auth.rs). Por eso esto no expulsa a nadie por un corte de red.
       setSignedIn(estado.status === "ok" ? estado.data.signed_in : false);
+      setCorreo(estado.status === "ok" ? (estado.data.email ?? null) : null);
     } catch (e) {
       console.warn("No se pudo leer el estado de la cuenta:", e);
       setSignedIn(false);
@@ -415,10 +418,25 @@ function App() {
   };
 
   useEffect(() => {
-    if (onboardingStep === "done" && !isReturningUser && !primerDictadoHecho()) {
+    // ⚠️ Sin `isReturningUser`: se calcula con los ajustes del COMPUTADOR (¿ya hizo el
+    // onboarding?), así que una cuenta nueva en un equipo ya usado contaba como veterana y nunca
+    // veía el tutorial. Manda la marca por cuenta, que es lo que de verdad se quiere saber.
+    if (onboardingStep === "done" && correo && !primerDictadoHecho(correo)) {
       setPrimerDictado(true);
     }
-  }, [onboardingStep, isReturningUser]);
+  }, [onboardingStep, correo]);
+
+  // Cerrar sesión (o dictar sin sesión) devuelve a la pantalla de entrar. Antes había que
+  // reiniciar la app: quedaba entera y dictando aunque dijera que la sesión estaba cerrada.
+  useEffect(() => {
+    const unlisten = listen("sesion-cerrada", () => {
+      setPrimerDictado(false);
+      void refreshAuth();
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   useEffect(() => {
     const abrir = () => setPrimerDictado(true);
@@ -459,6 +477,7 @@ function App() {
   if (primerDictado) {
     return (
       <PrimerDictado
+        cuenta={correo ?? ""}
         onDone={() => {
           // Los avisos que hayan saltado durante la práctica (un pegado fallido, por ejemplo)
           // ya los explicó el tutorial: que no aparezcan de golpe al volver a Inicio.

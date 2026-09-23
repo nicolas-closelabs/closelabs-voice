@@ -134,6 +134,15 @@ pub async fn ensure_device_token(app: &AppHandle) -> Option<String> {
     Some(token)
 }
 
+/// Olvida el token de esta instalación para que la próxima llamada registre uno nuevo.
+///
+/// Se usa cuando el equipo quedó vinculado a otra cuenta (ver `vincular_este_equipo` en auth.rs).
+pub fn olvidar_device_token(app: &AppHandle) {
+    let mut updated = get_settings(app);
+    updated.device_token.set(None);
+    write_settings(app, updated);
+}
+
 /// Transcribe y limpia en UNA sola llamada.
 ///
 /// Medido el 2026-09-19: hacerlo en dos llamadas costaba **1,84 s más** por dictado. No era solo

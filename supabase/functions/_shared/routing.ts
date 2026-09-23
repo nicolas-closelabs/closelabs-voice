@@ -16,6 +16,7 @@ export interface Route {
   model: string;
   /** Solo para formatear: 'low' | 'medium' | 'high'. Ver nota en la migración. */
   reasoningEffort: string | null;
+  extraBody: Record<string, unknown> | null;
   /**
    * Solo para transcribir. ⚠️ Medido el 2026-09-19: el Whisper turbo de DeepInfra DEVUELVE LA
    * TRANSCRIPCIÓN VACÍA cuando la pista de vocabulario pasa de ~150 caracteres, y con pistas
@@ -69,6 +70,8 @@ interface ProviderRow {
   format_reasoning_effort: string | null;
   supports_transcribe_prompt: boolean;
   enabled: boolean;
+  /** Campos extra del cuerpo. Hoy solo OpenRouter: elige qué servidor sirve el modelo. */
+  extra_body: Record<string, unknown> | null;
 }
 
 async function routingConfig(): Promise<RoutingConfig> {
@@ -87,7 +90,7 @@ async function routingConfig(): Promise<RoutingConfig> {
     ),
     select<ProviderRow>(
       "providers",
-      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,supports_transcribe_prompt,enabled",
+      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,supports_transcribe_prompt,enabled,extra_body",
     ),
   ]);
   const row = cfgRows[0];
@@ -127,6 +130,7 @@ function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
     apiKey,
     model,
     reasoningEffort: p.format_reasoning_effort,
+    extraBody: p.extra_body ?? null,
     supportsTranscribePrompt: p.supports_transcribe_prompt,
     dailyQuota: cfg.dailyQuota,
   };
