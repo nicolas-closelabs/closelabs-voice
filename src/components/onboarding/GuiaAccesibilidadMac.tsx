@@ -19,7 +19,13 @@ const PASOS = [
   "Toca el interruptor para encenderlo.",
 ];
 
-export const GuiaAccesibilidadMac: React.FC = () => (
+/**
+ * `actualizando`: solo quien YA usaba la app necesita el aviso de apagar y volver a encender. A un
+ * médico nuevo no le dice nada y le mete ruido justo donde menos sobra.
+ */
+export const GuiaAccesibilidadMac: React.FC<{ actualizando?: boolean }> = ({
+  actualizando = false,
+}) => (
   <div className="w-full rounded-2xl border border-brand-border bg-brand-surface p-4 flex flex-col gap-3">
     <p className="text-[15px] font-semibold text-brand-text">
       Así se ve en tu Mac:
@@ -43,14 +49,17 @@ export const GuiaAccesibilidadMac: React.FC = () => (
       Cuando lo enciendas, vuelve aquí; esta pantalla sigue sola.
     </p>
 
-    {/* Le pasa a TODOS los que actualizan: el permiso de macOS va atado a la versión exacta del
-        programa, así que tras instalar una versión nueva el interruptor se ve encendido pero ya
-        no vale. Sin este aviso, el médico jura que ya lo dio y se queda trancado. Desaparece
-        cuando firmemos la app con Developer ID. */}
-    <p className="text-[13px] leading-snug text-brand-text-muted">
-      <strong className="text-brand-text">¿Ya aparece encendido?</strong> Apágalo y vuelve a
-      encenderlo. Al instalar una versión nueva, el permiso anterior deja de servir.
-    </p>
+    {/* El permiso de macOS va atado a la versión exacta del programa: tras actualizar, el
+        interruptor se ve encendido pero ya no vale. Sin el aviso, el médico jura que ya lo dio y
+        se queda trancado. ⚠️ Solo se le muestra a quien ya usaba la app: al recién llegado le
+        sobra. ⚠️ AL FIRMAR CON DEVELOPER ID ESTO SE BORRA: el permiso sobrevivirá a las
+        actualizaciones y el aviso pasará a ser mentira. */}
+    {actualizando && (
+      <p className="text-[13px] leading-snug text-brand-text-muted">
+        <strong className="text-brand-text">¿Ya aparece encendido?</strong> Apágalo y vuelve a
+        encenderlo. Al instalar una versión nueva, el permiso anterior deja de servir.
+      </p>
+    )}
   </div>
 );
 

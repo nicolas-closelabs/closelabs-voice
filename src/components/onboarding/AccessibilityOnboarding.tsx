@@ -16,6 +16,9 @@ import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
 
 interface AccessibilityOnboardingProps {
   onComplete: () => void;
+  /** Ya usaba la app (viene de una versión anterior): solo a esa persona le sirve el aviso de
+      apagar y encender el interruptor. */
+  actualizando?: boolean;
 }
 
 type PermissionStatus = "checking" | "needed" | "waiting" | "granted";
@@ -28,6 +31,7 @@ interface PermissionsState {
 
 const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   onComplete,
+  actualizando = false,
 }) => {
   const { t } = useTranslation();
   const refreshAudioDevices = useSettingsStore(
@@ -354,7 +358,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
             titulo={t("onboarding.permissions.accessibility.title")}
             descripcion={t("onboarding.permissions.accessibility.description")}
           >
-            <GuiaAccesibilidadMac />
+            <GuiaAccesibilidadMac actualizando={actualizando} />
             {permissions.accessibility === "waiting" ? (
               <Esperando texto={t("onboarding.permissions.waitingAcc")} />
             ) : (
