@@ -70,3 +70,45 @@ Para capturar un crudo de verdad:
 3. Restaurar `app_config` (⚠️ no olvidarlo: mientras tanto NADIE recibe texto limpio).
 
 Nunca se usan dictados de pacientes reales: los casos son inventados, aunque hablen como un médico.
+
+## Prueba ácida: gpt-4o-mini contra gpt-6-luna (PENDIENTE — después de grabar el guion)
+
+**Por qué:** en el único defecto abierto (el dictado de 6 min que deja las dos dosis de una
+corrección), luna salió limpio 21 de 21 y gpt-4o-mini falló 2 de 21. Puede ser suerte (~11%).
+Luna es 6% más barato y tarda el doble; solo vale la pena si de verdad cambia menos contenido.
+Detalle en `BACKLOG.md` (2026-09-24, gpt-6-luna).
+
+**Cuándo:** después de grabar `GUION-GRABACIONES.md` y convertir los crudos en casos, para que la
+prueba cubra las ocho especialidades y no solo los 9 casos de hoy.
+
+**Regla de decisión — fijada el 2026-09-24, ANTES de ver los números. No se cambia después.**
+
+Se mira `CONTENIDO: X de N respuestas cambiaron o perdieron contenido`, que cuenta cualquier
+número perdido o de más, término perdido, retractación que sobrevive, texto que no llega al final o
+salida resumida. Las muletillas y la mayúscula inicial NO cuentan: son forma, no contenido.
+
+Luna reemplaza a gpt-4o-mini **solo si se cumplen las tres**:
+1. **Menos fallos de contenido**: en el total del banco (10 repeticiones) más `largo-6min` (30),
+   luna tiene **al menos 3 fallos menos** que gpt-4o-mini.
+2. **No empeora nada**: ninguna comprobación de contenido que gpt-4o-mini saque perfecta sale
+   imperfecta con luna.
+3. **Tiempo aceptable**: mediana del dictado de 6 min por debajo de 10 s, y la peor respuesta de
+   todo el banco por debajo de 20 s (la app pega el texto crudo a los 30 s).
+
+Si falta cualquiera, o empatan: **se queda gpt-4o-mini** (más rápido) y el defecto de la dosis se
+ataca por otro lado —prompt o troceado— medido con este mismo banco.
+
+**Pasos:**
+1. Con gpt-4o-mini de principal (como está):
+   ```bash
+   bun pruebas-dictado/correr.ts --proveedor openai --repeticiones 10 --etiqueta acida-4o-mini
+   bun pruebas-dictado/correr.ts --proveedor openai --caso largo-6min --repeticiones 30 --etiqueta acida-4o-mini-6min
+   ```
+2. Migración que habilite `openai-luna` y la ponga de principal (con `openai` de primer respaldo),
+   `db push`, esperar un minuto (caché del ruteo), y lo mismo con `--proveedor openai-luna`.
+3. Migración con el ganador, `db push`, y el resultado en `BACKLOG.md`.
+4. Ese mismo día, en el panel de uso de OpenAI: tokens de entrada CACHEADOS de cada modelo. La
+   caché de luna cuesta $0,01 contra $0,075 por millón y nuestro prompt es ~86% del costo;
+   `usage_events` no lo guarda. Cambia el costo, no la decisión: la regla de arriba es de calidad.
+
+Costo de la prueba completa: menos de un dólar. Tiempo: ~30 minutos por modelo.

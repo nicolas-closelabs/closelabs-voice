@@ -34,6 +34,13 @@ interface Caso {
   comprobaciones: Comprobacion[];
 }
 
+/**
+ * Lo que NO es contenido: un dictado con muletillas o sin mayúscula inicial es feo, no peligroso.
+ * Todo lo demás (números, términos, retractaciones, que llegue al final, que no se resuma) es
+ * contenido clínico, y es lo que cuenta `fallosContenido`.
+ */
+const SOLO_FORMA = new Set(["sin_muletillas", "formato_basico"]);
+
 const numeros = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
 
 function evaluar(c: Comprobacion, entrada: string, salida: string): { ok: boolean; detalle: string } {
@@ -145,6 +152,9 @@ console.log(`Banco de dictado · ${casos.length} caso(s) × ${repeticiones} · e
 const resumen: any = { etiqueta, fecha: new Date().toISOString(), casos: {} };
 let totalOk = 0;
 let totalRespaldo = 0;
+/** Respuestas con al menos una comprobación de contenido fallida, sumadas en todo el banco. */
+let fallosContenido = 0;
+let respuestasMedidas = 0;
 let total = 0;
 const latencias: number[] = [];
 
@@ -168,12 +178,16 @@ for (const caso of casos) {
       continue;
     }
     ms.push(r.ms);
+    respuestasMedidas++;
+    let contenidoOk = true;
     for (const c of caso.comprobaciones) {
       const clave = c.tipo === "contiene" || c.tipo === "no_contiene" ? `${c.tipo}:${c.valor}` : c.tipo;
       const { ok, detalle } = evaluar(c, caso.texto, r.texto);
       conteo.set(clave, (conteo.get(clave) ?? 0) + (ok ? 1 : 0));
       if (!ok && detalle) detalles.set(clave, detalle);
+      if (!ok && !SOLO_FORMA.has(c.tipo)) contenidoOk = false;
     }
+    if (!contenidoOk) fallosContenido++;
   }
 
   const mediana = ms.length ? ms.sort((a, b) => a - b)[Math.floor(ms.length / 2)] : 0;
@@ -206,8 +220,14 @@ for (const caso of casos) {
 const medianaGlobal = latencias.length
   ? latencias.sort((a, b) => a - b)[Math.floor(latencias.length / 2)]
   : 0;
-resumen.total = { ok: totalOk, de: total, medianaMs: medianaGlobal, proveedor: soloProveedor ?? null, deRespaldo: totalRespaldo };
-console.log(`TOTAL: ${totalOk}/${total} comprobaciones sin un solo fallo · mediana ${(medianaGlobal / 1000).toFixed(1)}s`);
+const peorMs = latencias.length ? Math.max(...latencias) : 0;
+resumen.total = {
+  ok: totalOk, de: total, medianaMs: medianaGlobal, peorMs,
+  fallosContenido, respuestasMedidas,
+  proveedor: soloProveedor ?? null, deRespaldo: totalRespaldo,
+};
+console.log(`TOTAL: ${totalOk}/${total} comprobaciones sin un solo fallo · mediana ${(medianaGlobal / 1000).toFixed(1)}s · peor ${(peorMs / 1000).toFixed(1)}s`);
+console.log(`CONTENIDO: ${fallosContenido} de ${respuestasMedidas} respuestas cambiaron o perdieron contenido`);
 if (soloProveedor) {
   console.log(
     totalRespaldo
