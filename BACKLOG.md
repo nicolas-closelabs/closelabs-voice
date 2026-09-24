@@ -225,6 +225,31 @@ y se lleva a Mi cuenta. Los fallos técnicos siguen cayendo al local, igual que 
 
 ⚠️ Al añadir un código de denegación nuevo en `_shared/auth.ts`, añadirlo TAMBIÉN a esa lista.
 
+## 2026-09-24 — Dictados MUY largos: el formateo se enredaba y el médico recibía texto crudo
+
+Pruebas con dictados reales de Nicolás (13 guiones). Los cortos y medianos salieron bien; los dos
+largos, no. El registro de la app decía `limpieza no` y `usage_events` explicó por qué:
+
+| dictado | audio | tokens de salida | resultado |
+|---|---|---|---|
+| "largo" | **3 min 20** | 10.775 y luego 16.000 | `truncated` en los dos intentos → texto CRUDO |
+| "muy largo" | **6 min 10** | 16.292 y luego 18.579 | `truncated` en los dos intentos → texto CRUDO |
+
+El texto crudo de un dictado muy largo trae palabras a medias ("tensi arterial", "frecuencia card
+98"): eso es de **Whisper**, no del formateo, y solo se ve porque la limpieza no llegó a correr.
+⚠️ Vale la pena mirar aparte por qué Whisper corta palabras con audio de 3+ minutos.
+
+Con el modelo enredado, más cupo no salva: sigue razonando. Por eso al truncarse ahora el trozo se
+repite con razonamiento **bajo** — un trozo con menos razonamiento es peor que uno normal, pero
+muchísimo mejor que el crudo, que era la alternativa real. Con eso el dictado de 3 min pasó de
+fallar a salir completo en ~10 s.
+
+**Lo que NO se arregló y hay que decir claro:** en dictados de varios minutos la autocorrección
+hablada ("mentira", "me equivoqué") es poco fiable — acierta a veces y otras deja las dos opciones
+("se remite a urgencias, hospitalización"). En frases normales sigue en **33/33**. Se probó bajar
+el trozo de 900 a 500 caracteres: no mejoró y metió un timeout. Siguiente paso real: medir un
+modelo SIN razonamiento (gpt-4o-mini) con estos mismos dictados reales.
+
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
 **Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq

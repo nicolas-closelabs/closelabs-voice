@@ -217,6 +217,11 @@ cambia la URL.
   mirar `usage_events` por día. OpenRouter NO ofrece transcripción de audio.
   ⚠️ El respaldo se reordenó a **openai → deepinfra**: el Whisper de DeepInfra no acepta la pista
   de vocabulario, así que cuando entraba se perdía el diccionario del médico.
+- [ ] **Probar un modelo SIN razonamiento para formatear** (gpt-4o-mini, llave de OpenAI ya puesta)
+  con los dictados reales del 2026-09-24. Motivo: `gpt-oss-20b` razona antes de escribir y en
+  dictados de 3+ minutos se enreda (16.000-18.000 tokens sin terminar). Detalle en BACKLOG.
+- [ ] **Mirar por qué Whisper corta palabras con audio de 3+ minutos** ("tensi arterial"). Se vio
+  en el texto crudo del 2026-09-24; puede ser el audio, la compresión Opus o el propio modelo.
 - [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
   ⚠️ 2026-09-22: DeepInfra con reasoning `low` INVIERTE autocorrecciones ("se remite a cardiología
   me equivoqué a neurología" → cardiología). Con `medium` acierta pero tarda ~4,5 s. Detalle en BACKLOG.

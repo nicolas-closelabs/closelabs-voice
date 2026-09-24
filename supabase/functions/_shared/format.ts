@@ -137,6 +137,9 @@ export async function formatText(
  * cifra. Cada trozo se limpia solo, que es justo lo que hace el prompt: puntuar y quitar
  * muletillas, no reescribir la historia entera.
  */
+// ⚠️ Medido el 2026-09-24 con el dictado real de 3 minutos de Nicolás: bajar el trozo a 500 no
+// mejoró las autocorrecciones y sí metió un tiempo de espera fallido (más llamadas a la vez =
+// más carga). 900 es el tamaño con el que se midió todo lo demás.
 const LARGO_TROZO = 900;
 const SIN_PARTIR = 1_300;
 
@@ -193,6 +196,7 @@ async function llamar(
   limite: number,
   strict: boolean,
   techo: number = MAX_OUTPUT_TOKENS,
+  esfuerzo?: string,
 ): Promise<Respuesta> {
   const payload: Record<string, unknown> = {
     model: route.model,
@@ -209,7 +213,7 @@ async function llamar(
       json_schema: { name: "transcription", strict: true, schema: SCHEMA },
     };
   }
-  payload.reasoning_effort = route.reasoningEffort ?? ESFUERZO_POR_DEFECTO;
+  payload.reasoning_effort = esfuerzo ?? route.reasoningEffort ?? ESFUERZO_POR_DEFECTO;
   // Lo que el proveedor necesite además del estándar de OpenAI (OpenRouter: qué servidor usar).
   if (route.extraBody) Object.assign(payload, route.extraBody);
 
@@ -233,7 +237,7 @@ async function llamar(
   // petición mal armada: se repite sin esquema antes de rendirse.
   if (res.status === 400 && strict) {
     console.warn(`${route.provider} no pudo generar el JSON; reintento sin esquema estricto`);
-    return llamar(route, trozo, systemPrompt, limite, false, techo);
+    return llamar(route, trozo, systemPrompt, limite, false, techo, esfuerzo);
   }
 
   if (!res.ok) {
@@ -256,8 +260,15 @@ async function llamar(
     // Al trozo no le alcanzó el techo (casi siempre porque el modelo razonó de más). Se le da el
     // techo amplio UNA vez: cambiar de proveedor no serviría, todos sirven el mismo modelo.
     if (techo < TECHO_AMPLIO && limite - Date.now() > MINIMO_INTENTO_MS) {
-      console.warn(`${route.provider} se quedó corto; se repite el trozo con techo amplio`);
-      return llamar(route, trozo, systemPrompt, limite, strict, TECHO_AMPLIO);
+      // ⚠️ El segundo intento va con razonamiento BAJO, no solo con más cupo. Medido el
+      // 2026-09-24 con dos dictados reales de 3 y 6 minutos: el texto crudo de un dictado muy
+      // largo trae palabras a medias y frases sueltas, y con eso el modelo se enreda razonando —
+      // gastó 16.000 y 18.000 tokens sin terminar la frase, en los DOS intentos, y el médico
+      // recibió el dictado sin puntuar. Darle más cupo no lo salva: hay que sacarlo del bucle.
+      // Un trozo formateado con razonamiento bajo es peor que uno con razonamiento medio, pero
+      // muchísimo mejor que el texto crudo, que es la alternativa real aquí.
+      console.warn(`${route.provider} se quedó corto; se repite el trozo sin razonar tanto`);
+      return llamar(route, trozo, systemPrompt, limite, strict, TECHO_AMPLIO, "low");
     }
     console.error(`${route.provider} truncó la respuesta: el trozo no cabe ni en el techo amplio`);
     return { ok: false, code: "truncated", status: 502, tokensIn, tokensOut };
@@ -287,7 +298,7 @@ async function llamar(
     // proveedor, sin esquema, suele contestar bien, y cuesta segundos en vez de un proveedor.
     if (strict && limite - Date.now() > MINIMO_INTENTO_MS) {
       console.warn(`${route.provider} devolvió vacío con esquema; reintento sin esquema`);
-      return llamar(route, trozo, systemPrompt, limite, false, techo);
+      return llamar(route, trozo, systemPrompt, limite, false, techo, esfuerzo);
     }
     return { ok: false, code: "empty_result", status: 502, tokensIn, tokensOut };
   }
