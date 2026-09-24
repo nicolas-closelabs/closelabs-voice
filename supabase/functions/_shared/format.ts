@@ -148,6 +148,11 @@ export async function formatText(
  * Tamaño de trozo. El dictado se formatea por TROZOS PEQUEÑOS, cortados en final de frase, y
  * todos se mandan en paralelo.
  *
+ * ⚠️ Medido con el banco el 2026-09-24, apagando el troceado con gpt-4o-mini ya puesto: 40/42
+ * contra 42/42, y los dos dictados largos reales perdieron la corrección hablada (0/3 los dos) y
+ * tardaron 5,1 s y 7,7 s en vez de 2,3 s. O sea: el troceado NO era un parche del modelo viejo,
+ * sigue haciendo falta con el nuevo.
+ *
  * ⚠️ El porqué, que es el principio de todo este archivo: el modelo obedece el prompt completo
  * cuando el texto es corto, y va soltando reglas a medida que crece. Medido el 2026-09-24 con
  * dictados REALES de 3 y 6 minutos: en frases sueltas la limpieza acierta 33/33, y el mismo

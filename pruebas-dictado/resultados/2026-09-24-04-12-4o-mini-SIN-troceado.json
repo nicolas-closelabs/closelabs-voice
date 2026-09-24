@@ -1,0 +1,107 @@
+{
+  "etiqueta": "4o-mini-SIN-troceado",
+  "fecha": "2026-09-24T04:11:43.881Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "3/3",
+        "conserva": "3/3",
+        "formato_basico": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 1919,
+      "errores": 0
+    },
+    "corto-signos": {
+      "comprobaciones": {
+        "contiene:140/90": "3/3",
+        "contiene:98": "3/3",
+        "contiene:94": "3/3",
+        "contiene:36": "3/3",
+        "formato_basico": "3/3"
+      },
+      "medianaMs": 1742,
+      "errores": 0
+    },
+    "largo-3min": {
+      "comprobaciones": {
+        "termina_en": "3/3",
+        "conserva": "3/3",
+        "numeros_intactos": "3/3",
+        "contiene:hospitalización": "3/3",
+        "no_contiene:urgencias": "0/3",
+        "no_contiene:mentira": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 5124,
+      "errores": 0
+    },
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "3/3",
+        "conserva": "3/3",
+        "contiene:850": "3/3",
+        "no_contiene:1000": "0/3",
+        "no_contiene:mentira": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 7732,
+      "errores": 0
+    },
+    "muletillas-ingles": {
+      "comprobaciones": {
+        "sin_muletillas": "3/3",
+        "conserva": "3/3",
+        "contiene:2022": "3/3",
+        "formato_basico": "3/3"
+      },
+      "medianaMs": 1706,
+      "errores": 0
+    },
+    "retract-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "3/3",
+        "no_contiene:mentira": "3/3",
+        "conserva": "3/3"
+      },
+      "medianaMs": 1422,
+      "errores": 0
+    },
+    "retract-lista": {
+      "comprobaciones": {
+        "contiene:850": "3/3",
+        "no_contiene:1000": "3/3",
+        "no_contiene:mentira": "3/3",
+        "conserva": "3/3"
+      },
+      "medianaMs": 1717,
+      "errores": 0
+    },
+    "retract-remision": {
+      "comprobaciones": {
+        "contiene:neurolog": "3/3",
+        "no_contiene:cardiolog": "3/3",
+        "no_contiene:equivoqu": "3/3",
+        "contiene:valoración": "3/3"
+      },
+      "medianaMs": 1440,
+      "errores": 0
+    },
+    "trampa-palabras": {
+      "comprobaciones": {
+        "contiene:mentiras": "3/3",
+        "contiene:perdón": "3/3",
+        "contiene:coma": "3/3",
+        "contiene:punto de sutura": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 1643,
+      "errores": 0
+    }
+  },
+  "total": {
+    "ok": 40,
+    "de": 42,
+    "medianaMs": 1742
+  }
+}
