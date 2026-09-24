@@ -197,6 +197,29 @@ cambia la URL.
 - [ ] **Prueba con 2 médicos reales** de 50+ años: mandarles el link, no ayudarles, y mirar dónde se
   traban. Encuentra lo que ninguna revisión de código encuentra.
 
+**Fiabilidad del dictado (lo que se hizo el 2026-09-24):**
+- [x] **Banco de pruebas `pruebas-dictado/`** — 9 dictados fijos × 3 repeticiones contra `/format`,
+  comprobando que no se pierda ni cambie contenido. Dos casos son dictados REALES de 3 y 6 minutos.
+  Ningún cambio de modelo, prompt o troceado se da por bueno sin pasarlo. **Regla: un 2/3 es un
+  fallo**, porque estos modelos fallan de forma intermitente.
+- [x] **Formateo con `gpt-4o-mini`** (openai), con openrouter y groq de respaldo: 42/42 contra
+  35/42 de gpt-oss-20b, 1,7 s contra 9-10 s en dictados largos, mismo costo (~$0,00037/dictado).
+- [x] **El dictado se parte en trozos de ~400 caracteres** cortados en final de frase y se
+  formatean en paralelo. Medido apagándolo con el modelo nuevo ya puesto: 40/42 y los dos dictados
+  largos pierden la corrección hablada. O sea, sigue haciendo falta.
+- [x] **El prompt vive en `app_config.format_prompt`** → se afina sin instaladores; verificado
+  mandando el prompt viejo desde el cliente (42/42 igual).
+- [ ] ⚠️ **Sigue fallando 1 de cada 9**: en el dictado de 6 minutos, a veces quedan escritas las
+  dos dosis de una corrección hablada. Es visible para el médico (dos dosis contradictorias), no
+  silencioso, pero hay que cerrarlo antes de lanzar.
+- [ ] **Grabar el guion `pruebas-dictado/GUION-GRABACIONES.md`** (17 dictados, 8 especialidades,
+  uno de 5 min con pausa y otro de 10). ⚠️ Antes de grabar, apagar la limpieza para capturar el
+  texto CRUDO; si no, no se puede separar un error de voz de uno de formateo.
+- [ ] **Banco de la capa de VOZ**, que hoy no existe: el banco actual arranca desde el texto ya
+  transcrito. Sale de las grabaciones de arriba.
+- [ ] **Por qué Whisper corta palabras con audio de 3+ minutos** ("tensi arterial", "frecuencia
+  card 98"). Visto en el crudo del 2026-09-24; puede ser el audio, la compresión Opus o el modelo.
+
 **Producción con más de 20 médicos (proveedores):**
 - [x] **Respaldo automático en el proxy.** ✅ 2026-09-21, EN PRODUCCIÓN. Cadenas en `app_config`:
   transcribir **groq → deepinfra → openai**, formatear **groq → deepinfra**. Si uno falla (caída,
@@ -209,8 +232,8 @@ cambia la URL.
   reales: los dos salieron bien, atendidos por DeepInfra, y el diccionario siguió funcionando
   ("CloseLabs", "CloseLabs Voice", "Aztec Voice" bien escritos). El proveedor roto falló en
   ~100 ms y el dictado completo costó ~3 s más. Configuración restaurada al terminar.
-- [x] **Formatear: OpenRouter (servidor Groq)** — EN PRODUCCIÓN 2026-09-23. Resuelve el techo del
-  plan gratis de Groq sin perder calidad ni velocidad (32/32, ~2 s, ~$0,00025/dictado).
+- [x] ~~**Formatear: OpenRouter (servidor Groq)**~~ — sustituido el 2026-09-24 por openai/gpt-4o-mini
+  tras medirlo con el banco (35/42 contra 42/42). OpenRouter queda de primer respaldo.
 - [x] **Transcribir: nos quedamos en Groq gratis, con OpenAI de primer respaldo** (decisión de
   Nicolás, 2026-09-23). El plan gratis aguanta ~2.000 dictados/día entre TODOS; OpenAI ya está
   configurado y entra solo si Groq falla. ⚠️ Se reabre cuando el volumen se acerque a ese techo:

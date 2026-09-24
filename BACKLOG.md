@@ -482,8 +482,8 @@ llamar a la función; este, en el primer registro de verdad.
 3. **Páginas propias** para confirmar correo y recuperar contraseña (hoy usan las de Supabase).
 
 ### Acciones del cliente
-- [ ] **Repartir los instaladores 0.8.2** (la 0.8.0 no escribía el dictado dentro de la propia app: el tutorial nunca funcionaba) y avisar que ahora hay que crear cuenta. Están en el Escritorio y en el repo público de descargas.
-- [ ] **Subir `latest_version` a 0.8.2** cuando estén repartidos.
+- [ ] **Repartir los instaladores 0.8.4** (la 0.8.0 no escribía el dictado dentro de la propia app: el tutorial nunca funcionaba) y avisar que ahora hay que crear cuenta. Están en el Escritorio y en el repo público de descargas.
+- [ ] **Subir `latest_version` a 0.8.4** cuando estén repartidos.
 - [ ] **Volver el repo a privado** (hoy público para el CI).
 - [ ] **Abogado:** Política de Tratamiento de Datos, autorización de transferencia internacional,
       Términos con la cláusula de que la historia clínica es responsabilidad del médico, y

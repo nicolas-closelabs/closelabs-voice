@@ -4,7 +4,7 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.8.3)
+## Estado actual (v0.8.4 publicada)
 
 > **SIN PUBLICAR — el techo de salida tumbaba todos los dictados largos.** `MAX_OUTPUT_TOKENS`
 > estaba en 2.000 y el modelo se quedaba sin cupo a mitad de la respuesta: devolvía **HTTP 200**
@@ -25,6 +25,14 @@
 > para el médico. Ese caso pide **partir el dictado en trozos**, no un techo más alto. Vigilar
 > `truncated` en `errores_recientes` para saber si hace falta.
 
+> **v0.8.4 — PUBLICADA (2026-09-24).** Permisos de Mac de a un paso, con la guía visual ANTES de
+> abrir Ajustes del Sistema. En la misma tanda: el ícono con las proporciones del sistema y el pie
+> de página sin el falso "activar" del modelo.
+>
+> ⚠️ **El prompt de limpieza ya NO manda desde el instalador:** vive en `app_config.format_prompt`
+> y el proxy usa ese. El de `settings.rs` queda de respaldo por si la columna se vacía. Afinar el
+> formateo NO requiere versión nueva.
+>
 > **v0.8.3 — sin pagar no se dicta** (el respaldo local se activaba también con "no pagó": apagar
 > el wifi daba dictado gratis; ver `CODIGOS_SIN_PERMISO` en `proxy.rs`) y el ícono con las
 > proporciones de macOS. Preparación del canal gMedic: ver Fase 5 del ROADMAP.
