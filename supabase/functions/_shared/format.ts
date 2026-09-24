@@ -215,13 +215,19 @@ async function llamar(
 ): Promise<Respuesta> {
   const payload: Record<string, unknown> = {
     model: route.model,
-    temperature: 0,
-    max_tokens: techo,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: trozo },
     ],
   };
+  // Los modelos de razonamiento de OpenAI rechazan `temperature` y el techo en `max_tokens` (ver
+  // `Route.reasoningModel`). No es una preferencia: la API devuelve 400 a cualquiera de los dos.
+  if (route.reasoningModel) {
+    payload.max_completion_tokens = techo;
+  } else {
+    payload.temperature = 0;
+    payload.max_tokens = techo;
+  }
   if (strict) {
     payload.response_format = {
       type: "json_schema",

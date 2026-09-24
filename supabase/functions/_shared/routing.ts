@@ -16,6 +16,14 @@ export interface Route {
   model: string;
   /** Solo para formatear: 'low' | 'medium' | 'high'. Ver nota en la migración. */
   reasoningEffort: string | null;
+  /**
+   * Solo para formatear. `true` = modelo de razonamiento de OpenAI (gpt-5 en adelante), que la
+   * API directa trata distinto: rechaza `temperature` y exige el techo en
+   * `max_completion_tokens` en vez de `max_tokens` — las dos cosas con un 400. Por OpenRouter no
+   * se notaba porque traduce los parámetros; directo a OpenAI, cada dictado fallaba y lo salvaba
+   * el respaldo sin que nadie se enterara. Ver la migración 20260924000005.
+   */
+  reasoningModel: boolean;
   extraBody: Record<string, unknown> | null;
   /**
    * Solo para transcribir. ⚠️ Medido el 2026-09-19: el Whisper turbo de DeepInfra DEVUELVE LA
@@ -70,6 +78,7 @@ interface ProviderRow {
   transcribe_model: string | null;
   format_model: string | null;
   format_reasoning_effort: string | null;
+  format_reasoning_model: boolean | null;
   supports_transcribe_prompt: boolean;
   enabled: boolean;
   /** Campos extra del cuerpo. Hoy solo OpenRouter: elige qué servidor sirve el modelo. */
@@ -93,7 +102,7 @@ async function routingConfig(): Promise<RoutingConfig> {
     ),
     select<ProviderRow>(
       "providers",
-      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,supports_transcribe_prompt,enabled,extra_body",
+      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,format_reasoning_model,supports_transcribe_prompt,enabled,extra_body",
     ),
   ]);
   const row = cfgRows[0];
@@ -134,6 +143,7 @@ function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
     apiKey,
     model,
     reasoningEffort: p.format_reasoning_effort,
+    reasoningModel: p.format_reasoning_model === true,
     extraBody: p.extra_body ?? null,
     supportsTranscribePrompt: p.supports_transcribe_prompt,
     dailyQuota: cfg.dailyQuota,

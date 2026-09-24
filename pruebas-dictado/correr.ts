@@ -120,6 +120,16 @@ const opcion = (nombre: string, def?: string) => {
 const repeticiones = Number(opcion("repeticiones", "3"));
 const soloCaso = opcion("caso");
 const etiqueta = opcion("etiqueta", "sin-etiqueta")!;
+/**
+ * El proveedor que se quiere medir. Las respuestas que sirvió OTRO (el respaldo) se cuentan aparte
+ * y NO entran en la nota.
+ *
+ * ⚠️ Existe por lo que pasó el 2026-09-24 con gpt-6-luna: OpenRouter le devolvió 429 a la mitad de
+ * las llamadas, gpt-4o-mini las recogió desde el respaldo y el banco dio 41/42 — una nota que
+ * mezclaba los dos modelos y parecía de uno solo. El respaldo protege al médico; aquí no puede
+ * maquillar la medición.
+ */
+const soloProveedor = opcion("proveedor");
 
 const casos: Caso[] = readdirSync(CASOS)
   .filter((f) => f.endsWith(".json"))
@@ -134,6 +144,7 @@ console.log(`Banco de dictado · ${casos.length} caso(s) × ${repeticiones} · e
 
 const resumen: any = { etiqueta, fecha: new Date().toISOString(), casos: {} };
 let totalOk = 0;
+let totalRespaldo = 0;
 let total = 0;
 const latencias: number[] = [];
 
@@ -141,12 +152,19 @@ for (const caso of casos) {
   const conteo = new Map<string, number>();
   const detalles = new Map<string, string>();
   let errores = 0;
+  let deRespaldo = 0;
+  const servidoPor = new Map<string, number>();
   const ms: number[] = [];
 
   for (let i = 0; i < repeticiones; i++) {
     const r = await formatear(caso.texto, prompt, base, token);
     if (r.error) {
       errores++;
+      continue;
+    }
+    servidoPor.set(r.proveedor, (servidoPor.get(r.proveedor) ?? 0) + 1);
+    if (soloProveedor && r.proveedor !== soloProveedor) {
+      deRespaldo++;
       continue;
     }
     ms.push(r.ms);
@@ -160,9 +178,15 @@ for (const caso of casos) {
 
   const mediana = ms.length ? ms.sort((a, b) => a - b)[Math.floor(ms.length / 2)] : 0;
   latencias.push(...ms);
-  const hechas = repeticiones - errores;
+  const hechas = repeticiones - errores - deRespaldo;
   console.log(`▸ ${caso.id} — ${caso.descripcion} (${caso.origen}, ${caso.texto.length} chars)`);
   if (errores) console.log(`   ⚠️  ${errores} de ${repeticiones} llamadas fallaron`);
+  if (deRespaldo || servidoPor.size > 1) {
+    const quien = [...servidoPor].map(([p, n]) => `${p} ${n}`).join(" · ");
+    const aviso = deRespaldo ? ` — ${deRespaldo} fuera de la nota` : "";
+    console.log(`   🔁 servido por: ${quien}${aviso}`);
+  }
+  totalRespaldo += deRespaldo;
 
   const filas: Record<string, string> = {};
   for (const c of caso.comprobaciones) {
@@ -176,14 +200,21 @@ for (const caso of casos) {
     console.log(`   ${marca} ${clave}: ${ok}/${hechas}${extra}`);
   }
   console.log(`   ⏱  ${(mediana / 1000).toFixed(1)}s\n`);
-  resumen.casos[caso.id] = { comprobaciones: filas, medianaMs: mediana, errores };
+  resumen.casos[caso.id] = { comprobaciones: filas, medianaMs: mediana, errores, deRespaldo, servidoPor: Object.fromEntries(servidoPor) };
 }
 
 const medianaGlobal = latencias.length
   ? latencias.sort((a, b) => a - b)[Math.floor(latencias.length / 2)]
   : 0;
-resumen.total = { ok: totalOk, de: total, medianaMs: medianaGlobal };
+resumen.total = { ok: totalOk, de: total, medianaMs: medianaGlobal, proveedor: soloProveedor ?? null, deRespaldo: totalRespaldo };
 console.log(`TOTAL: ${totalOk}/${total} comprobaciones sin un solo fallo · mediana ${(medianaGlobal / 1000).toFixed(1)}s`);
+if (soloProveedor) {
+  console.log(
+    totalRespaldo
+      ? `⚠️  ${totalRespaldo} de ${casos.length * repeticiones} respuestas las sirvió el respaldo: no cuentan para ${soloProveedor}`
+      : `Todas las respuestas las sirvió ${soloProveedor}.`,
+  );
+}
 
 if (!existsSync(RESULTADOS)) mkdirSync(RESULTADOS, { recursive: true });
 const archivo = join(RESULTADOS, `${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}-${etiqueta}.json`);

@@ -364,6 +364,14 @@ nuevo arregla un caso y puede romper otro, y sin el banco no hay forma de saberl
 clínicos sigan ahí, que el texto llegue al final y que no sobreviva lo retractado. Ningún cambio
 en el formateo (modelo, prompt, troceado) se da por bueno sin pasarlo. Los fallos de estos
 modelos son INTERMITENTES: por eso 3 repeticiones, y un 2/3 cuenta como fallo.
+⚠️ Al medir un proveedor nuevo, SIEMPRE `--proveedor <nombre>`: si el principal falla, el respaldo
+contesta y sin esa opción el banco lo califica como si fuera el principal (pasó con gpt-6-luna:
+429 en la mitad de las llamadas y un 41/42 que mezclaba dos modelos). Y un fallo de ~1 en 10 no
+se ve con 3 repeticiones: para comparar modelos en un fallo raro, decenas.
+
+**Modelos de razonamiento de OpenAI (gpt-5 en adelante) directo a OpenAI:** marcar
+`providers.format_reasoning_model = true`. Sin la marca, el proxy manda `temperature` y
+`max_tokens`, OpenAI responde 400 a cada dictado y el respaldo lo tapa sin que nadie lo note.
 
 **Respaldo automático (desde 2026-09-21):** cada tipo tiene una cadena ORDENADA en `app_config`
 (`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir groq → deepinfra → openai; formatear

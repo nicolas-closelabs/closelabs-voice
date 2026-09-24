@@ -1,0 +1,21 @@
+{
+  "etiqueta": "tanteo-luna",
+  "fecha": "2026-09-24T04:45:50.765Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "1/1",
+        "conserva": "1/1",
+        "formato_basico": "1/1",
+        "longitud": "1/1"
+      },
+      "medianaMs": 4163,
+      "errores": 0
+    }
+  },
+  "total": {
+    "ok": 4,
+    "de": 4,
+    "medianaMs": 4163
+  }
+}

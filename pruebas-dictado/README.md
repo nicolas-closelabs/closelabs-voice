@@ -14,7 +14,13 @@ bun pruebas-dictado/correr.ts                 # todo el banco, 3 repeticiones po
 bun pruebas-dictado/correr.ts --repeticiones 1
 bun pruebas-dictado/correr.ts --caso largo-3min
 bun pruebas-dictado/correr.ts --etiqueta "openrouter-gpt-oss"   # nombre del resultado guardado
+bun pruebas-dictado/correr.ts --proveedor openai-luna           # solo cuenta lo que sirvió ESE proveedor
 ```
+
+⚠️ **Al medir un proveedor nuevo, usar siempre `--proveedor`.** Si el principal falla, el respaldo
+contesta y el banco lo califica como si fuera el principal. Pasó el 2026-09-24: gpt-6-luna recibió
+429 en la mitad de las llamadas y el banco dio 41/42 con la mitad de las respuestas de gpt-4o-mini.
+Con `--proveedor`, lo que sirvió otro se cuenta aparte y queda fuera de la nota.
 
 Cada corrida guarda un JSON en `resultados/` y, si encuentra la anterior, imprime la comparación.
 

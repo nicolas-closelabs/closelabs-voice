@@ -23,10 +23,12 @@ const env: Record<string, string> = {
 type Comportamiento = "ok" | "429" | "500" | "400" | "vacio" | "cuelga" | "400-siempre" | "truncado";
 const conducta: Record<string, Comportamiento> = {};
 let llamadas: string[] = [];
+/** Cuerpo de cada petición de formateo, por proveedor: para revisar QUÉ parámetros se mandan. */
+let cuerpos: Record<string, any> = {};
 
 const proveedores = [
   { name: "groq", base_url: "https://groq.test", api_key_env: "GROQ_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, enabled: true },
-  { name: "deepinfra", base_url: "https://deepinfra.test", api_key_env: "DEEPINFRA_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: "low", supports_transcribe_prompt: true, enabled: true },
+  { name: "deepinfra", base_url: "https://deepinfra.test", api_key_env: "DEEPINFRA_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: "low", format_reasoning_model: true, supports_transcribe_prompt: true, enabled: true },
   { name: "openai", base_url: "https://openai.test", api_key_env: "OPENAI_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, enabled: true },
 ];
 
@@ -44,6 +46,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   const prov = new URL(url).hostname.split(".")[0];
   const tipo = url.endsWith("/audio/transcriptions") ? "T" : "F";
   llamadas.push(`${prov}:${tipo}`);
+  if (tipo === "F") cuerpos[prov] = JSON.parse(init.body);
   const c = conducta[prov] ?? "ok";
   if (c === "cuelga") {
     return new Promise((_, rechazar) =>
@@ -106,6 +109,21 @@ await caso("Groq COLGADO → corta a tiempo y responde DeepInfra", { groq: "cuel
 console.log("— FORMATEO —");
 await caso("principal bien", {}, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "groq", ["groq:F"]);
 await caso("Groq 500 → DeepInfra", { groq: "500" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "deepinfra:F"]);
+
+// 2026-09-24: los modelos de razonamiento de OpenAI (aquí, deepinfra con la marca puesta)
+// rechazan con 400 `temperature` y `max_tokens`. Si se colara uno, cada dictado fallaría contra el
+// principal y lo salvaría el respaldo sin que nadie lo notara — exactamente lo que el banco vio.
+{
+  const normal = cuerpos.groq ?? {};
+  const razona = cuerpos.deepinfra ?? {};
+  const okNormal = normal.temperature === 0 && typeof normal.max_tokens === "number" && !("max_completion_tokens" in normal);
+  const okRazona =
+    !("temperature" in razona) && !("max_tokens" in razona) &&
+    typeof razona.max_completion_tokens === "number" && razona.reasoning_effort === "low";
+  if (!okNormal || !okRazona) fallas++;
+  console.log(okNormal ? "✅ modelo normal: lleva temperature y max_tokens" : `❌ modelo normal mal armado: ${JSON.stringify(normal)}`);
+  console.log(okRazona ? "✅ modelo de razonamiento: sin temperature, techo en max_completion_tokens" : `❌ modelo de razonamiento mal armado: ${JSON.stringify(razona)}`);
+}
 await caso("Groq no cierra el JSON 2 veces → DeepInfra", { groq: "400-siempre" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "groq:F", "deepinfra:F"]);
 await caso("Groq COLGADO → DeepInfra dentro de los 30 s de la app", { groq: "cuelga" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "deepinfra", ["groq:F", "deepinfra:F"]);
 

@@ -280,6 +280,54 @@ Quedó `format_provider = openai` con openrouter y groq de respaldo. Cuesta lo m
 README dice cómo) y un segundo banco para la capa de VOZ, que hoy no se mide: el crudo de los
 dictados de 3+ minutos trae palabras cortadas ("tensi arterial") y eso viene de Whisper.
 
+## 2026-09-24 — gpt-6-luna: más barato en la lista, no en la factura (se queda gpt-4o-mini)
+
+Se probó `gpt-6-luna` porque su precio de lista es menor (0,10/0,50 contra 0,15/0,60 por millón).
+Se queda **gpt-4o-mini de principal**, pero la pregunta de calidad quedó **abierta** (abajo).
+
+**Medición limpia** (directo a OpenAI, esfuerzo `low`, banco con `--proveedor`), sobre los mismos
+27 dictados que la corrida final de gpt-4o-mini:
+
+| | gpt-4o-mini | gpt-6-luna |
+|---|---|---|
+| Banco | 42/42 | 42/42 |
+| Dosis retractada, dictado de 6 min | **19/21** | **21/21** |
+| Costo del banco | $0,0216 | $0,0203 (6% menos) |
+| Latencia mediana por llamada | 975 ms | 2.018 ms |
+| Dictado de 6 min | 2,3–2,5 s | 5,5–6,3 s |
+| Rechazos 429 | 0 | 0 |
+
+**Por qué el precio de lista engaña:** luna es un modelo de razonamiento, y el razonamiento se cobra
+como salida. Aun con esfuerzo `low` escribe 3x los tokens de gpt-4o-mini. Sin esfuerzo declarado es
+peor: el ahorro cae a 1% y tarda 3x. El punto de equilibrio con nuestro prompt está en ~3x.
+
+**Tres errores de medición que casi deciden por nosotros:**
+1. **Por OpenRouter, la mitad de las llamadas recibieron 429** con un solo equipo usándolo, y el
+   respaldo (gpt-4o-mini) las atendió. El banco dio 41/42 **mezclando los dos modelos**, y el "44%
+   de ahorro" de esa tanda salió de que luna solo alcanzó a servir los dictados cortos. Por eso
+   el banco ahora tiene `--proveedor`: lo que sirve el respaldo queda fuera de la nota.
+2. **Comparar contra "los últimos 200 dictados" de gpt-4o-mini daba 12% de ahorro**; contra los
+   mismos 27 textos, 6%. Siempre comparar corridas del banco, nunca promedios de producción.
+3. **3 repeticiones no bastaban** para el fallo de la dosis: gpt-4o-mini sacó 3/3 en la corrida
+   final y 8/9 al repetir. Para fallos de ~1 en 10 hacen falta decenas de repeticiones.
+
+**Pregunta abierta — la única que justificaría cambiar:** en el defecto abierto (el dictado de
+6 min conserva las dos dosis), luna no falló en 21 intentos y gpt-4o-mini falló 2 de 21. Que eso
+sea suerte tiene ~11% de probabilidad: señal, no prueba. Zanjarlo: 30 repeticiones de cada uno en
+`largo-6min`. Si la diferencia se sostiene, la regla "calidad sobre velocidad" dice que vale pagar
+~3 s en los dictados largos. Tampoco se midió la caché del prompt (luna $0,01 vs $0,075 por millón;
+el prompt es ~86% del costo): se ve en el panel de uso de OpenAI, `usage_events` no la guarda.
+
+**Lo que queda de la prueba, sirva o no luna:**
+- El proxy habla con modelos de razonamiento DIRECTO a OpenAI: columna
+  `providers.format_reasoning_model` → sin `temperature` y con el techo en `max_completion_tokens`
+  (OpenAI rechaza con 400 lo contrario; OpenRouter lo traducía y lo escondía). Con test en
+  `respaldo.test.ts`. Probar el próximo modelo es cambiar una fila.
+- Filas `openai-luna` y `openrouter-luna` deshabilitadas, con lo medido en sus migraciones
+  (20260924000003 a 000006).
+- Por OpenRouter, fijar el servidor: de los 7 que sirven luna, Azure y Bedrock no aceptan
+  `response_format`, y `openai/flex` es diferido.
+
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
 **Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq

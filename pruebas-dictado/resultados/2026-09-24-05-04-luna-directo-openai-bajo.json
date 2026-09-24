@@ -1,0 +1,145 @@
+{
+  "etiqueta": "luna-directo-openai-bajo",
+  "fecha": "2026-09-24T05:03:02.955Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "3/3",
+        "conserva": "3/3",
+        "formato_basico": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 2073,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "corto-signos": {
+      "comprobaciones": {
+        "contiene:140/90": "3/3",
+        "contiene:98": "3/3",
+        "contiene:94": "3/3",
+        "contiene:36": "3/3",
+        "formato_basico": "3/3"
+      },
+      "medianaMs": 2912,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "largo-3min": {
+      "comprobaciones": {
+        "termina_en": "3/3",
+        "conserva": "3/3",
+        "numeros_intactos": "3/3",
+        "contiene:hospitalización": "3/3",
+        "no_contiene:urgencias": "3/3",
+        "no_contiene:mentira": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 4364,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "3/3",
+        "conserva": "3/3",
+        "contiene:850": "3/3",
+        "no_contiene:1000": "3/3",
+        "no_contiene:mentira": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 5496,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "muletillas-ingles": {
+      "comprobaciones": {
+        "sin_muletillas": "3/3",
+        "conserva": "3/3",
+        "contiene:2022": "3/3",
+        "formato_basico": "3/3"
+      },
+      "medianaMs": 1804,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "retract-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "3/3",
+        "no_contiene:mentira": "3/3",
+        "conserva": "3/3"
+      },
+      "medianaMs": 1966,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "retract-lista": {
+      "comprobaciones": {
+        "contiene:850": "3/3",
+        "no_contiene:1000": "3/3",
+        "no_contiene:mentira": "3/3",
+        "conserva": "3/3"
+      },
+      "medianaMs": 3571,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "retract-remision": {
+      "comprobaciones": {
+        "contiene:neurolog": "3/3",
+        "no_contiene:cardiolog": "3/3",
+        "no_contiene:equivoqu": "3/3",
+        "contiene:valoración": "3/3"
+      },
+      "medianaMs": 1975,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    },
+    "trampa-palabras": {
+      "comprobaciones": {
+        "contiene:mentiras": "3/3",
+        "contiene:perdón": "3/3",
+        "contiene:coma": "3/3",
+        "contiene:punto de sutura": "3/3",
+        "longitud": "3/3"
+      },
+      "medianaMs": 2177,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 3
+      }
+    }
+  },
+  "total": {
+    "ok": 42,
+    "de": 42,
+    "medianaMs": 2657,
+    "proveedor": "openai-luna",
+    "deRespaldo": 0
+  }
+}

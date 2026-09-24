@@ -1,0 +1,29 @@
+{
+  "etiqueta": "luna-6min-x9",
+  "fecha": "2026-09-24T05:05:12.966Z",
+  "casos": {
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "9/9",
+        "conserva": "9/9",
+        "contiene:850": "9/9",
+        "no_contiene:1000": "9/9",
+        "no_contiene:mentira": "9/9",
+        "longitud": "9/9"
+      },
+      "medianaMs": 6253,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 9
+      }
+    }
+  },
+  "total": {
+    "ok": 6,
+    "de": 6,
+    "medianaMs": 6253,
+    "proveedor": "openai-luna",
+    "deRespaldo": 0
+  }
+}
