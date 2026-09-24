@@ -1,0 +1,24 @@
+{
+  "id": "retract-dosis",
+  "descripcion": "Se corrige la frecuencia de un medicamento",
+  "origen": "inventado",
+  "texto": "El paciente toma losartán 50 mg cada 8 horas, mentira, cada 12 horas desde hace 2 años.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos",
+      "retractados": [
+        "8"
+      ]
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "mentira"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "losartán"
+      ]
+    }
+  ]
+}

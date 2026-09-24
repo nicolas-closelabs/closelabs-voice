@@ -1,0 +1,24 @@
+{
+  "id": "retract-remision",
+  "descripcion": "Se corrige el servicio al que remite",
+  "origen": "inventado",
+  "texto": "Se remite a cardiología, me equivoqué, a neurología para valoración prioritaria por cefalea de un mes de evolución.",
+  "comprobaciones": [
+    {
+      "tipo": "contiene",
+      "valor": "neurolog"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "cardiolog"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "equivoqu"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "valoración"
+    }
+  ]
+}

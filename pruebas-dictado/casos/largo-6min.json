@@ -1,0 +1,38 @@
+{
+  "id": "largo-6min",
+  "descripcion": "Dos días de historia: ingreso y evolución con egreso e indicaciones",
+  "origen": "dictado real",
+  "texto": "Paciente masculino de 62 años que consulta por dolor torácico opresivo de dos días de evolución. Irradiado a un miembro superior izquierdo, asociado a disnea de medianos esfuerzos. Niega fiebre, niega tos, niega palpitaciones antecedentes personales. Hipertensión arterial diagnosticada hace 10 años en manejo con los Artan. 50 mg cada 12 horas. Diabetes mellitus, tipo 2 de 8 años de evolución. El manejo con metformina, 850 mg cada 8 horas. Dislipidemia, el manejo con atorvasatina, 40 mg en la noche. Antecedentes quirúrgicos, colesistectomía, laparoscopia en el año 2015 sin complicaciones, antecedentes familiares. Padre fallecido por infarto agudo de miocardio a los 58 años. Madre viva con hipotiroidismo, hábitos fumador de 10 cigarrillos diarios durante 20 años. Suspendido hace 3 meses consumo de alcohol social sedentario refiere aumento de peso de 8 kilos en el a al examen f paciente en regulares condiciones generales consciente orientado hidratado tensi arterial 140 sobre 90 frecuencia card 98 por minuto frecuencia respiratoria 20 por minuto saturaci 94 temperatura 36 grados cuello sin ingurgitaci yugular no adenopat ruidos card r taquic Sin soplos, murmullo vesicular, conservados y inagregados abdomen blando, depresible, no doloroso, sin masias ni megalias a extremidades. Sin edemas, pulsos periféricos presentes y simétricos. Análisis se trata de paciente con múltiples factores de riesgo cardiovascular, que consulta por dolor torácico con características anginosas, por lo que se debe descartar síndrome coronario agudo. Plan se solicita electrocardiograma de 12 derivaciones troponinas, ultrasensibles, cuadro hemático, perfil lipídico, glicemia y radiografía de tórax. Se inicia ácido acetalicílico, 300 mg biooral, dosis única y se remite a urgencias, mentira, hospitalización, para valoración prioritaria por cardiología. Se explica al paciente y a su familia el motivo de la relaci de la remisi quienes comprenden y aceptan Evoluci del d siguiente paciente que amanece sin dolor tor refiere mejor subjetiva importante niega disnea niega palpitaciones durma bien torner a la v oral sin n ni v diuresis conservada de posici presente al examen f Paciente en buenas condiciones generales, consciente orientado en tiempo y lugar y persona. Afebril, tensión arterial 120 sobre 70 y 5, frecuencia cardíaca 78 por minuto, saturación 97%, al ambiente ruidos cardíacos rítmicos sin soplos, murmullo vesicular, CloseLabs, La Cronomía, Trombosis. 7200 plaquetas 240 creatinina 0 glicemia en ayunas 132 colesterol total 210 IDL 138 HDL 38 tiglicerios 220 an paciente con dolor tor de bajo riesgo descartado s coronario agudo con troponinas seriadas negativas y electrocardiogramas sin cambios persiste con mal control metab Y dislipidemia no controlada. Plan, C de Egreso con las siguientes indicaciones, continuar los Artan 50 mg cada 12 horas, aumentar metformina a 1000 mg cada 12 horas, mentira mantener 850 cada 8 horas, y agregar empagliflozina 10 mg al día. Aumentar la torvastatina de 40 a 80 mg en la noche. Ácido acetilsalicílico 100 mg al día. Control por medicina interna en 4 semanas con perfil lipídico y hemoglobina. Glicosilada. Control por nutrición y actividades físicas progresivas. Se explica en signos de alarma, dolor torácico opresivo de más de 20 minutos. Disnea súbita, síncope o sudoración profusa por los cuales debe consultar de inmediato el servicio urgente. Paciente y familiar comprenden y aceptan.",
+  "comprobaciones": [
+    {
+      "tipo": "termina_en",
+      "valor": "comprenden y aceptan"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "empagliflozina",
+        "troponinas",
+        "hemoglobina",
+        "síncope"
+      ]
+    },
+    {
+      "tipo": "contiene",
+      "valor": "850"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "1000"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "mentira"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.15
+    }
+  ]
+}

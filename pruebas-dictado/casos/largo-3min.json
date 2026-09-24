@@ -1,0 +1,43 @@
+{
+  "id": "largo-3min",
+  "descripcion": "Historia clínica completa con antecedentes, examen físico y plan",
+  "origen": "dictado real",
+  "texto": "Paciente masculino de 62 años que consulta por dolor torácico opresivo de dos días de evolución. Irradiado a miembro superior izquierdo asociado a disnea de medianos esfuerzos. Niega fiebre, niega tos, niega palpitaciones, antecedentes personales, hipertensión arterial, Diagnosticada hace 10 años, en manejo con losartan, 50 mg cada 12 horas. Diabetes mellitus tipo 2, de 8 años de evolución, en manejo con metformina, 850 mg cada 8 horas. Dislipidemia, en manejo con atorvastatina, 40 mg en la noche. Antecedentes quirúrgicos, colesistectomía, laparoscopia en el año 2015, sin complicaciones. Antecedentes familiares, padre fallecido por infarto, agudo de miocardio a los 58 años. Madre viva, con hipotiroidismo, hábitos de fumador de 10 cigarrillos diarios durante 20 años. Suspendió hace 3 meses consumo de alcohol social, sedentario, refiere un aumento de peso de 8 kilos en el último año. El examen f o paciente en regulares condiciones generales consciente orientado hidratado tensi arterial 140 sobre 90 frecuencia card 98 por minuto frecuencia respiratoria 20 por minuto saturaci 94 temperatura 36 grados cuello sin ingurgitaci yugular No adenopatías, ruidos cardíacos, rítmicos, taquicárdicos, sin soplos, murmullo, vesicular, conservados y sin agregados abdomen blando, depresible, no doloroso, sin masas ni megalias de extremidades. Cinedemas, pulsos periféricos, presentes y simétricos. Análisis se trata de paciente con múltiples factores de riesgo cardiovascular, que consulta por dolor torácico de características anginosas, por lo que se debe descartar síndrome coronario agudo. Plan, se solicita electrocardiograma de 12 derivaciones troponinas, ultrasensibles, cuadro hemático, perfil lipídico, glicemia y radiografía de tórax. Se inicia ácido acetilsalicílico, 300 mg vía oral, dosis única y se remite a urgencias, mentira a hospitalización para valoración prioritaria por cardiología. Se explica al paciente y a su familia en motivo de la remisión, quienes comprenden y aceptan.",
+  "comprobaciones": [
+    {
+      "tipo": "termina_en",
+      "valor": "comprenden y aceptan"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "metformina",
+        "atorvastatina",
+        "istectom",
+        "troponinas",
+        "acetilsalic"
+      ]
+    },
+    {
+      "tipo": "numeros_intactos",
+      "retractados": []
+    },
+    {
+      "tipo": "contiene",
+      "valor": "hospitalización"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "urgencias"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "mentira"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.15
+    }
+  ]
+}

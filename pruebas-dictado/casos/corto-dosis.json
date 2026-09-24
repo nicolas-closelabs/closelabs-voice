@@ -1,0 +1,26 @@
+{
+  "id": "corto-dosis",
+  "descripcion": "Fórmula con dos medicamentos y duración",
+  "origen": "inventado",
+  "texto": "Se formula metformina 850 mg cada 12 horas y atorvastatina 40 mg en la noche por 3 meses.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "metformina",
+        "atorvastatina"
+      ]
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.8,
+      "max": 1.3
+    }
+  ]
+}

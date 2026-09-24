@@ -1,0 +1,25 @@
+{
+  "id": "muletillas-ingles",
+  "descripcion": "Muletillas y términos en inglés que no se traducen",
+  "origen": "inventado",
+  "texto": "eh bueno el el paciente tiene antecedente de bypass coronario hace cinco años y colocación de stent en dos mil veintidós eh sin complicaciones",
+  "comprobaciones": [
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "bypass",
+        "stent"
+      ]
+    },
+    {
+      "tipo": "contiene",
+      "valor": "2022"
+    },
+    {
+      "tipo": "formato_basico"
+    }
+  ]
+}

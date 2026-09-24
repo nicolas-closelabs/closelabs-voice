@@ -1,0 +1,27 @@
+{
+  "id": "corto-signos",
+  "descripcion": "Signos vitales dictados en palabras",
+  "origen": "inventado",
+  "texto": "tensión arterial ciento cuarenta sobre noventa frecuencia cardiaca noventa y ocho por minuto saturación noventa y cuatro por ciento temperatura treinta y seis punto ocho",
+  "comprobaciones": [
+    {
+      "tipo": "contiene",
+      "valor": "140/90"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "98"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "94"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "36"
+    },
+    {
+      "tipo": "formato_basico"
+    }
+  ]
+}

@@ -140,44 +140,50 @@ export async function formatText(
 // ⚠️ Medido el 2026-09-24 con el dictado real de 3 minutos de Nicolás: bajar el trozo a 500 no
 // mejoró las autocorrecciones y sí metió un tiempo de espera fallido (más llamadas a la vez =
 // más carga). 900 es el tamaño con el que se midió todo lo demás.
-const LARGO_TROZO = 900;
-const SIN_PARTIR = 1_300;
+/**
+ * Tamaño de trozo. El dictado se formatea por TROZOS PEQUEÑOS, cortados en final de frase, y
+ * todos se mandan en paralelo.
+ *
+ * ⚠️ El porqué, que es el principio de todo este archivo: el modelo obedece el prompt completo
+ * cuando el texto es corto, y va soltando reglas a medida que crece. Medido el 2026-09-24 con
+ * dictados REALES de 3 y 6 minutos: en frases sueltas la limpieza acierta 33/33, y el mismo
+ * contenido dentro de un texto largo deshacía mal una corrección hablada ("se remite a urgencias,
+ * mentira, a hospitalización" quedó como "se remite a urgencias" — lo que el médico retractó).
+ * No es un problema de la retracción: es la regla que más duele de las que se caen. Por eso la
+ * respuesta NO es una excepción para ese caso, sino no darle nunca al modelo más de lo que
+ * atiende bien.
+ */
+const LARGO_TROZO = 400;
 
+/** Por debajo de esto no vale la pena partir: cabe entero en lo que el modelo atiende bien. */
+const SIN_PARTIR = 600;
+
+/** Parte el texto en frases, conservando el signo final. */
+function enFrases(texto: string): string[] {
+  const frases = texto.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g);
+  return frases ? frases.map((f) => f.trim()).filter(Boolean) : [texto];
+}
+
+/**
+ * Trozos de ~400 caracteres que SIEMPRE terminan en final de frase. Una frase nunca se parte por
+ * la mitad: cada trozo se entiende solo, que es lo que el modelo necesita para aplicar todas las
+ * reglas. Si una sola frase pasa el tamaño, va sola y se respeta.
+ */
 export function partirDictado(texto: string): string[] {
   if (texto.length <= SIN_PARTIR) return [texto];
 
   const trozos: string[] = [];
-  let resto = texto;
-  while (resto.length > SIN_PARTIR) {
-    const ventana = resto.slice(0, LARGO_TROZO + 400);
-    let corte = -1;
-    for (const marca of [". ", "? ", "! ", "; ", ".\n"]) {
-      const i = ventana.lastIndexOf(marca);
-      if (i > LARGO_TROZO / 2 && i > corte) corte = i + marca.length - 1;
+  let actual = "";
+  for (const frase of enFrases(texto)) {
+    if (actual && actual.length + frase.length + 1 > LARGO_TROZO) {
+      trozos.push(actual.trim());
+      actual = "";
     }
-    if (corte < 0) corte = ventana.lastIndexOf(" ", LARGO_TROZO);
-    if (corte < 0) corte = LARGO_TROZO;
-    trozos.push(resto.slice(0, corte + 1).trim());
-    resto = resto.slice(corte + 1).trim();
+    actual = actual ? actual + " " + frase : frase;
   }
-  if (resto) trozos.push(resto);
-  return trozos;
+  if (actual.trim()) trozos.push(actual.trim());
+  return trozos.length ? trozos : [texto];
 }
-
-/**
- * Cuánto se le deja "pensar" al modelo antes de escribir. Medido el 2026-09-23 contra el proxy
- * real, y es el compromiso central de este archivo:
- *   · razonamiento BAJO → 1,9 s, pero **27/33** en las frases con autocorrección, y los errores
- *     son graves: dejó "brazo derecho" donde el médico corrigió a izquierdo, y "30 años" donde
- *     dijo "treinta, mentira, treinta y dos". Inaceptable en una historia clínica.
- *   · razonamiento MEDIO → **32-33/33**, y con el techo de salida en 3.000 cuesta apenas 2,2 s
- *     (con el techo en 8.000 el modelo se estiraba hasta 20 s: ver MAX_OUTPUT_TOKENS).
- *
- * Se probó también decidirlo por texto (bajo si no hay señales de corrección), y daba lo mismo en
- * tiempo. Se descartó: manda la calidad, y esa lista de señales es una apuesta sobre cómo habla el
- * médico — basta que diga "corrección" o "más bien" para que el atajo falle justo donde importa.
- */
-const ESFUERZO_POR_DEFECTO = "medium";
 
 interface Respuesta {
   ok: boolean;
@@ -213,7 +219,8 @@ async function llamar(
       json_schema: { name: "transcription", strict: true, schema: SCHEMA },
     };
   }
-  payload.reasoning_effort = esfuerzo ?? route.reasoningEffort ?? ESFUERZO_POR_DEFECTO;
+  const razonamiento = esfuerzo ?? route.reasoningEffort;
+  if (razonamiento) payload.reasoning_effort = razonamiento;
   // Lo que el proveedor necesite además del estándar de OpenAI (OpenRouter: qué servidor usar).
   if (route.extraBody) Object.assign(payload, route.extraBody);
 
@@ -268,7 +275,17 @@ async function llamar(
       // Un trozo formateado con razonamiento bajo es peor que uno con razonamiento medio, pero
       // muchísimo mejor que el texto crudo, que es la alternativa real aquí.
       console.warn(`${route.provider} se quedó corto; se repite el trozo sin razonar tanto`);
-      return llamar(route, trozo, systemPrompt, limite, strict, TECHO_AMPLIO, "low");
+      // Si el proveedor no razona, el segundo intento solo lleva más cupo: no hay bucle del que
+      // salir y mandarle `reasoning_effort` rompería la petición.
+      return llamar(
+        route,
+        trozo,
+        systemPrompt,
+        limite,
+        strict,
+        TECHO_AMPLIO,
+        route.reasoningEffort ? "low" : undefined,
+      );
     }
     console.error(`${route.provider} truncó la respuesta: el trozo no cabe ni en el techo amplio`);
     return { ok: false, code: "truncated", status: 502, tokensIn, tokensOut };

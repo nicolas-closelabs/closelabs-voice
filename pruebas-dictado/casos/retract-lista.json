@@ -1,0 +1,26 @@
+{
+  "id": "retract-lista",
+  "descripcion": "Se corrige una indicación dentro de una lista de egreso",
+  "origen": "dictado real",
+  "texto": "Plan, C de Egreso con las siguientes indicaciones, continuar los Artan 50 mg cada 12 horas, aumentar metformina a 1000 mg cada 12 horas, mentira mantener 850 cada 8 horas, y agregar empagliflozina 10 mg al día.",
+  "comprobaciones": [
+    {
+      "tipo": "contiene",
+      "valor": "850"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "1000"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "mentira"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "empagliflozina"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "trampa-palabras",
+  "descripcion": "«mentira» y «perdón» como parte del contenido, no como corrección",
+  "origen": "inventado",
+  "texto": "La madre refiere que el niño dice mentiras en el colegio. Le pedí perdón a la paciente por la demora. El paciente ingresó en coma y tiene un punto de sutura en la frente.",
+  "comprobaciones": [
+    {
+      "tipo": "contiene",
+      "valor": "mentiras"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "perdón"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "coma"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "punto de sutura"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.2
+    }
+  ]
+}
