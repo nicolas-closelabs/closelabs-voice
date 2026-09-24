@@ -250,6 +250,36 @@ hablada ("mentira", "me equivoqué") es poco fiable — acierta a veces y otras 
 el trozo de 900 a 500 caracteres: no mejoró y metió un timeout. Siguiente paso real: medir un
 modelo SIN razonamiento (gpt-4o-mini) con estos mismos dictados reales.
 
+## 2026-09-24 — Se deja de afinar a ojo: banco de pruebas, prompt en la base y gpt-4o-mini
+
+Tras un día entero probando cosas sueltas (troceado, techos de salida, niveles de razonamiento,
+tres modelos) se paró y se montó lo que faltaba: una forma de medir. `pruebas-dictado/` corre 9
+dictados fijos × 3 repeticiones contra `/format` y comprueba lo que de verdad importa —que no se
+pierda ni cambie contenido—, no si el texto se ve bonito.
+
+Con la misma vara, mismo prompt y mismo troceado:
+
+| Configuración | Comprobaciones sin un fallo | Mediana | Dictado real de 3 min |
+|---|---|---|---|
+| openrouter / gpt-oss-20b | 35/42 | 2,1 s | retractación 0/3, 9-10 s |
+| openai / gpt-4.1-mini | 40/42 | 1,6 s | 3/3 |
+| openai / gpt-4o-mini | 40/42 | 1,7 s | 3/3 |
+| **openai / gpt-4o-mini + ejemplo de enumeración en el prompt** | **42/42** | 1,7 s | 3/3 |
+
+Quedó `format_provider = openai` con openrouter y groq de respaldo. Cuesta lo mismo que antes
+(~$0,00037 por dictado) y es 5 veces más rápido en dictados largos.
+
+**Dos cosas que hay que conservar de este día:**
+1. **El prompt se mudó a `app_config.format_prompt`.** El ejemplo que subió el banco de 40 a 42
+   habría necesitado un instalador nuevo; ahora llegó a todos en un minuto. Verificado mandando el
+   prompt VIEJO desde el cliente: el resultado siguió siendo 42/42.
+2. **Los fallos son intermitentes.** El dictado de 6 minutos acertó 5 de 6 entre dos pasadas. Una
+   sola pasada habría dicho "perfecto". Por eso el banco repite.
+
+**Lo que sigue:** más casos en el banco (otras especialidades, dictados capturados en crudo — el
+README dice cómo) y un segundo banco para la capa de VOZ, que hoy no se mide: el crudo de los
+dictados de 3+ minutos trae palabras cortadas ("tensi arterial") y eso viene de Whisper.
+
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
 **Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq

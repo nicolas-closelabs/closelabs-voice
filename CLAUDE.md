@@ -346,9 +346,20 @@ el motor GGML) + Xcode CLT (macOS). cmake se puede instalar con `brew install cm
 secas produce el instalador final. Las llaves viven en los secretos de Supabase y el proveedor se
 elige en la tabla `app_config` (columnas `transcribe_provider` / `format_provider`).
 
+**El prompt de limpieza vive en `app_config.format_prompt` (desde 2026-09-24).** La app manda el
+suyo, pero el proxy usa el de la base si está puesto: afinar el prompt ya NO exige instaladores.
+⚠️ Al tocarlo, correr `bun pruebas-dictado/correr.ts` antes y después y comparar — un ejemplo
+nuevo arregla un caso y puede romper otro, y sin el banco no hay forma de saberlo.
+
+**Banco de pruebas del dictado: `pruebas-dictado/`.** 9 dictados fijos (dos de ellos reales, de
+3 y 6 minutos) × 3 repeticiones, comprobando que no se pierda ningún número, que los términos
+clínicos sigan ahí, que el texto llegue al final y que no sobreviva lo retractado. Ningún cambio
+en el formateo (modelo, prompt, troceado) se da por bueno sin pasarlo. Los fallos de estos
+modelos son INTERMITENTES: por eso 3 repeticiones, y un 2/3 cuenta como fallo.
+
 **Respaldo automático (desde 2026-09-21):** cada tipo tiene una cadena ORDENADA en `app_config`
 (`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir groq → deepinfra → openai; formatear
-**openrouter → groq → deepinfra** (OpenRouter sirve el mismo modelo a través de Groq, sin el techo
+**openai (gpt-4o-mini) → openrouter → groq** (OpenRouter sirve el mismo modelo a través de Groq, sin el techo
 de tokens/minuto del plan gratis; `providers.extra_body` dice qué servidor debe usar). Si el principal falla, el proxy prueba el siguiente en el mismo dictado. ⚠️ Al
 tocar `_shared/transcribe.ts` o `_shared/format.ts`, correr antes
 `bun supabase/functions/_tests/respaldo.test.ts`. ⚠️ Desplegar SIEMPRE la migración antes que el

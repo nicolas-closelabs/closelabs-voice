@@ -58,6 +58,8 @@ interface RoutingConfig {
   transcribeFallbacks: string[];
   formatFallbacks: string[];
   dailyQuota: number;
+  /** Prompt de limpieza guardado en la base; manda sobre el que envía la app. */
+  formatPrompt: string | null;
   providers: Record<string, ProviderRow>;
 }
 
@@ -84,9 +86,10 @@ async function routingConfig(): Promise<RoutingConfig> {
       transcribe_fallbacks: string[] | null;
       format_fallbacks: string[] | null;
       daily_quota: number;
+      format_prompt: string | null;
     }>(
       "app_config",
-      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota&limit=1",
+      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota,format_prompt&limit=1",
     ),
     select<ProviderRow>(
       "providers",
@@ -105,6 +108,7 @@ async function routingConfig(): Promise<RoutingConfig> {
     transcribeFallbacks: row.transcribe_fallbacks ?? [],
     formatFallbacks: row.format_fallbacks ?? [],
     dailyQuota: row.daily_quota,
+    formatPrompt: row.format_prompt,
     providers,
   };
   cache = { at: Date.now(), cfg };
@@ -191,4 +195,15 @@ export async function loadAppConfig(): Promise<AppConfig> {
     downloadUrl: data.download_url,
     tutorialUrl: data.tutorial_url,
   };
+}
+
+/** El prompt de limpieza que manda: el de la base si está puesto, si no el que envió la app. */
+export async function promptDeFormateo(delCliente: string): Promise<string> {
+  try {
+    const cfg = await routingConfig();
+    const guardado = cfg.formatPrompt?.trim();
+    return guardado ? guardado : delCliente;
+  } catch {
+    return delCliente;
+  }
 }

@@ -4,7 +4,7 @@
 // aparece en ningún mensaje de error. Solo se cuenta cuántos tokens fueron.
 
 import { fetchWithTimeout, isAbort, classifyProviderError } from "./http.ts";
-import { resolveRoutes, type Route } from "./routing.ts";
+import { promptDeFormateo, resolveRoutes, type Route } from "./routing.ts";
 import { logUsage, type ErrorCode } from "./usage.ts";
 
 /**
@@ -77,6 +77,10 @@ export async function formatText(
   if (!text.trim() || !systemPrompt.trim()) {
     return { ok: false, code: "bad_request", status: 400 };
   }
+
+  // El prompt manda desde la base: así afinarlo no exige instaladores nuevos (ver la migración
+  // 20260924000001). Si la columna está vacía, se usa el que envió la app.
+  systemPrompt = await promptDeFormateo(systemPrompt);
 
   let routes: Route[];
   try {
