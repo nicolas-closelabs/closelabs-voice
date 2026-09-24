@@ -229,10 +229,10 @@ cambia la URL.
 - [ ] **Firma Windows con SSL.com IV + eSigner** a nombre de Nicolás (~$309/año). Luz verde desde
   2026-09-21; va primero porque casi todos los médicos usan Windows.
 - [ ] Firma + notarización macOS (Apple Developer, persona natural, $99/año).
-  ⚠️ **Al firmar, BORRAR el aviso "¿Ya aparece encendido? Apágalo y vuelve a encenderlo"**
-  (`GuiaAccesibilidadMac`, prop `actualizando`): existe solo porque sin firma el permiso de
-  Accesibilidad va atado al hash del binario y se cae en cada versión. Con Developer ID el permiso
-  sobrevive y el aviso pasa a ser MENTIRA.
+  ⚠️ **Mientras no esté firmada, el permiso de Accesibilidad se cae en CADA versión nueva** (va
+  atado al hash del binario): el interruptor se ve encendido pero no vale, y hay que apagarlo y
+  encenderlo. Se decidió NO ponerlo en la app (2026-09-23: es ruido para el médico nuevo, que es
+  la mayoría); a los testers se les avisa por fuera. Con Developer ID desaparece solo.
   Todo el detalle en `FIRMA-Y-DISTRIBUCION.md`.
 - [ ] Actualización automática: clave del updater, `latest.json` en un host público, "Actualización lista, reinicia".
 - [ ] Build Windows probado de punta a punta.

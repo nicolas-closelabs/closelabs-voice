@@ -102,7 +102,7 @@ const AccessibilityPermissions: React.FC = () => {
       </div>
       {/* Mismo apoyo visual que en el onboarding: cuando ya se abrió Ajustes del Sistema, el
           médico está frente a una ventana llena de opciones sin saber qué tocar. */}
-      {permissionState === "verify" && <GuiaAccesibilidadMac actualizando />}
+      {permissionState === "verify" && <GuiaAccesibilidadMac />}
     </div>
   );
 };

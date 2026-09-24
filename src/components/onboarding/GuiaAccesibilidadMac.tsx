@@ -8,6 +8,12 @@ import React from "react";
  * Sistema, pero al otro lado aparece una ventana llena de opciones y nadie le dijo QUÉ tocar.
  * Antes solo decía "Conceder permiso" y el médico se quedaba mirando la pantalla del sistema.
  *
+ * ⚠️ Aquí NO va el caso de quien actualiza (tras instalar una versión nueva el interruptor se ve
+ * encendido pero ya no vale, porque sin firma el permiso queda atado al hash del binario). Se
+ * probó y se quitó: se lo comía todo el mundo, incluido el médico que instala por primera vez, y
+ * es ruido en la pantalla donde menos sobra. Cuando firmemos con Developer ID el problema
+ * desaparece solo; mientras tanto, a los testers se les avisa por fuera de la app.
+ *
  * El dibujo es DELIBERADAMENTE genérico: no imita la interfaz de Apple ni usa sus íconos; solo
  * reproduce la forma que el médico va a ver (una lista con el nombre de la app y un interruptor)
  * para que reconozca dónde está parado.
@@ -19,13 +25,7 @@ const PASOS = [
   "Toca el interruptor para encenderlo.",
 ];
 
-/**
- * `actualizando`: solo quien YA usaba la app necesita el aviso de apagar y volver a encender. A un
- * médico nuevo no le dice nada y le mete ruido justo donde menos sobra.
- */
-export const GuiaAccesibilidadMac: React.FC<{ actualizando?: boolean }> = ({
-  actualizando = false,
-}) => (
+export const GuiaAccesibilidadMac: React.FC = () => (
   <div className="w-full rounded-2xl border border-brand-border bg-brand-surface p-4 flex flex-col gap-3">
     <p className="text-[15px] font-semibold text-brand-text">
       Así se ve en tu Mac:
@@ -49,17 +49,6 @@ export const GuiaAccesibilidadMac: React.FC<{ actualizando?: boolean }> = ({
       Cuando lo enciendas, vuelve aquí; esta pantalla sigue sola.
     </p>
 
-    {/* El permiso de macOS va atado a la versión exacta del programa: tras actualizar, el
-        interruptor se ve encendido pero ya no vale. Sin el aviso, el médico jura que ya lo dio y
-        se queda trancado. ⚠️ Solo se le muestra a quien ya usaba la app: al recién llegado le
-        sobra. ⚠️ AL FIRMAR CON DEVELOPER ID ESTO SE BORRA: el permiso sobrevivirá a las
-        actualizaciones y el aviso pasará a ser mentira. */}
-    {actualizando && (
-      <p className="text-[13px] leading-snug text-brand-text-muted">
-        <strong className="text-brand-text">¿Ya aparece encendido?</strong> Apágalo y vuelve a
-        encenderlo. Al instalar una versión nueva, el permiso anterior deja de servir.
-      </p>
-    )}
   </div>
 );
 
