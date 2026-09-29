@@ -1,0 +1,38 @@
+{
+  "id": "real-2-2b-examen",
+  "descripcion": "Examen físico y paraclínicos de rodilla (1.087 caracteres)",
+  "origen": "dictado real",
+  "fuente": "Audio 2.2 parte 2 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
+  "texto": "Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientada, hidratada, afebril. Peso 78 kilos, talla 1.56, índice de masa corporal 32. Tensión arterial 140/85, frecuencia cardíaca 76 por minuto, frecuencia respiratoria 16 por minuto, saturación 97% al ambiente, cardiopulmonar sin alteraciones, ruidos cardíacos rítmicos sin soplos, murmullo vesicular conservado. Abdomen blando, no doloroso. En extremidades, rodilla derecha con crepitación a la movilización, dolor en la interlínea articular medial, sin derrame, con limitación de los últimos grados de flexión. Rodilla izquierda con crepitación leve y sin dolor a la palpación. Marcha antálgica, pulsos periféricos presentes y simétricos sin edemas. Paraclínicos previos que trae la paciente. Hemograma normal, velocidad de sedimentación 24, proteína C reactiva negativa, glicemia 98, creatinina 0.8, radiografía de rodillas en proyección anteroposterior de pie que muestran disminución del espacio articular medial bilateral de predominio derecho, con osteofitos marginales y esclerosis subcondral.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "crepitación",
+        "interlínea",
+        "antálgica",
+        "hemograma",
+        "osteofitos",
+        "esclerosis subcondral"
+      ]
+    },
+    {
+      "tipo": "termina_en",
+      "valor": "subcondral"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.2
+    }
+  ]
+}

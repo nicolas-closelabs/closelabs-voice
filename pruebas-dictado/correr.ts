@@ -41,6 +41,9 @@ interface Caso {
  */
 const SOLO_FORMA = new Set(["sin_muletillas", "formato_basico"]);
 
+/** `a|b`: basta con que aparezca una de las variantes (misma palabra, otra grafía válida). */
+const tiene = (s: string, valor: string) => valor.toLowerCase().split("|").some((v) => s.includes(v));
+
 const numeros = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
 
 function evaluar(c: Comprobacion, entrada: string, salida: string): { ok: boolean; detalle: string } {
@@ -63,15 +66,15 @@ function evaluar(c: Comprobacion, entrada: string, salida: string): { ok: boolea
       };
     }
     case "conserva": {
-      const faltan = c.valores.filter((v) => !s.includes(v.toLowerCase()));
+      const faltan = c.valores.filter((v) => !tiene(s, v));
       return { ok: faltan.length === 0, detalle: faltan.length ? `faltan ${faltan.join(", ")}` : "" };
     }
     case "contiene":
-      return { ok: s.includes(c.valor.toLowerCase()), detalle: c.valor };
+      return { ok: tiene(s, c.valor), detalle: c.valor };
     case "no_contiene":
-      return { ok: !s.includes(c.valor.toLowerCase()), detalle: c.valor };
+      return { ok: !tiene(s, c.valor), detalle: c.valor };
     case "termina_en":
-      return { ok: s.includes(c.valor.toLowerCase()), detalle: `no llegó a "${c.valor}"` };
+      return { ok: tiene(s, c.valor), detalle: `no llegó a "${c.valor}"` };
     case "sin_muletillas":
       return { ok: !/\b(eh|em|mmm|este)\b\s*,?/i.test(salida), detalle: "quedaron muletillas" };
     case "formato_basico": {

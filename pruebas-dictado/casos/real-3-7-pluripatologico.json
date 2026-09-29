@@ -1,0 +1,51 @@
+{
+  "id": "real-3-7-pluripatologico",
+  "descripcion": "Pluripatológico: cinco medicamentos, decimales y \"nefrología, me equivoqué, endocrinología\"",
+  "origen": "dictado real",
+  "fuente": "Audio 3.7 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
+  "texto": "Paciente masculino de 73 años, pensionado, que asiste a control de medicina interna. Antecedentes de diabetes mellitus tipo 2 de 15 años de evolución, hipertensión arterial de 20 años, enfermedad renal crónica estadio 3A, fibrilación auricular permanente y dislipidemia. Medicamentos actuales: metformina 850 miligramos cada 12 horas, empagliflozina 10 miligramos al día, losartán 50 miligramos cada 12 horas, apixaban 5 miligramos cada 12 horas y atorvastatina 40 miligramos en la noche. Refiere buena adherencia al tratamiento, niega hipoglicemias, niega sangrados, niega disnea, niega edemas, niega palpitaciones. Camina 30 minutos diarios. Al examen físico, tensión arterial 138/78, frecuencia cardíaca 84 por minuto irregular, peso 79 kilos, saturación 96%, ruidos cardíacos arrítmicos sin soplos, murmullo vesicular conservado, abdomen blando, extremidades sin edemas, pulsos pedios presentes. Paraclínicos recientes: hemoglobina glucosilada 7.2, glicemia en ayunas 134, creatinina 1.4 con tasa de filtración glomerular estimada de 52, potasio 4.1, colesterol LDL 78, relación albúminuria-creatininuria de 180. Análisis: paciente pluripatológico con adecuado control glicémico y lipídico, con enfermedad renal crónica estable y albúminuria persistente. Anticoagulado por fibrilación auricular sin eventos hemorrágicos. Plan: continuar el mismo esquema de medicamentos, se remite a nefrología, me equivoqué, a endocrinología para ajuste de manejo de la diabetes y se solicita valoración por oftalmología por tamizaje de retinopatía diabética. Se solicitan paraclínicos de control en tres meses con hemoglobina glucosilada, creatinina, potasio y relación albúminuria y creatininuria. Se refuerzan recomendaciones de dieta, baja en sodio y actividad física. Control en tres meses. Paciente y su hijo comprenden y lo aceptan.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "metformina",
+        "empagliflozina",
+        "losartán|losartan",
+        "apixaban|apixabán",
+        "atorvastatina",
+        "filtración glomerular",
+        "oftalmología"
+      ]
+    },
+    {
+      "tipo": "contiene",
+      "valor": "endocrinolog"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "nefrolog"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "me equivoqué"
+    },
+    {
+      "tipo": "termina_en",
+      "valor": "comprenden"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.2
+    }
+  ]
+}

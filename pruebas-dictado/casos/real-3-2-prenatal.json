@@ -1,0 +1,53 @@
+{
+  "id": "real-3-2-prenatal",
+  "descripcion": "Control prenatal: siete negativos y \"28 semanas, perdón, de 29\"",
+  "origen": "dictado real",
+  "fuente": "Audio 3.2 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
+  "texto": "Paciente femenina de 27 años, gestante, que asiste a control prenatal. Fecha de última menstruación: el 14 de marzo. Edad gestacional de 28 semanas por fecha de última menstruación, confiable, concordante con ecografía del primer trimestre. Primera gestación, sin abortos previos, refiere movimientos fetales presentes y percibidas diariamente. Niega sangrado vaginal, niega salida de líquido, niega contracciones, niega cefalea, niega fosfenos, niega tinnitus, niega epigastralgia. Al examen físico, tensión arterial 110/70, frecuencia cardíaca 82 por minuto, peso 68 kilos con ganancia de 9 kilos en el embarazo, altura uterina 27 centímetros, feto único, situación longitudinal, presenta cefálica, dorso a la izquierda, fetocardia de 145 latidos por minuto, edema de miembros inferiores grado 1, reflejos normales. Para clínicos del segundo trimestre, hemoglobina 11.8, prueba de tolerancia a la glucosa normal, serologías no reactivas, urocultivos negativo, análisis, gestante de 28 semanas, perdón, de 29 semanas, con embarazo de curso normal, sin signos de alarma. Plan, continuar ácido fólico 400 microgramos al día y sulfato ferroso 60 miligramos al día. Se solicita ecografía de crecimiento para las 32 semanas. Se explican signos de alarma obstétricos y se indica control en 3 semanas. Paciente comprende y acepta.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "sangrado vaginal",
+        "salida de líquido",
+        "contracciones",
+        "cefalea",
+        "fosfenos",
+        "tinnitus|tinitus",
+        "epigastralgia",
+        "ácido fólico",
+        "sulfato ferroso"
+      ]
+    },
+    {
+      "tipo": "contiene",
+      "valor": "niega"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "29 semanas"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "28 semanas"
+    },
+    {
+      "tipo": "no_contiene",
+      "valor": "perdón"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.2
+    }
+  ]
+}

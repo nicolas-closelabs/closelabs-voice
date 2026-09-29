@@ -1,0 +1,30 @@
+{
+  "id": "real-1-3-laboratorios",
+  "descripcion": "Laboratorios seguidos, con miles y decimales",
+  "origen": "dictado real",
+  "fuente": "Audio 1.3 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
+  "texto": "Glicemia 132, creatinina 0.9, nitrógeno ureico 18, hemoglobina 14.2, hematocrito 42, plaquetas 240,000, leucocitos 7,200, tensión arterial 130/80, frecuencia cardíaca 78, saturación 97%.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "hematocrito",
+        "saturación"
+      ]
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.25
+    }
+  ]
+}

@@ -167,11 +167,35 @@ const LARGO_TROZO = 400;
 /** Por debajo de esto no vale la pena partir: cabe entero en lo que el modelo atiende bien. */
 const SIN_PARTIR = 600;
 
-/** Parte el texto en frases, conservando el signo final. */
+/**
+ * Parte el texto en frases, conservando el signo final. Un signo solo corta si lo sigue un espacio
+ * o el final: el punto de "7.2", de "1.56" o de "maria.lopez@clinica.co" no es final de frase.
+ *
+ * ⚠️ BUG CORREGIDO el 2026-09-29, y por qué se escribe así: la versión anterior era
+ * `texto.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g)`, y `match` con /g SALTA lo que no encaja. Una
+ * frase con un decimal no encajaba, así que se descartaba desde su comienzo hasta el número: en un
+ * dictado largo desaparecían, sin aviso, "Signos vitales al ingreso: tensión arterial 100/60,
+ * frecuencia cardíaca 110…" o "hemoglobina glucosilada 7.2, glicemia en ayunas 134, creatinina
+ * 1.4". Estuvo en producción desde el 2026-09-23; casi no se notaba porque Groq rara vez escribía
+ * decimales, y saltó al pasar a OpenAI, que sí los escribe. Aquí se recorre el texto por posiciones
+ * y el resto se agrega siempre: nada puede quedarse fuera.
+ */
 function enFrases(texto: string): string[] {
-  const frases = texto.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g);
-  return frases ? frases.map((f) => f.trim()).filter(Boolean) : [texto];
+  const frases: string[] = [];
+  let desde = 0;
+  for (const m of texto.matchAll(/[.!?]+(?=\s|$)/g)) {
+    const hasta = (m.index ?? 0) + m[0].length;
+    const frase = texto.slice(desde, hasta).trim();
+    if (frase) frases.push(frase);
+    desde = hasta;
+  }
+  const resto = texto.slice(desde).trim();
+  if (resto) frases.push(resto);
+  return frases.length ? frases : [texto];
 }
+
+/** El texto sin diferencias de espacios: para comprobar que los trozos no perdieron nada. */
+const sinEspacios = (s: string) => s.replace(/\s+/g, "");
 
 /**
  * Trozos de ~400 caracteres que SIEMPRE terminan en final de frase. Una frase nunca se parte por
@@ -191,7 +215,15 @@ export function partirDictado(texto: string): string[] {
     actual = actual ? actual + " " + frase : frase;
   }
   if (actual.trim()) trozos.push(actual.trim());
-  return trozos.length ? trozos : [texto];
+
+  // Guarda: los trozos juntos TIENEN que ser el dictado entero. Si algún día el corte vuelve a
+  // perder algo —otra forma de puntuar, otro idioma—, se formatea de una sola vez: más lento y un
+  // poco peor, pero nunca un dictado con un pedazo menos que nadie ve.
+  if (!trozos.length || sinEspacios(trozos.join("")) !== sinEspacios(texto)) {
+    console.error("el corte del dictado no reconstruye el texto; se formatea entero");
+    return [texto];
+  }
+  return trozos;
 }
 
 interface Respuesta {

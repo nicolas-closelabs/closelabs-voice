@@ -1,0 +1,35 @@
+{
+  "id": "real-1-5-medicamentos",
+  "descripcion": "Siete medicamentos dictados rápido, con microgramos",
+  "origen": "dictado real",
+  "fuente": "Audio 1.5 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
+  "texto": "Se formula Enalapril 20 mg cada 12 horas, Hidroclorotiazida 25 mg al día, Espironolactona 25 mg al día, Levotiroxina 50 mcg en ayunas, Resubastatina 20 mg en la noche, Clopidogrel 75 mg al día y Omeprazol 20 mg antes del desayuno.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "enalapril",
+        "hidroclorotiazida",
+        "espironolactona",
+        "levotiroxina",
+        "clopidogrel",
+        "omeprazol",
+        "mcg|microgramos"
+      ]
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.25
+    }
+  ]
+}

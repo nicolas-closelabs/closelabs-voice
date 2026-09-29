@@ -1,0 +1,40 @@
+{
+  "id": "real-3-6-urgencias",
+  "descripcion": "Nota rápida de urgencias con signos vitales",
+  "origen": "dictado real",
+  "fuente": "Audio 3.6 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
+  "texto": "Paciente masculino de 41 años, triaje 2, que ingresa por dolor abdominal de 24 horas de evolución, localizado inicialmente en epigastrio y que migró a fosa ilíaca derecha, asociado a náuseas, un episodio emético y fiebre no cuantificada. Signos vitales al ingreso: tensión arterial 100/60, frecuencia cardíaca 110 por minuto, frecuencia respiratoria 20 por minuto, temperatura 38.2, saturación 96%, abdomen con dolor a la palpación en fosa ilíaca derecha, Blumberg positivo, McBurney positivo, ruidos intestinales disminuidos. Se solicita hemograma, proteína C reactiva, uroanálisis y ecografía abdominal. Se inicia hidratación con lactato de Ringer 1000 mililitros, dipirona 1 gramo intravenoso y se deja en nada vía oral. Se solicita valoración prioritaria por cirugía general por sospecha de apendicitis aguda.",
+  "comprobaciones": [
+    {
+      "tipo": "numeros_intactos"
+    },
+    {
+      "tipo": "formato_basico"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "epigastrio",
+        "fosa ilíaca|fosa iliaca",
+        "emético",
+        "blumberg",
+        "mcburney",
+        "lactato de ringer",
+        "dipirona",
+        "apendicitis"
+      ]
+    },
+    {
+      "tipo": "termina_en",
+      "valor": "apendicitis aguda"
+    },
+    {
+      "tipo": "longitud",
+      "min": 0.85,
+      "max": 1.2
+    }
+  ]
+}

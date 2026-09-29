@@ -160,5 +160,27 @@ await caso("truncado no se confunde con empty_result", { groq: "truncado", deepi
   );
 }
 
+// --- Regresión 2026-09-29: el corte borraba las frases con decimales ---------------------------
+{
+  const { partirDictado } = await import("../_shared/format.ts");
+  // Lo que dicta un médico de verdad: decimales, tensiones con barra, un correo y "Dr.".
+  const dictado = [
+    "Paciente de 73 años con enfermedad renal crónica.",
+    "Signos vitales al ingreso: tensión arterial 100/60, frecuencia cardíaca 110, temperatura 38.2, saturación 96%.",
+    "Paraclínicos: hemoglobina glucosilada 7.2, creatinina 1.4 con filtración de 52, potasio 4.1.",
+    "Talla 1.56, peso 78 kilos.",
+    "Se remite al Dr. Pérez, correo maria.lopez@clinica.co, para valoración",
+  ].join(" ").repeat(3);
+  const trozos = partirDictado(dictado);
+  const integro = trozos.join("").replace(/\s+/g, "") === dictado.replace(/\s+/g, "");
+  const conDecimales = ["7.2", "1.4", "4.1", "38.2", "1.56", "100/60"].every((n) => trozos.join(" ").includes(n));
+  if (!integro || !conDecimales || trozos.length < 2) fallas++;
+  console.log(
+    integro && conDecimales && trozos.length > 1
+      ? `✅ dictado con decimales, barras y correo: ${trozos.length} trozos y no se pierde nada`
+      : `❌ el corte PIERDE texto con decimales (${trozos.length} trozos, íntegro=${integro})`,
+  );
+}
+
 console.log(fallas ? `\n❌ ${fallas} caso(s) fallaron` : "\n✅ todos los casos pasan");
 process.exit(fallas ? 1 : 0);
