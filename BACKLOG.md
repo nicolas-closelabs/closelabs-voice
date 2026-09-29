@@ -342,6 +342,28 @@ el prompt es ~86% del costo): se ve en el panel de uso de OpenAI, `usage_events`
 - Por OpenRouter, fijar el servidor: de los 7 que sirven luna, Azure y Bedrock no aceptan
   `response_format`, y `openai/flex` es diferido.
 
+## 2026-09-29 — El corte borraba frases con decimales, y luna pasa a formatear
+
+**Bug grave, encontrado por el banco con casos reales:** `enFrases` (`_shared/format.ts`) usaba
+`texto.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g)`, que SALTA lo que no encaja. Una frase con "7.2" o
+"38.2" no encajaba, y en todo dictado de más de 600 caracteres (los que se trocean) se perdía desde
+el comienzo de esa frase hasta el número: "Signos vitales al ingreso: tensión arterial 100/60,
+frecuencia cardíaca 110…", "hemoglobina glucosilada 7.2, glicemia en ayunas 134, creatinina 1.4".
+Desde el 2026-09-23. Casi no se veía porque Groq rara vez escribía decimales; saltó en cuanto
+transcribió OpenAI. Arreglo: corte por posiciones + guarda que exige que los trozos reconstruyan el
+texto. Prueba de regresión que falla en el código viejo. ⚠️ Dictados largos con decimales hechos
+entre el 23 y el 29 pudieron perder un tramo; no hay forma de saber cuáles.
+
+**Prueba ácida — ganó gpt-6-luna** (regla fijada el 2026-09-24): 0 fallos de contenido contra 4,
+dictado de 6 min 5,4 s contra 2,4 s. Detalle en `pruebas-dictado/README.md` y la migración
+20260929000005. Lo que gpt-4o-mini hacía peor y no se veía: ignoraba un "mentira" 10 de 10 cuando
+la corrección cambiaba la dosis de un esquema ("25 mg por una semana, mentira, 50 mg").
+
+**Otros hallazgos del día:**
+- El banco agota el cupo diario del equipo (500 eventos ≈ 250 dictados). Una prueba ácida entera lo
+  gastó y dejó el Mac sin dictar. Hace falta un equipo de pruebas propio.
+- `\b` de JavaScript no conoce tildes: "emético" contaba como la muletilla "em".
+
 ## 2026-09-29 — La voz perdía contenido antes del formateo: se transcribe con OpenAI
 
 Nicolás grabó el guion (`pruebas-dictado/GUION-GRABACIONES.md`) con la limpieza apagada. Contra el

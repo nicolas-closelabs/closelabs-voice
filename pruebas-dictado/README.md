@@ -71,7 +71,23 @@ Para capturar un crudo de verdad:
 
 Nunca se usan dictados de pacientes reales: los casos son inventados, aunque hablen como un médico.
 
-## Prueba ácida: gpt-4o-mini contra gpt-6-luna (PENDIENTE — después de grabar el guion)
+## Prueba ácida: gpt-4o-mini contra gpt-6-luna — HECHA el 2026-09-29, ganó luna
+
+| | gpt-4o-mini | gpt-6-luna |
+|---|---|---|
+| Fallos de contenido (banco × 10 + 6 min × 30) | 4 (1 de 150 + 3 de 30) | **0** |
+| Dictado de 6 min, mediana / peor | 2,4 / 4,5 s | 5,4 / 14,2 s |
+
+Cumple las tres condiciones de abajo. Ajustes hechos al medir, todos a la vista en la migración
+20260929000005: separadores de miles y decimales cuentan como el mismo número; el caso de
+sertralina se sacó por ambiguo y se reescribió con la regla del producto; la primera corrida de
+luna se descartó porque agotó el cupo diario del equipo a mitad de camino.
+
+⚠️ **Correr el banco gasta el cupo diario del equipo** (500 eventos; transcribir y formatear cuentan
+aparte). Una prueba ácida completa lo agota y deja el Mac sin dictar hasta las 00:00 UTC. Pendiente:
+un equipo de pruebas propio para el banco.
+
+### El protocolo, tal como se fijó
 
 **Por qué:** en el único defecto abierto (el dictado de 6 min que deja las dos dosis de una
 corrección), luna salió limpio 21 de 21 y gpt-4o-mini falló 2 de 21. Puede ser suerte (~11%).

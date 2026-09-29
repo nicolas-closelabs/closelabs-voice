@@ -216,11 +216,14 @@ cambia la URL.
   (`pruebas-dictado/voz/`): 97 de 446 datos clínicos se perdían en la voz, antes del formateo.
 - [x] **Transcribir con OpenAI `gpt-4o-mini-transcribe`** (2026-09-29): datos mal 8-17% → 1,6-2%,
   cero números inventados, cero tramos borrados. Groq de respaldo sin pista. Ver BACKLOG.
-- [ ] ⚠️ **Coma de miles de OpenAI** ("7,200" se lee 7,2 en Colombia): normalizar en el formateo,
-  con caso en el banco. Antes de lanzar.
+- [x] ~~Coma de miles de OpenAI~~ — Nicolás decidió que no es un problema (2026-09-29).
+- [x] **Corte del dictado que borraba frases con decimales** — corregido y desplegado (2026-09-29).
 - [ ] **Red de seguridad**: detectar tramos de audio sin texto (borrados) y avisar al médico.
 - [ ] Casos de formateo a partir de los crudos nuevos y más audios para el banco de voz.
-- [ ] **Prueba ácida gpt-4o-mini contra gpt-6-luna**, DESPUÉS de grabar el guion (para que cubra
+- [x] **Prueba ácida — ganó gpt-6-luna** (2026-09-29): 0 fallos de contenido contra 4, cerró el
+  "1 de cada 9" de la dosis del dictado de 6 min (51/51). Formatea luna desde ese día.
+- [ ] **Equipo de pruebas propio para el banco**: hoy gasta el cupo del Mac de Nicolás.
+- [x] ~~Prueba ácida gpt-4o-mini contra gpt-6-luna~~, DESPUÉS de grabar el guion (para que cubra
   las ocho especialidades). Luna no falló en 21 intentos donde gpt-4o-mini falló 2 — puede ser
   suerte. Protocolo y regla de decisión, fijada antes de ver los números, en
   `pruebas-dictado/README.md`. Si luna gana, cierra también el punto de "1 de cada 9" de arriba.

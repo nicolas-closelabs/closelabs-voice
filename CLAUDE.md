@@ -15,8 +15,16 @@
 > es ortografía de términos). Cuesta ~2 s más y ~$0,003/min. Groq sigue de respaldo, **sin pista**.
 > ⚠️ **La pista de Whisper puede reemplazar lo que dijo el médico.** No volver a meterle frases de
 > estilo largas; toda pista nueva se mide con `bun pruebas-dictado/voz/transcribir.ts`.
-> ⚠️ **OpenAI escribe los miles con coma** ("leucocitos 7,200"): en Colombia eso se lee 7,2. Lo
-> tiene que resolver el formateo — pendiente, ver ROADMAP.
+> Nicolás decidió que la coma de miles de OpenAI ("7,200") NO es un problema: no se normaliza.
+>
+> **2026-09-29 — SE FORMATEA CON `gpt-6-luna`** (directo a OpenAI, esfuerzo `low`, gpt-4o-mini de
+> primer respaldo). Ganó la prueba ácida con la regla fijada antes de medir: 0 fallos de contenido
+> contra 4, a cambio de ~3 s más en dictados largos. Ver `pruebas-dictado/README.md`.
+>
+> **2026-09-29 — BUG GRAVE CORREGIDO en el corte del dictado:** `enFrases` descartaba, en todo
+> dictado de más de 600 caracteres, las frases que tenían un decimal ("7.2", "38.2"): se perdían
+> signos vitales y laboratorios sin aviso. Estuvo desde el 2026-09-23. Ahora hay una guarda: si los
+> trozos no reconstruyen el texto, no se trocea. Ver el comentario en `format.ts`.
 
 > **SIN PUBLICAR — el techo de salida tumbaba todos los dictados largos.** `MAX_OUTPUT_TOKENS`
 > estaba en 2.000 y el modelo se quedaba sin cupo a mitad de la respuesta: devolvía **HTTP 200**
@@ -393,7 +401,7 @@ palabras cortadas y texto colado de la pista. Ningún cambio de motor de voz o d
 **Respaldo automático (desde 2026-09-21):** cada tipo tiene una cadena ORDENADA en `app_config`
 (`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir **openai (gpt-4o-mini-transcribe) → groq (sin pista) → deepinfra** (desde
 2026-09-29, medido con el banco de voz); formatear
-**openai (gpt-4o-mini) → openrouter → groq** (OpenRouter sirve el mismo modelo a través de Groq, sin el techo
+**openai-luna (gpt-6-luna, desde 2026-09-29) → openai (gpt-4o-mini) → openrouter → groq** (OpenRouter sirve el mismo modelo a través de Groq, sin el techo
 de tokens/minuto del plan gratis; `providers.extra_body` dice qué servidor debe usar). Si el principal falla, el proxy prueba el siguiente en el mismo dictado. ⚠️ Al
 tocar `_shared/transcribe.ts` o `_shared/format.ts`, correr antes
 `bun supabase/functions/_tests/respaldo.test.ts`. ⚠️ Desplegar SIEMPRE la migración antes que el
