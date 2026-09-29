@@ -1,0 +1,45 @@
+{
+  "id": "voz-3-3",
+  "titulo": "Ortopedia — trauma de rodilla (corrige el LADO)",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente masculino de veinticuatro años, futbolista aficionado, que consulta por dolor en rodilla derecha, mentira, en rodilla izquierda, de doce horas de evolución, posterior a trauma en torsión durante partido de fútbol, con apoyo del pie y giro del cuerpo, sin golpe directo. Refiere haber escuchado un chasquido al momento del trauma, con dolor inmediato e incapacidad para continuar jugando. Presenta aumento de volumen progresivo en las horas siguientes. Niega trauma previo en la misma rodilla, niega cirugías, niega antecedentes de importancia. Al examen físico: paciente en aceptables condiciones generales, marcha con claudicación y apoyo parcial. Rodilla izquierda con edema moderado, derrame articular palpable, dolor a la palpación de la interlínea medial, limitación de la flexión por dolor a ciento diez grados. Prueba de Lachman positiva, cajón anterior positivo, prueba de McMurray dolorosa en el compartimiento medial. Estabilidad en varo y valgo conservada. Pulsos distales presentes, llenado capilar menor de dos segundos, sin déficit neurológico. Análisis: paciente con trauma en torsión de rodilla izquierda, con hallazgos clínicos compatibles con lesión del ligamento cruzado anterior asociada a posible lesión meniscal medial. Plan: se solicita radiografía de rodilla izquierda en proyecciones anteroposterior y lateral para descartar lesión ósea, y resonancia magnética de rodilla izquierda. Se indica acetaminofén quinientos miligramos cada ocho horas, hielo local por veinte minutos cada seis horas, inmovilizador de rodilla y descarga con muletas. Incapacidad por cinco días, mentira por siete días. Control con resultados de imágenes en una semana. Paciente comprende y acepta.",
+  "crudo": "Paciente masculino de 24 años, futbolista aficionado que consulta por dolor en rodilla derecha, mentira en rodilla izquierda. De 12 horas de evolución, posterior a trauma en torsión durante partido de fútbol, con apoyo del pie y giro al cuerpo sin golpe directo. Refiere a haber escuchado un chasquido al momento del trauma, con dolor inmediato e incapacidad para seguir jugando. Presenta aumento de volumen progresivo en las horas siguientes, niega trauma previo en la misma rodilla, niega cirugías, niega antecedentes de importancia. Al examen físico, paciente en aceptables condiciones generales, marcha con claudicación y apoyo parcial. Rodilla izquierda con edema moderado, derrame particular palpable, dolor a la palpación de la interlínea medial, limitación de la flexión por dolor a 110 grados. Prueba de Lackman positiva caj anterior positivo prueba de McMurray dolorosa en el compartimiento medial Estabilidad en varo y valgo conservada Pulsos distales presentes llenado capilar menor de 2 segundos sin d neurol Análisis, paciente con trauma en torsión de rodilla izquierda con hallazgos clínicos, compatibles con lesión del ligamento cruzado anterior asociado a posible lesión meniscal medial. Plan, se solicita radiografía de rodilla izquierda en proyecciones antero posterior y lateral para descargar lesión ósea. Resonancia magnética de rodilla izquierda, se indica acetaminofem 500mg cada 8 horas, hielo local por 20 minutos cada 6 horas, inmovilizador de rodilla y descarga con muletas. Incapacidad por 5 días, mentira por 7 días, control con resultados de imágenes en una semana. Paciente comprende y acepta.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "derecha",
+        "izquierda",
+        "chasquido",
+        "Lachman",
+        "cajón anterior",
+        "McMurray",
+        "déficit neurológico",
+        "ligamento cruzado anterior",
+        "meniscal",
+        "descartar",
+        "resonancia",
+        "acetaminofén",
+        "muletas",
+        "mentira"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "24",
+        "12",
+        "110",
+        "2",
+        "500",
+        "8",
+        "20",
+        "6",
+        "5",
+        "7"
+      ]
+    }
+  ]
+}

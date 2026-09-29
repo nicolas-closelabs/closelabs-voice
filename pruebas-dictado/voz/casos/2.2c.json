@@ -1,0 +1,33 @@
+{
+  "id": "voz-2-2c",
+  "titulo": "La misma, parte 3: análisis y plan",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Análisis: se trata de paciente con cuadro clínico compatible con osteoartrosis de rodillas, de predominio derecho, con factores agravantes de sobrepeso y sedentarismo, sin signos de artritis inflamatoria, con paraclínicos que descartan proceso inflamatorio agudo. Plan: se indica acetaminofén un gramo cada ocho horas por siete días, mentira cada seis horas por cinco días, y se agrega diclofenaco tópico tres veces al día en la rodilla derecha. Se solicita valoración por fisiatría para terapia física con fortalecimiento de cuádriceps, se remite a nutrición para plan de reducción de peso, y se explica a la paciente la importancia de la actividad física de bajo impacto como natación o bicicleta estática. Se dan signos de alarma: aumento súbito del dolor, imposibilidad para apoyar el miembro, fiebre o enrojecimiento articular, por los cuales debe consultar. Control por consulta externa en seis semanas con los resultados de fisiatría. La paciente comprende las indicaciones y acepta el plan propuesto.",
+  "crudo": "Análisis, se trata de paciente con cuadro clínico compatible con osteoartrosis de rodillas, de predominio derecho, con factores agravantes de sobrepeso y sedentarismo. Sin signos de artritis inflamatoria, con paraclínicos que descartan proceso inflamatorio agudo. Plan, se indica acetaminofén 1 gramo cada 8 horas por 7 días, mentira, cada 6 horas por 5 días. y se agrega iclofenaco tópico 3 veces al día en la rodilla derecha. Se solicita valoración por fisiatría para terapia física con fortalecimiento de cuadriceps, se remite a nutrición para plan de reducción de peso y se explica a la paciente la importancia de la actividad física de bajo impacto como natación o bicicleta estática. Se dan signos de alarma, aumento súbito de dolor, imposibilidad para apoyar al miembro, fiebre o enrojecimiento articular por los cuales debe consultar. Control por consulta externa en 6 semanas con los resultados de fisiatría. La paciente comprende las indicaciones y acepta el plan propuesto.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "osteoartrosis",
+        "acetaminofén",
+        "diclofenaco",
+        "fisiatría",
+        "nutrición",
+        "mentira"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "1",
+        "8",
+        "7",
+        "6",
+        "5",
+        "3"
+      ]
+    }
+  ]
+}

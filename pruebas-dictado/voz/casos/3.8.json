@@ -1,0 +1,41 @@
+{
+  "id": "voz-3-8",
+  "titulo": "Oftalmología — agudeza visual",
+  "condicion": "~1 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente femenina de cuarenta y seis años que consulta por visión borrosa de cerca de un año de evolución, que dificulta la lectura y el trabajo en el computador, asociada a cefalea frontal al final del día. Niega dolor ocular, niega ojo rojo, niega fotopsias, niega miodesopsias, niega pérdida súbita de visión. Sin antecedentes oftalmológicos, usa lentes de lectura comprados en farmacia. Al examen: agudeza visual sin corrección de veinte sobre cuarenta en ojo derecho y veinte sobre treinta en ojo izquierdo, que corrige a veinte sobre veinte en ambos ojos. Presión intraocular de dieciséis milímetros de mercurio en ojo derecho y dieciocho, mentira catorce milímetros de mercurio en ojo izquierdo. Segmento anterior sin alteraciones, cristalino transparente, cámara anterior amplia. Fondo de ojo con papila de bordes definidos, excavación de cero punto tres en ambos ojos, mácula sin alteraciones, vasos de calibre conservado, retina aplicada. Análisis: presbicia asociada a astigmatismo leve, sin signos de glaucoma ni retinopatía. Plan: se formula corrección óptica con esfera menos cero punto cincuenta y cilindro menos cero punto setenta y cinco a ciento ochenta grados en ambos ojos, con adición de más uno punto veinticinco para cerca. Se recomienda descanso visual cada veinte minutos y control anual. Paciente comprende y acepta.",
+  "crudo": "Paciente femenina de 46 años que consulta por visión borrosa de cerca de un año de evolución, que dificulta la lectura y el trabajo en el computador. Asociada a cefalea frontal al final de glia. Niega dolor ocular, niega ojo rojo, niega fotopsias, niega miodesopsias, niega pérdida súbita de visión sin antecedentes oftalmológicos. Usa lentes de lectura comprada en farmacia. Al examen, agudeza visual sin corrección de 20 sobre 40 en ojo derecho y 20 sobre 30 en ojo izquierdo, que corrige a 20 sobre 20 en ambos ojos. Presión intraocular de 16 milímetros de mercurio en ojo derecho y 18, mentira, 14 milímetros de mercurio en ojo izquierdo. Segmento anterior sin alteraciones, cristalino, transparente, cámara anterior amplia. Fondo de ojo con papila de bordes definidos, excavación de 0.3 en ambos ojos. Mácula sin alteraciones, vasos de calibre conservado, retina aplicada, análisis presbicia asociada a astigmatismo leve, sin signos de glaucoma ni retinopatía. Plan, se formula corrección óptica con esfera menos 0.50 y cilindro menos 0.75 a 180 grados en ambos ojos, con adición de más de 1.25 para cerca. Se recomienda descanso visual cada 20 minutos y control anual. Paciente comprende y acepta.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "fotopsias",
+        "miodesopsias",
+        "presión intraocular",
+        "presbicia",
+        "astigmatismo",
+        "glaucoma",
+        "del día",
+        "mentira"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "46",
+        "20",
+        "40",
+        "30",
+        "16",
+        "18",
+        "14",
+        "0.3",
+        "0.50",
+        "0.75",
+        "180",
+        "1.25"
+      ]
+    }
+  ]
+}

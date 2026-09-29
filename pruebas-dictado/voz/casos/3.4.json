@@ -1,0 +1,36 @@
+{
+  "id": "voz-3-4",
+  "titulo": "Dermatología — psoriasis",
+  "condicion": "~1 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente femenina de treinta y cuatro años que consulta por lesiones en codos y rodillas de seis meses de evolución, que describe como placas rojas con escamas blancas, pruriginosas, que empeoran en épocas de estrés y mejoran parcialmente con la exposición solar. Niega compromiso de uñas, niega dolor articular, niega fiebre. Antecedente familiar de psoriasis en la madre. Al examen físico: placas eritematodescamativas bien delimitadas, de aproximadamente cuatro centímetros de diámetro, con escama gruesa de color blanco nacarado, localizadas en cara de extensión de ambos codos y ambas rodillas, que comprometen aproximadamente el tres por ciento de la superficie corporal. Signo de Auspitz positivo. Cuero cabelludo sin compromiso, uñas sin alteraciones. Análisis: cuadro clínico compatible con psoriasis en placas, de severidad leve por extensión. Plan: se formula betametasona crema, me equivoqué, hidrocortisona al uno por ciento en crema dos veces al día por cuatro semanas, emoliente con urea al diez por ciento dos veces al día de forma permanente, y se explica que no debe suspender el emoliente al mejorar las lesiones. Se recomienda evitar el rascado y manejo del estrés. Control en un mes para evaluar respuesta. Paciente comprende y acepta.",
+  "crudo": "Paciente femenina de 34 años que consulta por lesiones en codos y rodillas de 6 meses de evolución, que describe como placas rojas con escamas blancas, pruriginosas, que empeoran en épocas de estrés y mejoran parcialmente con la exposición solar. Niega compromiso de uñas, niega dolor articular, niega fiebre. Antecedente familiar de psoriasis en la madre. Al examen físico, placas eritematodescamativas bien delimitadas de aproximadamente 4 cm de diámetro, con escama gruesa de color blanco nacarado localizadas en cara de extensión de ambos codos y ambas rodillas que comprometen aproximadamente el 3% de la superficie corporal. Signo de Auspitz positivo, cuero cabellido sin compromiso, uñas sin alteraciones. Análisis, cuadro clínico compatible con psoriasis en placas de severidad leve por extensión. En el plan se formula betametosona crema, me equivoqué, hidrocortisona al 1% en crema dos veces al día por 4 semanas. Emoliente con urea al 10% dos veces al día y de forma permanente. Y se explica que no se debe suspender el emoliente al mejorar las lesiones. Se recomienda evitar el rascado y manejo del estrés. Control en un mes para evaluar respuesta. Paciente comprende y acepta.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "psoriasis",
+        "eritematodescamativas",
+        "Auspitz",
+        "cuero cabelludo",
+        "betametasona",
+        "hidrocortisona",
+        "emoliente",
+        "urea",
+        "me equivoqué"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "34",
+        "6",
+        "4",
+        "3",
+        "1",
+        "10"
+      ]
+    }
+  ]
+}

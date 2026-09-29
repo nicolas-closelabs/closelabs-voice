@@ -1,0 +1,41 @@
+{
+  "id": "voz-2-2a",
+  "titulo": "La misma, parte 1: anamnesis",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente femenina de cincuenta y ocho años, ama de casa, natural y procedente de Medellín, que consulta por cuadro clínico de ocho meses de evolución consistente en dolor en ambas rodillas, de predominio derecho, que empeora al bajar escaleras y al levantarse de la silla, y que mejora parcialmente con el reposo. Refiere rigidez matutina de aproximadamente quince minutos, sin edema evidente, sin enrojecimiento y sin fiebre. En el último mes el dolor aumentó de intensidad, lo califica en siete sobre diez, y le impide caminar más de dos cuadras. Como antecedentes personales tiene hipertensión arterial diagnosticada hace doce años, en manejo con losartán cincuenta miligramos cada doce horas; hipotiroidismo en manejo con levotiroxina setenta y cinco microgramos en ayunas; y obesidad grado uno. Niega diabetes, niega enfermedad renal, niega alergias medicamentosas. Antecedente quirúrgico de cesárea hace treinta años y colecistectomía hace ocho años, ambas sin complicaciones. Antecedentes familiares: madre con artrosis de rodillas operada de prótesis a los setenta años, padre fallecido por enfermedad cerebrovascular.",
+  "crudo": "Paciente femenina de 58 años, ama de casa, natural y procedente de Medellín, que consulta por cuadro clínico de 8 meses de evolución consistente en dolor en ambas rodillas. De predominio derecho, que empeora al bajar las escaleras y al levantarse de la silla, y que mejora parcialmente con el reposo. Refiere rigidez matutina de aproximadamente 15 minutos, sin edema evidente, sin enrojecimiento y sin fiebre. En el último mes, el dolor aumentó de intensidad, lo califica con 7 sobre 10 y le impide caminar más de 2 cuadras. Como antecedentes personales, tiene hipertensión arterial diagnosticada hace 12 años, en manejo con losartan 50 mg cada 12 horas. Hipotiroidismo en manejo con leotiroxina 75 microgramos en ayunas y obesidad grado 1. 2. Niega diabetes, niega enfermedad renal, niega alergias medicamentosas, antecedente quirúrgico de cesárea hace 30 años y colicestectomía hace 8 años. Ambas sin complicaciones, antecedentes familiares, madre con artrosis de rodillas operada de prótesis a los 70 años, padre fallecido por enfermedad cerebrovascular.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "losartán|losartan",
+        "levotiroxina",
+        "microgramos|mcg",
+        "niega diabetes",
+        "cesárea",
+        "colecistectomía",
+        "hipertensión arterial",
+        "obesidad"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "58",
+        "8",
+        "15",
+        "7",
+        "10",
+        "2",
+        "12",
+        "50",
+        "75",
+        "1",
+        "30",
+        "70"
+      ]
+    }
+  ]
+}

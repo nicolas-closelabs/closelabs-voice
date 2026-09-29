@@ -1,0 +1,36 @@
+{
+  "id": "voz-3-1",
+  "titulo": "Pediatría — niño sano",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente masculino de tres años, que asiste a control de crecimiento y desarrollo acompañado de la madre. Sin antecedentes de importancia, producto de embarazo a término, parto vaginal, peso al nacer tres mil doscientos gramos, esquema de vacunación completo para la edad según el carné. Madre refiere buen apetito, deposiciones normales, sueño conservado, sin cuadros respiratorios en los últimos tres meses. Al examen físico: peso catorce kilos, talla noventa y cinco centímetros, perímetro cefálico cincuenta centímetros, todos en percentil cincuenta para la edad. Buen estado general, mucosas húmedas, sin palidez. Cardiopulmonar sin soplos, abdomen blando sin masas, genitales de aspecto normal, sin adenopatías. Desarrollo psicomotor acorde: el niño corre, sube escaleras alternando los pies, arma frases de cuatro palabras y sigue instrucciones de dos pasos. Análisis: niño sano con crecimiento y desarrollo adecuados para la edad. Plan: se indica acetaminofén jarabe ciento veinte miligramos cada seis horas en caso de fiebre, se explica que la dosis es de quince miligramos por kilo, se recomienda continuar alimentación variada con cinco comidas al día, limitar pantallas a una hora diaria y estimular el juego al aire libre. Control en seis meses, mentira en cuatro meses, con esquema de vacunación al día. Madre comprende y acepta las indicaciones.",
+  "crudo": "Paciente masculino de 3 años que asiste a control de crecimientos y desarrollo acompañado de la madre. Sin antecedentes de importancia, producto de embarazo a término, parto vaginal, peso al nacer 3200 gramos, esquema de vacunación completo para la edad según el carné. Madre refiere buen apetito, deposiciones normales, sueño conservado, sin cuadros respiratorios en los últimos 3 meses. Al examen físico, peso 14 kilos, talla 95 centímetros, perímetro cefálico 53, 50 centímetros, todos en percentil 50 para la edad. Buen estado general, mucosas húmedas, sin palidez, cardiopulmonar sin soplos, abdomen blando sin masas, genitales de aspecto normal, sin adenopatías. Desarrollo psicomotor acorde, el niño corre, sube escaleras alterando los pies, arma frases de cuatro palabras y sigue instrucciones de dos pasos. Análisis, niño sano con crecimiento y desarrollo adecuados para la edad. Plan, se indica acetaminofrenjarabe de 125 mg cada seis horas en caso de fiebre. Se explica que la dosis es de 15 mg por kilo. Se recomienda continuar la alimentación variada a edad con 5 comidas al día. Limitar pantallas a 1 hora diaria y estimular el juego al aire libre. Control en 6 meses, mentira en 4 meses, con esquema de vacunación al día. Madre comprende y acepta las indicaciones.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "acetaminofén",
+        "alternando",
+        "percentil",
+        "mentira"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "3",
+        "3200|3.200",
+        "14",
+        "95",
+        "50",
+        "120",
+        "15",
+        "5",
+        "1",
+        "6",
+        "4"
+      ]
+    }
+  ]
+}

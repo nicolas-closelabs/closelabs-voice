@@ -1,0 +1,30 @@
+{
+  "id": "voz-1-2",
+  "titulo": "Apellidos colombianos",
+  "condicion": "normal",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "La junta médica la atienden los doctores Walteros, Echeverri, Buitrago, Gutiérrez, Ocampo, Zuluaga, Cifuentes, Saavedra y Restrepo, del servicio de medicina interna del Hospital San Rafael.",
+  "crudo": "La junta médica la atienden los doctores Walteros, Echeverry, Buitrago, Gutiérrez, Ocampo, Zuluaga, Sifuentes, Saavedra y Restrepo, del Servicio de Medicina Interna del Hospital San Rafael.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "Walteros",
+        "Echeverri|Echeverry",
+        "Buitrago",
+        "Gutiérrez",
+        "Ocampo",
+        "Zuluaga",
+        "Cifuentes",
+        "Saavedra",
+        "Restrepo",
+        "San Rafael"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": []
+    }
+  ]
+}

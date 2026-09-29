@@ -1,0 +1,34 @@
+{
+  "id": "voz-1-3",
+  "titulo": "Números seguidos",
+  "condicion": "normal",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Glicemia ciento treinta y dos, creatinina cero punto nueve, nitrógeno ureico dieciocho, hemoglobina catorce punto dos, hematocrito cuarenta y dos, plaquetas doscientos cuarenta mil, leucocitos siete mil doscientos, tensión arterial ciento treinta sobre ochenta, frecuencia cardiaca setenta y ocho, saturación noventa y siete por ciento.",
+  "crudo": "Glicemia 132, creatinina 0.9, nitrógeno ureico 18, hemoglobina 14.2, hematocrito 42, plaquetas 240.000, leucocitos 7.200, tensión arterial 130 sobre 80, frecuencia cardíaca 60.000. Saturación, 97%.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "hematocrito",
+        "saturación"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "132",
+        "0.9",
+        "18",
+        "14.2",
+        "42",
+        "240.000|240000",
+        "7.200|7200",
+        "130",
+        "80",
+        "78",
+        "97"
+      ]
+    }
+  ]
+}

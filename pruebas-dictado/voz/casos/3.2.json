@@ -1,0 +1,50 @@
+{
+  "id": "voz-3-2",
+  "titulo": "Obstetricia — control prenatal",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente femenina de veintisiete años, gestante, que asiste a control prenatal. Fecha de última menstruación el catorce de marzo, edad gestacional de veintiocho semanas por fecha de última menstruación, confiable, concordante con ecografía del primer trimestre. Primera gestación, sin abortos previos. Refiere movimientos fetales presentes y percibidos diariamente, niega sangrado vaginal, niega salida de líquido, niega contracciones, niega cefalea, niega fosfenos, niega tinitus, niega epigastralgia. Al examen físico: tensión arterial ciento diez sobre setenta, frecuencia cardiaca ochenta y dos por minuto, peso sesenta y ocho kilos con ganancia de nueve kilos en el embarazo. Altura uterina veintisiete centímetros, feto único, situación longitudinal, presentación cefálica, dorso a la izquierda, fetocardia de ciento cuarenta y cinco latidos por minuto. Edema de miembros inferiores grado uno, reflejos normales. Paraclínicos del segundo trimestre: hemoglobina once punto ocho, prueba de tolerancia a la glucosa normal, serologías no reactivas, urocultivo negativo. Análisis: gestante de veintiocho semanas, perdón, de veintinueve semanas, con embarazo de curso normal, sin signos de alarma. Plan: continuar ácido fólico cuatrocientos microgramos al día y sulfato ferroso sesenta miligramos al día, se solicita ecografía de crecimiento para las treinta y dos semanas, se explican signos de alarma obstétricos y se indica control en tres semanas. Paciente comprende y acepta.",
+  "crudo": "Paciente femenina de 27 años, gestante que asiste a control prenatal. Fecha de última menstruación, el 14 de marzo. Edad gestacional de 28 semanas por fecha de última menstruación. Confiable, concordante con ecografía del primer trimestre. Primera gestación sin abortos previos, refiere movimientos fetales presentes y percibidos diariamente. sudocia Dictado médico, empagliflozina, CloseLabs, Suilte de la Ngo. Feto único, situación longitudinal, presenta cefálica, dorso a la izquierda, fetocardia de 145 latidos por minuto, edema de miembros inferiores grado 1, reflejos normales. Para clínicos del segundo trimestre, hemoglobina 11.8, prueba de tolerancia a la glucosa normal, serologías no reactivas, urocultivo negativo, análisis. Gestante de 29 semanas, con embarazo de curso normal, sin signos de alarma. Plan, continuar ácido fólico, 400 microgramos al día y sulfato ferroso, 60 miligramos al día. Se solicita ecografía de crecimiento para las 32 semanas. Se explican signos de alarma obstétricos y se indica control en 3 semanas. Paciente comprende y acepta.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "niega sangrado",
+        "niega salida de líquido",
+        "niega contracciones",
+        "niega cefalea",
+        "fosfenos",
+        "tinitus",
+        "epigastralgia",
+        "tensión arterial",
+        "altura uterina",
+        "presentación cefálica",
+        "fetocardia",
+        "ácido fólico",
+        "sulfato ferroso"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "27",
+        "14",
+        "28",
+        "29",
+        "110",
+        "70",
+        "82",
+        "68",
+        "9",
+        "145",
+        "1",
+        "11.8",
+        "400",
+        "60",
+        "32",
+        "3"
+      ]
+    }
+  ]
+}

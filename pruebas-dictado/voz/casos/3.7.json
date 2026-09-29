@@ -1,0 +1,62 @@
+{
+  "id": "voz-3-7",
+  "titulo": "Medicina interna — pluripatológico",
+  "condicion": "~2 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente masculino de setenta y tres años, pensionado, que asiste a control de medicina interna. Antecedentes de diabetes mellitus tipo dos de quince años de evolución, hipertensión arterial de veinte años, enfermedad renal crónica estadio tres A, fibrilación auricular permanente y dislipidemia. Medicamentos actuales: metformina ochocientos cincuenta miligramos cada doce horas, empagliflozina diez miligramos al día, losartán cincuenta miligramos cada doce horas, apixabán cinco miligramos cada doce horas y atorvastatina cuarenta miligramos en la noche. Refiere buena adherencia al tratamiento, niega hipoglicemias, niega sangrados, niega disnea, niega edemas, niega palpitaciones. Camina treinta minutos diarios. Al examen físico: tensión arterial ciento treinta y ocho sobre setenta y ocho, frecuencia cardiaca ochenta y cuatro por minuto irregular, peso setenta y nueve kilos, saturación noventa y seis por ciento. Ruidos cardiacos arrítmicos sin soplos, murmullo vesicular conservado, abdomen blando, extremidades sin edemas, pulsos pedios presentes. Paraclínicos recientes: hemoglobina glicosilada siete punto dos, glicemia en ayunas ciento treinta y cuatro, creatinina uno punto cuatro con tasa de filtración glomerular estimada de cincuenta y dos, potasio cuatro punto uno, colesterol LDL setenta y ocho, relación albuminuria creatinuria de ciento ochenta. Análisis: paciente pluripatológico con adecuado control glicémico y lipídico, con enfermedad renal crónica estable y albuminuria persistente, anticoagulado por fibrilación auricular sin eventos hemorrágicos. Plan: continuar el mismo esquema de medicamentos, se remite a nefrología, me equivoqué, a endocrinología para ajuste del manejo de la diabetes, y se solicita valoración por oftalmología para tamizaje de retinopatía diabética. Se solicitan paraclínicos de control en tres meses con hemoglobina glicosilada, creatinina, potasio y relación albuminuria creatinuria. Se refuerzan recomendaciones de dieta baja en sodio y actividad física. Control en tres meses. Paciente y su hijo comprenden y aceptan.",
+  "crudo": "Paciente masculino de 73 años, pensionado, que asiste a control de medicina interna. Antecedentes de diabetes, melitus tipo 2 de 15 años de evolución, hipertensión arterial de 20 años, enfermedad renal crónica estadio 3A, fibrilación auricular permanente y dislipidemia. Medicamentos actuales, Metformina, 850 mg cada 12 horas, empagliflozina, 10 mg al día, Losartan, 50 mg cada 12 horas, Apixaban, 100 mg cada 12 horas y Atorvastatina, 40 mg en la noche. 4. Rufina suerte. 5. Una herencia al tratamiento, niega hipoglicemias, niega sangrados, niega disnea, niega ademas, niega palpitaciones. 6. Camina 30 minutos diarios al examen físico, tensión arterial 138 sobre 78, frecuencia cardíaca 84 por minuto irregular, Peso 79 kilos saturaci 96 ruidos card arritmicos sin soplos murmullo vesicular conservado abdomen blando extremidades sin edemas pulsos pedidos presentes Para cl recientes hemoglobina glicosilada 7 Glicemia en ayunas 134 Creatinina 1 con tasa de filtraci glomerular estimada de 52 Potasio 4 Colesterol LDL 78 Relaci albuminuria Creatinina 1 Tintinuria de 180, análisis, paciente pluripatológico con adecuado control glicémico y lipídico, con enfermedad renal crónica estable y albuminuria persistente, anticoagulado por fibrilación auricular sin eventos hemorrágicos. Plan, continuar con el mismo esquema de medicamentos, se remite a nefrología, me equivoqué, a endroquinología para ajuste del manejo de la diabetes y se solicita valoración por oftalmología para tamizaje de retinopatía diabética. Se solicitan para clínicos de control en 3 meses con hemoglobina glicosilada, creatinina, potasio y relación de albuminuria, creatinuria. Se refuerzan recomendaciones de dieta baja en sodio y actividad física. Control en tres meses. Paciente y su hijo comprenden y lo aceptan.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "diabetes mellitus",
+        "metformina",
+        "empagliflozina",
+        "losartán|losartan",
+        "apixabán|apixaban",
+        "atorvastatina",
+        "buena adherencia",
+        "niega edemas",
+        "saturación",
+        "ruidos cardíacos|ruidos cardiacos",
+        "pulsos pedios",
+        "paraclínicos|para clínicos",
+        "filtración glomerular",
+        "relación albuminuria",
+        "nefrología",
+        "endocrinología",
+        "oftalmología",
+        "me equivoqué"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "73",
+        "2",
+        "15",
+        "20",
+        "3",
+        "850",
+        "12",
+        "10",
+        "50",
+        "5",
+        "40",
+        "30",
+        "138",
+        "78",
+        "84",
+        "79",
+        "96",
+        "7.2",
+        "134",
+        "1.4",
+        "52",
+        "4.1",
+        "180"
+      ]
+    }
+  ]
+}

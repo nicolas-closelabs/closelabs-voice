@@ -1,0 +1,40 @@
+{
+  "id": "voz-3-6",
+  "titulo": "Urgencias — nota RÁPIDA",
+  "condicion": "rápido",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente masculino de cuarenta y un años, triage dos, que ingresa por dolor abdominal de veinticuatro horas de evolución localizado inicialmente en epigastrio y que migró a fosa iliaca derecha, asociado a náuseas, un episodio emético y fiebre no cuantificada. Signos vitales al ingreso: tensión arterial cien sobre sesenta, frecuencia cardiaca ciento diez por minuto, frecuencia respiratoria veinte por minuto, temperatura treinta y ocho punto dos, saturación noventa y seis por ciento. Abdomen con dolor a la palpación en fosa iliaca derecha, Blumberg positivo, McBurney positivo, ruidos intestinales disminuidos. Se solicita hemograma, proteína C reactiva, uroanálisis y ecografía abdominal. Se inicia hidratación con lactato de Ringer mil mililitros, dipirona un gramo intravenoso y se deja en nada vía oral. Se solicita valoración prioritaria por cirugía general por sospecha de apendicitis aguda.",
+  "crudo": "Paciente masculino de 41 años, triage 2, que ingresa por dolor abdominal de 24 horas de evolución localizado, inicialmente en epigastrio y que emigró a fosa hialica derecha. Asociado a náuseas, un episodio hemético y fiebre no cuantificada. Signos vitales al ingreso, tensión arterial 100 sobre 60, frecuencia cardíaca 110 por minuto, frecuencia respiratoria 20 por minuto, temperatura 38.2, saturación 96%, Abdomen con dolor a la palpación en fósia hialica derecha. Blomberg positivo, McBurnie positivo, ruidos intestinales disminuidos. Se solicita hemograma, proteína C reactiva, uroanálisis y ecografía abdominal. Se inicia hidratación con lactoato de Ringer, 1000 ml, dipirona 1 gramo intravenoso y se deja en nada vía oral. Se solicita valoración prioritaria por cirugía general por sospecha de apendicitis aguda. Gracias por ver el video.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "epigastrio",
+        "fosa iliaca|fosa ilíaca",
+        "emético",
+        "Blumberg",
+        "McBurney",
+        "lactato de Ringer",
+        "dipirona",
+        "apendicitis"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "41",
+        "2",
+        "24",
+        "100",
+        "60",
+        "110",
+        "20",
+        "38.2",
+        "96",
+        "1000|1.000",
+        "1"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "voz-3-5",
+  "titulo": "Psiquiatría — ansiedad",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Paciente femenina de treinta y un años, ingeniera, que consulta por cuadro de cuatro meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas, niega episodios previos de depresión. Antecedente familiar de trastorno de ansiedad en la madre. Al examen mental: paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso resonante, pensamiento de curso y contenido normales sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado, introspección adecuada. Se aplica escala GAD siete con puntaje de catorce puntos, compatible con ansiedad moderada. Análisis: paciente con criterios de trastorno de ansiedad generalizada de intensidad moderada, sin riesgo suicida actual. Plan: se inicia sertralina veinticinco miligramos al día por una semana, mentira cincuenta miligramos al día después de la primera semana, se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo conductual, se recomienda higiene del sueño y actividad física regular. Control en cuatro semanas. Paciente comprende y acepta el manejo.",
+  "crudo": "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y dificultad de controlar asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niña ideación suicida, niña ideación homicida, niña consumo de alcohol o sustancias psicoactivas, niña episodios previos de depresión, antecedentes familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, efecto ansioso resonante, pensamiento de curso y contenido normales sin ideas delirantes. Sin alteraciones sensoperceptivas, juicio conservado, introspección adecuada. Se aplica a escala de GAT, 7 con puntaje de 14 puntos, compatible con ansiedad moderada. Análisis, paciente con criterios de trastorno de la ansiedad generalizada de intensidad moderada sin riesgo de suicida actual. Plan, se inicia C-Hertralina 25 mg al día por una semana. Mentira, 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se repite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Controla en cuatro semanas. Paciente comprende y acepta el manejo.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "niega ideación suicida",
+        "niega ideación homicida",
+        "niega consumo",
+        "niega episodios",
+        "afecto ansioso",
+        "GAD",
+        "sertralina",
+        "se remite",
+        "psicoterapia"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "31",
+        "4",
+        "7",
+        "14",
+        "25",
+        "50"
+      ]
+    }
+  ]
+}

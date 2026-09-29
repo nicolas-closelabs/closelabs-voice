@@ -1,0 +1,44 @@
+{
+  "id": "voz-2-2b",
+  "titulo": "La misma, parte 2: examen y paraclínicos",
+  "condicion": "~1,5 min",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientada, hidratada, afebril. Peso setenta y ocho kilos, talla un metro cincuenta y seis, índice de masa corporal treinta y dos. Tensión arterial ciento cuarenta sobre ochenta y cinco, frecuencia cardiaca setenta y seis por minuto, frecuencia respiratoria dieciséis por minuto, saturación noventa y siete por ciento al ambiente. Cardiopulmonar sin alteraciones, ruidos cardiacos rítmicos sin soplos, murmullo vesicular conservado. Abdomen blando, no doloroso. En extremidades: rodilla derecha con crepitación a la movilización, dolor en la interlínea articular medial, sin derrame, con limitación de los últimos grados de flexión. Rodilla izquierda con crepitación leve y sin dolor a la palpación. Marcha antálgica. Pulsos periféricos presentes y simétricos, sin edemas. Paraclínicos previos que trae la paciente: hemograma normal, velocidad de sedimentación veinticuatro, proteína C reactiva negativa, glicemia noventa y ocho, creatinina cero punto ocho. Radiografía de rodillas en proyección anteroposterior de pie que muestra disminución del espacio articular medial bilateral, de predominio derecho, con osteofitos marginales y esclerosis subcondral.",
+  "crudo": "Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientada, hidratada, afebril, peso 78 kilos, talla 1,56 m, índice de masa corporal 32, tensión arterial 140 sobre 85, frecuencia cardíaca 76 por minuto, frecuencia respiratoria 16 por minuto. Sincronización, 97% al ambiente, cardiopulmonar sin alteraciones, ruidos cardíacos rítmicos sin soplos, murmullo vesicular conservado. Abdomen blando, no doloroso, en extremidades rodilla derecha con crepitación a la movilización, dolor en la interlínea articular medial, sin derrame, con limitación de los últimos grados de flexión. Rodilla izquierda con crepitación leve y sin dolor a la palpación. Marcha antálgica, pulsos periféricos presentes y simétricos sin edemas. Para clínicos previos que trae la paciente, homograma normal, velocidad de sedimentación 24, proteína C reactiva negativa, glicemia 98, creatinina 0.8, radiografía de rodillas en proyección antero posterior de pie. CloseLabs, CloseS, CloseLabs, CloseLabs, CloseLabs.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "tensión arterial",
+        "frecuencia cardíaca|frecuencia cardiaca",
+        "saturación",
+        "crepitación",
+        "interlínea",
+        "limitación",
+        "flexión",
+        "ruidos cardíacos|ruidos cardiacos",
+        "hemograma",
+        "paraclínicos|para clínicos",
+        "osteofitos",
+        "esclerosis subcondral"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "78",
+        "1,56|1.56|1 metro y 56",
+        "32",
+        "140",
+        "85",
+        "76",
+        "16",
+        "97",
+        "24",
+        "98",
+        "0.8"
+      ]
+    }
+  ]
+}

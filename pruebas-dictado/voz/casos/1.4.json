@@ -1,0 +1,30 @@
+{
+  "id": "voz-1-4",
+  "titulo": "Espanglish médico",
+  "condicion": "normal",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Se realizó bypass coronario hace cinco años, se colocó un stent medicado en la descendente anterior, se solicita holter de veinticuatro horas, doppler de miembros inferiores, score de calcio y test de esfuerzo en banda.",
+  "crudo": "Se realizó bypass coronario hace 5 años, se colocó un stent medicado en la decente anterior, se solicita Holter de 24 horas, Doppler de miembros inferiores, score de calcio y test de esfuerzo en banda.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "bypass",
+        "stent",
+        "descendente anterior",
+        "holter",
+        "doppler",
+        "score de calcio",
+        "test de esfuerzo"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "5",
+        "24"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": "voz-1-1",
+  "titulo": "Medicamentos que suenan parecido",
+  "condicion": "normal",
+  "fecha": "2026-09-28",
+  "motor": "groq whisper-large-v3-turbo, idioma auto, con pista de estilo + diccionario",
+  "referencia": "Se formula enalapril veinte miligramos cada doce horas, hidroclorotiazida veinticinco miligramos al día, espironolactona veinticinco miligramos al día, levotiroxina cincuenta microgramos en ayunas, rosuvastatina veinte miligramos en la noche, clopidogrel setenta y cinco miligramos al día y omeprazol veinte miligramos antes del desayuno.",
+  "crudo": "Se formula en al april 20 mg cada 12 horas, hidroclorotiacida 25 mg al día, espironolactona 25 mg al día, leotiroxina 50 microgramos en ayunas, rosubostatina 20 mg en la noche, Clopidrogel 75 mg al día y Omeprazole 20 mg antes del desayuno.",
+  "comprobaciones": [
+    {
+      "tipo": "conserva",
+      "valores": [
+        "enalapril",
+        "hidroclorotiazida",
+        "espironolactona",
+        "levotiroxina",
+        "rosuvastatina",
+        "clopidogrel",
+        "omeprazol",
+        "microgramos|mcg"
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "valores": [
+        "20",
+        "12",
+        "25",
+        "50",
+        "75"
+      ]
+    }
+  ]
+}
