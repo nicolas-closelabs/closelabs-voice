@@ -1,0 +1,295 @@
+{
+  "etiqueta": "acida-luna-v2",
+  "fecha": "2026-09-29T03:56:16.877Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "conserva": "10/10",
+        "formato_basico": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1823,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "corto-signos": {
+      "comprobaciones": {
+        "contiene:140/90": "10/10",
+        "contiene:98": "10/10",
+        "contiene:94": "10/10",
+        "contiene:36": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 2454,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "largo-3min": {
+      "comprobaciones": {
+        "termina_en": "10/10",
+        "conserva": "10/10",
+        "numeros_intactos": "10/10",
+        "contiene:hospitalización": "10/10",
+        "no_contiene:urgencias": "10/10",
+        "no_contiene:mentira": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 4698,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "10/10",
+        "conserva": "10/10",
+        "contiene:850": "10/10",
+        "no_contiene:1000": "10/10",
+        "no_contiene:mentira": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 5616,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "muletillas-ingles": {
+      "comprobaciones": {
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:2022": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 2123,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "real-1-3-laboratorios": {
+      "comprobaciones": {
+        "numeros_intactos": "9/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1775,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": [
+        "Glicemia 132, creatinina 0.9, nitrógeno ureico 18, hemoglobina 14.2, hematocrito 42, plaquetas 240 000, leucocitos 7 200, tensión arterial 130/80, frecuencia cardíaca 78, saturación 97%."
+      ]
+    },
+    "real-1-5-medicamentos": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2685,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "real-2-2b-examen": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "termina_en": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 3381,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "real-3-2-prenatal": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:niega": "10/10",
+        "contiene:29 semanas": "10/10",
+        "contiene:28 semanas": "10/10",
+        "no_contiene:perdón": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 3727,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "real-3-5-ansiedad": {
+      "comprobaciones": {
+        "numeros_intactos": "0/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:niega ideación suicida": "10/10",
+        "contiene:50 mg|50 miligramos": "10/10",
+        "no_contiene:mentira": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 4482,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": [
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión. Antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por un cuadro de 4 meses de evolución, consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo.",
+        "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de 4 meses de evolución, consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales, sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado e introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 50 mg al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en 4 semanas. Paciente comprende y acepta el manejo."
+      ]
+    },
+    "real-3-6-urgencias": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "termina_en": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2850,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "real-3-7-pluripatologico": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:endocrinolog": "10/10",
+        "no_contiene:nefrolog": "10/10",
+        "no_contiene:me equivoqué": "10/10",
+        "termina_en": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 3197,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "retract-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "no_contiene:mentira": "10/10",
+        "conserva": "10/10"
+      },
+      "medianaMs": 1707,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "retract-lista": {
+      "comprobaciones": {
+        "contiene:850": "10/10",
+        "no_contiene:1000": "10/10",
+        "no_contiene:mentira": "10/10",
+        "conserva": "10/10"
+      },
+      "medianaMs": 3437,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "retract-remision": {
+      "comprobaciones": {
+        "contiene:neurolog": "10/10",
+        "no_contiene:cardiolog": "10/10",
+        "no_contiene:equivoqu": "10/10",
+        "contiene:valoración": "10/10"
+      },
+      "medianaMs": 1550,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    },
+    "trampa-palabras": {
+      "comprobaciones": {
+        "contiene:mentiras": "10/10",
+        "contiene:perdón": "10/10",
+        "contiene:coma": "10/10",
+        "contiene:punto de sutura": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1620,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 88,
+    "de": 90,
+    "medianaMs": 2783,
+    "peorMs": 6116,
+    "fallosContenido": 11,
+    "respuestasMedidas": 160,
+    "proveedor": "openai-luna",
+    "deRespaldo": 0
+  }
+}

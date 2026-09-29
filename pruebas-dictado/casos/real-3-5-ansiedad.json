@@ -1,12 +1,15 @@
 {
   "id": "real-3-5-ansiedad",
-  "descripcion": "Psiquiatría: cuatro negaciones que no pueden perderse",
+  "descripcion": "Psiquiatría: cuatro negaciones que no pueden perderse, y \"25 mg, mentira, 50 mg\"",
   "origen": "dictado real",
   "fuente": "Audio 3.5 del guion, transcrito por OpenAI gpt-4o-mini-transcribe con la configuración de producción (2026-09-29). Paciente inventado.",
   "texto": "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de cuatro meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado y introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan, se inicia sertralina 25 miligramos al día por una semana, mentira, 50 miligramos al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en cuatro semanas. Paciente comprende y acepta el manejo.",
   "comprobaciones": [
     {
-      "tipo": "numeros_intactos"
+      "tipo": "numeros_intactos",
+      "retractados": [
+        "25"
+      ]
     },
     {
       "tipo": "formato_basico"
@@ -42,5 +45,6 @@
       "min": 0.85,
       "max": 1.2
     }
-  ]
+  ],
+  "nota": "Con la regla del producto, lo que sigue a \"mentira\" reemplaza lo anterior: el 25 se retracta. Hasta el 2026-09-29 el caso exigía conservar el 25 (el guion se leía como titulación); gpt-4o-mini ignoraba la corrección 10 de 10."
 }

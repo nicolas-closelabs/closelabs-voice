@@ -1,0 +1,33 @@
+{
+  "etiqueta": "acida-luna-6min",
+  "fecha": "2026-09-29T04:04:32.767Z",
+  "casos": {
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "30/30",
+        "conserva": "30/30",
+        "contiene:850": "30/30",
+        "no_contiene:1000": "30/30",
+        "no_contiene:mentira": "30/30",
+        "longitud": "30/30"
+      },
+      "medianaMs": 5369,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 30
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 6,
+    "de": 6,
+    "medianaMs": 5369,
+    "peorMs": 14238,
+    "fallosContenido": 0,
+    "respuestasMedidas": 30,
+    "proveedor": "openai-luna",
+    "deRespaldo": 0
+  }
+}

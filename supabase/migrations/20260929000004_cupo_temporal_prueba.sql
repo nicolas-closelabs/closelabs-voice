@@ -1,0 +1,12 @@
+-- TEMPORAL (2026-09-29): cupo diario 500 → 2.000 para terminar la prueba ácida.
+--
+-- El banco corre con el token del Mac de Nicolás y cada llamada cuenta contra el cupo del equipo
+-- (`device_usage_today` cuenta transcripción y formateo por separado: 500 son ~250 dictados).
+-- La prueba ácida lo agotó a mitad de la corrida de luna: todas las llamadas empezaron a volver
+-- con 429 y el Mac quedó sin poder dictar hasta las 00:00 UTC.
+--
+-- Es un techo contra abuso, no algo que un médico real toque. Vuelve a 500 en la migración de
+-- cierre de la prueba.
+-- ⚠️ Para la próxima: el banco debería correr con un equipo de pruebas propio, no con el del
+-- Mac de trabajo.
+update app_config set daily_quota = 2000, updated_at = now();

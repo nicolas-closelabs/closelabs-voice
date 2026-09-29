@@ -49,7 +49,8 @@ const tiene = (s: string, valor: string) => valor.toLowerCase().split("|").some(
  * "240,000" y "240.000". Cambiar el estilo de separador no es cambiar el contenido (decisión de
  * Nicolás, 2026-09-29), y sin esto un modelo que escribe a la colombiana parecía perder números.
  */
-const numeros = (s: string) => (s.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/,/g, "."));
+const numeros = (s: string) =>
+  (s.replace(/(\d) (?=\d{3}\b)/g, "$1.").match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/,/g, "."));
 
 function evaluar(c: Comprobacion, entrada: string, salida: string): { ok: boolean; detalle: string } {
   const s = salida.toLowerCase();
