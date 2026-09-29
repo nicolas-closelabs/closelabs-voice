@@ -142,6 +142,20 @@
     medible. Dejar la guarda de respaldo como está y volver a mirar si reaparece con el tier pago
     (puede que el 400 fuera el disfraz de un throttle).
 
+18. ⚠️ **IMPORTANTE — Cerrar sesión en un computador la cierra en TODOS, tarde y sin avisar**
+   (encontrado leyendo el código, 2026-09-28). `auth_sign_out` llama a `/auth/v1/logout` sin
+   `scope`, y el valor por defecto de Supabase es `global`: revoca las sesiones de la cuenta en
+   todos sus equipos. El otro computador no se entera en el momento —sigue dictando, porque dicta
+   con el token del EQUIPO, no con la sesión— sino cuando necesita renovar la sesión (hasta una
+   hora después, al abrir "Mi cuenta" o al reiniciar). Ahí `token_valido` recibe 4xx, borra la
+   sesión y le pide entrar de nuevo, sin explicación. Caso real: el médico cierra sesión en el
+   consultorio y horas después la app de su casa le pide la contraseña "porque sí".
+   **Arreglo:** `?scope=local` en la URL de `auth_sign_out` (`auth.rs`): cerrar sesión cierra SOLO
+   este computador, que es lo que el médico espera. Una línea; necesita versión nueva.
+   Dictar en dos computadores A LA VEZ sí funciona bien: cada uno es un equipo propio de la
+   cuenta (tope 3), con su token y su cupo diario. ⚠️ Nota de negocio: por lo mismo, tres médicos
+   pueden compartir una cuenta y pagar una sola suscripción; el tope de 3 lo limita, no lo impide.
+
 ## 2026-09-22 — El dictado no se escribía dentro de la propia app
 
 El tutorial "Tu primer dictado" nunca funcionaba (lo encontró Nicolás en Mac Intel con la 0.8.0), y
