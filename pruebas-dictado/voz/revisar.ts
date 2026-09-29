@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 
 const CASOS = join(dirname(fileURLToPath(import.meta.url)), "casos");
 
-interface Caso {
+export interface Caso {
   id: string;
   titulo: string;
   condicion: string;
@@ -41,7 +41,7 @@ const palabrasDe = (s: string) => s.toLowerCase().split(/[^a-záéíóúñü]+/)
 const hay = (texto: string, valor: string) =>
   valor.split("|").some((v) => texto.toLowerCase().includes(v.toLowerCase()));
 
-function revisar(c: Caso) {
+export function revisar(c: Caso) {
   const crudo = c.crudo;
   const conserva = c.comprobaciones.find((x) => x.tipo === "conserva")?.valores ?? [];
   const numeros = c.comprobaciones.find((x) => x.tipo === "numeros")?.valores ?? [];
@@ -67,6 +67,13 @@ function revisar(c: Caso) {
   return { perdidos, faltan, inventados, cortadas, colados, datos: conserva.length + numeros.length };
 }
 
+export function leerCasos(): Caso[] {
+  return readdirSync(CASOS)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => JSON.parse(readFileSync(join(CASOS, f), "utf8")));
+}
+
+if (import.meta.main) {
 const casos: Caso[] = readdirSync(CASOS)
   .filter((f) => f.endsWith(".json"))
   .map((f) => JSON.parse(readFileSync(join(CASOS, f), "utf8")))
@@ -93,3 +100,4 @@ console.log(
   `\nDictados con números inventados: ${conInventos} de ${casos.length}` +
   ` · con texto colado: ${conColados} · con palabras cortadas: ${conCortes}`,
 );
+}

@@ -45,3 +45,5 @@ result
 
 # Instaladores de Aztec usados como referencia (no son código nuestro)
 AztecVoice - Examples/
+# Audio con la voz de quien graba: se queda en este computador, no va al repositorio.
+pruebas-dictado/voz/audios/
