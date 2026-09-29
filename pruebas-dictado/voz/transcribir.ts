@@ -55,6 +55,10 @@ const CONFIGS: { nombre: string; pista: string; idioma?: string }[] = [
   { nombre: "solo dicc, es", pista: diccionario, idioma: "es" },
 ];
 
+/** `--configs 0,1` corre solo esas (por posición en CONFIGS). */
+const soloConfigs = opcion("configs", "").split(",").filter(Boolean).map(Number);
+const aCorrer = soloConfigs.length ? CONFIGS.filter((_, i) => soloConfigs.includes(i)) : CONFIGS;
+
 const casoDe: Record<string, string> = { "2.2 parte 2": "voz-2-2b" };
 const casos = new Map(leerCasos().map((c) => [c.id, c]));
 
@@ -77,9 +81,9 @@ async function transcribir(archivo: string, pista: string, idioma?: string) {
 
 const audios = readdirSync(AUDIOS).filter((f) => f.endsWith(".ogg")).sort();
 const salida: any = { etiqueta, fecha: new Date().toISOString(), configs: {} };
-console.log(`${audios.length} audios × ${CONFIGS.length} configuraciones × ${repeticiones}\n`);
+console.log(`${audios.length} audios × ${aCorrer.length} configuraciones × ${repeticiones}\n`);
 
-for (const cfg of CONFIGS) {
+for (const cfg of aCorrer) {
   let mal = 0, datos = 0, inventos = 0, colados = 0, cortadas = 0;
   const detalle: any[] = [];
   for (const archivo of audios) {
@@ -95,9 +99,10 @@ for (const cfg of CONFIGS) {
     }
   }
   salida.configs[cfg.nombre] = { mal, datos, inventos, colados, cortadas, detalle };
-  const otros = [...new Set(detalle.map((d) => d.proveedor).filter((p) => p && p !== "groq"))];
+  const quien = new Map<string, number>();
+  for (const d of detalle) if (d.proveedor) quien.set(d.proveedor, (quien.get(d.proveedor) ?? 0) + 1);
   console.log(`${cfg.nombre.padEnd(24)} datos mal ${String(mal).padStart(3)}/${datos} · números inventados ${inventos} · texto colado ${colados} · palabras cortadas ${cortadas}` +
-    (otros.length ? `  ⚠️ servido también por ${otros.join(", ")}` : "") +
+    `  [${[...quien].map(([p, n]) => `${p} ${n}`).join(" · ")}]` +
     (detalle.some((d) => d.error) ? `  ⚠️ ${detalle.filter((d) => d.error).length} errores` : ""));
 }
 

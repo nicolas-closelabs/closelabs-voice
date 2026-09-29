@@ -49,8 +49,11 @@ export function revisar(c: Caso) {
   const perdidos = conserva.filter((v) => !hay(crudo, v)).map((v) => v.split("|")[0]);
 
   const delCrudo = numerosDe(crudo);
-  const faltan = numeros.filter((v) => !v.split("|").some((alt) => delCrudo.includes(alt)));
-  const esperados = new Set(numeros.flatMap((v) => v.split("|")));
+  // Una variante con letras o espacios ("1 metro 56", "cuatro meses") se busca como frase.
+  const esFrase = (alt: string) => /[\sa-záéíóúñ]/i.test(alt);
+  const faltan = numeros.filter((v) => !v.split("|").some((alt) =>
+    esFrase(alt) ? crudo.toLowerCase().includes(alt.toLowerCase()) : delCrudo.includes(alt)));
+  const esperados = new Set(numeros.flatMap((v) => v.split("|").flatMap((alt) => esFrase(alt) ? numerosDe(alt) : [alt])));
   const inventados = [...new Set(delCrudo.filter((n) => !esperados.has(n)))];
 
   // Palabra cortada: no existe en el guion, pero es el comienzo de una palabra del guion y lo que
@@ -73,7 +76,32 @@ export function leerCasos(): Caso[] {
     .map((f) => JSON.parse(readFileSync(join(CASOS, f), "utf8")));
 }
 
-if (import.meta.main) {
+/** `--recalificar a.json b.json`: vuelve a revisar textos ya transcritos con las comprobaciones de hoy. */
+function recalificar(archivos: string[]) {
+  const casos = new Map(leerCasos().map((c) => [c.id, c]));
+  const casoDe: Record<string, string> = { "2.2 parte 2": "voz-2-2b" };
+  for (const a of archivos) {
+    const d = JSON.parse(readFileSync(a, "utf8"));
+    console.log(`\n${d.etiqueta}`);
+    for (const [cfg, v] of Object.entries<any>(d.configs)) {
+      let mal = 0, datos = 0, inv = 0, col = 0, cort = 0, n = 0;
+      const quien = new Map<string, number>();
+      for (const x of v.detalle) {
+        if (!x.texto) continue;
+        const caso = casos.get(casoDe[x.audio] ?? `voz-${x.audio.replace(".", "-")}`)!;
+        const r = revisar({ ...caso, crudo: x.texto });
+        mal += r.perdidos.length + r.faltan.length; datos += r.datos; n++;
+        inv += r.inventados.length; col += r.colados.length; cort += r.cortadas.length;
+        quien.set(x.proveedor, (quien.get(x.proveedor) ?? 0) + 1);
+      }
+      console.log(`  ${cfg.padEnd(24)} mal ${String(mal).padStart(3)}/${datos} (${(100 * mal / datos).toFixed(1)}%) · inventados ${inv} · colado ${col} · cortadas ${cort}  [${[...quien].map(([p, k]) => `${p} ${k}`).join(" · ")}]`);
+    }
+  }
+}
+
+if (import.meta.main && process.argv.includes("--recalificar")) {
+  recalificar(process.argv.slice(process.argv.indexOf("--recalificar") + 1));
+} else if (import.meta.main) {
 const casos: Caso[] = readdirSync(CASOS)
   .filter((f) => f.endsWith(".json"))
   .map((f) => JSON.parse(readFileSync(join(CASOS, f), "utf8")))
