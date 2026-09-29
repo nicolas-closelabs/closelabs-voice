@@ -76,7 +76,9 @@ function evaluar(c: Comprobacion, entrada: string, salida: string): { ok: boolea
     case "termina_en":
       return { ok: tiene(s, c.valor), detalle: `no llegó a "${c.valor}"` };
     case "sin_muletillas":
-      return { ok: !/\b(eh|em|mmm|este)\b\s*,?/i.test(salida), detalle: "quedaron muletillas" };
+      // Límites con \p{L} y no con \b: en JavaScript \b solo conoce letras sin tilde, así que
+      // "emético" contaba como la muletilla "em" seguida de otra palabra.
+      return { ok: !/(?<!\p{L})(eh|em|mmm|este)(?!\p{L})/iu.test(salida), detalle: "quedaron muletillas" };
     case "formato_basico": {
       const ok = /^[A-ZÁÉÍÓÚÑ¿¡]/.test(salida.trim()) && /[.!?]$/.test(salida.trim());
       return { ok, detalle: "mayúscula inicial y signo final" };
