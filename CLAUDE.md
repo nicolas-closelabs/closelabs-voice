@@ -6,6 +6,18 @@
 
 ## Estado actual (v0.8.4 publicada)
 
+> **2026-09-29 — SE TRANSCRIBE CON OPENAI (`gpt-4o-mini-transcribe`), NO CON GROQ.** La primera
+> medición de la capa de voz (`pruebas-dictado/voz/`, audios reales del guion) mostró que Groq
+> `whisper-large-v3-turbo` pierde contenido ANTES del formateo, donde nada lo puede arreglar: con
+> pista, a veces borra un tramo y lo reemplaza por la pista o por una frase inventada; con o sin
+> pista, hay tramos sin puntuación donde cada palabra se corta en la primera tilde y **se pierden
+> los decimales** (creatinina 1.4 → 1). Datos clínicos mal: Groq 8-17%, OpenAI 1,6-2% (lo que queda
+> es ortografía de términos). Cuesta ~2 s más y ~$0,003/min. Groq sigue de respaldo, **sin pista**.
+> ⚠️ **La pista de Whisper puede reemplazar lo que dijo el médico.** No volver a meterle frases de
+> estilo largas; toda pista nueva se mide con `bun pruebas-dictado/voz/transcribir.ts`.
+> ⚠️ **OpenAI escribe los miles con coma** ("leucocitos 7,200"): en Colombia eso se lee 7,2. Lo
+> tiene que resolver el formateo — pendiente, ver ROADMAP.
+
 > **SIN PUBLICAR — el techo de salida tumbaba todos los dictados largos.** `MAX_OUTPUT_TOKENS`
 > estaba en 2.000 y el modelo se quedaba sin cupo a mitad de la respuesta: devolvía **HTTP 200**
 > con `finish_reason: "length"` y el JSON cortado, `JSON.parse` fallaba y se reportaba como
@@ -373,8 +385,14 @@ se ve con 3 repeticiones: para comparar modelos en un fallo raro, decenas.
 `providers.format_reasoning_model = true`. Sin la marca, el proxy manda `temperature` y
 `max_tokens`, OpenAI responde 400 a cada dictado y el respaldo lo tapa sin que nadie lo note.
 
+**Banco de la capa de VOZ: `pruebas-dictado/voz/`.** `transcribir.ts` manda el MISMO audio real
+(Notas de Voz → Opus como la app; los audios NO van al repo) a `/transcribe` con distintas pistas e
+idiomas, y `revisar.ts` lo compara contra el guion: datos clínicos perdidos, números que nadie dijo,
+palabras cortadas y texto colado de la pista. Ningún cambio de motor de voz o de pista sin pasarlo.
+
 **Respaldo automático (desde 2026-09-21):** cada tipo tiene una cadena ORDENADA en `app_config`
-(`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir groq → deepinfra → openai; formatear
+(`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir **openai (gpt-4o-mini-transcribe) → groq (sin pista) → deepinfra** (desde
+2026-09-29, medido con el banco de voz); formatear
 **openai (gpt-4o-mini) → openrouter → groq** (OpenRouter sirve el mismo modelo a través de Groq, sin el techo
 de tokens/minuto del plan gratis; `providers.extra_body` dice qué servidor debe usar). Si el principal falla, el proxy prueba el siguiente en el mismo dictado. ⚠️ Al
 tocar `_shared/transcribe.ts` o `_shared/format.ts`, correr antes

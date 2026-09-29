@@ -212,16 +212,20 @@ cambia la URL.
 - [ ] ⚠️ **Sigue fallando 1 de cada 9**: en el dictado de 6 minutos, a veces quedan escritas las
   dos dosis de una corrección hablada. Es visible para el médico (dos dosis contradictorias), no
   silencioso, pero hay que cerrarlo antes de lanzar.
-- [ ] **Grabar el guion `pruebas-dictado/GUION-GRABACIONES.md`** (17 dictados, 8 especialidades,
-  uno de 5 min con pausa y otro de 10). ⚠️ Antes de grabar, apagar la limpieza para capturar el
-  texto CRUDO; si no, no se puede separar un error de voz de uno de formateo.
-- [ ] **Banco de la capa de VOZ**, que hoy no existe: el banco actual arranca desde el texto ya
-  transcrito. Sale de las grabaciones de arriba.
+- [x] **Guion grabado** (2026-09-28, 20 dictados crudos) y **banco de la capa de VOZ**
+  (`pruebas-dictado/voz/`): 97 de 446 datos clínicos se perdían en la voz, antes del formateo.
+- [x] **Transcribir con OpenAI `gpt-4o-mini-transcribe`** (2026-09-29): datos mal 8-17% → 1,6-2%,
+  cero números inventados, cero tramos borrados. Groq de respaldo sin pista. Ver BACKLOG.
+- [ ] ⚠️ **Coma de miles de OpenAI** ("7,200" se lee 7,2 en Colombia): normalizar en el formateo,
+  con caso en el banco. Antes de lanzar.
+- [ ] **Red de seguridad**: detectar tramos de audio sin texto (borrados) y avisar al médico.
+- [ ] Casos de formateo a partir de los crudos nuevos y más audios para el banco de voz.
 - [ ] **Prueba ácida gpt-4o-mini contra gpt-6-luna**, DESPUÉS de grabar el guion (para que cubra
   las ocho especialidades). Luna no falló en 21 intentos donde gpt-4o-mini falló 2 — puede ser
   suerte. Protocolo y regla de decisión, fijada antes de ver los números, en
   `pruebas-dictado/README.md`. Si luna gana, cierra también el punto de "1 de cada 9" de arriba.
-- [ ] **Por qué Whisper corta palabras con audio de 3+ minutos** ("tensi arterial", "frecuencia
+- [x] ~~**Por qué Whisper corta palabras con audio de 3+ minutos**~~ Resuelto 2026-09-29: no era
+  la duración, eran tramos degradados de Groq turbo. OpenAI no lo hace. Texto original: ("tensi arterial", "frecuencia
   card 98"). Visto en el crudo del 2026-09-24; puede ser el audio, la compresión Opus o el modelo.
 
 **Producción con más de 20 médicos (proveedores):**

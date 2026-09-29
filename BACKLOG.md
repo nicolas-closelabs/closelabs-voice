@@ -342,6 +342,51 @@ el prompt es ~86% del costo): se ve en el panel de uso de OpenAI, `usage_events`
 - Por OpenRouter, fijar el servidor: de los 7 que sirven luna, Azure y Bedrock no aceptan
   `response_format`, y `openai/flex` es diferido.
 
+## 2026-09-29 — La voz perdía contenido antes del formateo: se transcribe con OpenAI
+
+Nicolás grabó el guion (`pruebas-dictado/GUION-GRABACIONES.md`) con la limpieza apagada. Contra el
+guion, **97 de 446 datos clínicos llegaron mal o no llegaron**, y eso ANTES del formateo, que no
+puede recuperar lo que el motor nunca escribió — lo deja bien puntuado y el hueco no se nota.
+Casos reales: los 7 negativos de un control prenatal reemplazados por "Dictado médico,
+empagliflozina, CloseLabs"; "Niega ideación suicida" → "Niña ideación suicida"; apixabán 5 → 100 mg;
+levotiroxina 50 microgramos → 50 mg; "Gracias por ver el video." al final de una nota de urgencias.
+
+Después grabó 7 de esos dictados en Notas de Voz y se mandó el MISMO audio al motor con varias
+configuraciones (`voz/transcribir.ts`), calificado con la misma vara (`voz/revisar.ts --recalificar`):
+
+| | Groq whisper-large-v3-turbo | OpenAI gpt-4o-mini-transcribe |
+|---|---|---|
+| Datos clínicos mal o perdidos | 8-17% | 1,6-2% |
+| Números que nadie dijo | 2-3 por corrida | 0 |
+| Tramos borrados/reemplazados | 3 de 14 con pista, 0 sin ella | 0 de 28 |
+| Palabras cortadas en la tilde | en cada corrida | 0 |
+| Audio de ~2 min | 1-2,4 s | 2,6-7 s |
+
+**Dos mecanismos distintos en Groq:**
+1. **La pista reemplaza contenido.** Le mandábamos "Dictado médico en español, con signos de
+   puntuación y correos… CloseLabs, CloseLabs Voice, empagliflozina, Walteros", y a veces el modelo
+   la "continúa" en lugar de transcribir: se come 15-20 s de audio y escribe la pista o una frase
+   inventada ("…el resultado es el resultado de la enfermedad"). Solo pasó con pista.
+2. **Tramos degradados**, con o sin pista: sin puntuación, cada palabra cortada justo antes de la
+   primera tilde o eñe ("tensi arterial", "saturaci", "a" por "años") y **sin decimales**
+   (creatinina 1.4 → 1, potasio 4.1 → 4, HbA1c 7.2 → 7, 5 de 5 veces). Parece que en esos tramos
+   se descartan los tokens que empiezan por signo o por letra acentuada. Es lo que se había visto
+   el 2026-09-24 como "Whisper corta palabras en audios de 3+ minutos": no era la duración.
+
+**Decisión (migración 20260929000002):** OpenAI de principal; Groq y DeepInfra de respaldo, Groq ya
+sin pista. Sin versión nueva: todo en `app_config` y `providers`.
+
+**Pendiente de esto:**
+- ⚠️ **Coma de miles:** OpenAI escribe "leucocitos 7,200" y "plaquetas 240,000". En Colombia la
+  coma es decimal: "7,200" se lee 7,2. El formateo tiene que normalizarlo, con caso en el banco.
+- **La pista de OpenAI**: se sigue mandando porque no hizo daño en 14 intentos y ayuda con
+  apellidos. Medir con más audios si la frase de estilo aporta algo o sobra (el diccionario solo
+  podría bastar).
+- **Red de seguridad para "nunca sin avisar"**: detectar un tramo borrado comparando la duración del
+  audio con lo transcrito (pocas palabras para muchos segundos) y avisarle al médico. Ningún motor
+  es perfecto; el aviso es lo que convierte un error silencioso en uno visible.
+- Más audios para el banco de voz (hoy 7) y casos de formateo a partir de los crudos nuevos.
+
 ## DECISIÓN 2026-09-19 — Proveedores: nos quedamos en Groq hasta la Fase 1
 
 **Qué se decidió:** NO mover el formateador a DeepInfra todavía. Todo sigue en Groq
