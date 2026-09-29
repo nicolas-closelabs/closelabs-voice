@@ -1,0 +1,266 @@
+{
+  "etiqueta": "acida-4o-mini",
+  "fecha": "2026-09-29T03:32:36.830Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "conserva": "10/10",
+        "formato_basico": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1421,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "corto-signos": {
+      "comprobaciones": {
+        "contiene:140/90": "10/10",
+        "contiene:98": "10/10",
+        "contiene:94": "10/10",
+        "contiene:36": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 1439,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "largo-3min": {
+      "comprobaciones": {
+        "termina_en": "10/10",
+        "conserva": "10/10",
+        "numeros_intactos": "10/10",
+        "contiene:hospitalización": "10/10",
+        "no_contiene:urgencias": "10/10",
+        "no_contiene:mentira": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2328,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "10/10",
+        "conserva": "10/10",
+        "contiene:850": "10/10",
+        "no_contiene:1000": "9/10",
+        "no_contiene:mentira": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2475,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "muletillas-ingles": {
+      "comprobaciones": {
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:2022": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 1352,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-1-3-laboratorios": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1686,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-1-5-medicamentos": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1849,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-2-2b-examen": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "termina_en": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2206,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-3-2-prenatal": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:niega": "10/10",
+        "contiene:29 semanas": "10/10",
+        "contiene:28 semanas": "10/10",
+        "no_contiene:perdón": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2014,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-3-5-ansiedad": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:niega ideación suicida": "10/10",
+        "contiene:50 mg|50 miligramos": "10/10",
+        "no_contiene:mentira": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1935,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-3-6-urgencias": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "termina_en": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1880,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "real-3-7-pluripatologico": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "formato_basico": "10/10",
+        "sin_muletillas": "10/10",
+        "conserva": "10/10",
+        "contiene:endocrinolog": "10/10",
+        "no_contiene:nefrolog": "10/10",
+        "no_contiene:me equivoqué": "10/10",
+        "termina_en": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 2194,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "retract-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "10/10",
+        "no_contiene:mentira": "10/10",
+        "conserva": "10/10"
+      },
+      "medianaMs": 1214,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "retract-lista": {
+      "comprobaciones": {
+        "contiene:850": "10/10",
+        "no_contiene:1000": "10/10",
+        "no_contiene:mentira": "10/10",
+        "conserva": "10/10"
+      },
+      "medianaMs": 1472,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "retract-remision": {
+      "comprobaciones": {
+        "contiene:neurolog": "10/10",
+        "no_contiene:cardiolog": "10/10",
+        "no_contiene:equivoqu": "10/10",
+        "contiene:valoración": "10/10"
+      },
+      "medianaMs": 1293,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    },
+    "trampa-palabras": {
+      "comprobaciones": {
+        "contiene:mentiras": "10/10",
+        "contiene:perdón": "10/10",
+        "contiene:coma": "10/10",
+        "contiene:punto de sutura": "10/10",
+        "longitud": "10/10"
+      },
+      "medianaMs": 1824,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai": 10
+      }
+    }
+  },
+  "total": {
+    "ok": 89,
+    "de": 90,
+    "medianaMs": 1791,
+    "peorMs": 3922,
+    "fallosContenido": 1,
+    "respuestasMedidas": 160,
+    "proveedor": "openai",
+    "deRespaldo": 0
+  }
+}

@@ -44,13 +44,18 @@ const SOLO_FORMA = new Set(["sin_muletillas", "formato_basico"]);
 /** `a|b`: basta con que aparezca una de las variantes (misma palabra, otra grafía válida). */
 const tiene = (s: string, valor: string) => valor.toLowerCase().split("|").some((v) => s.includes(v));
 
-const numeros = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
+/**
+ * Los números del texto, con el separador unificado: "7.2" y "7,2" son el mismo valor, igual que
+ * "240,000" y "240.000". Cambiar el estilo de separador no es cambiar el contenido (decisión de
+ * Nicolás, 2026-09-29), y sin esto un modelo que escribe a la colombiana parecía perder números.
+ */
+const numeros = (s: string) => (s.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/,/g, "."));
 
 function evaluar(c: Comprobacion, entrada: string, salida: string): { ok: boolean; detalle: string } {
   const s = salida.toLowerCase();
   switch (c.tipo) {
     case "numeros_intactos": {
-      const fuera = (c.retractados ?? []).map(String);
+      const fuera = (c.retractados ?? []).map((n) => String(n).replace(/,/g, "."));
       const dentro = numeros(entrada).filter((n) => !fuera.includes(n));
       const faltan = dentro.filter((n) => !numeros(salida).includes(n));
       // Los números retractados NO deben sobrevivir: si siguen ahí, la corrección no se aplicó.
@@ -166,6 +171,8 @@ const latencias: number[] = [];
 for (const caso of casos) {
   const conteo = new Map<string, number>();
   const detalles = new Map<string, string>();
+  /** Texto de cada respuesta con un fallo de contenido: sin esto no se puede juzgar si el fallo es real. */
+  const fallidas: string[] = [];
   let errores = 0;
   let deRespaldo = 0;
   const servidoPor = new Map<string, number>();
@@ -192,7 +199,10 @@ for (const caso of casos) {
       if (!ok && detalle) detalles.set(clave, detalle);
       if (!ok && !SOLO_FORMA.has(c.tipo)) contenidoOk = false;
     }
-    if (!contenidoOk) fallosContenido++;
+    if (!contenidoOk) {
+      fallosContenido++;
+      fallidas.push(r.texto);
+    }
   }
 
   const mediana = ms.length ? ms.sort((a, b) => a - b)[Math.floor(ms.length / 2)] : 0;
@@ -219,7 +229,7 @@ for (const caso of casos) {
     console.log(`   ${marca} ${clave}: ${ok}/${hechas}${extra}`);
   }
   console.log(`   ⏱  ${(mediana / 1000).toFixed(1)}s\n`);
-  resumen.casos[caso.id] = { comprobaciones: filas, medianaMs: mediana, errores, deRespaldo, servidoPor: Object.fromEntries(servidoPor) };
+  resumen.casos[caso.id] = { comprobaciones: filas, medianaMs: mediana, errores, deRespaldo, servidoPor: Object.fromEntries(servidoPor), fallidas };
 }
 
 const medianaGlobal = latencias.length
