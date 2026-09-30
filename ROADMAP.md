@@ -129,8 +129,19 @@ cambia la URL.
   dicta: un cobro rechazado suele ser una tarjeta vencida, no alguien que se va.
 - [x] **Pantallas**: bienvenida, registro con teléfono y consentimiento fechado, recuperar
   contraseña, y "Mi cuenta" con suscripción y equipos.
-- [ ] **Stripe** — lo único grande que falta. Pasarela, webhook → `subscriptions`, pantalla de
-  tarjeta. Todo lo demás ya está esperándolo.
+- [ ] **Stripe** — lo único grande que falta. 🔨 Arrancado el 2026-09-30, en MODO DE PRUEBA.
+  **Decisiones de Nicolás (2026-09-30), que reemplazan las del 2026-09-20:**
+  - **La tarjeta se pide al FINAL de la prueba, no al registrarse.** Pedirla al instalar mete un
+    paso difícil justo cuando un médico de 50+ está solo con la app, y ahí abandona. La prueba de
+    30 días arranca sin tarjeta (como hoy); la tarjeta se agrega desde "Mi cuenta", con avisos en
+    los últimos días.
+  - **US$11 al mes, en dólares.**
+  - **Fin de la prueba sin pagar:** una pantalla amable ("gracias por probar"), con lo que el médico
+    dictó en su prueba y UN botón para seguir. Nada de mensajes de error.
+  - Pago y portal: páginas de Stripe en el navegador (Checkout + Customer Portal); la tarjeta nunca
+    pasa por la app ni por nuestro servidor. La cuenta es la del socio español; Nicolás tiene acceso.
+  - Impuestos y facturación (autónomo español cobrando a médicos colombianos, IVA del 19% a
+    servicios digitales del exterior): lo ven con el contador antes de pasar a dinero real.
 - [ ] Política de Tratamiento de Datos (Ley 1581, datos sensibles de salud). Los enlaces de la app
   ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
 - [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
