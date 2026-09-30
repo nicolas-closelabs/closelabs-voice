@@ -1,0 +1,14 @@
+-- La revisión de la limpieza vuelve a 'observe' (2026-09-30), por decisión de Nicolás.
+--
+-- Por qué: la revisión ADIVINA qué cambios son legítimos (ventana de 12 palabras antes de un
+-- "mentira", números en palabras, separadores, 60% de largo). Cada forma válida de limpiar que no
+-- está prevista es una falsa alarma, y esa lista no tiene fin. Con el modelo principal perdiendo
+-- contenido 0 de 228 veces en el banco, casi todo lo que atraparía serían falsas alarmas: le
+-- quitaría la limpieza a más dictados de los que salvaría.
+--
+-- En 'observe' no toca el dictado: sigue contando en `revisiones_recientes`, como sensor para
+-- saber si un proveedor empieza a perder números.
+--
+-- Regla que queda: en producción solo se APLICAN comprobaciones exactas (p. ej. que los trozos
+-- reconstruyan el texto, en `partirDictado`); las que adivinan, solo OBSERVAN.
+update app_config set content_check = 'observe', updated_at = now();

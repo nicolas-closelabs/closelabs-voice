@@ -355,6 +355,13 @@ Probado con los dictados reales del banco (detecta las 4 fugas de la pista del g
 signos vitales; 0 falsas alarmas en las transcripciones de OpenAI) y en producción en modo observe
 (0 alarmas en 48 dictados del banco; las tres detecciones funcionan con audio sintético).
 
+**Decisión posterior (2026-09-30): vuelve a `observe`.** Nicolás la vio frágil y tenía razón: la
+revisión adivina qué transformaciones son legítimas, y la lista de formas válidas de limpiar no
+tiene fin. Con luna perdiendo contenido 0 de 228 veces, casi todo lo que atraparía serían falsas
+alarmas que le quitan la limpieza al médico. Queda como sensor. Regla que sale de aquí: en
+producción solo se aplican comprobaciones EXACTAS (la guarda de `partirDictado`); las que
+adivinan, solo observan.
+
 **Límites conocidos:**
 - Una corrección hablada LARGA (el "mentira" más de 12 palabras después de lo retractado) dispara
   una falsa alarma: el médico recibe el crudo con el "mentira" a la vista.

@@ -394,8 +394,12 @@ se ve con 3 repeticiones: para comparar modelos en un fallo raro, decenas.
 `max_tokens`, OpenAI responde 400 a cada dictado y el respaldo lo tapa sin que nadie lo note.
 
 **Red de seguridad: `_shared/revision.ts`** (desde 2026-09-30, `app_config.content_check`:
-off | observe | enforce, hoy enforce). Si la limpieza pierde un número no retractado o encoge el
-texto a menos del 60%, se pega el crudo completo. Quita "Gracias por ver el video." sueltos y anota
+off | observe | enforce, **hoy observe**). Detecta si la limpieza pierde un número no retractado o
+encoge el texto a menos del 60%; en observe solo lo cuenta. ⚠️ **Regla (decisión de Nicolás,
+2026-09-30): en producción solo se APLICAN comprobaciones exactas** —como que los trozos
+reconstruyan el texto en `partirDictado`—; **las que adivinan, solo observan.** Esta adivina qué
+cambios son legítimos, y con un modelo que casi nunca pierde contenido casi todo lo que atraparía
+serían falsas alarmas que le quitan la limpieza al médico. No pasarla a enforce sin datos nuevos. Quita "Gracias por ver el video." sueltos y anota
 el eco de la pista. Lo que ve queda en la vista `revisiones_recientes`. Pruebas en
 `_tests/revision.test.ts`, con dictados reales: correrlas al tocar `revision.ts` o `format.ts`.
 

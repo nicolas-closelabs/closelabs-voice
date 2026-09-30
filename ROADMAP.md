@@ -218,10 +218,10 @@ cambia la URL.
   cero números inventados, cero tramos borrados. Groq de respaldo sin pista. Ver BACKLOG.
 - [x] ~~Coma de miles de OpenAI~~ — Nicolás decidió que no es un problema (2026-09-29).
 - [x] **Corte del dictado que borraba frases con decimales** — corregido y desplegado (2026-09-29).
-- [x] **Red de seguridad, capas 1 y 2a** (2026-09-30, `_shared/revision.ts`, `content_check =
-  'enforce'`): si la limpieza pierde un número no retractado o encoge el texto, se pega el crudo
-  completo; se quitan las frases de subtítulos y se anota el eco de la pista. 0 falsas alarmas en
-  el banco. Se vigila en la vista `revisiones_recientes`.
+- [x] **Red de seguridad, capas 1 y 2a** (2026-09-30, `_shared/revision.ts`): quedó como SENSOR
+  (`content_check = 'observe'`), no como arreglo — adivina qué cambios son legítimos y daría más
+  falsas alarmas que aciertos. Se quitan las frases de subtítulos exactas y se anota el eco de la
+  pista. Se mira en la vista `revisiones_recientes`.
 - [ ] **Red de seguridad, capa 2b**: partir el audio en las pausas y detectar tramos sin texto.
   **Condición para hacerla:** que el banco de voz, con más audios, muestre que OpenAI borra algo.
 - [ ] **Avisar al médico en la app** cuando la red de seguridad actúe (hoy solo queda anotado).
