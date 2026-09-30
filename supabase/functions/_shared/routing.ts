@@ -213,6 +213,11 @@ export async function loadAppConfig(): Promise<AppConfig> {
   };
 }
 
+/** Solo para las pruebas: olvida el ruteo guardado, para leer una configuración nueva. */
+export function olvidarRuteo(): void {
+  cache = null;
+}
+
 /** Modo de la red de seguridad de la limpieza. Si la base no responde, "observe". */
 export async function modoRevision(): Promise<ModoRevision> {
   try {

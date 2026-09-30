@@ -1,0 +1,14 @@
+-- La red de seguridad de la limpieza pasa a 'enforce' (2026-09-30).
+--
+-- Medido en producción en modo 'observe' antes de activarla:
+--   - Banco completo con gpt-6-luna (48 dictados reales): 0 alarmas. Ninguna falsa.
+--   - Audio con "Gracias por ver el video." al final: se quitó y quedó anotado.
+--   - Audio con la frase de la pista dentro: quedó anotado como `eco_pista`, texto intacto.
+--   - Corrección hablada LARGA (el "mentira" llega >12 palabras después de lo retractado): salta.
+--     Es una falsa alarma conocida y rara; con 'enforce' el médico recibe el crudo completo, con el
+--     "mentira" a la vista. Feo, visible y sin perder nada: lo que pide la regla del producto.
+--
+-- ⚠️ Requiere el código que, al fallar la revisión, pega el crudo de inmediato en vez de recorrer
+-- los respaldos (format.ts, 2026-09-30). Con el código anterior cada falsa alarma costaba 8-10 s.
+-- Vigilar `revisiones_recientes`: si `revision_limpieza` aparece seguido, mirar por qué.
+update app_config set content_check = 'enforce', updated_at = now();

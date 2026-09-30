@@ -218,7 +218,14 @@ cambia la URL.
   cero números inventados, cero tramos borrados. Groq de respaldo sin pista. Ver BACKLOG.
 - [x] ~~Coma de miles de OpenAI~~ — Nicolás decidió que no es un problema (2026-09-29).
 - [x] **Corte del dictado que borraba frases con decimales** — corregido y desplegado (2026-09-29).
-- [ ] **Red de seguridad**: detectar tramos de audio sin texto (borrados) y avisar al médico.
+- [x] **Red de seguridad, capas 1 y 2a** (2026-09-30, `_shared/revision.ts`, `content_check =
+  'enforce'`): si la limpieza pierde un número no retractado o encoge el texto, se pega el crudo
+  completo; se quitan las frases de subtítulos y se anota el eco de la pista. 0 falsas alarmas en
+  el banco. Se vigila en la vista `revisiones_recientes`.
+- [ ] **Red de seguridad, capa 2b**: partir el audio en las pausas y detectar tramos sin texto.
+  **Condición para hacerla:** que el banco de voz, con más audios, muestre que OpenAI borra algo.
+- [ ] **Avisar al médico en la app** cuando la red de seguridad actúe (hoy solo queda anotado).
+  Necesita versión nueva.
 - [ ] Casos de formateo a partir de los crudos nuevos y más audios para el banco de voz.
 - [x] **Prueba ácida — ganó gpt-6-luna** (2026-09-29): 0 fallos de contenido contra 4, cerró el
   "1 de cada 9" de la dosis del dictado de 6 min (51/51). Formatea luna desde ese día.

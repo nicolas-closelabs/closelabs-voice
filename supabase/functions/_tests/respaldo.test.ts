@@ -23,6 +23,8 @@ const env: Record<string, string> = {
 type Comportamiento = "ok" | "429" | "500" | "400" | "vacio" | "cuelga" | "400-siempre" | "truncado";
 const conducta: Record<string, Comportamiento> = {};
 let llamadas: string[] = [];
+/** `app_config.content_check` que devuelve la base falsa. */
+let revision = "observe";
 /** Cuerpo de cada petición de formateo, por proveedor: para revisar QUÉ parámetros se mandan. */
 let cuerpos: Record<string, any> = {};
 
@@ -38,7 +40,7 @@ const json = (b: unknown, status = 200) =>
 globalThis.fetch = (async (input: any, init: any = {}) => {
   const url = String(input);
   if (url.includes("/rest/v1/app_config")) {
-    return json([{ transcribe_provider: "groq", format_provider: "groq", transcribe_fallbacks: ["deepinfra", "openai"], format_fallbacks: ["deepinfra"], daily_quota: 500 }]);
+    return json([{ transcribe_provider: "groq", format_provider: "groq", transcribe_fallbacks: ["deepinfra", "openai"], format_fallbacks: ["deepinfra"], daily_quota: 500, content_check: revision }]);
   }
   if (url.includes("/rest/v1/providers")) return json(proveedores);
   if (url.includes("/rest/v1/")) return new Response(null, { status: 201 });
@@ -137,6 +139,17 @@ await caso("Groq COLGADO → DeepInfra dentro de los 30 s de la app", { groq: "c
 // proveedor no sirve, todos sirven el mismo modelo y truncarían igual.
 await caso("dictado que no cabe: se repite con techo amplio y NO prueba el respaldo", { groq: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F", "groq:F"]);
 await caso("truncado no se confunde con empty_result", { groq: "truncado", deepinfra: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F", "groq:F"]);
+
+// Red de seguridad (2026-09-30). El proveedor falso devuelve "limpio por groq": para un dictado
+// con "500 mg", la limpieza PERDIÓ el número.
+{
+  const { olvidarRuteo } = await import(`${FN}/routing.ts`);
+  await caso("revisión en observe: se entrega lo limpio aunque pierda un número", {}, () => formatText("d1", "Dosis de 500 mg.", "prompt"), (r) => r.ok && r.provider === "groq", ["groq:F"]);
+  revision = "enforce"; olvidarRuteo();
+  await caso("revisión en enforce: falla YA, sin probar el respaldo (la app pega el crudo)", {}, () => formatText("d1", "Dosis de 500 mg.", "prompt"), (r) => !r.ok && r.code === "revision_limpieza", ["groq:F"]);
+  await caso("revisión en enforce: lo que no pierde nada pasa normal", {}, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "groq", ["groq:F"]);
+  revision = "observe"; olvidarRuteo();
+}
 
 // --- Corte del dictado largo (2026-09-23) ---------------------------------------------------
 {

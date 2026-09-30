@@ -393,6 +393,12 @@ se ve con 3 repeticiones: para comparar modelos en un fallo raro, decenas.
 `providers.format_reasoning_model = true`. Sin la marca, el proxy manda `temperature` y
 `max_tokens`, OpenAI responde 400 a cada dictado y el respaldo lo tapa sin que nadie lo note.
 
+**Red de seguridad: `_shared/revision.ts`** (desde 2026-09-30, `app_config.content_check`:
+off | observe | enforce, hoy enforce). Si la limpieza pierde un número no retractado o encoge el
+texto a menos del 60%, se pega el crudo completo. Quita "Gracias por ver el video." sueltos y anota
+el eco de la pista. Lo que ve queda en la vista `revisiones_recientes`. Pruebas en
+`_tests/revision.test.ts`, con dictados reales: correrlas al tocar `revision.ts` o `format.ts`.
+
 **Banco de la capa de VOZ: `pruebas-dictado/voz/`.** `transcribir.ts` manda el MISMO audio real
 (Notas de Voz → Opus como la app; los audios NO van al repo) a `/transcribe` con distintas pistas e
 idiomas, y `revisar.ts` lo compara contra el guion: datos clínicos perdidos, números que nadie dijo,

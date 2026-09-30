@@ -121,6 +121,12 @@ export async function formatText(
       console.error("el dictado excede MAX_OUTPUT_TOKENS; el respaldo truncaría igual");
       return r;
     }
+    // La red de seguridad detuvo la limpieza: se pega el crudo YA, sin recorrer los respaldos.
+    // Medido el 2026-09-30: cuando salta con el principal, casi siempre es una corrección hablada
+    // larga que TODOS los modelos aplican igual (y la revisión no alcanza a ver), así que probar
+    // otros tres proveedores solo sumaba 8-10 s de espera para terminar en el mismo crudo. Y
+    // cuando es una pérdida de verdad, el respaldo es un modelo peor que el principal.
+    if (r.code === "revision_limpieza") return r;
     if (!esUltimo) {
       console.warn(`${routes[n].provider} falló (${r.code}) al formatear; se prueba el siguiente`);
     }
@@ -403,8 +409,7 @@ async function formatearCon(
 
   // Red de seguridad: cada trozo limpio contra su crudo. Por trozos y no el dictado entero porque
   // así una corrección hablada nunca cruza el límite de lo comparado (el modelo tampoco la ve).
-  // Ver `revision.ts`. En "enforce", el intento cuenta como fallido y se prueba el siguiente
-  // proveedor; si ninguno pasa, la app pega el crudo ENTERO, que es lo que se quiere.
+  // Ver `revision.ts`. En "enforce", el formateo falla y la app pega el crudo ENTERO.
   const modo = await modoRevision();
   const revisado = modo === "off"
     ? true

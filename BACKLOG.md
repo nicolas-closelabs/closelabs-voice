@@ -342,6 +342,27 @@ el prompt es ~86% del costo): se ve en el panel de uso de OpenAI, `usage_events`
 - Por OpenRouter, fijar el servidor: de los 7 que sirven luna, Azure y Bedrock no aceptan
   `response_format`, y `openai/flex` es diferido.
 
+## 2026-09-30 — Red de seguridad: revisión mecánica de la limpieza y de la voz
+
+`supabase/functions/_shared/revision.ts`, sin modelos (<1 ms). Capa 1: cada trozo limpio contra su
+crudo; si se perdió un número que no se retractó, o el texto quedó por debajo del 60%, el formateo
+falla y la app pega el crudo COMPLETO (sin recorrer los respaldos: medido, solo sumaba 8-10 s para
+terminar igual). Capa 2a: se quitan "Gracias por ver el video." y parientes cuando vienen sueltos
+dentro de un dictado real, y se anota `eco_pista` cuando la pista se cuela (no se borra: a veces va
+pegada a contenido real).
+
+Probado con los dictados reales del banco (detecta las 4 fugas de la pista del guion y el borrado de
+signos vitales; 0 falsas alarmas en las transcripciones de OpenAI) y en producción en modo observe
+(0 alarmas en 48 dictados del banco; las tres detecciones funcionan con audio sintético).
+
+**Límites conocidos:**
+- Una corrección hablada LARGA (el "mentira" más de 12 palabras después de lo retractado) dispara
+  una falsa alarma: el médico recibe el crudo con el "mentira" a la vista.
+- No detecta una corrección NO aplicada (dosis doble): ahí no se pierde nada. Eso lo mide el banco.
+- No recupera lo que la voz nunca escribió: eso es la capa 2b, pendiente con condición.
+- Hoy el médico no ve ningún aviso; solo queda anotado en `revisiones_recientes`. El aviso en la
+  app necesita versión nueva.
+
 ## 2026-09-29 — El corte borraba frases con decimales, y luna pasa a formatear
 
 **Bug grave, encontrado por el banco con casos reales:** `enFrases` (`_shared/format.ts`) usaba
