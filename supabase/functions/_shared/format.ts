@@ -4,7 +4,8 @@
 // aparece en ningún mensaje de error. Solo se cuenta cuántos tokens fueron.
 
 import { fetchWithTimeout, isAbort, classifyProviderError } from "./http.ts";
-import { promptDeFormateo, resolveRoutes, type Route } from "./routing.ts";
+import { modoRevision, promptDeFormateo, resolveRoutes, type Route } from "./routing.ts";
+import { revisarLimpieza } from "./revision.ts";
 import { logUsage, type ErrorCode } from "./usage.ts";
 
 /**
@@ -400,10 +401,28 @@ async function formatearCon(
     return { ok: false, code: fallo.code ?? "provider_error", status: fallo.status ?? 502 };
   }
 
+  // Red de seguridad: cada trozo limpio contra su crudo. Por trozos y no el dictado entero porque
+  // así una corrección hablada nunca cruza el límite de lo comparado (el modelo tampoco la ve).
+  // Ver `revision.ts`. En "enforce", el intento cuenta como fallido y se prueba el siguiente
+  // proveedor; si ninguno pasa, la app pega el crudo ENTERO, que es lo que se quiere.
+  const modo = await modoRevision();
+  const revisado = modo === "off"
+    ? true
+    : trozos.every((trozo, i) => revisarLimpieza(trozo, partes[i].texto ?? "").ok);
+  if (!revisado) console.warn(`revisión: ${route.provider} perdió contenido al limpiar (modo ${modo})`);
+  if (!revisado && modo === "enforce") {
+    logUsage({
+      deviceId, kind: "format", provider: route.provider, model: route.model,
+      tokensIn: suma("tokensIn"), tokensOut: suma("tokensOut"),
+      latencyMs, ok: false, errorCode: "revision_limpieza",
+    });
+    return { ok: false, code: "revision_limpieza", status: 502 };
+  }
+
   logUsage({
     deviceId, kind: "format", provider: route.provider, model: route.model,
     tokensIn: suma("tokensIn"), tokensOut: suma("tokensOut"),
-    latencyMs, ok: true,
+    latencyMs, ok: true, errorCode: revisado ? undefined : "revision_limpieza",
   });
   if (trozos.length > 1) {
     console.log(`dictado largo formateado en ${trozos.length} trozos (${Math.round(latencyMs)} ms)`);

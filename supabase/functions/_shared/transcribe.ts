@@ -6,6 +6,7 @@
 import { fetchWithTimeout, isAbort, classifyProviderError } from "./http.ts";
 import { resolveRoutes, type Route } from "./routing.ts";
 import { logUsage, type ErrorCode } from "./usage.ts";
+import { revisarTranscripcion } from "./revision.ts";
 
 /** ~5 minutos de Opus a 24 kbps. Más que eso no es un dictado, es otra cosa. */
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -171,10 +172,19 @@ async function intentar(
     };
   }
 
+  // Red de seguridad de la voz (`revision.ts`): se quitan las frases de subtítulos que vienen
+  // sueltas dentro de un dictado real, y se anota si la pista se coló. Lo segundo no se toca:
+  // puede venir pegado a contenido real, y lo que dice es que el motor se comió un tramo.
+  const revisada = revisarTranscripcion(text, prompt);
+  const aviso: ErrorCode | undefined = revisada.ecoPista
+    ? "eco_pista"
+    : revisada.quitadas ? "alucinacion_quitada" : undefined;
+  if (aviso) console.warn(`revisión de la voz (${route.provider}): ${aviso}`);
+
   logUsage({
     deviceId, kind: "transcribe", provider: route.provider, model: route.model,
-    audioSeconds, latencyMs, ok: true,
+    audioSeconds, latencyMs, ok: true, errorCode: aviso,
   });
 
-  return { ok: true, text, promptSent };
+  return { ok: true, text: revisada.texto, promptSent };
 }

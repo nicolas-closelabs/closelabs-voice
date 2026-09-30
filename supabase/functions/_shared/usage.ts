@@ -40,7 +40,13 @@ export type ErrorCode =
   // en el sentido de "hiciste algo mal", así que todos llevan explicación en la interfaz.
   | "no_account"
   | "trial_ended"
-  | "subscription_inactive";
+  | "subscription_inactive"
+  // Red de seguridad (`revision.ts`). Los dos primeros se anotan en un evento `ok: true` cuando la
+  // revisión está en modo "observe": el dictado salió, pero se habría detenido. No cuentan como
+  // fallo en las alertas; se leen en la vista `revisiones_recientes`.
+  | "revision_limpieza" // la limpieza perdió un número o encogió el texto de más
+  | "eco_pista" // la transcripción trae la pista repetida: casi siempre, un tramo comido
+  | "alucinacion_quitada"; // se quitó una frase de subtítulos ("Gracias por ver el video.")
 
 export function logUsage(u: UsageRecord): void {
   insertDetached("usage_events", {

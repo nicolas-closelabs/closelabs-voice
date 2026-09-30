@@ -6,6 +6,7 @@
 // fila y TODAS las instalaciones obedecen en el siguiente dictado.
 
 import { select } from "./db.ts";
+import type { ModoRevision } from "./revision.ts";
 
 export type Kind = "transcribe" | "format";
 
@@ -68,6 +69,8 @@ interface RoutingConfig {
   dailyQuota: number;
   /** Prompt de limpieza guardado en la base; manda sobre el que envía la app. */
   formatPrompt: string | null;
+  /** Qué hace la red de seguridad con la limpieza. Ver `revision.ts`. */
+  contentCheck: ModoRevision;
   providers: Record<string, ProviderRow>;
 }
 
@@ -96,9 +99,10 @@ async function routingConfig(): Promise<RoutingConfig> {
       format_fallbacks: string[] | null;
       daily_quota: number;
       format_prompt: string | null;
+      content_check: string | null;
     }>(
       "app_config",
-      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota,format_prompt&limit=1",
+      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota,format_prompt,content_check&limit=1",
     ),
     select<ProviderRow>(
       "providers",
@@ -118,6 +122,8 @@ async function routingConfig(): Promise<RoutingConfig> {
     formatFallbacks: row.format_fallbacks ?? [],
     dailyQuota: row.daily_quota,
     formatPrompt: row.format_prompt,
+    // Un valor que no se reconoce cae en "observe": ante la duda, mirar sin tocar el dictado.
+    contentCheck: (["off", "observe", "enforce"] as const).find((m) => m === row.content_check) ?? "observe",
     providers,
   };
   cache = { at: Date.now(), cfg };
@@ -205,6 +211,15 @@ export async function loadAppConfig(): Promise<AppConfig> {
     downloadUrl: data.download_url,
     tutorialUrl: data.tutorial_url,
   };
+}
+
+/** Modo de la red de seguridad de la limpieza. Si la base no responde, "observe". */
+export async function modoRevision(): Promise<ModoRevision> {
+  try {
+    return (await routingConfig()).contentCheck;
+  } catch {
+    return "observe";
+  }
 }
 
 /** El prompt de limpieza que manda: el de la base si está puesto, si no el que envió la app. */
