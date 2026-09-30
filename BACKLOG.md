@@ -1,7 +1,8 @@
 # BACKLOG — CloseLabs Voice
 
 > Feedback y pendientes acumulados para hacer **un build grande con todo junto** (no builds
-> sueltos). Última actualización: 2026-07-13.
+> sueltos). Última actualización: 2026-09-30. Lo abierto de verdad está resumido en la sección
+> "Para la próxima versión de la app" de ROADMAP.md (Fase 2.5).
 
 ## Estado actual (ya EN PRODUCCIÓN, probado en Silicon + Intel)
 - ✅ **Transcripción HÍBRIDA** (v0.6): online → Groq Whisper `large-v3-turbo` (nube, calidad
@@ -36,13 +37,13 @@
    y borrarlos sin preguntar no es cosa de una migración. Quien quiera el espacio:
    `rm -rf ~/.cache/huggingface/hub/models--*whisper*`.
 
-4. **Error handling / alertas cuando Groq falla.** Hoy, ante cualquier error de Groq (sin saldo,
+4. ✅ **RESUELTO con el proxy (v0.6.0) + alertas (2026-09-20)** — telemetría en `usage_events`, vistas de salud y respaldo automático. Texto original: **Error handling / alertas cuando Groq falla.** Hoy, ante cualquier error de Groq (sin saldo,
    rate limit, caído) cae a Parakeet **en silencio, sin avisar a CloseLabs** → los médicos degradan
    a calidad "regular" y nadie se entera. (No se queda pegado: reintenta la nube en cada dictado y
    se recupera solo.) Fix real = **proxy propio + telemetría** (misma infra que la capa de
    cuentas/suscripción del roadmap). Mínimo viable: distinguir/loguear el tipo de error de cuenta.
 
-5. **Plan B de proveedor (CRÍTICO para distribuir).** ⚠️ Groq tiene los **upgrades a Developer
+5. ✅ **RESUELTO (2026-09-21/29)** — respaldo automático en el proxy; hoy transcribe OpenAI y formatea gpt-6-luna, Groq es solo respaldo. Texto original: **Plan B de proveedor (CRÍTICO para distribuir).** ⚠️ Groq tiene los **upgrades a Developer
    tier PAUSADOS** ("temporarily unavailable due to high demand") → no se pueden conseguir límites
    de producción desde Groq por ahora. **Límites del free tier (medidos en vivo 2026-07-13):**
    Whisper ~2000 req/día + 7200 audio-seg; Llama 70B ~1000 req/día + 12000 tokens/min → **~1000
@@ -61,7 +62,7 @@
    "falta Accesibilidad, tu texto está en el portapapeles"; no restaurar el portapapeles si cambió;
    bandeja "Pegar última transcripción".
 
-7. **PRIVACIDAD — log con texto de pacientes.** `managers/transcription.rs:1412` hace
+7. ✅ **RESUELTO** — el log solo anota la longitud ("Transcription result: N chars"), verificado el 2026-09-30. Texto original: **PRIVACIDAD — log con texto de pacientes.** `managers/transcription.rs:1412` hace
    `info!("Transcription result: {}")` → el dictado completo queda en el archivo de log. Loguear
    solo la longitud.
 
@@ -114,7 +115,7 @@
     **Arreglado en el prompt** (regla 11) con **excepción médica**: "coma" y "punto" sueltos NUNCA
     se convierten ("paciente en coma", "punto de sutura", "punto gatillo"). Validado contra la API.
 
-16. ⚠️ **TECHO DE ESCALA — el tier gratis de Groq NO aguanta el producto (medido 2026-09-18).**
+16. ✅ **YA NO APLICA (2026-09-29)** — ni la transcripción ni el formateo dependen del plan gratis de Groq; queda solo de respaldo. Texto original: ⚠️ **TECHO DE ESCALA — el tier gratis de Groq NO aguanta el producto (medido 2026-09-18).**
     La cuenta reporta `x-ratelimit-limit-tokens: 8000` **por minuto para toda la organización**.
     Cada dictado gasta el prompt entero, así que el techo es directo: **~5-6 dictados por minuto
     ENTRE TODOS los médicos**. Con dos o tres consultorios a la vez ya devuelve 429 (se reprodujo:
@@ -129,7 +130,7 @@
       Groq detrás del proxy (pendiente #5 / Fase 1).** Es acción del cliente: habilitar facturación
       en Groq antes de vender licencias.
 
-17. **La salida estructurada falla de forma intermitente** (`400 Failed to generate JSON`): cuando
+17. ✅ **YA NO APLICA** — era el validador de JSON de Groq, que ya no formatea. Texto original: **La salida estructurada falla de forma intermitente** (`400 Failed to generate JSON`): cuando
     pasa, se reintenta por la ruta clásica y el dictado tarda ~6 s en vez de 2,5 s.
     ✅ **2026-09-19 — IDENTIFICADO: es de Groq.** Se reprodujo con el prompt de producción (1 de 16
     llamadas) y NO aparece en DeepInfra con el mismo modelo y el mismo esquema (0 de 32). Bajarle

@@ -171,7 +171,8 @@ cambia la URL.
   sacaba de la app y seguía dictando; el tutorial no salía. Detalle en BACKLOG.
 - [x] **El dictado se escribe DENTRO de la app — HECHO 2026-09-22 (v0.8.1).** El tutorial nunca
   había funcionado: el Cmd+V simulado no llegaba a nuestra propia ventana.
-- [ ] **Guía visual del permiso de Accesibilidad (Mac)**: una imagen de dónde exactamente hacer clic.
+- [x] **Guía visual del permiso de Accesibilidad (Mac)** — HECHO en la v0.8.4 (2026-09-24): un
+  permiso por paso, con el dibujo de qué tocar ANTES de abrir Ajustes del Sistema.
 - [~] **Página closelabs.co/voice (convencer e instalar)** — 🔨 EN CURSO (2026-09-21), en otra
   sesión dedicada al diseño de páginas. Estado:
   - **Descargas:** repo PÚBLICO `nicolas-closelabs/closelabs-voice-releases`, solo con instaladores
@@ -209,9 +210,8 @@ cambia la URL.
   largos pierden la corrección hablada. O sea, sigue haciendo falta.
 - [x] **El prompt vive en `app_config.format_prompt`** → se afina sin instaladores; verificado
   mandando el prompt viejo desde el cliente (42/42 igual).
-- [ ] ⚠️ **Sigue fallando 1 de cada 9**: en el dictado de 6 minutos, a veces quedan escritas las
-  dos dosis de una corrección hablada. Es visible para el médico (dos dosis contradictorias), no
-  silencioso, pero hay que cerrarlo antes de lanzar.
+- [x] ~~**Sigue fallando 1 de cada 9**~~ (las dos dosis de una corrección en el dictado de 6 min)
+  — CERRADO el 2026-09-29 al pasar a gpt-6-luna: 51/51.
 - [x] **Guion grabado** (2026-09-28, 20 dictados crudos) y **banco de la capa de VOZ**
   (`pruebas-dictado/voz/`): 97 de 446 datos clínicos se perdían en la voz, antes del formateo.
 - [x] **Transcribir con OpenAI `gpt-4o-mini-transcribe`** (2026-09-29): datos mal 8-17% → 1,6-2%,
@@ -226,17 +226,21 @@ cambia la URL.
   **Condición para hacerla:** que el banco de voz, con más audios, muestre que OpenAI borra algo.
 - [ ] **Avisar al médico en la app** cuando la red de seguridad actúe (hoy solo queda anotado).
   Necesita versión nueva.
-- [ ] Casos de formateo a partir de los crudos nuevos y más audios para el banco de voz.
+- [x] **7 casos de formateo con textos reales de OpenAI** (2026-09-29): el banco pasó de 9 a 16
+  casos y encontró el bug del corte con decimales.
+- [ ] **Más audios para el banco de voz** (hoy 7). Idealmente de médicos reales en el piloto,
+  incluida la palabra "mentira" (la voz sintética la hizo sonar como "Motrin").
 - [x] **Prueba ácida — ganó gpt-6-luna** (2026-09-29): 0 fallos de contenido contra 4, cerró el
   "1 de cada 9" de la dosis del dictado de 6 min (51/51). Formatea luna desde ese día.
 - [ ] **Equipo de pruebas propio para el banco**: hoy gasta el cupo del Mac de Nicolás.
-- [x] ~~Prueba ácida gpt-4o-mini contra gpt-6-luna~~, DESPUÉS de grabar el guion (para que cubra
-  las ocho especialidades). Luna no falló en 21 intentos donde gpt-4o-mini falló 2 — puede ser
-  suerte. Protocolo y regla de decisión, fijada antes de ver los números, en
-  `pruebas-dictado/README.md`. Si luna gana, cierra también el punto de "1 de cada 9" de arriba.
-- [x] ~~**Por qué Whisper corta palabras con audio de 3+ minutos**~~ Resuelto 2026-09-29: no era
-  la duración, eran tramos degradados de Groq turbo. OpenAI no lo hace. Texto original: ("tensi arterial", "frecuencia
-  card 98"). Visto en el crudo del 2026-09-24; puede ser el audio, la compresión Opus o el modelo.
+- [x] ~~**Por qué Whisper corta palabras con audio de 3+ minutos**~~ ("tensi arterial") —
+  Resuelto 2026-09-29: no era la duración, eran tramos degradados de Groq turbo. OpenAI no lo hace.
+
+**Para la próxima versión de la app (se juntan en un solo build):**
+- [ ] ⚠️ **Cerrar sesión solo en ESTE computador** (`?scope=local` en `auth_sign_out`): hoy la
+  cierra en todos, tarde y sin avisar. Ítem 18 del BACKLOG.
+- [ ] Avisar al médico cuando la red de seguridad actúe (si algún día pasa a `enforce`).
+- [ ] Repartir la 0.8.4 y subir `latest_version` (sigue en 0.6.0).
 
 **Producción con más de 20 médicos (proveedores):**
 - [x] **Respaldo automático en el proxy.** ✅ 2026-09-21, EN PRODUCCIÓN. Cadenas en `app_config`:
@@ -252,21 +256,22 @@ cambia la URL.
   ~100 ms y el dictado completo costó ~3 s más. Configuración restaurada al terminar.
 - [x] ~~**Formatear: OpenRouter (servidor Groq)**~~ — sustituido el 2026-09-24 por openai/gpt-4o-mini
   tras medirlo con el banco (35/42 contra 42/42). OpenRouter queda de primer respaldo.
-- [x] **Transcribir: nos quedamos en Groq gratis, con OpenAI de primer respaldo** (decisión de
+- [x] **2026-09-29: se transcribe con OpenAI** (`gpt-4o-mini-transcribe`) y se formatea con
+  **gpt-6-luna**, las dos cosas medidas con los bancos. Lo de abajo es el historial que llevó ahí.
+- [x] ~~Transcribir: nos quedamos en Groq gratis, con OpenAI de primer respaldo~~ (decisión de
   Nicolás, 2026-09-23). El plan gratis aguanta ~2.000 dictados/día entre TODOS; OpenAI ya está
   configurado y entra solo si Groq falla. ⚠️ Se reabre cuando el volumen se acerque a ese techo:
   mirar `usage_events` por día. OpenRouter NO ofrece transcripción de audio.
   ⚠️ El respaldo se reordenó a **openai → deepinfra**: el Whisper de DeepInfra no acepta la pista
   de vocabulario, así que cuando entraba se perdía el diccionario del médico.
-- [ ] **Probar un modelo SIN razonamiento para formatear** (gpt-4o-mini, llave de OpenAI ya puesta)
+- [x] ~~**Probar un modelo SIN razonamiento para formatear**~~ (hecho el 2026-09-24; hoy luna) (gpt-4o-mini, llave de OpenAI ya puesta)
   con los dictados reales del 2026-09-24. Motivo: `gpt-oss-20b` razona antes de escribir y en
   dictados de 3+ minutos se enreda (16.000-18.000 tokens sin terminar). Detalle en BACKLOG.
-- [ ] **Mirar por qué Whisper corta palabras con audio de 3+ minutos** ("tensi arterial"). Se vio
-  en el texto crudo del 2026-09-24; puede ser el audio, la compresión Opus o el propio modelo.
-- [ ] **Medir con 30-50 dictados reales** antes de elegir el principal (hasta hoy, 5 muestras).
+- [x] ~~Mirar por qué Whisper corta palabras con audio de 3+ minutos~~ — resuelto (ver arriba).
+- [x] ~~**Medir con 30-50 dictados reales** antes de elegir el principal~~ — hecho con los bancos (2026-09-24/29).
   ⚠️ 2026-09-22: DeepInfra con reasoning `low` INVIERTE autocorrecciones ("se remite a cardiología
   me equivoqué a neurología" → cardiología). Con `medium` acierta pero tarda ~4,5 s. Detalle en BACKLOG.
-- [ ] Recomendación provisional: **transcribir con OpenAI** (`gpt-4o-mini-transcribe`, la mejor
+- [x] ~~Recomendación provisional~~ — superada por la decisión del 2026-09-29: **transcribir con OpenAI** (`gpt-4o-mini-transcribe`, la mejor
   calidad medida, ~$1,30/médico/mes) con DeepInfra y luego Groq de respaldo; **formatear con
   DeepInfra** (`gpt-oss-20b`, 16/16, cero errores de JSON) con Groq de respaldo. ⚠️ Revisado el 2026-09-22: no con reasoning `low` (ver arriba).
 - [ ] Que el abogado revise la política de datos de cada proveedor (datos de salud).
