@@ -2,7 +2,73 @@
 
 > Cómo firmar la app en Windows y macOS, qué hace cada quien y en qué orden.
 > Todo lo de aquí está verificado contra fuentes oficiales o confirmado por el proveedor.
-> **Última actualización: 2026-09-21.**
+> **Última actualización: 2026-10-02.**
+
+---
+
+## ⚠️ 2026-10-02 — CAMBIO DE PLAN: se está abriendo una LLC en EE.UU.
+
+Todo lo que sigue más abajo (SSL.com IV y Apple a nombre de Nicolás) se decidió porque no existía
+ninguna sociedad. **Con la LLC, la recomendación cambia: firmar todo a nombre de la LLC desde el
+primer instalador.** Y el momento es ideal: todavía no se ha firmado nada, así que no hay reputación
+que perder (ver *La regla de la identidad*).
+
+**Lo que gana el médico:** el aviso de Windows y el de Mac muestran **"CloseLabs LLC"** (o el
+nombre legal exacto que tenga), no el nombre de una persona. Para alguien que está decidiendo si
+instala, una empresa con el nombre del producto da más confianza. También pesa con gMedic.
+
+| | Windows | macOS |
+|---|---|---|
+| **Primera opción** | **Azure Artifact Signing**, $9,99/mes (~$120/año), 5.000 firmas/mes | **Apple Developer como organización**, $99/año |
+| **Respaldo** | **SSL.com OV**, ~$309/año ($129 + eSigner $180), 20 firmas/mes | — |
+| **Requisito clave** | EIN, D-U-N-S, web y correo en el dominio de la LLC | D-U-N-S, web en el dominio de la LLC |
+
+**Por qué Azure primero y SSL.com de respaldo:**
+- Azure cuesta ~$190/año menos y da **5.000 firmas al mes** frente a 20. Con 3-4 firmas por build,
+  las 20 de SSL.com alcanzan para unos 5 builds al mes: en una semana de arreglos se agotan.
+- El workflow ya trae instalada la herramienta de Azure (heredada de Handy).
+- ⚠️ **El riesgo es la validación de una sociedad recién creada.** Una empleada de Microsoft
+  respondió en agosto de 2026 que **no hay edad mínima** ("no minimum org age restrictions"), pero
+  un anuncio de abril de 2025 hablaba de 3 años de historia, y hay varios hilos de validaciones de
+  sociedades nuevas **rechazadas sin explicación**, con solo **tres intentos** para aportar
+  documentos. Por eso: intentar Azure **cuando la LLC ya tenga D-U-N-S y presencia pública**, y si
+  falla, SSL.com OV sin perder más tiempo.
+- **SSL.com OV acepta sociedades de menos de 3 años** (piden además la cédula de quien solicita) y
+  tiene garantía de 30 días. Exige una llamada de verificación a un teléfono **listado
+  públicamente**: el del perfil de D-U-N-S sirve.
+
+**macOS como organización:** Apple **no acepta** nombres comerciales (DBA): el certificado sale
+con el nombre legal de la LLC. Exige D-U-N-S y una web pública y funcional cuyo dominio esté
+asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejemplo en el pie).
+
+### Lo que necesita la LLC para firmar (en este orden)
+
+1. **Nombre legal definitivo** de la LLC. Es lo que verá el médico en los avisos.
+2. **EIN.** Sin número de Seguro Social no se pide en línea: por teléfono (línea internacional del
+   IRS, +1 267-941-1099, se obtiene en la misma llamada) o por fax con el formulario SS-4 (semanas).
+3. **D-U-N-S** (gratis, por la herramienta de Apple o en Dun & Bradstreet): 1 a 30 días hábiles.
+   Revisar que el teléfono y la dirección queden en el perfil: SSL.com llama a ese teléfono.
+4. **closelabs.co con el nombre legal** visible, y el dominio registrado o facturado a la LLC.
+5. **Un buzón real en el dominio** (p. ej. `nicolas@closelabs.co`) y otro distinto de respaldo:
+   Azure manda ahí los enlaces de verificación y vencen en 7 días.
+6. **Dirección comercial** en EE.UU. que coincida en todos los registros (la del agente registrado
+   o la oficina virtual).
+
+**Tiempo realista:** de 3 a 8 semanas desde que exista la LLC, sobre todo por el EIN y el D-U-N-S.
+
+### Obligaciones de una LLC con dueños extranjeros (para el contador)
+
+Una LLC de un solo dueño extranjero presenta cada año el **formulario 5472** con un 1120 pro forma:
+la multa por no hacerlo es de **$25.000**. Si los dueños son dos (Nicolás y el socio), cambia a
+sociedad de personas (formulario 1065). Lo define el contador, no este documento.
+
+### Stripe
+
+Con la LLC, la cuenta de Stripe debería ser **de la LLC** y no del socio español: cobro en dólares
+sin conversión a euros y la propiedad legal clara. Por eso se pausó la integración el 2026-10-02.
+El código no cambia: solo cambian las llaves.
+
+---
 
 ---
 
@@ -307,7 +373,8 @@ Unido, Australia, Nueva Zelanda, Japón, Corea del Sur, Singapur, Suiza, Noruega
 **individuos** solo de EE.UU. o Canadá. Colombia no está; un autónomo español es persona física.
 
 **Si CloseLabs se constituye en uno de esos países:**
-- Microsoft dice que **no hay antigüedad mínima** para la sociedad.
+- Microsoft dice que **no hay antigüedad mínima** para la sociedad (confirmado de nuevo en agosto de
+  2026 por una empleada de Microsoft; ver la sección del 2026-10-02 arriba).
 - ⚠️ Pero la validación se contrasta contra **registros públicos**, donde una sociedad recién creada
   casi no aparece. Hay varios casos de validaciones rechazadas sin explicación, y solo dan **tres
   intentos** para aportar documentos. Conviene tener antes el **D-U-N-S**.

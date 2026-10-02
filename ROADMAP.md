@@ -288,6 +288,11 @@ cambia la URL.
 - [ ] Que el abogado revise la política de datos de cada proveedor (datos de salud).
 
 ### Fase 3 — Distribución profesional (necesita: cuentas Apple/Windows)
+
+> ⚠️ **2026-10-02: se abre una LLC en EE.UU. → firmar TODO a nombre de la LLC** (Azure Artifact
+> Signing primero, SSL.com OV de respaldo; Apple como organización). Los dos ítems de abajo "a
+> nombre de Nicolás" quedan como plan B si la LLC se demora y hay que lanzar antes. Requisitos y
+> orden en `FIRMA-Y-DISTRIBUCION.md`, sección del 2026-10-02. Stripe en pausa hasta tener la LLC.
 - [ ] **Firma Windows con SSL.com IV + eSigner** a nombre de Nicolás (~$309/año). Luz verde desde
   2026-09-21; va primero porque casi todos los médicos usan Windows.
 - [ ] Firma + notarización macOS (Apple Developer, persona natural, $99/año).
