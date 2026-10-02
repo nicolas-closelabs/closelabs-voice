@@ -41,6 +41,16 @@ instala, una empresa con el nombre del producto da más confianza. También pesa
 con el nombre legal de la LLC. Exige D-U-N-S y una web pública y funcional cuyo dominio esté
 asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejemplo en el pie).
 
+### Datos de la LLC (2026-10-02)
+
+- **Nombre legal: CLOSELABS LLC**, con **dos socios** (Nicolás y el socio español): para el IRS es
+  una sociedad de personas, no una LLC de un solo dueño. Lo de impuestos lo define el contador.
+- **EIN: esperado hacia el 2026-10-09.**
+- **D-U-N-S: pedirlo YA, no necesita el EIN.** Por la herramienta de Apple
+  (developer.apple.com/enroll/duns-lookup): es gratis, D&B lo emite en **hasta 5 días hábiles** y
+  Apple lo recibe en **2 días hábiles** más. Por la web de D&B directamente es gratis pero tarda
+  hasta 30 días hábiles (o $229 por la vía rápida): no hace falta.
+
 ### Lo que necesita la LLC para firmar (en este orden)
 
 1. **Nombre legal definitivo** de la LLC. Es lo que verá el médico en los avisos.
