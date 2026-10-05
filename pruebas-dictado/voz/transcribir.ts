@@ -50,6 +50,10 @@ const { base, token, palabras } = ajustes();
 const estilo = fraseDeEstilo();
 const diccionario = palabras.length ? palabras.join(", ") + "." : "";
 
+/** Lista médica general (`lista-medica.txt`), para medir si ayuda en la pista. */
+const listaMedica = readFileSync(join(AQUI, "lista-medica.txt"), "utf8")
+  .split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).join(", ") + ".";
+
 /** Lo que se compara. La primera es exactamente lo que manda hoy la app. */
 const CONFIGS: { nombre: string; pista: string; idioma?: string }[] = [
   { nombre: "HOY: estilo+dicc, auto", pista: `${estilo} ${diccionario}`.trim() },
@@ -57,6 +61,16 @@ const CONFIGS: { nombre: string; pista: string; idioma?: string }[] = [
   { nombre: "estilo+dicc, es", pista: `${estilo} ${diccionario}`.trim(), idioma: "es" },
   { nombre: "sin pista, es", pista: "", idioma: "es" },
   { nombre: "solo dicc, es", pista: diccionario, idioma: "es" },
+  { nombre: "estilo+dicc+lista, auto", pista: `${estilo} ${diccionario} ${listaMedica}`.trim() },
+  // Para gpt-transcribe: la pista como CONTEXTO, pidiéndole que no interprete (2026-10-04 cambió
+  // "mentira" por "aumenta"). Va por `prompt` porque el proxy aún no reenvía `keywords`.
+  {
+    nombre: "literal+lista, auto",
+    pista: "Transcripción LITERAL de un dictado médico en español. Escribe exactamente lo que se " +
+      "dice, sin corregir ni reinterpretar: conserva las autocorrecciones del médico tal cual " +
+      "('mentira', 'perdón', 'me equivoqué') y todos los números. Términos que pueden aparecer: " +
+      `${diccionario} ${listaMedica}`,
+  },
 ];
 
 /** `--configs 0,1` corre solo esas (por posición en CONFIGS). */
