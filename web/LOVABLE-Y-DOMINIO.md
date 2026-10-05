@@ -1,13 +1,14 @@
 # Pendientes de la web y del dominio
 
 > Para tener a mano. Los prompts se pegan tal cual en Lovable. Actualizado el 2026-10-05.
-> Los textos legales (Términos y Privacidad) NO están aquí: viven en
-> `legal/BORRADOR-TERMINOS-Y-PRIVACIDAD.md` y se pegan solo cuando el abogado los apruebe.
+> Los textos legales (Términos y Privacidad) están en `legal/TERMINOS-Y-PRIVACIDAD-v1.md`
+> (aprobados por el abogado el 2026-10-04): su Parte C es el prompt que se pega en Lovable.
 
 | | Qué | Por qué | Estado |
 |---|---|---|---|
 | 1 | Pie con "© 2026 CLOSELABS LLC" + página /empresa | Apple y Microsoft verifican que la web sea de la empresa (firmas) | Pendiente |
 | 2 | Las 3 páginas de después del pago | Stripe necesita a dónde mandar al médico | Pendiente |
+| 2b | Páginas /terminos y /privacidad (v1) | Las enlaza la app al registrarse; las pide Stripe | Pendiente — prompt en `legal/TERMINOS-Y-PRIVACIDAD-v1.md` |
 | 3 | Dominio a nombre de la LLC en Namecheap | Microsoft acepta la factura del dominio como prueba (firmas) | Pendiente |
 | — | Buzones `contacto@` y `nicolas@` | Verificaciones de Microsoft y contacto | ✅ Hechos (Private Email de Namecheap, 2026-10-05) |
 
@@ -15,8 +16,7 @@
 
 ## 1. Prompt de Lovable — la web a nombre de CLOSELABS LLC
 
-Antes de pegarlo, reemplazar `[DIRECCIÓN DE LA LLC EN EE.UU.]` por la **misma dirección** del
-D-U-N-S, letra por letra.
+La dirección ya está puesta; tiene que ser **la misma** que la del D-U-N-S, letra por letra.
 
 ```
 Necesito que el sitio muestre claramente que pertenece a la empresa CLOSELABS LLC. No cambies el
@@ -36,7 +36,7 @@ diseño ni el contenido existente: solo agrega lo siguiente, con el mismo estilo
      Voice, una aplicación de dictado por voz para médicos."
    - Un bloque "Datos de la empresa" con:
      Razón social: CLOSELABS LLC
-     Dirección: [DIRECCIÓN DE LA LLC EN EE.UU.]
+     Dirección: 7345 W Sand Lake Rd, Ste 210, Office 4824, Orlando, FL 32819, United States
      Correo: contacto@closelabs.co
      WhatsApp: +57 310 299 1182 (enlace a https://wa.me/573102991182)
 
@@ -87,7 +87,7 @@ Página 3 — ruta /voice/cuenta-actualizada
 2. Bajar hasta la sección de **contactos del dominio** y editar el **Registrant**:
    - **Organization:** `CLOSELABS LLC`
    - **Nombre:** Nicolás, como representante.
-   - **Dirección:** la de la LLC en EE.UU. (la misma del D-U-N-S).
+   - **Dirección:** 7345 W Sand Lake Rd, Ste 210, Office 4824, Orlando, FL 32819, United States (la misma del D-U-N-S).
    - **Correo:** dejar el Gmail personal, **no** uno `@closelabs.co`: si algún día el dominio
      falla, los avisos de renovación tienen que llegar igual.
 3. Marcar que los mismos datos se usen para **Administrative, Technical y Billing**, y guardar.

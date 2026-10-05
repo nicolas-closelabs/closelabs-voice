@@ -152,6 +152,15 @@ cambia la URL.
       sigue dictando mientras Stripe reintenta, con aviso; si fallan los reintentos, mensaje claro
       y botón para actualizarla. **Sin reembolso** de la parte no usada (sigue dictando hasta el
       final del período); va escrito en los términos. Médicos de gMedic cancelan con gMedic.
+  - **Textos legales v1 aprobados por el abogado (2026-10-04)**: `legal/TERMINOS-Y-PRIVACIDAD-v1.md`.
+    Falta publicarlos en Lovable. Lo que obligan a construir:
+    - **Retracto del primer cobro** (5 días hábiles, Ley 1480 art. 47): devolverlo si el médico lo
+      pide. Al principio, a mano desde Stripe.
+    - **Pedir aceptación de nuevo** a quienes se registraron antes de publicar la v1 (aceptaron
+      enlaces que no existían). Una vez, en la próxima versión.
+    - **Autorización OPCIONAL y separada** para recibir información de otros productos: hoy el
+      teléfono es obligatorio "también para otros productos", y eso no sirve como autorización.
+    - Si la web llega a usar cookies o analítica, actualizar la sección 11 de la Política.
   - **Eliminar mi cuenta** (Ley 1581; decidido 2026-10-05, va en la próxima versión): separado de
     cancelar y que se note la diferencia — una **"Zona peligrosa"** al final de "Mi cuenta", al estilo
     GitHub, en rojo, con **doble confirmación** (explicar qué se borra y pedir que escriba su correo
