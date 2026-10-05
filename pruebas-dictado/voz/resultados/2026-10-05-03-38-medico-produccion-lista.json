@@ -1,0 +1,297 @@
+{
+  "etiqueta": "medico-produccion-lista",
+  "fecha": "2026-10-05T03:36:56.972Z",
+  "configs": {
+    "HOY: estilo+dicc, auto": {
+      "mal": 36,
+      "datos": 446,
+      "inventos": 4,
+      "colados": 0,
+      "cortadas": 0,
+      "detalle": [
+        {
+          "audio": "1.1",
+          "proveedor": "openai",
+          "perdidos": [
+            "microgramos"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 13,
+          "texto": "Se formula enalapril 20 miligramos cada 12 horas, hidroclorotiazida 25 miligramos al día, espironolactona 25 miligramos al día, levotiroxina 50 miligramos en ayunas, rosuvastatina 20 miligramos en la noche, clopidogrel 75 miligramos al día y omeprazol 20 miligramos antes del desayuno."
+        },
+        {
+          "audio": "1.2",
+          "proveedor": "openai",
+          "perdidos": [
+            "Walteros",
+            "Cifuentes"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 10,
+          "texto": "La junta médica la tienen los doctores Wolteros, Echeverri, Buitrago, Gutiérrez, Ocampo, Zuluaga, Sifuentes, Saavedra, Restrepo, del servicio de medicina interna del Hospital San Rafael."
+        },
+        {
+          "audio": "1.3",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 13,
+          "texto": "Glicemia 132, creatinina 0.9, nitrógeno ureico 18, hemoglobina 14.2, hematocrito 42, plaquetas 240,000, leucocitos 7,200, tensión arterial 130/80, frecuencia cardíaca 78, saturación 97%."
+        },
+        {
+          "audio": "1.4",
+          "proveedor": "openai",
+          "perdidos": [
+            "descendente anterior"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 9,
+          "texto": "Se realizó bypass con horario hace cinco años, se colocó un stent medicado en la descendiente anterior, se solicita holter de 24 horas, Doppler de miembros inferiores, score de calcio y test de esfuerzo en banda."
+        },
+        {
+          "audio": "1.5",
+          "proveedor": "openai",
+          "perdidos": [
+            "microgramos"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 13,
+          "texto": "Se formula enalapril 20 miligramos cada 12 horas, hidroclorotiazida 25 miligramos al día, espironolactona 25 miligramos al día, levotiroxina 50 miligramos en ayunas, rosuvastatina 20 miligramos en la noche, clopidogrel 75 miligramos al día y omeprazol 20 miligramos antes del desayuno."
+        },
+        {
+          "audio": "1.6",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 13,
+          "texto": "Glicemia 132, creatinina 0.9, nitrógeno ureico 18, hemoglobina 14.2, hematocrito 42, plaquetas 240,000, leucocitos 7,200, tensión arterial 130/80, frecuencia cardíaca 78 y saturación 97%."
+        },
+        {
+          "audio": "1.7",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 10,
+          "texto": "La junta médica la atienden los doctores Walteros, Echeverri, Buitrago, Gutiérrez, Ocampo, Zuluaga, Cifuentes, Saavedra y Restrepo, del servicio de medicina interna del Hospital San Rafael."
+        },
+        {
+          "audio": "2.1",
+          "proveedor": "openai",
+          "perdidos": [
+            "microgramos",
+            "colecistectomía",
+            "esclerosis subcondral",
+            "osteoartrosis"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 56,
+          "texto": "Paciente femenina de 58 años, ama de casa, natural y procedente de Medellín, que consulta por cuadro clínico de ocho meses de evolución constante en dolor en ambas rodillas, de predominio derecho, que empeora al bajar escaleras y al levantarse de la silla, y que mejora parcialmente con el reposo. Refiere rigidez matutina de aproximadamente 15 minutos, sin edema evidente, sin enrojecimiento y sin fiebre, y en el último mes el dolor aumentó de intensidad. Lo califica en 7 sobre 10 y le impide caminar más de dos cuadras. Como antecedentes personales tiene hipertensión arterial, diagnosticada hace años, en manejo con losartán, 50 miligramos cada 12 horas, hipotiroidismo en manejo con levotiroxina, 75 miligramos en ayunas y obesidad grado 1. Niega diabetes, niega enfermedad renal, niega alergías medicamentosas, antecedente quirúrgico en cesárea hace 30 años y colostitrectomía hace 8 años, ambas sin complicaciones. Antecedentes familiares, madre con artrosis de rodillas, operada en prótesis a los 70 años, padre fallecido por enfermedad cerebrovascular. Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientado, hidratada, afebril, peso 78 kilos, talla 1 metro 56, índice de masa corporal 32, tensión arterial 140 sobre 85, frecuencia cardíaca 76 por minuto, frecuencia respiratoria 16 por minuto, saturación 97% al ambiente, cardiopulmonar sin alteraciones, ruidos cardíacos, ritmos sin soplas, murmullo vesicular conservado, abdomen blando, no doloroso, en extremidades, rodilla derecha con crepitación a la movilización, dolor en la interlínea articular medial, sin derrame, con limitación de los últimos grados de flexión, rodilla izquierda con crepitación leve y sin dolor en la palpación, marcha antálgica, pulsos periféricos presentes y simétricos sin edemas. Paraclínicos previos que trae la paciente, hemograma normal, velocidad de sedimentación 24, proteína C reactiva negativa, glicemia 98, creatinina 0.8, radiografía de rodilla sin proyección anteroposterior de pie que muestra disminución del espacio articular medial bilateral de predominio derecho con osteofitos marginales y esclerosis subcondrial. Análisis, se trata de paciente con cuadro clínico compatible con osteoenterosis de rodillas de predominio derecho con factores agravantes de sobrepeso y sedentarismo, sin signos de artritis inflamatoria, con paraclínicos que descartan proceso inflamatorio agudo. Plan, se indica acetaminofén 1 gramo cada 8 horas por 7 días, mientras 6 horas, mentira, cada 6 horas por 5 días y se agrega diclofenaco tópico 3 veces al día en la rodilla derecha. Se solicita valoración por fisiatría para terapia física con fortalecimiento de cuádriceps, se remite a nutrición para plan de reducción de peso y se explica a la paciente la importancia de la actividad física de bajo impacto como natación, bicicleta estática, etc. Se dan signos de alarma, aumento súbito de dolor, imposibilidad para apoyar el miembro, fiebre o enrojecimiento articular, por los cuales debe consultar. Control por consulta externa en 6 semanas con los resultados de fisiatría. La paciente cumple las indicaciones y acepta el plan propuesto."
+        },
+        {
+          "audio": "2.2a",
+          "proveedor": "openai",
+          "perdidos": [
+            "losartán",
+            "levotiroxina",
+            "microgramos",
+            "colecistectomía"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 20,
+          "texto": "Paciente femenina de 58 años, ama de casa, natural y procedente de Medellín, que consulta por cuadro clínico de ocho meses de evolución constante, consistente en dolor de ambas rodillas, de predominio derecho que empeora al bajar escaleras y al levantarse de la silla, y que mejora parcialmente con el reposo. Refiere rigidez matutina de aproximadamente 15 minutos, sin edema evidente, sin enrojecimiento y sin fiebre. En el último mes el dolor ha aumentado de intensidad, lo califica 7 sobre 10 y le impide caminar más de dos cuadras. Como antecedentes personales, tiene hipertensión arterial diagnosticada hace 12 años, en manejo con losortán 50 miligramos cada 12 horas, hipotiroidismo en manejo con levotroxina 75 miligramos en ayunas y obesidad grado 1. Niega diabetes, niega enfermedad renal, niega alergias a medicamentos, antecedente quirúrgico de cesárea hace 30 años y colexistomía hace 8 años, ambas sin complicaciones. Antecedentes familiares, madre con artrosis de rodillas operada de prótesis a los 70 años, padre fallecido por enfermedad cerebrovascular."
+        },
+        {
+          "audio": "2.2b",
+          "proveedor": "openai",
+          "perdidos": [
+            "limitación",
+            "osteofitos"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 23,
+          "texto": "Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientada, hidratada, afebril, peso 78 kilos, talla 1 metro 56, índice de masa corporal 32, tensión arterial 140 sobre 85, frecuencia cardíaca 76 por minuto, frecuencia respiratoria 16 por minuto, saturación 97 por ciento al ambiente, cardiopulmonar sin alteraciones, ruidos cardíacos rítmicos sin soplos, murmullo vesicular conservado, abdomen blando, no doloroso. En extremidades, rodilla derecha con crepitación a la movilización, dolor a la interlínea articular medial, sin derrame, con limitaciones de los últimos grados de flexión, rodilla izquierda con crepitación leve y sin dolor en la palpación, marcha atálgica, pulsos periféricos presentes y simétricos sin edemas. Paraclínicos previos que trae la paciente, hemograma normal, velocidad de sedimentación 24, proteína C reactiva negativa, glicemia 98, creatinina 0.8, radiografía de rodillas en proyección antero-posterior de pie que muestra disminución del espacio, articular medial bilateral, de predominio derecho, con estrofitos marginales y esclerosis subcondral."
+        },
+        {
+          "audio": "2.2c",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 12,
+          "texto": "Análisis: Se trata de paciente con cuadro clínico compatible con osteoartrosis de rodilla de predominio derecho, con factores agravantes de sobrepeso y sedentarismo, sin signos de artritis inflamatoria, con paraclínicos que descartan proceso inflamatorio agudo. Plan: Se indica acetaminofén un gramo cada ocho horas por siete días, mentira, cada seis horas por cinco días, y se agrega diclofenaco tópico tres veces al día en la rodilla derecha. Se solicita valoración por fisiatría para terapia física y fortalecimiento de cuádriceps, se remite a nutrición para el plan de reducción de peso y se explica a la paciente la importancia de la actividad física de bajo impacto como natación y bicicleta estática. Se dan signos de alarma, aumento de suita del dolor, imposibilidad para apoyar el miembro, fiebre o enrojecimiento, enrojecimiento articular, por los cuales debe consultar. Control por consulta externa en seis semanas con los resultados de fisiatría. La paciente comprende las indicaciones y acepta el plan propuesto."
+        },
+        {
+          "audio": "2.3",
+          "proveedor": "openai",
+          "perdidos": [
+            "microgramos",
+            "colecistectomía",
+            "limitación"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 76,
+          "texto": "Paciente femenina de 58 años, ama de casa, natural y procedente de Medellín, quien consulta por cuadro clínico de ocho meses de evolución consistente en dolor de ambas rodillas, de predominio derecho, que empeora al bajar escaleras y al levantarse de la silla y que mejora parcialmente con el reposo. Refiere rigidez matutina de aproximadamente 15 minutos, sin edema evidente, sin enrojecimiento y sin fiebre. En el último mes, el dolor aumenta con intensidad, lo califica como 7 sobre 10 y le impide caminar más de dos cuadras. Como antecedentes personales, tiene hipertensión arterial diagnosticada hace 12 años, en manejo con losartan 50 miligramos cada 12 horas, hipotiroidismo en manejo con levotiroxina 75 miligramos en ayunas y obesidad grado 1. Niega diabetes, niega enfermedad renal, niega alergias medicamentosas, antecedente quirúrgico de cesárea hace 30 años y colecitroctomía hace 8 años, ambas sin complicaciones. Antecedentes familiares, madre con artrosis de rodilla, operada de prótesis a los 70 años. Padre fallecido por enfermedad cerebrovascular. Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientada, hidratada y febril. Peso 78 kilos, talla 1.56, índice de masa corporal 32, tensión arterial 140 sobre 85, frecuencia cardíaca 76 por minuto, frecuencia respiratoria 16 por minuto, saturación 97% al ambiente, cardiopulmonar sin alteraciones, ruidos cardíacos rítmicos sin soplos, murmullo vesicular conservado, abdomen blando, no doloroso. En extremidades, rodilla derecha con crepitación a la movilización, dolor en la interlínea articular medial, sin derrame, con limitaciones en los últimos grados de flexión. Rodilla izquierda con crepitación leve y sin dolor a la palpación. Marcha antálgica, pulsos periféricos presentes y simétricos sin edemas. Paraclínicos previos que trae la paciente, hemograma normal, velocidad de sedimentación 24, proteína C reactiva negativa, glicemia 98, creatinina 0.8, radiografía de rodillas en proyección. Ante lo posterior, de pique muestra disminución del espacio articular medial bilateral, de predominio derecho con osteofitos marginales y esclerosis subcondral. Análisis. Se trata de paciente con cuadro clínico compatible con osteoartrosis de rodillas de predominio derecho, con factores agravantes de sobrepeso y sedentarismo, sin signos de artritis inflamatoria, con paraclínicos que descartan proceso inflamatorio agudo. Plan. Se indica acetaminofén 1 gramo cada 8 horas por 7 días, mentira, cada 6 horas por 5 días y se agrega diclofenaco tópico 3 veces al día en rodilla derecha. Se solicita valoración por fisiatría para terapia física y fortalecimiento de cuádriceps. Se remite a nutricionista para plan de reducción de peso y se explica a la paciente la importancia de la actividad física de bajo impacto como natación o bicicleta estática. Se dan signos de alarma, aumento súbito de dolor, imposibilidad para apoyar el miembro, fiebre o enrojecimiento articular, por los cuales debe consultar. Control por consulta externa en 6 semanas con los resultados y fisiatría. La paciente comprende las indicaciones y acepta el plan propuesto. Evolución a las 6 semanas. Paciente que regresa a control refiriendo mejora parcial del dolor que califica ahora en 4 sobre 10. Asistió a 8 semanas de terapia física de las 12 programadas. Refiere adherencia a los ejercicios en casa 3 veces por semana. Logró reducción de 3 kilos de peso con el plan de nutrición. Persiste dolor al bajar escaleras, pero ya camina 6 cuadras sin detenerse. Niega efectos adversos del acetaminofén, niega gastritis, niega sangrado. Al examen físico, peso 75 kilos, tensión arterial 130 sobre 80, frecuencia cardíaca 72, rodilla derecha con menor dolor a la palpación de la interlínea medial. Persiste crepitación, mejoría en los grados de flexión, sin derrame. Fuerza muscular de cuádriceps 4 sobre 5, mejor que en la consulta previa, marcha sin claudicación. Análisis. Paciente con osteoartritis de rodillas en respuesta favorable al manejo conservador, con adecuada adherencia a la terapia física y reducción de peso, sin indicación quirúrgica en este momento. Plan. Continuar acetaminofén 1 gramo cada 8 horas si presenta dolor, completar las 12 sesiones de terapia física, continuar plan de nutrición con meta de perder 5 kilos adicionales en 3 meses, mentira, en 4 meses. Se explica que el manejo es a largo plazo y que la cirugía de prótesis se considera solamente si hay dolor incapacitante que no responde al manejo médico. Se solicita nuevo control en 3 meses con radiografía de control. Se entregan incapacidad no requerida y recomendaciones por escrito. La paciente y su hija comprenden y aceptan."
+        },
+        {
+          "audio": "3.1",
+          "proveedor": "openai",
+          "perdidos": [
+            "alternando"
+          ],
+          "faltan": [],
+          "inventados": [
+            "2"
+          ],
+          "cortadas": [],
+          "colados": [],
+          "datos": 15,
+          "texto": "Paciente masculino de 3 años que asiste a control de crecimiento y desarrollo acompañado de la madre, sin antecedentes de importancia, producto de embarazo a término, parto vaginal, peso al nacer 3,200 gramos, esquema de vacunación completo para la edad según el carnet. Madre refiere buen apetito, deposiciones normales, sueño conservado, sin cuadro respiratorio en los últimos 3 meses. Al examen físico, peso 14 kilos, talla 95 centímetros, perímetro cefálico 50 centímetros, todo el percentil 50 para la edad. Buen estado general, mucosas húmedas, sin palidez, cardiopulmonar, sin soplos, abdomen blando sin masas, genitales de aspecto normal, sin adenopatías, desarrollo psicomotor acorde, el niño corre, sube escaleras alterando los pies, arma frases de 4 palabras y sigue instrucciones de 2 pasos. Análisis, el niño sano con crecimiento y desarrollo adecuado para la edad. Plan, se indica acetaminofén jarabe 120 miligramos cada 6 horas en caso de fiebre, se explica que la dosis es de 15 miligramos por kilo, se recomienda continuar alimentación variada con 5 comidas al día, limitar pantallas a una hora diaria y estimular el juego al aire libre. Control en 6 semanas, mentira, en 4 meses y esquema de vacunación al día. Madre comprende y acepta las indicaciones."
+        },
+        {
+          "audio": "3.2",
+          "proveedor": "openai",
+          "perdidos": [
+            "altura uterina",
+            "fetocardia"
+          ],
+          "faltan": [
+            "70"
+          ],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 29,
+          "texto": "Paciente femenina de 27 años, gestante, que asiste a control prenatal, fecha de última menstruación el 14 de marzo, edad gestacional de 28 semanas por fecha de última menstruación confiable, concordante con ecografía del primer trimestre, primera gestación sin abortos previos, refiere movimientos fetales presentes y percibidos diariamente, niega sangrado vaginal, niega salida de líquido, niega contracciones, niega cefalea, niega fosfenos, niega tinnitus, niega epigastralgia. El examen físico, tensión arterial 110/60, frecuencia cardíaca 82 por minuto, peso 68 kilos en ganancia de 9 kilos en el embarazo, altura uteria 27 centímetros, feto único, situación longitudinal, presentación cefálica, dorso a la izquierda, cetocardia de 145 latidos por minuto, edema de miembros inferiores grado 1, reflejos normales, paraclínicos del segundo trimestre, hemoglobina 11.8, prueba de tolerancia a la glucosa normal, serologías no reactivas, urocultivo negativo. Análisis, gestante de 28 semanas, perdón, de 29 semanas con embarazo de curso normal, sin signos de alarma. Plan, continuar ácido fólico, 400 microgramos al día y sulfato ferroso, 60 miligramos al día, se solicita ecografía de crecimiento para las 32 semanas, se explican signos de alarma obstétricos y se indica control en 3 semanas. Paciente comprende y acepta."
+        },
+        {
+          "audio": "3.3",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 24,
+          "texto": "Paciente masculino de 24 años, futbolista aficionado que consulta por dolor en rodilla derecha, mentira, en rodilla izquierda, de 12 horas de evolución, posterior a trauma en torsión durante partido de fútbol, con apoyo del pie y giro del cuerpo sin golpe directo. Refiere haber escuchado un chasquido al momento del trauma con dolor inmediato e incapacidad para continuar jugando. Presenta aumento de volumen progresivo en las horas siguientes. Niega trauma previo en la misma rodilla, niega cirugías, niega antecedentes de importancia. Al examen físico, paciente en aceptables condiciones generales, marcha con claudicación y apoyo parcial, rodilla izquierda con edema moderado, derrame articular palpable, dolor en la palpación en la interlínea medial, limitación de la flexión por dolor a 110 grados, prueba de Lachman positiva, cajón anterior positivo, prueba de McMurray dolorosa en el compartimiento medial, estabilidad en varo y valgo conservada, pulsos distales presentes, llenado capilar menor de dos segundos, sin déficit neurológico. Análisis. Paciente con trauma en torsión de rodilla izquierda con hallazgos clínicos compatibles con lesión de ligamento cruzado anterior asociado a posible lesión meniscal medial. Plan. Se solicita radiografía de rodilla izquierda en proyecciones anteroposteriores y lateral para descartar lesión ósea y resonancia magnética de rodilla izquierda. Se indica acetaminofén 500 miligramos cada ocho horas, hielo local por 20 minutos cada seis horas y movilizador de rodilla y descarga de muletas, con muletas. Incapacidad por cinco días, mentira, por siete días. Control con resultados de imágenes en una semana. Paciente comprende y acepta."
+        },
+        {
+          "audio": "3.4",
+          "proveedor": "openai",
+          "perdidos": [
+            "eritematodescamativas",
+            "betametasona"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 15,
+          "texto": "Paciente femenina de 34 años que consulta por lesiones en codos y rodillas de seis meses de evolución, que describe como placas rojas con escamas blancas, pruriginosas, que empeoran en épocas de estrés y mejoran parcialmente con exposición solar. Niega compromiso de uñas, niega dolor articular, niega fiebre. Antecedente familiar de psoriasis en la madre. Al examen físico, placas eritematosas escamativas bien delimitadas de aproximadamente 4 centímetros de diámetro, con escama gruesa de color blanco nacarado, localizables en cara de extensión de ambos codos y ambas rodillas, que comprometen aproximadamente el 3% de la superficie corporal. Signo de Auspitz positivo, cuero cabelludo sin compromiso, uñas sin alteraciones. Análisis, cuadro clínico compatible con psoriasis en placas de severidad leve por extensión. Plan, se formula betametosona crema, me equivoqué, hidrocortisona al 1% encremados dos veces al día por cuatro semanas, emoliente con urea al 10%, dos veces al día de forma permanente. y se explica que no debe suspender el emoliente al mejorar las lesiones. Se recomienda evitar el rascado de manejo de estrés. Control en un mes para evaluar respuesta. Paciente comprende y acepta."
+        },
+        {
+          "audio": "3.5",
+          "proveedor": "openai",
+          "perdidos": [
+            "sertralina"
+          ],
+          "faltan": [
+            "7"
+          ],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 15,
+          "texto": "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de cuatro meses de evolución consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad, sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas, niega episodios previos de depresión, antecedentes familiares de trastorno de ansiedad de la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaborativa, lenguaje coherente y fluido, afecto ansioso resonante, pensamiento en curso y contenido normal sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado, introspección adecuada. Se aplica escala GAD, siente con puntaje de 14 puntos, compatible con ansiedad moderada. Análisis, paciente con criterios de trastorno de ansiedad generalizada de intensidad moderada sin rasgos suicidas actual. Plan, se inicia sertalina 25 miligramos al día por una semana, mentira, 50 miligramos al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitiva conductual, se recomienda higiene de sueño y actividad física regular. Control en cuatro semanas, paciente comprende y acepta el manejo."
+        },
+        {
+          "audio": "3.6",
+          "proveedor": "openai",
+          "perdidos": [
+            "emético",
+            "lactato de Ringer",
+            "dipirona"
+          ],
+          "faltan": [
+            "41",
+            "2"
+          ],
+          "inventados": [
+            "49"
+          ],
+          "cortadas": [],
+          "colados": [],
+          "datos": 19,
+          "texto": "Paciente masculino de 49 años de edad, quien ingresa por dolor abdominal de 24 horas en evolución localizada inicialmente en epigastrio y que migró hacia foca ilíaca derecha, asociado a náuseas, un episodio de hemitido y fiebre no cuantificada. Signos vitales de ingreso: tensión arterial 100/60, frecuencia cardíaca 110 por minuto, frecuencia respiratoria 20 por minuto, temperatura 38.2, saturación 96%, abdomen con dolor en la palpación en la fosa ilíaca derecha, Blumberg positivo, McBurney positivo, ruidos intestinales disminuidos, se solicita hemoglobina, proteína C reactiva, urocultivo, ecografía abdominal, se inicia hidratación con lacteos ringer 1000 mililitros, leopirina 1 gramo intravenoso y se deja en nada vía oral. Se solicita valoración prioritaria por cirugía general, sospecha de apendicitis aguda."
+        },
+        {
+          "audio": "3.7",
+          "proveedor": "openai",
+          "perdidos": [
+            "atorvastatina",
+            "relación albuminuria"
+          ],
+          "faltan": [
+            "1.4"
+          ],
+          "inventados": [
+            "68",
+            "0.4"
+          ],
+          "cortadas": [],
+          "colados": [],
+          "datos": 41,
+          "texto": "Paciente masculino de 73 años, pensionado que asista a control de medicina interna, antecedentes de diabetes mellitus tipo 2 de 15 años de evolución, hipertensión arterial de 20 años, enfermedad renal crónica estadio 3A, fibrilación auricular permanente y dislipidemia. Medicamentos actuales: metformina 850 miligramos cada 12 horas, empagliflozina 10 miligramos al día, losartán 50 miligramos cada 12 horas, apixabán 5 miligramos cada 12 horas y atrovastatina 40 miligramos en la noche. Refiere buena adherencia al tratamiento, niega hipoglicemias, niega sangrados, niega disnea, niega edemas, niega palpitaciones, camina 30 minutos diarios. Al examen físico, tensión arterial 138 sobre 68, frecuencia cardíaca 84 por minuto irregular, peso 79 kilos, saturación 96%, ruidos cardíacos arrítmicos sin soplos, murmullo vesicular conservado, abdomen blando, extremidades sin edemas, pulsos pedios presentes. Paraclínicos recientes, hemoglobina glicosilada 7.2, glicemia en ayunas 134, creatinina 0.4 con tasa de filtración glomerular estimada de 52, potasio 4.1, colesterol LDL 78, relación albuminaria creaturina de 180. Análisis, paciente pluripatático con adecuado control glicémico y lipídico, con enfermedad renal crónica estable y albuminaria persistente, anticoagulado por fibrilación auricular sin eventos hemorrágicos. Plan, continuar con el mismo esquema de medicamentos, se remite a nefrología, me equivoqué a endocrinología para ajustes en el manejo de la diabetes y se solicita valoración por oftalmología para tamizaje de retinopatía diabética. Se solicitan paraclínicos de control en tres meses con hemoglobina glicosilada, creatinina y potasio, relación albuminaria, creatinurina. Se refuerzan recomendaciones de dieta baja en sodio y actividad física, control en tres meses, paciente y su hijo comprenden y aceptan."
+        },
+        {
+          "audio": "3.8",
+          "proveedor": "openai",
+          "perdidos": [
+            "miodesopsias",
+            "astigmatismo"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 20,
+          "texto": "Paciente femenina de 46 años que consulta por visión borrosa de cerca de un año de evolución. Se dificulta la lectura y el trabajo en el computador, asociado a cefalea frontal al final del día. Niega dolor ocular, niega ojo rojo, niega fotopsias, niega medios opacías, niega pérdida súbita de visión, sin antecedentes oftalmológicos, usa lentes de lectura comprados en farmacia. Al examen, agudez visual sin corrección de 20 sobre 40 en ojo derecho y 20 sobre 30 en ojo izquierdo, corrige a 20 sobre 20 en ambos ojos, presión intraocular de 16 milímetros de mercurio en ojo derecho y 18, mentira, 14 milímetros de mercurio en ojo izquierdo. Segmento anterior sin alteraciones, cristalino transparente, cámara anterior amplia, fondo de ojo con papila de bordes definidos, excavación de 0.3 en ambos ojos, mácula sin alteraciones, vasos de calibre conservados, retina aplicada. Análisis, presbicia asociada a astigamiento leve, sin signos de glaucoma ni retinopatía. Plan, se formula una corrección óptica con esfera menos 0.50 y cilindro menos 0.75 a 180 grados en ambos ojos, con adición de más de 1.25 para cerca. Se recomienda descanso visual para cada 20 minutos y control anual. Paciente comprende y acepta."
+        }
+      ]
+    }
+  }
+}

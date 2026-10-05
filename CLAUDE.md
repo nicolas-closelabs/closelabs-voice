@@ -17,6 +17,14 @@
 > estilo largas; toda pista nueva se mide con `bun pruebas-dictado/voz/transcribir.ts`.
 > Nicolás decidió que la coma de miles de OpenAI ("7,200") NO es un problema: no se normaliza.
 >
+> **2026-10-04 — LISTA MÉDICA EN LA PISTA (solo OpenAI).** `app_config.transcribe_vocabulary` (104
+> términos, fuente en `pruebas-dictado/voz/lista-medica.txt`) se agrega a la pista de los
+> proveedores con `providers.transcribe_uses_vocabulary`. Con la voz de un médico real los datos mal
+> bajan de 9,4% a ~8%, sin sustituciones nuevas. ⚠️ Nunca a DeepInfra (devuelve vacío con pistas
+> largas). `gpt-transcribe` se midió y NO entró: interpreta lo que oye ("mentira" → "aumenta") y
+> perdió un número en silencio; con instrucción de transcribir literal conserva las correcciones,
+> pero sigue perdiendo el número. Queda deshabilitado (`openai-transcribe`) para volver a medirlo.
+>
 > **2026-09-29 — SE FORMATEA CON `gpt-6-luna`** (directo a OpenAI, esfuerzo `low`, gpt-4o-mini de
 > primer respaldo). Ganó la prueba ácida con la regla fijada antes de medir: 0 fallos de contenido
 > contra 4, a cambio de ~3 s más en dictados largos. Ver `pruebas-dictado/README.md`.

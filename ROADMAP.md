@@ -239,7 +239,14 @@ cambia la URL.
   Necesita versión nueva.
 - [x] **7 casos de formateo con textos reales de OpenAI** (2026-09-29): el banco pasó de 9 a 16
   casos y encontró el bug del corte con decimales.
-- [ ] **Más audios para el banco de voz** (hoy 7). Idealmente de médicos reales en el piloto,
+- [x] **Audios de un médico real** (2026-10-04): el guion completo, 20 dictados. Con su voz los
+  datos mal suben a 9,4% (la de Nicolás, 2%): la ortografía de medicamentos es lo que más falla.
+- [x] **Lista médica general en la pista, solo OpenAI** (2026-10-04): 9,4% → ~8% sin sustituciones
+  nuevas. Se edita en `app_config.transcribe_vocabulary`.
+- [ ] **gpt-transcribe, candidato a volver a medir** con más audios: con pista "literal" deja 4,5%
+  y conserva las correcciones, pero perdió "100" en una tensión arterial dos veces. No entra hasta
+  que no pierda números.
+- [ ] **Más audios para el banco de voz** (hoy 27: 7 de Nicolás, 20 de un médico). Idealmente de médicos reales en el piloto,
   incluida la palabra "mentira" (la voz sintética la hizo sonar como "Motrin").
 - [x] **Prueba ácida — ganó gpt-6-luna** (2026-09-29): 0 fallos de contenido contra 4, cerró el
   "1 de cada 9" de la dosis del dictado de 6 min (51/51). Formatea luna desde ese día.

@@ -343,6 +343,28 @@ el prompt es ~86% del costo): se ve en el panel de uso de OpenAI, `usage_events`
 - Por OpenRouter, fijar el servidor: de los 7 que sirven luna, Azure y Bedrock no aceptan
   `response_format`, y `openai/flex` es diferido.
 
+## 2026-10-04 — Lista médica en la pista; gpt-transcribe medido y descartado (por ahora)
+
+Con los 27 audios (20 del médico real, 7 de Nicolás) y la misma vara:
+
+| | Datos mal (médico / Nicolás) | Correcciones | Números perdidos | $/médico/mes |
+|---|---|---|---|---|
+| mini, como estaba | 9,4% / 2,0% | 12/12 | 0 | 0,18 |
+| **mini + lista médica (en producción)** | **~8% / 1,3%** | **12/12** | **0** | **0,18** |
+| gpt-transcribe tal cual | 5,2% / 3,3% | "mentira" → **"aumenta"**, "me equivoqué" → "mequeo" | 1 | 0,27 |
+| gpt-transcribe, pista "literal" + lista | 4,5% / 3,3% | 12/12 | **1** | 0,27 |
+
+- **gpt-transcribe interpreta lo que oye.** Tal cual, cambió "mentira" por "aumenta" (Nicolás
+  confirmó escuchando que el médico dijo "mentira") y aplicó por su cuenta una corrección. Con una
+  pista que le pide transcribir literal conserva las correcciones, pero en las DOS pruebas escribió
+  "tensión arterial sobre 60" donde el médico dijo "cien sobre sesenta". El mini nunca pierde ese
+  número. Regla: solo entra lo que mejora sin empeorar nada.
+- **La lista médica en la pista** arregla enalapril, levotiroxina, empagliflozina, apixabán y
+  Blumberg sin ninguna sustitución nueva. Verificado en producción con los audios mandados como
+  los manda la app.
+- La lista NO es la del guion: es lo que se receta y se pide a diario en consulta general. Si se
+  arma a la medida del banco, la mejora es falsa.
+
 ## 2026-10-04 — El guion grabado por un médico real
 
 Un médico grabó los 20 dictados del guion (`pruebas-dictado/voz/audios/medico/`, fuera del repo).
