@@ -77,19 +77,17 @@ así; hay que verificar las condiciones vigentes de cada proveedor.
 4. **Derecho de retracto (Ley 1480, art. 47).** La decisión de negocio es **no reembolsar**. ¿Aplica
    el retracto de 5 días hábiles al primer cobro después de la prueba gratis? Si aplica, hay que
    decirlo y honrarlo.
-5. **IVA.** ¿El precio de US$11 incluye IVA? ¿Cómo lo trata una LLC de EE.UU. que vende servicios
-   digitales a médicos en Colombia? (Coordinar con el contador.)
-6. **Ley aplicable y jurisdicción.** Empresa en EE.UU., usuarios en Colombia (consumidores, con
+5. **Ley aplicable y jurisdicción.** Empresa en EE.UU., usuarios en Colombia (consumidores, con
    normas que no se pueden renunciar). ¿Qué cláusula dejar?
-7. **Registro Nacional de Bases de Datos (SIC).** ¿Le aplica a una LLC extranjera?
-8. **Responsabilidad clínica.** ¿Basta la cláusula de "herramienta de apoyo; el médico revisa antes
+6. **Registro Nacional de Bases de Datos (SIC).** ¿Le aplica a una LLC extranjera?
+7. **Responsabilidad clínica.** ¿Basta la cláusula de "herramienta de apoyo; el médico revisa antes
    de firmar"? ¿Riesgo de que se considere dispositivo médico (INVIMA)? El producto no diagnostica
    ni recomienda: solo transcribe y puntúa.
-9. **Aceptaciones ya dadas.** Los médicos que se registraron hasta hoy marcaron "Acepto los Términos
+8. **Aceptaciones ya dadas.** Los médicos que se registraron hasta hoy marcaron "Acepto los Términos
    y la Política" con enlaces que todavía no existían (versión registrada: "v1"). ¿Hay que pedirles
    aceptar de nuevo cuando se publiquen?
-10. **México y Perú.** ¿Qué cambia al abrir esos países (LFPDPPP en México, Ley 29733 en Perú)?
-11. **Limitación de responsabilidad.** ¿Qué tope es válido frente al Estatuto del Consumidor?
+9. **México y Perú.** ¿Qué cambia al abrir esos países (LFPDPPP en México, Ley 29733 en Perú)?
+10. **Limitación de responsabilidad.** ¿Qué tope es válido frente al Estatuto del Consumidor?
 
 ---
 

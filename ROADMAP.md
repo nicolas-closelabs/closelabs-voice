@@ -140,8 +140,6 @@ cambia la URL.
     dictó en su prueba y UN botón para seguir. Nada de mensajes de error.
   - Pago y portal: páginas de Stripe en el navegador (Checkout + Customer Portal); la tarjeta nunca
     pasa por la app ni por nuestro servidor. La cuenta es la del socio español; Nicolás tiene acceso.
-  - Impuestos y facturación (autónomo español cobrando a médicos colombianos, IVA del 19% a
-    servicios digitales del exterior): lo ven con el contador antes de pasar a dinero real.
   - **Cancelar (decidido con Nicolás, 2026-10-05):**
     - **Súper fácil, sin trampas**: "Mi cuenta → Cancelar suscripción", dos clics, sin llamar ni
       escribir a nadie. **Sin oferta de retención** (ni descuentos para quedarse) al lanzar.

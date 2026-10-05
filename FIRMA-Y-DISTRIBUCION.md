@@ -43,8 +43,7 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
 
 ### Datos de la LLC (2026-10-02)
 
-- **Nombre legal: CLOSELABS LLC**, con **dos socios** (Nicolás y el socio español): para el IRS es
-  una sociedad de personas, no una LLC de un solo dueño. Lo de impuestos lo define el contador.
+- **Nombre legal: CLOSELABS LLC**, con **dos socios** (Nicolás y el socio español).
 - **EIN: esperado hacia el 2026-10-09.**
 - **D-U-N-S: pedirlo YA, no necesita el EIN.** Por la herramienta de Apple
   (developer.apple.com/enroll/duns-lookup): es gratis, D&B lo emite en **hasta 5 días hábiles** y
@@ -65,12 +64,6 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
    o la oficina virtual).
 
 **Tiempo realista:** de 3 a 8 semanas desde que exista la LLC, sobre todo por el EIN y el D-U-N-S.
-
-### Obligaciones de una LLC con dueños extranjeros (para el contador)
-
-Una LLC de un solo dueño extranjero presenta cada año el **formulario 5472** con un 1120 pro forma:
-la multa por no hacerlo es de **$25.000**. Si los dueños son dos (Nicolás y el socio), cambia a
-sociedad de personas (formulario 1065). Lo define el contador, no este documento.
 
 ### Stripe
 
@@ -404,9 +397,7 @@ Unido, Australia, Nueva Zelanda, Japón, Corea del Sur, Singapur, Suiza, Noruega
 | Validación de Azure | 1-20 días hábiles |
 
 ⚠️ **No crear una sociedad solo para esto.** Azure ahorra unos $190/año frente a SSL.com, y una LLC
-con dueño extranjero cuesta más que eso al año en mantenimiento. Además tiene obligaciones con
-multas grandes, como el **formulario 5472 del IRS** ($25.000 si no se presenta); confirmarlo con un
-contador. Si la sociedad llega a existir por razones de negocio, probar Azure **en paralelo, sin
+con dueño extranjero cuesta más que eso al año en mantenimiento. Si la sociedad llega a existir por razones de negocio, probar Azure **en paralelo, sin
 apagar SSL.com** hasta que la validación diga *Completed*, y teniendo en cuenta la regla de la
 identidad.
 
