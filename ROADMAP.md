@@ -142,6 +142,23 @@ cambia la URL.
     pasa por la app ni por nuestro servidor. La cuenta es la del socio español; Nicolás tiene acceso.
   - Impuestos y facturación (autónomo español cobrando a médicos colombianos, IVA del 19% a
     servicios digitales del exterior): lo ven con el contador antes de pasar a dinero real.
+  - **Cancelar (decidido con Nicolás, 2026-10-05):**
+    - **Súper fácil, sin trampas**: "Mi cuenta → Cancelar suscripción", dos clics, sin llamar ni
+      escribir a nadie. **Sin oferta de retención** (ni descuentos para quedarse) al lanzar.
+    - Una pregunta **opcional** de un clic: "¿Por qué cancelas?" (la trae el portal de Stripe).
+    - Después: "Puedes seguir dictando hasta el DD de MES" en la app, botón **Reanudar** hasta esa
+      fecha, y un **correo de confirmación nuestro** (Stripe no lo manda por defecto).
+    - Al vencer: la pantalla amable de fin de prueba con "Volver a suscribirme". Cuenta,
+      diccionario y equipos se conservan.
+    - Durante la prueba no hay nada que cancelar (la tarjeta se pide al final). Tarjeta rechazada:
+      sigue dictando mientras Stripe reintenta, con aviso; si fallan los reintentos, mensaje claro
+      y botón para actualizarla. **Sin reembolso** de la parte no usada (sigue dictando hasta el
+      final del período); va escrito en los términos. Médicos de gMedic cancelan con gMedic.
+  - **Eliminar mi cuenta** (Ley 1581; decidido 2026-10-05, va en la próxima versión): separado de
+    cancelar y que se note la diferencia — una **"Zona peligrosa"** al final de "Mi cuenta", al estilo
+    GitHub, en rojo, con **doble confirmación** (explicar qué se borra y pedir que escriba su correo
+    para confirmar). Borra perfil, equipos, diccionario y suscripción; si hay una suscripción activa,
+    se cancela primero en Stripe.
 - [ ] Política de Tratamiento de Datos (Ley 1581, datos sensibles de salud). Los enlaces de la app
   ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
 - [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
