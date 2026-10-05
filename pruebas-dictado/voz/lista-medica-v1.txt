@@ -1,0 +1,119 @@
+# Lista médica general para la pista del motor de voz (borrador 2026-10-04, PARA MEDIR).
+# Lo que se receta y se pide a diario en consulta general en Latinoamérica. NO es la lista del
+# guion: si lo fuera, el banco quedaría hecho a la medida y la mejora sería falsa.
+# Un término por línea. Las líneas con # no cuentan.
+
+# Cardiovascular y metabólico
+enalapril
+losartán
+valsartán
+amlodipino
+hidroclorotiazida
+furosemida
+espironolactona
+carvedilol
+metoprolol
+bisoprolol
+atorvastatina
+rosuvastatina
+ácido acetilsalicílico
+clopidogrel
+apixabán
+rivaroxabán
+warfarina
+metformina
+glibenclamida
+sitagliptina
+empagliflozina
+dapagliflozina
+insulina glargina
+levotiroxina
+# Analgesia, antiinflamatorios, gastro
+acetaminofén
+ibuprofeno
+naproxeno
+diclofenaco
+dipirona
+tramadol
+omeprazol
+esomeprazol
+metoclopramida
+loperamida
+# Antibióticos y antiinfecciosos
+amoxicilina
+amoxicilina clavulanato
+cefalexina
+ceftriaxona
+azitromicina
+claritromicina
+ciprofloxacino
+nitrofurantoína
+trimetoprim sulfametoxazol
+metronidazol
+fluconazol
+albendazol
+# Respiratorio y alergia
+salbutamol
+beclometasona
+budesonida
+loratadina
+cetirizina
+prednisolona
+prednisona
+dexametasona
+hidrocortisona
+betametasona
+# Neuro y psiquiatría
+sertralina
+fluoxetina
+escitalopram
+amitriptilina
+clonazepam
+alprazolam
+quetiapina
+pregabalina
+gabapentina
+# Otros frecuentes
+sulfato ferroso
+ácido fólico
+vitamina D
+carbonato de calcio
+# Unidades (la confusión que más pesa)
+microgramos
+miligramos
+mililitros
+unidades internacionales
+# Exámenes y paraclínicos
+hemograma
+glicemia
+hemoglobina glicosilada
+creatinina
+nitrógeno ureico
+perfil lipídico
+TSH
+uroanálisis
+urocultivo
+proteína C reactiva
+electrocardiograma
+ecocardiograma
+holter
+ecografía
+radiografía
+tomografía
+resonancia magnética
+# Signos y examen físico con nombre propio
+Blumberg
+McBurney
+Murphy
+Lachman
+McMurray
+Romberg
+Babinski
+Auspitz
+Glasgow
+# Diagnósticos y términos que se confunden al oído
+fibrilación auricular
+colecistectomía
+osteoartrosis
+apendicitis
+triage

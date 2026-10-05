@@ -1,47 +1,25 @@
-# Lista médica general para la pista del motor de voz — v2 (2026-10-05).
-#
-# CRITERIO: por especialidad, lo que más se receta, se pide y se explora en consulta en
-# Latinoamérica. NO se arma mirando el guion ni los errores del banco: la v1 (2026-10-04) tenía el
-# 43% de sus términos sacados del guion (Auspitz, Lachman, colecistectomía…) y su mejora estaba
-# inflada. Que un término de aquí también esté en el guion está bien si es común en su
-# especialidad; lo que no vale es agregarlo PORQUE falló en el banco.
-# Un término por línea; las líneas con # no cuentan. Todo cambio se mide con transcribir.ts.
-
-# Cardiología
-enalapril
-losartán
+# v2 SIN los términos que aparecen en el guion: para medir si la lista ayuda más allá de ellos.
 valsartán
 amlodipino
 nifedipino
-hidroclorotiazida
 clortalidona
 furosemida
-espironolactona
 carvedilol
 metoprolol
 bisoprolol
 propranolol
-atorvastatina
-rosuvastatina
 ácido acetilsalicílico
-clopidogrel
 warfarina
 rivaroxabán
-apixabán
 digoxina
 amiodarona
 nitroglicerina
-# Endocrinología
-metformina
 glibenclamida
 sitagliptina
-empagliflozina
 dapagliflozina
 insulina glargina
 insulina NPH
-levotiroxina
 metimazol
-# Infectología
 amoxicilina
 amoxicilina clavulanato
 ampicilina
@@ -63,20 +41,14 @@ aciclovir
 oseltamivir
 albendazol
 ivermectina
-# Dolor e inflamación
-acetaminofén
 ibuprofeno
 naproxeno
-diclofenaco
-dipirona
 ketorolaco
 tramadol
 morfina
 metocarbamol
 colchicina
 alopurinol
-# Gastroenterología
-omeprazol
 esomeprazol
 pantoprazol
 metoclopramida
@@ -86,7 +58,6 @@ loperamida
 lactulosa
 simeticona
 sales de rehidratación oral
-# Respiratorio y alergia
 salbutamol
 bromuro de ipratropio
 beclometasona
@@ -100,7 +71,6 @@ prednisolona
 prednisona
 dexametasona
 metilprednisolona
-# Neurología
 levetiracetam
 ácido valproico
 carbamazepina
@@ -108,8 +78,6 @@ fenitoína
 gabapentina
 pregabalina
 sumatriptán
-# Psiquiatría
-sertralina
 fluoxetina
 escitalopram
 paroxetina
@@ -125,9 +93,6 @@ olanzapina
 haloperidol
 carbonato de litio
 metilfenidato
-# Ginecología y obstetricia
-ácido fólico
-sulfato ferroso
 levonorgestrel
 etinilestradiol
 medroxiprogesterona
@@ -137,17 +102,12 @@ oxitocina
 sulfato de magnesio
 clotrimazol
 nistatina
-# Pediatría
 sulfato de zinc
 vitamina A
-esquema de vacunación
 pentavalente
 triple viral
-# Dermatología
 clobetasol
 mometasona
-betametasona
-hidrocortisona
 isotretinoína
 adapaleno
 peróxido de benzoílo
@@ -156,32 +116,18 @@ ketoconazol
 terbinafina
 permetrina
 tacrolimus
-# Oftalmología
 timolol
 latanoprost
 tobramicina
 moxifloxacino
 lágrimas artificiales
-# Urología y nefrología
 tamsulosina
 finasterida
 oxibutinina
-# Reumatología
 metotrexato
 hidroxicloroquina
-# Unidades (la confusión que más pesa)
-microgramos
-miligramos
-gramos
-mililitros
 unidades internacionales
 miliequivalentes
-# Exámenes y paraclínicos
-hemograma
-glicemia
-hemoglobina glicosilada
-creatinina
-nitrógeno ureico
 perfil lipídico
 triglicéridos
 TSH
@@ -189,11 +135,7 @@ T4 libre
 transaminasas
 bilirrubinas
 electrolitos
-uroanálisis
-urocultivo
 coprológico
-proteína C reactiva
-velocidad de sedimentación
 troponina
 dímero D
 gases arteriales
@@ -201,20 +143,13 @@ antígeno prostático
 prueba de embarazo
 electrocardiograma
 ecocardiograma
-holter
-ecografía
-radiografía
 tomografía
-resonancia magnética
 endoscopia
 colonoscopia
 mamografía
 citología
 espirometría
-# Signos del examen físico con nombre propio (los clásicos de cada sistema)
 Murphy
-Blumberg
-McBurney
 Rovsing
 Giordano
 Romberg
@@ -225,5 +160,3 @@ Brudzinski
 Glasgow
 Phalen
 Tinel
-Lachman
-McMurray

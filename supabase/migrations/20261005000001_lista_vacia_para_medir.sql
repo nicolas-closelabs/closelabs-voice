@@ -1,0 +1,11 @@
+-- TEMPORAL (2026-10-05): lista médica de la pista VACÍA mientras se mide la v2.
+--
+-- Nicolás pidió revisar el sesgo de la lista y tenía razón: el 43% de los 104 términos de la v1
+-- estaba en el guion del banco, varios agregados por haberlos visto fallar (Auspitz, Lachman,
+-- colecistectomía…). La mejora medida estaba inflada. La v2 se armó por especialidad (203
+-- términos, 21% en el guion, solo los comunes de verdad).
+--
+-- Para compararlas, el banco manda cada lista en la pista; si el servidor siguiera sumando la v1,
+-- todas las pruebas la llevarían. Mientras dure, los médicos transcriben como antes del
+-- 2026-10-04 (mini sin lista), que es lo medido como seguro. Se repone con la siguiente migración.
+update app_config set transcribe_vocabulary = null, updated_at = now();

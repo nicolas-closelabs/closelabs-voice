@@ -51,7 +51,9 @@ const estilo = fraseDeEstilo();
 const diccionario = palabras.length ? palabras.join(", ") + "." : "";
 
 /** Lista médica general (`lista-medica.txt`), para medir si ayuda en la pista. */
-const listaMedica = readFileSync(join(AQUI, "lista-medica.txt"), "utf8")
+// `--lista otro.txt` mide otra lista (p. ej. `lista-medica-sin-guion.txt`) con las mismas configs.
+const _l = process.argv.indexOf("--lista");
+const listaMedica = readFileSync(join(AQUI, _l >= 0 ? process.argv[_l + 1] : "lista-medica.txt"), "utf8")
   .split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).join(", ") + ".";
 
 /** Lo que se compara. La primera es exactamente lo que manda hoy la app. */
