@@ -27,11 +27,13 @@ let llamadas: string[] = [];
 let revision = "observe";
 /** Cuerpo de cada petición de formateo, por proveedor: para revisar QUÉ parámetros se mandan. */
 let cuerpos: Record<string, any> = {};
+/** Pista que recibió cada proveedor al transcribir. */
+let pistas: Record<string, string> = {};
 
 const proveedores = [
   { name: "groq", base_url: "https://groq.test", api_key_env: "GROQ_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, enabled: true },
   { name: "deepinfra", base_url: "https://deepinfra.test", api_key_env: "DEEPINFRA_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: "low", format_reasoning_model: true, supports_transcribe_prompt: true, enabled: true },
-  { name: "openai", base_url: "https://openai.test", api_key_env: "OPENAI_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, enabled: true },
+  { name: "openai", base_url: "https://openai.test", api_key_env: "OPENAI_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, transcribe_uses_vocabulary: true, enabled: true },
 ];
 
 const json = (b: unknown, status = 200) =>
@@ -40,7 +42,7 @@ const json = (b: unknown, status = 200) =>
 globalThis.fetch = (async (input: any, init: any = {}) => {
   const url = String(input);
   if (url.includes("/rest/v1/app_config")) {
-    return json([{ transcribe_provider: "groq", format_provider: "groq", transcribe_fallbacks: ["deepinfra", "openai"], format_fallbacks: ["deepinfra"], daily_quota: 500, content_check: revision }]);
+    return json([{ transcribe_provider: "groq", format_provider: "groq", transcribe_fallbacks: ["deepinfra", "openai"], format_fallbacks: ["deepinfra"], daily_quota: 500, content_check: revision, transcribe_vocabulary: "metformina, losartán." }]);
   }
   if (url.includes("/rest/v1/providers")) return json(proveedores);
   if (url.includes("/rest/v1/")) return new Response(null, { status: 201 });
@@ -49,6 +51,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   const tipo = url.endsWith("/audio/transcriptions") ? "T" : "F";
   llamadas.push(`${prov}:${tipo}`);
   if (tipo === "F") cuerpos[prov] = JSON.parse(init.body);
+  if (tipo === "T") pistas[prov] = String(init.body?.get?.("prompt") ?? "");
   const c = conducta[prov] ?? "ok";
   if (c === "cuelga") {
     return new Promise((_, rechazar) =>
@@ -99,6 +102,16 @@ console.log("— TRANSCRIPCIÓN —");
 await caso("principal bien: no toca el respaldo", {}, () => transcribeAudio("d1", audio(10)), (r) => r.ok && r.provider === "groq", ["groq:T"]);
 await caso("Groq saturado (429) → DeepInfra", { groq: "429" }, () => transcribeAudio("d1", audio(10)), (r) => r.ok && r.provider === "deepinfra", ["groq:T", "deepinfra:T"]);
 await caso("Groq caído (500) y DeepInfra 429 → OpenAI", { groq: "500", deepinfra: "429" }, () => transcribeAudio("d1", audio(10)), (r) => r.ok && r.provider === "openai", ["groq:T", "deepinfra:T", "openai:T"]);
+// 2026-10-04: la lista médica general va SOLO a quien tenga `transcribe_uses_vocabulary` (OpenAI).
+// DeepInfra devuelve vacío con pistas largas; si la recibiera, perdería dictados enteros.
+{
+  const okOpenai = pistas.openai === "metformina metformina, losartán.";
+  const okResto = pistas.groq === "metformina" && pistas.deepinfra === "metformina";
+  if (!okOpenai || !okResto) fallas++;
+  console.log(okOpenai && okResto
+    ? "✅ lista médica: OpenAI la recibe detrás de la pista del médico; Groq y DeepInfra no"
+    : `❌ lista médica mal repartida: ${JSON.stringify(pistas)}`);
+}
 await caso("audio rechazado (400): NO prueba otros (cadena Opus→FLAC)", { groq: "400" }, () => transcribeAudio("d1", audio(10)), (r) => !r.ok && r.code === "bad_request", ["groq:T"]);
 await caso("vacío con 10 s de habla → sospechoso, prueba otro", { groq: "vacio" }, () => transcribeAudio("d1", audio(10)), (r) => r.ok && r.provider === "deepinfra", ["groq:T", "deepinfra:T"]);
 await caso("vacío con 1 s → silencio real, no insiste", { groq: "vacio" }, () => transcribeAudio("d1", audio(1)), (r) => !r.ok && r.code === "empty_result", ["groq:T"]);

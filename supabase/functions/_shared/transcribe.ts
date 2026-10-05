@@ -118,8 +118,12 @@ async function intentar(
   // turbo de DeepInfra devuelve la transcripción VACÍA con una pista de ~150 caracteres, y con
   // pistas medianas la TRUNCA EN SILENCIO — media historia clínica sin que el médico lo note.
   // Quedarse sin la ayuda del diccionario es malo; perder medio dictado es inaceptable.
-  const promptSent = Boolean(prompt) && route.supportsTranscribePrompt;
-  if (promptSent) form.append("prompt", prompt);
+  // La pista del médico (frase de estilo + su diccionario) y, si este proveedor la recibe, la lista
+  // médica general de la base. La revisión de "eco de la pista" mira SOLO la del médico: con la
+  // lista entera, "Metformina, losartán, atorvastatina." contaría como eco sin serlo.
+  const pista = [prompt, route.transcribeVocabulary].filter(Boolean).join(" ");
+  const promptSent = Boolean(pista) && route.supportsTranscribePrompt;
+  if (promptSent) form.append("prompt", pista);
 
   const started = performance.now();
   let res: Response;

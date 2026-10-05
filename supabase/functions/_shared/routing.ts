@@ -34,6 +34,14 @@ export interface Route {
    * diccionario. Perder la ayuda del diccionario es malo; perder medio dictado es inaceptable.
    */
   supportsTranscribePrompt: boolean;
+  /**
+   * Solo para transcribir: la lista médica general (`app_config.transcribe_vocabulary`) que se
+   * agrega a la pista, o nulo si este proveedor no la recibe. Medido el 2026-10-04 con el banco de
+   * voz: en OpenAI arregla términos (enalapril, apixabán, empagliflozina) sin sustituciones nuevas.
+   * ⚠️ Solo a quien tenga `transcribe_uses_vocabulary`: DeepInfra devuelve VACÍO con pistas largas
+   * (2026-09-19), y a Groq no se le manda pista desde el 2026-09-29.
+   */
+  transcribeVocabulary: string | null;
   dailyQuota: number;
 }
 
@@ -71,6 +79,8 @@ interface RoutingConfig {
   formatPrompt: string | null;
   /** Qué hace la red de seguridad con la limpieza. Ver `revision.ts`. */
   contentCheck: ModoRevision;
+  /** Lista médica general para la pista de transcripción. Ver `Route.transcribeVocabulary`. */
+  transcribeVocabulary: string | null;
   providers: Record<string, ProviderRow>;
 }
 
@@ -83,6 +93,7 @@ interface ProviderRow {
   format_reasoning_effort: string | null;
   format_reasoning_model: boolean | null;
   supports_transcribe_prompt: boolean;
+  transcribe_uses_vocabulary: boolean | null;
   enabled: boolean;
   /** Campos extra del cuerpo. Hoy solo OpenRouter: elige qué servidor sirve el modelo. */
   extra_body: Record<string, unknown> | null;
@@ -100,13 +111,14 @@ async function routingConfig(): Promise<RoutingConfig> {
       daily_quota: number;
       format_prompt: string | null;
       content_check: string | null;
+      transcribe_vocabulary: string | null;
     }>(
       "app_config",
-      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota,format_prompt,content_check&limit=1",
+      "select=transcribe_provider,format_provider,transcribe_fallbacks,format_fallbacks,daily_quota,format_prompt,content_check,transcribe_vocabulary&limit=1",
     ),
     select<ProviderRow>(
       "providers",
-      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,format_reasoning_model,supports_transcribe_prompt,enabled,extra_body",
+      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,format_reasoning_model,supports_transcribe_prompt,transcribe_uses_vocabulary,enabled,extra_body",
     ),
   ]);
   const row = cfgRows[0];
@@ -124,6 +136,7 @@ async function routingConfig(): Promise<RoutingConfig> {
     formatPrompt: row.format_prompt,
     // Un valor que no se reconoce cae en "observe": ante la duda, mirar sin tocar el dictado.
     contentCheck: (["off", "observe", "enforce"] as const).find((m) => m === row.content_check) ?? "observe",
+    transcribeVocabulary: row.transcribe_vocabulary?.trim() || null,
     providers,
   };
   cache = { at: Date.now(), cfg };
@@ -152,6 +165,7 @@ function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
     reasoningModel: p.format_reasoning_model === true,
     extraBody: p.extra_body ?? null,
     supportsTranscribePrompt: p.supports_transcribe_prompt,
+    transcribeVocabulary: p.transcribe_uses_vocabulary === true ? cfg.transcribeVocabulary : null,
     dailyQuota: cfg.dailyQuota,
   };
 }
