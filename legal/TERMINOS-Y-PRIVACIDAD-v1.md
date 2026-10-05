@@ -1,6 +1,7 @@
 # Términos y Condiciones y Política de Tratamiento de Datos — CloseLabs Voice · v1
 
-> **Estado: v1 LISTA PARA PUBLICAR (2026-10-04).** El abogado revisó el borrador y aprobó todas las
+> **Estado: v1 PUBLICADA en closelabs.co (2026-10-05).** El sitio salió de Lovable: el texto vive
+> ahora en `closelabs-web/src/content/legal/*.md`, que se generó de este archivo. El abogado revisó el borrador y aprobó todas las
 > respuestas sugeridas a sus preguntas (abajo). Una vez publicada se le vuelve a pasar; si hace
 > falta una v2, la revisa él.
 >
@@ -42,7 +43,13 @@
 | 10 | Tope de responsabilidad | **Lo pagado en los últimos 12 meses**, salvo lo que la ley no permita limitar. |
 
 Datos completados: área de atención de datos = **CloseLabs** (contacto@closelabs.co); métricas de
-uso = **24 meses**; quejas = **15 días hábiles**; la web **no usa cookies ni analítica** por ahora.
+uso = **24 meses**; quejas = **15 días hábiles**; la web **no usa cookies**.
+
+⚠️ **Corrección al publicar (2026-10-05):** se había respondido "la web no usa analítica", pero el
+sitio tiene **Vercel Web Analytics y Speed Insights** (miden visitas de forma agregada y sin cookies).
+La sección 11 de la Política se ajustó para decirlo, y la fila de Vercel en la tabla de proveedores.
+Pasarle este cambio al abogado en la revisión posterior a la publicación. Vigencia: fecha de
+publicación, 5 de octubre de 2026.
 
 **Lo que esto obliga a hacer en el producto** (anotado en el ROADMAP):
 - Poder devolver el primer cobro si el Usuario se retracta dentro de 5 días hábiles (al principio, a
@@ -74,7 +81,7 @@ PÁGINA 1 — ruta /terminos
 
 # Términos y Condiciones de Uso de CloseLabs Voice
 
-Versión 1 · Vigentes desde el 4 de octubre de 2026
+Versión 1 · Vigentes desde el 5 de octubre de 2026
 
 ## 1. Quiénes somos
 
@@ -277,7 +284,7 @@ PÁGINA 2 — ruta /privacidad
 
 # Política de Tratamiento de Datos Personales de CloseLabs Voice
 
-Versión 1 · Vigente desde el 4 de octubre de 2026
+Versión 1 · Vigente desde el 5 de octubre de 2026
 
 ## 1. Responsable del tratamiento
 
@@ -347,7 +354,7 @@ tratan por cuenta nuestra y bajo obligaciones de confidencialidad y seguridad:
 | Supabase | Brasil (servidores) | Base de datos de cuentas y servidor del servicio |
 | Stripe | Estados Unidos | Procesar pagos |
 | Resend | Estados Unidos | Enviar los correos de la cuenta |
-| Vercel | Estados Unidos | Alojar el sitio web |
+| Vercel | Estados Unidos | Alojar el sitio web y medir sus visitas de forma agregada |
 | GitHub | Estados Unidos | Distribuir los instaladores |
 | Meta (WhatsApp) | Estados Unidos | Soporte, solo si usted nos escribe |
 
@@ -404,8 +411,11 @@ un dictado los trata el profesional como Responsable, con las garantías especia
 
 ## 11. Sitio web y cookies
 
-Por ahora, closelabs.co **no usa cookies ni herramientas de analítica**. Si eso cambia,
-actualizaremos esta Política.
+closelabs.co **no usa cookies**. Para saber cuántas personas lo visitan y si carga rápido, usa
+**Vercel Web Analytics y Speed Insights**, que miden las visitas de forma agregada (qué páginas se
+ven, desde qué país, con qué tipo de dispositivo y navegador) **sin cookies y sin identificarle**.
+No los usamos para hacer publicidad ni para crear perfiles. Si esto cambia, actualizaremos esta
+Política.
 
 ## 12. Cambios a esta Política
 
@@ -415,6 +425,6 @@ nuevo su autorización.
 
 ## 13. Vigencia
 
-Esta Política rige desde el 4 de octubre de 2026. Las bases de datos se conservarán mientras
+Esta Política rige desde el 5 de octubre de 2026. Las bases de datos se conservarán mientras
 CloseLabs preste el servicio y por el tiempo adicional que exija la ley.
 ```

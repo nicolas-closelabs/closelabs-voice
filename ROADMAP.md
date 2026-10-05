@@ -152,8 +152,10 @@ cambia la URL.
       sigue dictando mientras Stripe reintenta, con aviso; si fallan los reintentos, mensaje claro
       y botón para actualizarla. **Sin reembolso** de la parte no usada (sigue dictando hasta el
       final del período); va escrito en los términos. Médicos de gMedic cancelan con gMedic.
-  - **Textos legales v1 aprobados por el abogado (2026-10-04)**: `legal/TERMINOS-Y-PRIVACIDAD-v1.md`.
-    Falta publicarlos en Lovable. Lo que obligan a construir:
+  - **Textos legales v1 aprobados por el abogado (2026-10-04) y PUBLICADOS (2026-10-05)** en
+    closelabs.co/terminos y /privacidad (fuente: `closelabs-web/src/content/legal/*.md`). Al
+    publicar se corrigió la sección 11 de la Política: el sitio SÍ usa Vercel Web Analytics y
+    Speed Insights (sin cookies). Pasarle ese cambio al abogado. Lo que obligan a construir:
     - **Retracto del primer cobro** (5 días hábiles, Ley 1480 art. 47): devolverlo si el médico lo
       pide. Al principio, a mano desde Stripe.
     - **Pedir aceptación de nuevo** a quienes se registraron antes de publicar la v1 (aceptaron

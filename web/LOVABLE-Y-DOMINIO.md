@@ -1,14 +1,18 @@
 # Pendientes de la web y del dominio
 
-> Para tener a mano. Los prompts se pegan tal cual en Lovable. Actualizado el 2026-10-05.
+> ⚠️ **2026-10-05: la web salió de Lovable.** Ahora vive en `nicolas-closelabs/closelabs` (clon en
+> `../closelabs-web`), Vercel publica `main` directo a producción y closelabs.co redirige a
+> www.closelabs.co. Los prompts de abajo ya NO hacen falta: lo implementó Claude Code y está en
+> vivo (commit 04a6f63). Quedan como registro de lo que se pidió.
+> Actualizado el 2026-10-05.
 > Los textos legales (Términos y Privacidad) están en `legal/TERMINOS-Y-PRIVACIDAD-v1.md`
 > (aprobados por el abogado el 2026-10-04): su Parte C es el prompt que se pega en Lovable.
 
 | | Qué | Por qué | Estado |
 |---|---|---|---|
-| 1 | Pie con "© 2026 CLOSELABS LLC" + página /empresa | Apple y Microsoft verifican que la web sea de la empresa (firmas) | Pendiente |
-| 2 | Las 3 páginas de después del pago | Stripe necesita a dónde mandar al médico | Pendiente |
-| 2b | Páginas /terminos y /privacidad (v1) | Las enlaza la app al registrarse; las pide Stripe | Pendiente — prompt en `legal/TERMINOS-Y-PRIVACIDAD-v1.md` |
+| 1 | Pie con "© 2026 CLOSELABS LLC" + página /empresa | Apple y Microsoft verifican que la web sea de la empresa (firmas) | ✅ En vivo (2026-10-05) |
+| 2 | Las 3 páginas de después del pago | Stripe necesita a dónde mandar al médico | ✅ En vivo (2026-10-05), fuera de Google |
+| 2b | Páginas /terminos y /privacidad (v1) | Las enlaza la app al registrarse; las pide Stripe | ✅ En vivo (2026-10-05) |
 | 3 | Dominio a nombre de la LLC en Namecheap | Microsoft acepta la factura del dominio como prueba (firmas) | Pendiente |
 | — | Buzones `contacto@` y `nicolas@` | Verificaciones de Microsoft y contacto | ✅ Hechos (Private Email de Namecheap, 2026-10-05) |
 
