@@ -343,6 +343,27 @@ el prompt es ~86% del costo): se ve en el panel de uso de OpenAI, `usage_events`
 - Por OpenRouter, fijar el servidor: de los 7 que sirven luna, Azure y Bedrock no aceptan
   `response_format`, y `openai/flex` es diferido.
 
+## 2026-10-04 — El guion grabado por un médico real
+
+Un médico grabó los 20 dictados del guion (`pruebas-dictado/voz/audios/medico/`, fuera del repo).
+Con OpenAI `gpt-4o-mini-transcribe`, misma configuración de producción: **9,4% de los datos del
+guion mal**, contra 1,6-2% con la voz de Nicolás. Con y sin pista sale casi igual.
+
+**Lección para el banco: la verdad es lo que se DIJO, no lo que dice el guion.** Los tres errores
+que parecían graves eran del lector, y OpenAI escribió bien lo que oyó (Nicolás lo comprobó
+escuchando): dijo "miligramos" en vez de microgramos (levotiroxina, en las 5 grabaciones), "punto
+cuatro" en vez de 1.4 y "sesenta" en vez de setenta. Descontados, quedan **~7,6%**:
+- **Ortografía de medicamentos**: "en abril" (enalapril), "sertalina", "opixaban", "atrovastatina",
+  "colexistomía". Visibles: un médico no firma "en abril 20 miligramos".
+- **Sustituciones en el dictado rápido** (3.6 urgencias, leído deprisa): dipirona → "leopirina",
+  **hemograma → hemoglobina**, Blumberg → "número", triage → "traía". La de hemograma es la
+  peligrosa: dos palabras válidas con otro significado.
+
+**Siguiente paso propuesto:** medir `gpt-transcribe` (OpenAI, julio de 2026, $0,0045/min, acepta
+`keywords` con términos esperados y `languages`) contra el mini actual, con estos 20 audios.
+⚠️ Su documentación lista como formatos mp3/mp4/mpeg/mpga/m4a/wav/webm, **sin ogg**: si rechaza el
+Opus que sube la app, la app baja a FLAC y luego a WAV (más lento y más pesado). Medirlo antes.
+
 ## 2026-09-30 — Red de seguridad: revisión mecánica de la limpieza y de la voz
 
 `supabase/functions/_shared/revision.ts`, sin modelos (<1 ms). Capa 1: cada trozo limpio contra su

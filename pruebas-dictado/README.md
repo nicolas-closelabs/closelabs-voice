@@ -28,6 +28,12 @@ Usa el token de este equipo (`settings_store.json`) para hablar con `/format`, a
 que hay desplegado en ese momento**: proveedor, modelo, prompt y troceado. Para comparar dos
 opciones, se cambia la configuración, se corre el banco y se comparan las dos etiquetas.
 
+## ⚠️ La verdad es lo que se dijo, no lo que dice el guion
+
+Quien graba se desvía del guion sin darse cuenta: el médico del 2026-10-04 dijo "miligramos" donde
+el guion decía microgramos, y el motor lo escribió bien. Antes de culpar al motor por un dato
+grave, escuchar ese punto del audio.
+
 ## Por qué mide `/format` y no un modelo directo
 
 Porque lo que le importa al médico no es el modelo: es lo que sale por el otro lado, con el
