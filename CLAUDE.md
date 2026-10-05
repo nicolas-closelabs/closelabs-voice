@@ -26,7 +26,7 @@
 > signos vitales y laboratorios sin aviso. Estuvo desde el 2026-09-23. Ahora hay una guarda: si los
 > trozos no reconstruyen el texto, no se trocea. Ver el comentario en `format.ts`.
 
-> **SIN PUBLICAR — el techo de salida tumbaba todos los dictados largos.** `MAX_OUTPUT_TOKENS`
+> **(Histórico, 2026-09-22; ya desplegado y luego superado por el troceado y por gpt-6-luna) — el techo de salida tumbaba todos los dictados largos.** `MAX_OUTPUT_TOKENS`
 > estaba en 2.000 y el modelo se quedaba sin cupo a mitad de la respuesta: devolvía **HTTP 200**
 > con `finish_reason: "length"` y el JSON cortado, `JSON.parse` fallaba y se reportaba como
 > `empty_result`. Al ser 200, el reintento sin esquema (que solo mira el 400) no saltaba, y el
@@ -180,12 +180,13 @@ Highlights acumulados:
 ## Distribución (por qué "no abre en otros Macs") — CI + firma
 
 > 📄 **Todo lo de firmar (Apple y Windows) vive en `FIRMA-Y-DISTRIBUCION.md`**: precios, pasos,
-> secretos, y qué puede hacer cada entidad según su país. ⚠️ **No existe ninguna sociedad** (Nicolás
-> es persona natural colombiana; el socio español es autónomo). Por eso: Apple como persona natural
-> ($99, convertible a empresa sin perder el Team ID) y **Windows con SSL.com IV a nombre de Nicolás**
-> (~$309/año). Azure Artifact Signing exige una organización; se abre el día que CloseLabs se
-> constituya en la UE o EE.UU. (**no** pide antigüedad mínima, aunque medio internet diga que sí).
-> Leer antes de pagar.
+> secretos, y qué puede hacer cada entidad según su país.
+> ⚠️ **2026-10-02: se está constituyendo CLOSELABS LLC (EE.UU., dos socios).** Plan: firmar TODO a
+> nombre de la LLC — Windows con **Azure Artifact Signing** (~$120/año, 5.000 firmas/mes) y
+> **SSL.com OV** de respaldo (~$309/año) si Azure rechaza la validación; macOS con **Apple como
+> organización** ($99). Faltan el EIN (~2026-10-09) y el D-U-N-S. Hasta entonces, nada comprado:
+> el plan anterior (todo a nombre de Nicolás) queda como plan B. Stripe en pausa: la cuenta será
+> de la LLC. Leer el documento antes de pagar.
 
 
 ⚠️ **Un `.dmg` compilado localmente NO se distribuye a otros equipos.** Dos razones (confirmadas):
@@ -336,7 +337,7 @@ Atajo global (toggle) → grabar audio
 | Refine | Nube Groq, offline→raw | Cero RAM/peso local; costo trivial cobrando $30; potente |
 | API key refine | Embebida (v1), límite de gasto + endpoint configurable | Rápido de montar (como Aztec); migrar a proxy = solo cambiar URL |
 | Modelo | Descarga automática 1er arranque (no bundled) | Instalador liviano; UX sin fricción |
-| Firma | Windows: SSL.com IV + eSigner. macOS: Apple Developer. Ambas a nombre de Nicolás | No existe sociedad; son las únicas que no la exigen. Ver `FIRMA-Y-DISTRIBUCION.md` |
+| Firma | A nombre de CLOSELABS LLC: Windows con Azure Artifact Signing (SSL.com OV de respaldo); macOS con Apple como organización | El médico ve "CLOSELABS LLC" en los avisos, no una persona; Azure es más barato y da 5.000 firmas/mes. Ver `FIRMA-Y-DISTRIBUCION.md` (2026-10-02) |
 
 Investigamos a fondo **Aztec Voice** (`co.azteclab.voice`), otro fork de Handy que el cliente
 admira: transcripción híbrida (Groq Whisper online / Parakeet offline), refine con Groq
@@ -477,7 +478,7 @@ cuando lleva pista. Detalle en `BACKLOG.md` (2026-09-20).
 
 ## Roadmap (fuera del v1)
 
-- Firmar: Windows con SSL.com IV + eSigner (~$309/año) y macOS con Apple Developer ($99/año).
+- Firmar a nombre de CLOSELABS LLC (Azure Artifact Signing / SSL.com OV, Apple como organización).
   Detalle en `FIRMA-Y-DISTRIBUCION.md`.
 - Proxy propio de refine (sacar la key del binario, medir uso, gating de suscripción).
 - Capa de cuentas/suscripción (estilo Aztec/Supabase) para cobrar.
