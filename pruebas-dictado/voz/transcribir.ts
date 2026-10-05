@@ -19,7 +19,11 @@ import { fileURLToPath } from "node:url";
 import { leerCasos, revisar, type Caso } from "./revisar.ts";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
-const AUDIOS = join(AQUI, "audios", "opus");
+// `--carpeta medico` lee `audios/medico/opus/`; sin la opción, `audios/opus/` (los de Nicolás).
+const _i = process.argv.indexOf("--carpeta");
+const AUDIOS = _i >= 0
+  ? join(AQUI, "audios", process.argv[_i + 1], "opus")
+  : join(AQUI, "audios", "opus");
 const RAIZ = join(AQUI, "..", "..");
 
 const args = process.argv.slice(2);

@@ -36,6 +36,17 @@ const COLADOS = [
 ];
 
 const ACENTOS = /[áéíóúñü]/;
+
+/** "cada ocho horas" dice lo mismo que "cada 8 horas": el número escrito en palabras cuenta. */
+const EN_PALABRAS: Record<string, string[]> = {
+  "1": ["un", "uno", "una"], "2": ["dos"], "3": ["tres"], "4": ["cuatro"], "5": ["cinco"],
+  "6": ["seis"], "7": ["siete"], "8": ["ocho"], "9": ["nueve"], "10": ["diez"], "11": ["once"],
+  "12": ["doce"], "14": ["catorce"], "15": ["quince"], "16": ["dieciséis"], "18": ["dieciocho"],
+  "20": ["veinte"], "30": ["treinta"], "40": ["cuarenta"], "50": ["cincuenta"], "60": ["sesenta"],
+  "70": ["setenta"], "80": ["ochenta"], "90": ["noventa"], "100": ["cien"],
+};
+const enPalabras = (texto: string, n: string) =>
+  (EN_PALABRAS[n] ?? []).some((w) => new RegExp(`(?<!\\p{L})${w}(?!\\p{L})`, "iu").test(texto));
 const numerosDe = (s: string) => s.match(/\d+(?:[.,]\d+)*/g) ?? [];
 const palabrasDe = (s: string) => s.toLowerCase().split(/[^a-záéíóúñü]+/).filter(Boolean);
 const hay = (texto: string, valor: string) =>
@@ -52,7 +63,7 @@ export function revisar(c: Caso) {
   // Una variante con letras o espacios ("1 metro 56", "cuatro meses") se busca como frase.
   const esFrase = (alt: string) => /[\sa-záéíóúñ]/i.test(alt);
   const faltan = numeros.filter((v) => !v.split("|").some((alt) =>
-    esFrase(alt) ? crudo.toLowerCase().includes(alt.toLowerCase()) : delCrudo.includes(alt)));
+    esFrase(alt) ? crudo.toLowerCase().includes(alt.toLowerCase()) : delCrudo.includes(alt) || enPalabras(crudo, alt)));
   const esperados = new Set(numeros.flatMap((v) => v.split("|").flatMap((alt) => esFrase(alt) ? numerosDe(alt) : [alt])));
   const inventados = [...new Set(delCrudo.filter((n) => !esperados.has(n)))];
 
