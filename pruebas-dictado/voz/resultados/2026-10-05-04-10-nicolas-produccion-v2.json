@@ -1,0 +1,96 @@
+{
+  "etiqueta": "nicolas-produccion-v2",
+  "fecha": "2026-10-05T04:10:08.684Z",
+  "configs": {
+    "HOY: estilo+dicc, auto": {
+      "mal": 2,
+      "datos": 153,
+      "inventos": 0,
+      "colados": 0,
+      "cortadas": 0,
+      "detalle": [
+        {
+          "audio": "1.3",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 13,
+          "texto": "Glicemia 132, creatinina 0.9, nitrógeno ureico 18, hemoglobina 14.2, hematocrito 42, plaquetas 240,000, leucocitos 7,200, tensión arterial 130/80, frecuencia cardíaca 78, saturación 97%."
+        },
+        {
+          "audio": "1.5",
+          "proveedor": "openai",
+          "perdidos": [
+            "rosuvastatina"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 13,
+          "texto": "Se formula enalapril 20 miligramos cada 12 horas, hidroclorotiazida 25 miligramos al día, espironolactona 25 miligramos al día, levotiroxina 50 microgramos en ayunas, resubastatina 20 miligramos en la noche, clopidogrel 75 miligramos al día y omeprazol 20 miligramos antes del desayuno."
+        },
+        {
+          "audio": "2.2 parte 2",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 23,
+          "texto": "Al examen físico se encuentra paciente en buenas condiciones generales, consciente, orientada, hidratada, afebril. Peso 78 kilos, talla 1 metro 56, índice de masa corporal 32. Tensión arterial 140 sobre 85, frecuencia cardíaca 76 por minuto, frecuencia respiratoria 16 por minuto, saturación 97% al ambiente, cardiopulmonar sin alteraciones, ruidos cardíacos rítmicos sin soplos, murmullo vesicular conservado. Abdomen blando, no doloroso. En extremidades, rodilla derecha con crepitación a la movilización, dolor en la interlínea articular medial, sin derrame, con limitación de los últimos grados de flexión. Rodilla izquierda con crepitación leve y sin dolor a la palpación. Marcha antálgica, pulsos periféricos presentes y simétricos sin edemas. Paraclínicos previos que trae la paciente. Hemograma normal, velocidad de sedimentación 24, proteína C reactiva negativa, glicemia 98, creatinina 0.8, radiografía de rodillas en proyección anteroposterior de pie que muestra una disminución del espacio articular medial bilateral de predominio derecho, con osteofitos marginales y esclerosis subcondral."
+        },
+        {
+          "audio": "3.2",
+          "proveedor": "openai",
+          "perdidos": [
+            "presentación cefálica"
+          ],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 29,
+          "texto": "Paciente femenina de 27 años, gestante, que asiste a control prenatal. Fecha de última menstruación, el 14 de marzo. Edad gestacional de 28 semanas por fecha de última menstruación, confiable, concordante con ecografía del primer trimestre. Primera gestación, sin abortos previos, refiere movimientos fetales presentes y percibidas diariamente. Niega sangrado vaginal, niega salida de líquido, niega contracciones, niega cefalea, niega fosfenos, niega tinitus, niega epigastralgia. Al examen físico, tensión arterial 110/70, frecuencia cardíaca 82 por minuto, peso 68 kilos con ganancia de 9 kilos en el embarazo, altura uterina 27 centímetros, feto único, situación longitudinal. Presenta cefálica, dorso a la izquierda, fetocardia de 145 latidos por minuto, edema de miembros inferiores grado 1, reflejos normales. Para clínicos del segundo trimestre, hemoglobina 11.8, prueba de tolerancia a la glucosa normal, serologías no reactivas, urocultivos negativo. Análisis, gestante de 28 semanas, perdón, de 29 semanas, con embarazo de curso normal, sin signos de alarma. Plan, continuar ácido fólico 400 microgramos al día y sulfato ferroso 60 miligramos al día. Se solicita ecografía de crecimiento para las 32 semanas. Se explican signos de alarma obstétricos y se indica control en 3 semanas. Paciente comprende y acepta."
+        },
+        {
+          "audio": "3.5",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 15,
+          "texto": "Paciente femenina de 31 años, ingeniera, que consulta por cuadro de cuatro meses de evolución, consistente en preocupación excesiva y difícil de controlar, asociada a tensión muscular, dificultad para conciliar el sueño, irritabilidad y sensación de nudo en la garganta. Refiere que los síntomas se presentan la mayoría de los días y que han afectado su rendimiento laboral y su relación de pareja. Niega ideación suicida, niega ideación homicida, niega consumo de alcohol o sustancias psicoactivas. Niega episodios previos de depresión, antecedente familiar de trastorno de ansiedad en la madre. Al examen mental, paciente alerta, orientada en las tres esferas, con adecuada presentación personal, actitud colaboradora, lenguaje coherente y fluido, afecto ansioso, razonante, pensamiento de curso y contenido normales sin ideas delirantes, sin alteraciones sensoperceptivas, juicio conservado y introspección adecuada. Se aplica escala de GAD-7 con puntaje de 14 puntos, compatible con ansiedad moderada, sin riesgo suicida actual. Plan: se inicia sertralina 25 miligramos al día por una semana, mentira, 50 miligramos al día después de la primera semana. Se explican los efectos adversos iniciales y que el efecto terapéutico aparece entre la segunda y la cuarta semana. Se remite a psicoterapia cognitivo-conductual. Se recomienda higiene del sueño y actividad física regular. Control en cuatro semanas. Paciente comprende y acepta el manejo."
+        },
+        {
+          "audio": "3.6",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 19,
+          "texto": "Paciente masculino de 41 años, triaje 2, que ingresa por dolor abdominal de 24 horas de evolución, localizado inicialmente en epigastrio y que migró a fosa ilíaca derecha. Asociado a náuseas, un episodio emético y fiebre no cuantificada. Signos vitales al ingreso: tensión arterial 100/60, frecuencia cardíaca 110 por minuto, frecuencia respiratoria 20 por minuto, temperatura 38.2, saturación 96%, abdomen con dolor a la palpación en fosa ilíaca derecha, Blumberg positivo, McBurney positivo, ruidos intestinales disminuidos. Se solicita hemograma, proteína C reactiva, uroanálisis y ecografía abdominal. Se inicia hidratación con lactato de Ringer 1000 mililitros, dipirona 1 gramo intravenoso y se deja en nada vía oral. Se solicita valoración prioritaria por cirugía general por sospecha de apendicitis aguda."
+        },
+        {
+          "audio": "3.7",
+          "proveedor": "openai",
+          "perdidos": [],
+          "faltan": [],
+          "inventados": [],
+          "cortadas": [],
+          "colados": [],
+          "datos": 41,
+          "texto": "Paciente masculino de 73 años, pensionado, que asiste a control de medicina interna. Antecedentes de diabetes mellitus tipo 2 de 15 años de evolución, hipertensión arterial de 20 años, enfermedad renal crónica estadio 3A, fibrilación auricular permanente y dislipidemia. Medicamentos actuales: metformina 850 miligramos cada 12 horas, empagliflozina 10 miligramos al día, losartán 50 miligramos cada 12 horas, apixabán 5 miligramos cada 12 horas y atorvastatina 40 miligramos en la noche. Refiere buena adherencia al tratamiento, niega hipoglicemias, niega sangrados, niega disnea, niega edemas, niega palpitaciones. Camina 30 minutos diarios. Al examen físico, tensión arterial 138/78, frecuencia cardíaca 84 por minuto irregular, peso 79 kilos, saturación 96%, ruidos cardíacos arrítmicos sin soplos, murmullo vesicular conservado, abdomen blando, extremidades sin edemas, pulsos pedios presentes. Paraclínicos recientes: hemoglobina glicosilada 7.2, glicemia en ayunas 134, creatinina 1.4 con tasa de filtración glomerular estimada de 52, potasio 4.1, colesterol LDL 78, relación albuminuria-creatinuria de 180. Análisis: paciente pluripatológico con adecuado control glicémico y lipídico, con enfermedad renal crónica estable y albuminuria persistente. Anticoagulado por fibrilación auricular sin eventos hemorrágicos. Plan: continuar el mismo esquema de medicamentos, se remite a nefrología, me equivoqué, a endocrinología para ajuste de manejo de la diabetes y se solicita valoración por oftalmología por tamizaje de retinopatía diabética. Se solicitan paraclínicos de control en tres meses con hemoglobina glicosilada, creatinina, potasio y relación albuminuria y creatinuria. Se refuerzan recomendaciones de dieta, baja en sodio y actividad física. Control en tres meses. Paciente y su hijo comprenden y lo aceptan."
+        }
+      ]
+    }
+  }
+}
