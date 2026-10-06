@@ -38,11 +38,14 @@
 | Activa | Fecha de renovación | Administrar pago · Cancelar suscripción |
 | Canceló, le queda período | "Puedes seguir dictando hasta el…" | **Reanudar suscripción** · Administrar pago |
 | Cobro rechazado (reintentando) | "Sigues dictando con normalidad" | Actualizar tarjeta |
-| Fin de la prueba sin pagar | **"Gracias por probar"**, con sus dictados y horas de voz | Seguir dictando |
+| Fin de la prueba sin pagar | **"Tu prueba gratuita terminó"**, el precio y, al final, sus dictados y horas de voz | Suscribirme |
 | Suscripción terminada | Lo mismo, "Tu suscripción terminó" | Volver a suscribirme |
 | Reintentos agotados | "Pausamos el dictado…" | Actualizar tarjeta |
 
-Al terminar la prueba, un dictado negado ya NO muestra un aviso rojo: la app abre esta pantalla.
+Al terminar la prueba, un dictado negado ya NO muestra un aviso rojo: sale un **pop-up**
+(`FinDePruebaModal.tsx`) con el mismo contenido y "Ahora no", sobre "Mi cuenta". La primera versión
+("Gracias por probar" con los números en grande y el botón "Seguir dictando") no se entendía:
+Nicolás la probó y parecía un fallo. Orden actual: qué pasó → qué hacer → precio → botón → datos.
 
 **La regla que hace confiable el webhook:** nunca se escribe lo que trae el aviso; se le pregunta a
 Stripe cómo está la suscripción ahora y se escribe eso. Los avisos llegan repetidos, tarde y en

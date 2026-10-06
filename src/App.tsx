@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { toast, Toaster } from "sonner";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
@@ -27,6 +27,7 @@ import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
+import { FinDePruebaModal } from "./components/settings/account/FinDePruebaModal";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
 type OnboardingStep = "accessibility" | "model" | "done";
@@ -46,6 +47,10 @@ function App() {
   // (vs a new user who needs full onboarding including model selection)
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [currentSection, setCurrentSection] = useState<SidebarSection>("home");
+  /** Motivo del servidor cuando se negó un dictado por fin de prueba o suscripción vencida. */
+  const [finDePrueba, setFinDePrueba] = useState<string | null>(null);
+  // Estable: el pop-up la usa en un efecto (foco y teclado) que no debe re-ejecutarse en cada render.
+  const cerrarFinDePrueba = useCallback(() => setFinDePrueba(null), []);
   const { settings, updateSetting } = useSettings();
   const direction = getLanguageDirection(i18n.language);
   const refreshAudioDevices = useSettingsStore(
@@ -430,13 +435,14 @@ function App() {
   // Se lleva a Mi cuenta, que es donde puede resolverlo.
   //
   // Fin de la prueba o suscripción vencida: SIN aviso rojo. Decisión de Nicolás (2026-09-30): ahí
-  // el médico ve la pantalla amable de "gracias por probar" (`Suscripcion.tsx`), con lo que dictó
-  // y un botón para seguir. Un "error" justo en ese momento es lo que hace que no vuelva.
+  // el médico ve el pop-up de fin de prueba (`FinDePruebaModal`) sobre "Mi cuenta": qué pasó, cuánto
+  // cuesta seguir y un botón. Un "error" justo en ese momento es lo que hace que no vuelva.
   useEffect(() => {
     const unlisten = listen<string>("dictado-sin-permiso", (e) => {
       const motivo = e.payload;
       if (motivo === "trial_ended" || motivo === "subscription_inactive") {
         setCurrentSection("account");
+        setFinDePrueba(motivo);
         return;
       }
       const clave =
@@ -523,6 +529,11 @@ function App() {
       dir={direction}
       className="h-screen flex flex-col select-none cursor-default"
     >
+      <FinDePruebaModal
+        motivo={finDePrueba}
+        onCerrar={cerrarFinDePrueba}
+        onCobroAbierto={cerrarFinDePrueba}
+      />
       <Toaster
         theme="system"
         toastOptions={{

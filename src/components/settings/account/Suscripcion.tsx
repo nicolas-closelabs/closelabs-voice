@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string */
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2 } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { CreditCard, ExternalLink, Hourglass, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { commands, type EstadoCuenta } from "@/bindings";
 
@@ -96,9 +96,39 @@ const ERROR_GENERICO = {
 };
 
 const BOTON =
-  "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-semibold transition-colors disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-semibold transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2";
 const BOTON_PRINCIPAL = `${BOTON} bg-brand-accent text-white hover:bg-brand-accent-secondary`;
 const BOTON_SECUNDARIO = `${BOTON} border border-brand-border bg-white hover:border-brand-accent hover:text-brand-accent`;
+
+/**
+ * Se abrió una página de Stripe (desde "Mi cuenta" o desde el pop-up de fin de prueba).
+ *
+ * Vive FUERA del componente a propósito: si viviera dentro, cambiar de sección lo borraba (Nicolás
+ * lo notó: el aviso solo se iba al pasar por Diccionario y volver), y el pop-up, que abre el pago
+ * desde otro lado, no podía avisarle a "Mi cuenta" que esperara la vuelta del navegador.
+ * - `avisoPendiente`: mostrar "vuelve aquí" hasta que el médico vuelva a la app.
+ * - `escucharHasta`: hasta cuándo cada vuelta a la app pone al día el estado, en silencio.
+ */
+const cobroAbierto = { avisoPendiente: false, escucharHasta: 0 };
+const COBRO_ABIERTO = "closelabs:cobro-abierto";
+
+/** Abre el pago o el portal en el navegador. `null` si salió bien; si no, el código de error. */
+export async function abrirCobro(accion: "checkout" | "portal"): Promise<string | null> {
+  let r = await commands.accountOpenBilling(accion);
+  // Pidió el portal sin haber pagado nunca: lo que necesita es suscribirse.
+  if (r.status === "error" && r.error === "sin_pago") r = await commands.accountOpenBilling("checkout");
+  if (r.status === "error") return r.error;
+  cobroAbierto.avisoPendiente = true;
+  cobroAbierto.escucharHasta = Date.now() + ESPERA_MAX_MS;
+  // Para el panel de "Mi cuenta" si ya está abierto (el pop-up abre el pago desde encima de él).
+  window.dispatchEvent(new Event(COBRO_ABIERTO));
+  return null;
+}
+
+export function avisarErrorDeCobro(codigo: string) {
+  const m = MENSAJES_ERROR[codigo] ?? ERROR_GENERICO;
+  toast.error(m.titulo, { description: m.detalle });
+}
 
 interface Props {
   estado: EstadoCuenta;
@@ -108,14 +138,15 @@ interface Props {
 export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
   const [ocupado, setOcupado] = useState<null | "checkout" | "portal" | "resume" | "sync">(null);
   /**
-   * Se abrió una página de Stripe. Mientras `esperando`, se ve el aviso "vuelve aquí"; se quita en
-   * cuanto el médico vuelve a la app. Aparte, durante `ESPERA_MAX_MS` cada vuelta a la app pone al
-   * día el estado EN SILENCIO (sin ruedita ni botones grises): si volvió a mitad del pago y
-   * termina después, igual se entera. Lo encontró Nicolás probando la 0.9.0: el aviso quedaba
-   * pegado y cada vuelta a la ventana ponía los botones en gris.
+   * El aviso "vuelve aquí" (ver `cobroAbierto`): se quita en cuanto el médico vuelve a la app, y
+   * esa vuelta pone al día el estado EN SILENCIO, sin ruedita ni botones grises. Lo encontró
+   * Nicolás probando la 0.9.0: el aviso quedaba pegado y cada vuelta ponía los botones en gris.
    */
-  const [esperando, setEsperando] = useState(false);
-  const escucharHasta = useRef(0);
+  const [esperando, setEsperandoLocal] = useState(cobroAbierto.avisoPendiente);
+  const setEsperando = (v: boolean) => {
+    cobroAbierto.avisoPendiente = v;
+    setEsperandoLocal(v);
+  };
 
   const ponerAlDia = useCallback(async (visible: boolean) => {
     if (visible) setOcupado("sync");
@@ -126,12 +157,18 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
 
   useEffect(() => {
     const alVolver = () => {
-      if (Date.now() > escucharHasta.current) return;
-      setEsperando(false);
+      if (Date.now() > cobroAbierto.escucharHasta) return;
+      cobroAbierto.avisoPendiente = false;
+      setEsperandoLocal(false);
       void ponerAlDia(false);
     };
+    const alAbrirCobro = () => setEsperandoLocal(true);
     window.addEventListener("focus", alVolver);
-    return () => window.removeEventListener("focus", alVolver);
+    window.addEventListener(COBRO_ABIERTO, alAbrirCobro);
+    return () => {
+      window.removeEventListener("focus", alVolver);
+      window.removeEventListener(COBRO_ABIERTO, alAbrirCobro);
+    };
   }, [ponerAlDia]);
 
   const yaTermine = () => {
@@ -141,20 +178,9 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
 
   const abrir = async (accion: "checkout" | "portal") => {
     setOcupado(accion);
-    const r = await commands.accountOpenBilling(accion);
+    const error = await abrirCobro(accion);
     setOcupado(null);
-    if (r.status === "ok") {
-      escucharHasta.current = Date.now() + ESPERA_MAX_MS;
-      setEsperando(true);
-      return;
-    }
-    if (r.error === "sin_pago") {
-      // Pidió el portal sin haber pagado nunca: lo que necesita es suscribirse.
-      void abrir("checkout");
-      return;
-    }
-    const m = MENSAJES_ERROR[r.error] ?? ERROR_GENERICO;
-    toast.error(m.titulo, { description: m.detalle });
+    if (error) avisarErrorDeCobro(error);
   };
 
   const reanudar = async () => {
@@ -308,75 +334,117 @@ const AvisoNavegador: React.FC<{ ocupado: boolean; onYaTermine: () => void }> = 
   </div>
 );
 
+export type Fin = "fin_prueba" | "terminada" | "sin_pagar";
+
+const TEXTOS_FIN: Record<Fin, { titulo: string; subtitulo: string; boton: string; conPrecio: boolean }> = {
+  fin_prueba: {
+    titulo: "Tu prueba gratuita terminó",
+    subtitulo: "Suscríbete para seguir dictando.",
+    boton: "Suscribirme",
+    conPrecio: true,
+  },
+  terminada: {
+    titulo: "Tu suscripción terminó",
+    subtitulo: "Vuelve a suscribirte para seguir dictando.",
+    boton: "Volver a suscribirme",
+    conPrecio: true,
+  },
+  sin_pagar: {
+    titulo: "No pudimos cobrar tu tarjeta",
+    subtitulo:
+      "Pausamos el dictado porque el cobro no pasó después de varios intentos. Actualiza tu tarjeta y sigues de inmediato.",
+    boton: "Actualizar tarjeta",
+    conPrecio: false,
+  },
+};
+
 /**
- * Fin de la prueba (o de la suscripción). Decisión de Nicolás: una pantalla amable, con lo que el
- * médico dictó y UN botón para seguir. Nada de rojo, nada de "error".
+ * El contenido de fin de prueba (o de suscripción vencida), el mismo en "Mi cuenta" y en el
+ * pop-up que sale al intentar dictar (`FinDePruebaModal`).
+ *
+ * Decisión de Nicolás: amable, sin rojo ni "error", UN botón. La primera versión abría con "Gracias
+ * por probar" y los números en grande; Nicolás la probó y no se entendía que había que suscribirse
+ * ("toca leerlo mucho y la gente puede pensar que es un fallo"). Por eso el orden es el de las
+ * pantallas de pago: QUÉ pasó (título), QUÉ hacer (subtítulo), CUÁNTO cuesta, el botón, y lo que
+ * dictó al final, como dato. El botón dice lo que hace ("Suscribirme"): "Seguir dictando" prometía
+ * dictar y abría una página de pago.
  */
+export const ContenidoFin: React.FC<{
+  estado: EstadoCuenta | null;
+  situacion: Fin;
+  ocupado: boolean;
+  onPagar: () => void;
+  idTitulo?: string;
+  idDescripcion?: string;
+  refBoton?: React.Ref<HTMLButtonElement>;
+}> = ({ estado, situacion: s, ocupado, onPagar, idTitulo, idDescripcion, refBoton }) => {
+  const t = TEXTOS_FIN[s];
+  const Icono = s === "sin_pagar" ? CreditCard : Hourglass;
+  const dictados = estado?.dictados ?? 0;
+  const minutos = estado?.minutos_dictados ?? 0;
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft text-brand-accent">
+        <Icono className="w-6 h-6" aria-hidden="true" />
+      </span>
+      <h2 id={idTitulo} className="mt-5 font-heading font-bold text-2xl text-balance">
+        {t.titulo}
+      </h2>
+      <p id={idDescripcion} className="mt-2 text-[15px] text-brand-text-secondary leading-relaxed max-w-sm">
+        {t.subtitulo}
+      </p>
+
+      {t.conPrecio && (
+        <div className="mt-6 flex items-baseline justify-center gap-2">
+          <span className="font-heading font-bold text-4xl tabular-nums">US$11</span>
+          <span className="text-[15px] text-brand-text-secondary">al mes · cancelas cuando quieras</span>
+        </div>
+      )}
+
+      <button
+        ref={refBoton}
+        onClick={onPagar}
+        disabled={ocupado}
+        className={`${BOTON_PRINCIPAL} mt-6 w-full max-w-xs py-3 text-base`}
+      >
+        {ocupado && <Loader2 className="w-4 h-4 animate-spin" />}
+        {t.boton}
+      </button>
+      <p className="mt-2.5 text-xs text-brand-text-muted">
+        Se abre una página segura de Stripe en tu navegador.
+      </p>
+
+      {dictados > 0 && (
+        <p className="mt-6 pt-5 border-t border-brand-border w-full text-sm text-brand-text-secondary leading-relaxed">
+          {s === "fin_prueba" ? "En tu prueba dictaste" : "Con CloseLabs Voice dictaste"}{" "}
+          <strong className="font-semibold text-brand-text-secondary">
+            {dictados.toLocaleString("es")} {dictados === 1 ? "vez" : "veces"}
+          </strong>
+          {minutos > 0 && <>: {duracion(minutos)} de voz que no tuviste que escribir</>}. Tu
+          diccionario y tus equipos siguen aquí.
+        </p>
+      )}
+    </div>
+  );
+};
+
+/** El mismo contenido, como panel de "Mi cuenta". */
 const FinDePrueba: React.FC<{
   estado: EstadoCuenta;
-  situacion: "fin_prueba" | "terminada" | "sin_pagar";
+  situacion: Fin;
   ocupado: string | null;
   esperando: boolean;
   onPagar: () => void;
   onYaTermine: () => void;
-}> = ({ estado, situacion: s, ocupado, esperando, onPagar, onYaTermine }) => {
-  const dictados = estado.dictados ?? 0;
-  const minutos = estado.minutos_dictados ?? 0;
-
-  const titulo = {
-    fin_prueba: "Gracias por probar CloseLabs Voice",
-    terminada: "Tu suscripción terminó",
-    sin_pagar: "No pudimos cobrar tu tarjeta",
-  }[s];
-
-  const texto = {
-    fin_prueba: `Tu prueba gratuita terminó. Para seguir dictando, activa tu suscripción: ${PRECIO}, y cancelas cuando quieras.`,
-    terminada: `Para volver a dictar, suscríbete de nuevo: ${PRECIO}, y cancelas cuando quieras.`,
-    sin_pagar: "Pausamos el dictado porque el cobro no pasó después de varios intentos. Actualiza tu tarjeta y sigues de inmediato.",
-  }[s];
-
-  const boton = {
-    fin_prueba: "Seguir dictando",
-    terminada: "Volver a suscribirme",
-    sin_pagar: "Actualizar tarjeta",
-  }[s];
-
-  return (
-    <section className="rounded-3xl border border-brand-border bg-brand-surface px-6 py-8 sm:px-8">
-      <h2 className="font-heading font-bold text-xl text-balance">{titulo}</h2>
-
-      {dictados > 0 && (
-        <div className="mt-5 flex flex-wrap gap-x-10 gap-y-4">
-          <div>
-            <div className="font-heading font-bold text-3xl text-brand-accent tabular-nums">
-              {dictados.toLocaleString("es")}
-            </div>
-            <div className="text-sm text-brand-text-secondary">
-              {dictados === 1 ? "dictado" : "dictados"}
-              {s === "fin_prueba" ? " en tu prueba" : ""}
-            </div>
-          </div>
-          {minutos > 0 && (
-            <div>
-              <div className="font-heading font-bold text-3xl text-brand-accent">{duracion(minutos)}</div>
-              <div className="text-sm text-brand-text-secondary">de voz que no tuviste que escribir</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <p className="mt-5 text-[15px] text-brand-text-secondary leading-relaxed max-w-prose">{texto}</p>
-
-      <button onClick={onPagar} disabled={ocupado !== null} className={`${BOTON_PRINCIPAL} mt-6 px-6`}>
-        {ocupado === "checkout" || ocupado === "portal" ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        {boton}
-      </button>
-      <p className="mt-3 text-xs text-brand-text-muted">
-        Se abre una página segura de Stripe para poner tu tarjeta. Tu diccionario y tus equipos
-        siguen aquí.
-      </p>
-
-      {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={onYaTermine} />}
-    </section>
-  );
-};
+}> = ({ estado, situacion, ocupado, esperando, onPagar, onYaTermine }) => (
+  <section className="rounded-3xl border border-brand-border bg-brand-surface px-6 py-9 sm:px-10">
+    <ContenidoFin
+      estado={estado}
+      situacion={situacion}
+      ocupado={ocupado === "checkout" || ocupado === "portal"}
+      onPagar={onPagar}
+    />
+    {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={onYaTermine} />}
+  </section>
+);
