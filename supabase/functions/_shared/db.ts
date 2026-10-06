@@ -98,3 +98,17 @@ export function insertDetached(table: string, row: Record<string, unknown>): voi
     body: JSON.stringify(row),
   }).catch((e) => console.error("no se pudo registrar el uso:", e?.message));
 }
+
+/** Actualiza las filas que cumplan `query` (filtros de PostgREST). Devuelve cuántas cambiaron. */
+export async function update(
+  table: string,
+  query: string,
+  cambios: Record<string, unknown>,
+): Promise<number> {
+  const rows = await call<unknown[]>(`/${table}?${query}`, {
+    method: "PATCH",
+    headers: headers({ prefer: "return=representation" }),
+    body: JSON.stringify(cambios),
+  });
+  return Array.isArray(rows) ? rows.length : 0;
+}

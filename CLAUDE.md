@@ -424,6 +424,11 @@ el eco de la pista. Lo que ve queda en la vista `revisiones_recientes`. Pruebas 
 idiomas, y `revisar.ts` lo compara contra el guion: datos clínicos perdidos, números que nadie dijo,
 palabras cortadas y texto colado de la pista. Ningún cambio de motor de voz o de pista sin pasarlo.
 
+**Cobro con Stripe (desde 2026-10-06, modo de prueba): `STRIPE.md`.** Lógica en
+`_shared/cobro.ts`; el webhook nunca escribe lo que trae el aviso, le pregunta a Stripe el estado
+actual. ⚠️ Al tocar `cobro.ts`, `account` o `stripe-webhook`, correr
+`bun supabase/functions/_tests/cobro.test.ts`. Los tres secretos de Stripe se cambian juntos.
+
 **Respaldo automático (desde 2026-09-21):** cada tipo tiene una cadena ORDENADA en `app_config`
 (`transcribe_fallbacks`, `format_fallbacks`). Hoy: transcribir **openai (gpt-4o-mini-transcribe) → groq (sin pista) → deepinfra** (desde
 2026-09-29, medido con el banco de voz); formatear

@@ -457,3 +457,8 @@ verify_jwt = true
 # La llama pg_cron con la llave de servicio, que la propia función verifica.
 [functions.alertas]
 verify_jwt = false
+
+# La llama Stripe, que no tiene sesión de Supabase: se autentica con la firma `stripe-signature`,
+# que la función comprueba antes de tocar nada.
+[functions.stripe-webhook]
+verify_jwt = false

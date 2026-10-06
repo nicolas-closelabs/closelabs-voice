@@ -130,6 +130,10 @@ cambia la URL.
 - [x] **Pantallas**: bienvenida, registro con teléfono y consentimiento fechado, recuperar
   contraseña, y "Mi cuenta" con suscripción y equipos.
 - [ ] **Stripe** — lo único grande que falta. 🔨 Arrancado el 2026-09-30, en MODO DE PRUEBA.
+  ✅ **2026-10-06: servidor listo** (cuenta de Stripe de CLOSELABS LLC en modo de prueba,
+  `account` con checkout/portal/resume/sync, `stripe-webhook`, correo de cancelación, 58 pruebas).
+  Falta: probar de punta a punta con tarjetas de prueba, las pantallas de la app y pasar a pagos
+  reales cuando haya EIN. Todo en `STRIPE.md`.
   **Decisiones de Nicolás (2026-09-30), que reemplazan las del 2026-09-20:**
   - **La tarjeta se pide al FINAL de la prueba, no al registrarse.** Pedirla al instalar mete un
     paso difícil justo cuando un médico de 50+ está solo con la app, y ahí abandona. La prueba de
