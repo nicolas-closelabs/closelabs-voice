@@ -86,6 +86,14 @@ async function estado(userId: string): Promise<Response> {
   // Los ids de Stripe no salen hacia la app: solo si ya pagó alguna vez (para mostrar "Administrar
   // pago" en vez de "Suscribirme").
   const sub = subs[0];
+
+  // Lo que dictó, solo cuando la app va a mostrar la pantalla de fin de prueba o de suscripción
+  // vencida: es una consulta más y el resto del tiempo nadie la mira.
+  let uso: { dictados: number; minutos: number } | null = null;
+  if (sub && !puedeDictar(sub)) {
+    const u = await rpc<{ dictados: number; segundos: number }>("uso_de_la_cuenta", { p_user_id: userId });
+    if (u) uso = { dictados: Number(u.dictados), minutos: Math.round(Number(u.segundos) / 60) };
+  }
   return json({
     profile: perfiles[0] ?? null,
     subscription: sub
@@ -99,7 +107,19 @@ async function estado(userId: string): Promise<Response> {
       : null,
     devices: equipos,
     max_devices: cfg[0]?.max_devices ?? 3,
+    usage: uso,
   });
+}
+
+/**
+ * La misma regla que `authorize_device_v2` (la fecha manda sobre el estado), solo para decidir si
+ * vale la pena contar el uso. Si las dos alguna vez difieren, lo peor que pasa es que la pantalla
+ * de fin de prueba salga sin números.
+ */
+function puedeDictar(s: Suscripcion): boolean {
+  const fechas = [s.trial_ends_at, s.current_period_end].filter(Boolean).map((f) => Date.parse(f!));
+  if (fechas.some((f) => f > Date.now())) return true;
+  return s.status === "past_due" || (s.status === "active" && !s.current_period_end);
 }
 
 Deno.serve(async (req) => {

@@ -548,6 +548,31 @@ async accountState() : Promise<Result<EstadoCuenta, string>> {
 }
 },
 /**
+ * "Suscribirme" (`checkout`) o "Administrar pago" (`portal`): abre la página de Stripe en el
+ * navegador. Si ya está suscrito, `checkout` devuelve el portal: el servidor nunca abre un
+ * segundo pago.
+ */
+async accountOpenBilling(action: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("account_open_billing", { action }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Reanudar suscripción" (`resume`) o poner al día el estado al volver del navegador (`sync`).
+ * Devuelve el estado completo, ya al día.
+ */
+async accountBillingRefresh(action: string) : Promise<Result<EstadoCuenta, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("account_billing_refresh", { action }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Suelta un equipo para hacerle sitio a otro. El servidor comprueba que sea de quien lo pide.
  */
 async authUnlinkDevice(deviceId: string) : Promise<Result<null, string>> {
@@ -1027,9 +1052,19 @@ export type Equipo = { id: string; label: string | null; platform: string | null
 is_this_device: boolean }
 export type EstadoCuenta = { signed_in: boolean; email: string | null; full_name: string | null; 
 /**
- * `trialing`, `active`, `past_due`, `canceled`, `incomplete`.
+ * Los de Stripe: `trialing`, `active`, `past_due`, `canceled`, `incomplete`,
+ * `incomplete_expired`, `unpaid`, `paused`.
  */
-status: string | null; trial_ends_at: string | null; current_period_end: string | null; cancel_at_period_end: boolean; devices: Equipo[]; max_devices: number; 
+status: string | null; trial_ends_at: string | null; current_period_end: string | null; cancel_at_period_end: boolean; 
+/**
+ * Ya puso tarjeta alguna vez: "Administrar pago" en vez de "Suscribirme".
+ */
+has_billing: boolean; 
+/**
+ * Dictados y minutos de audio de la cuenta. Solo llegan cuando ya no puede dictar (fin de
+ * prueba o suscripción vencida): son los números de la pantalla de "gracias por probar".
+ */
+dictados: number | null; minutos_dictados: number | null; devices: Equipo[]; max_devices: number; 
 /**
  * Hay sesión guardada pero no se pudo hablar con el servidor. La app sigue dentro: lo que
  * no sabe es el estado exacto de la suscripción.

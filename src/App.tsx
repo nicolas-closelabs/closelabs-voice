@@ -427,13 +427,19 @@ function App() {
   }, [onboardingStep, correo]);
 
   // El servidor dice que esta cuenta no puede dictar (no pagó, se acabó la prueba, cupo del día).
-  // Se explica con palabras y se lleva a Mi cuenta, que es donde puede resolverlo.
+  // Se lleva a Mi cuenta, que es donde puede resolverlo.
+  //
+  // Fin de la prueba o suscripción vencida: SIN aviso rojo. Decisión de Nicolás (2026-09-30): ahí
+  // el médico ve la pantalla amable de "gracias por probar" (`Suscripcion.tsx`), con lo que dictó
+  // y un botón para seguir. Un "error" justo en ese momento es lo que hace que no vuelva.
   useEffect(() => {
     const unlisten = listen<string>("dictado-sin-permiso", (e) => {
       const motivo = e.payload;
+      if (motivo === "trial_ended" || motivo === "subscription_inactive") {
+        setCurrentSection("account");
+        return;
+      }
       const clave =
-        motivo === "trial_ended" ||
-        motivo === "subscription_inactive" ||
         motivo === "subscription_missing" ||
         motivo === "quota_exceeded"
           ? motivo

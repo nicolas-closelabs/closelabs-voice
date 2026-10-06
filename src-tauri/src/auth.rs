@@ -34,7 +34,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
@@ -227,11 +227,18 @@ pub struct EstadoCuenta {
     pub signed_in: bool,
     pub email: Option<String>,
     pub full_name: Option<String>,
-    /// `trialing`, `active`, `past_due`, `canceled`, `incomplete`.
+    /// Los de Stripe: `trialing`, `active`, `past_due`, `canceled`, `incomplete`,
+    /// `incomplete_expired`, `unpaid`, `paused`.
     pub status: Option<String>,
     pub trial_ends_at: Option<String>,
     pub current_period_end: Option<String>,
     pub cancel_at_period_end: bool,
+    /// Ya puso tarjeta alguna vez: "Administrar pago" en vez de "Suscribirme".
+    pub has_billing: bool,
+    /// Dictados y minutos de audio de la cuenta. Solo llegan cuando ya no puede dictar (fin de
+    /// prueba o suscripción vencida): son los números de la pantalla de "gracias por probar".
+    pub dictados: Option<u32>,
+    pub minutos_dictados: Option<u32>,
     pub devices: Vec<Equipo>,
     pub max_devices: u32,
     /// Hay sesión guardada pero no se pudo hablar con el servidor. La app sigue dentro: lo que
@@ -249,9 +256,97 @@ impl EstadoCuenta {
             trial_ends_at: None,
             current_period_end: None,
             cancel_at_period_end: false,
+            has_billing: false,
+            dictados: None,
+            minutos_dictados: None,
             devices: Vec::new(),
             max_devices: 0,
             offline: false,
+        }
+    }
+
+    /// Hay sesión pero no se pudo hablar con el servidor (ver `account_state`).
+    fn sin_conexion(email: String) -> Self {
+        Self {
+            signed_in: true,
+            email: Some(email),
+            offline: true,
+            ..Self::desconectado()
+        }
+    }
+}
+
+/// Lo que devuelve `GET /account` (y `resume`/`sync`, que devuelven el estado ya al día).
+#[derive(Deserialize)]
+struct RespuestaCuenta {
+    profile: Option<PerfilResp>,
+    subscription: Option<SuscripcionResp>,
+    devices: Vec<EquipoResp>,
+    max_devices: u32,
+    #[serde(default)]
+    usage: Option<UsoResp>,
+}
+#[derive(Deserialize)]
+struct PerfilResp {
+    full_name: String,
+}
+#[derive(Deserialize)]
+struct SuscripcionResp {
+    status: String,
+    trial_ends_at: Option<String>,
+    current_period_end: Option<String>,
+    #[serde(default)]
+    cancel_at_period_end: bool,
+    #[serde(default)]
+    has_billing: bool,
+}
+#[derive(Deserialize)]
+struct EquipoResp {
+    id: String,
+    label: Option<String>,
+    platform: Option<String>,
+    app_version: Option<String>,
+    last_seen_at: Option<String>,
+}
+#[derive(Deserialize)]
+struct UsoResp {
+    dictados: u32,
+    minutos: u32,
+}
+
+impl RespuestaCuenta {
+    fn en_estado(self, email: String) -> EstadoCuenta {
+        // Cuál de los equipos es este. Se compara por etiqueta y plataforma porque la app no
+        // conoce su propio id en la base — nunca se lo devolvemos, y no hace falta para nada más.
+        let esta_etiqueta = gethostname::gethostname().to_string_lossy().to_string();
+        let esta_plataforma = std::env::consts::OS;
+        let sub = self.subscription;
+        EstadoCuenta {
+            signed_in: true,
+            email: Some(email),
+            full_name: self.profile.map(|p| p.full_name),
+            status: sub.as_ref().map(|s| s.status.clone()),
+            trial_ends_at: sub.as_ref().and_then(|s| s.trial_ends_at.clone()),
+            current_period_end: sub.as_ref().and_then(|s| s.current_period_end.clone()),
+            cancel_at_period_end: sub.as_ref().map(|s| s.cancel_at_period_end).unwrap_or(false),
+            has_billing: sub.as_ref().map(|s| s.has_billing).unwrap_or(false),
+            dictados: self.usage.as_ref().map(|u| u.dictados),
+            minutos_dictados: self.usage.as_ref().map(|u| u.minutos),
+            offline: false,
+            devices: self
+                .devices
+                .into_iter()
+                .map(|d| Equipo {
+                    is_this_device: d.label.as_deref() == Some(esta_etiqueta.as_str())
+                        && d.platform.as_deref() == Some(esta_plataforma),
+                    id: d.id,
+                    label: d.label,
+                    platform: d.platform,
+                    app_version: d.app_version,
+                    last_seen_at: d.last_seen_at,
+                })
+                .collect(),
+            max_devices: self.max_devices,
         }
     }
 }
@@ -480,12 +575,7 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
     // explícitamente que el refresco ya no vale (ver `token_valido`).
     let Some(acceso) = token_valido(&app).await else {
         debug!("Hay sesión guardada pero no se pudo verificar; se sigue dentro");
-        return Ok(EstadoCuenta {
-            signed_in: true,
-            email: Some(sesion.email),
-            offline: true,
-            ..EstadoCuenta::desconectado()
-        });
+        return Ok(EstadoCuenta::sin_conexion(sesion.email));
     };
 
     let url = format!("{}/account", get_settings(&app).proxy_base_url.trim_end_matches('/'));
@@ -500,93 +590,101 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
         Ok(r) => r,
         Err(e) => {
             debug!("Sin conexión al leer la cuenta ({e}); se sigue dentro");
-            return Ok(EstadoCuenta {
-                signed_in: true,
-                email: Some(sesion.email),
-                offline: true,
-                ..EstadoCuenta::desconectado()
-            });
+            return Ok(EstadoCuenta::sin_conexion(sesion.email));
         }
     };
 
     // El servidor no contestó bien, pero la sesión es válida: mismo criterio que arriba.
     if !res.status().is_success() {
         warn!("La cuenta devolvió {}; se sigue dentro", res.status());
-        return Ok(EstadoCuenta {
-            signed_in: true,
-            email: Some(sesion.email),
-            offline: true,
-            ..EstadoCuenta::desconectado()
-        });
+        return Ok(EstadoCuenta::sin_conexion(sesion.email));
     }
 
-    #[derive(Deserialize)]
-    struct Respuesta {
-        profile: Option<Perfil>,
-        subscription: Option<Suscripcion>,
-        devices: Vec<EquipoResp>,
-        max_devices: u32,
-    }
-    #[derive(Deserialize)]
-    struct Perfil {
-        full_name: String,
-    }
-    #[derive(Deserialize)]
-    struct Suscripcion {
-        status: String,
-        trial_ends_at: Option<String>,
-        current_period_end: Option<String>,
-        #[serde(default)]
-        cancel_at_period_end: bool,
-    }
-    #[derive(Deserialize)]
-    struct EquipoResp {
-        id: String,
-        label: Option<String>,
-        platform: Option<String>,
-        app_version: Option<String>,
-        last_seen_at: Option<String>,
-    }
+    let r: RespuestaCuenta = res.json().await.map_err(|_| "servidor".to_string())?;
+    Ok(r.en_estado(sesion.email))
+}
 
-    let r: Respuesta = res.json().await.map_err(|_| "servidor".to_string())?;
+// ---------------------------------------------------------------------------------------------
+// Cobro (Stripe)
+// ---------------------------------------------------------------------------------------------
+//
+// La tarjeta NUNCA pasa por la app: el pago, el cambio de tarjeta y la cancelación son páginas de
+// Stripe que se abren en el navegador. La app solo pide a nuestro servidor la dirección de esa
+// página (acciones `checkout` y `portal` de la función `account`) y la abre. Ver STRIPE.md.
 
+/// Las únicas páginas que la app acepta abrir para el cobro. Si el servidor devolviera otra cosa
+/// (un error nuestro, o alguien en medio), no se abre: un botón de "pagar" que lleva a una página
+/// cualquiera es exactamente lo que no puede pasar.
+fn es_pagina_de_stripe(url: &str) -> bool {
+    url.starts_with("https://checkout.stripe.com/") || url.starts_with("https://billing.stripe.com/")
+}
 
-    // Cuál de los equipos es este. Se compara por etiqueta y plataforma porque la app no conoce
-    // su propio id en la base — nunca se lo devolvemos, y no hace falta para nada más.
-    let esta_etiqueta = gethostname::gethostname().to_string_lossy().to_string();
-    let esta_plataforma = std::env::consts::OS;
+/// Llama a una acción de cobro de `account`. Errores: `sin_conexion`, `sin_sesion`, `sin_pago`
+/// (pidió el portal sin haber pagado nunca), `vencida` (reanudar algo que ya terminó),
+/// `cobro_no_disponible` (Stripe sin configurar del lado del servidor) o `servidor`.
+async fn accion_de_cobro(app: &AppHandle, accion: &str) -> Result<serde_json::Value, String> {
+    let acceso = token_valido(app).await.ok_or_else(|| "sin_sesion".to_string())?;
+    let url = format!("{}/account", get_settings(app).proxy_base_url.trim_end_matches('/'));
+    let res = cliente()?
+        .post(&url)
+        .header("apikey", anon_key(app))
+        .bearer_auth(&acceso)
+        .json(&serde_json::json!({ "action": accion }))
+        .send()
+        .await
+        .map_err(|_| "sin_conexion".to_string())?;
 
-    Ok(EstadoCuenta {
-        signed_in: true,
-        email: Some(sesion.email),
-        full_name: r.profile.map(|p| p.full_name),
-        status: r.subscription.as_ref().map(|s| s.status.clone()),
-        trial_ends_at: r.subscription.as_ref().and_then(|s| s.trial_ends_at.clone()),
-        current_period_end: r
-            .subscription
-            .as_ref()
-            .and_then(|s| s.current_period_end.clone()),
-        cancel_at_period_end: r
-            .subscription
-            .as_ref()
-            .map(|s| s.cancel_at_period_end)
-            .unwrap_or(false),
-        offline: false,
-        devices: r
-            .devices
-            .into_iter()
-            .map(|d| Equipo {
-                is_this_device: d.label.as_deref() == Some(esta_etiqueta.as_str())
-                    && d.platform.as_deref() == Some(esta_plataforma),
-                id: d.id,
-                label: d.label,
-                platform: d.platform,
-                app_version: d.app_version,
-                last_seen_at: d.last_seen_at,
-            })
-            .collect(),
-        max_devices: r.max_devices,
+    let estado = res.status();
+    let cuerpo: serde_json::Value = res.json().await.unwrap_or(serde_json::Value::Null);
+    if estado.is_success() {
+        return Ok(cuerpo);
+    }
+    warn!("La acción de cobro {accion} devolvió {estado}");
+    Err(match (estado.as_u16(), cuerpo["error"].as_str()) {
+        (409, Some(codigo @ ("sin_pago" | "vencida"))) => codigo.to_string(),
+        (503, _) => "cobro_no_disponible".to_string(),
+        _ => "servidor".to_string(),
     })
+}
+
+/// "Suscribirme" (`checkout`) o "Administrar pago" (`portal`): abre la página de Stripe en el
+/// navegador. Si ya está suscrito, `checkout` devuelve el portal: el servidor nunca abre un
+/// segundo pago.
+#[tauri::command]
+#[specta::specta]
+pub async fn account_open_billing(app: AppHandle, action: String) -> Result<(), String> {
+    if action != "checkout" && action != "portal" {
+        return Err("servidor".to_string());
+    }
+    let r = accion_de_cobro(&app, &action).await?;
+    let url = r["url"].as_str().unwrap_or_default();
+    if !es_pagina_de_stripe(url) {
+        error!("El servidor devolvió una página de cobro que no es de Stripe; no se abre");
+        return Err("servidor".to_string());
+    }
+    use tauri_plugin_opener::OpenerExt;
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| {
+            error!("No se pudo abrir el navegador: {e}");
+            "sin_navegador".to_string()
+        })?;
+    info!("Página de cobro abierta en el navegador ({action})");
+    Ok(())
+}
+
+/// "Reanudar suscripción" (`resume`) o poner al día el estado al volver del navegador (`sync`).
+/// Devuelve el estado completo, ya al día.
+#[tauri::command]
+#[specta::specta]
+pub async fn account_billing_refresh(app: AppHandle, action: String) -> Result<EstadoCuenta, String> {
+    if action != "resume" && action != "sync" {
+        return Err("servidor".to_string());
+    }
+    let email = leer_sesion(&app).map(|s| s.email).ok_or_else(|| "sin_sesion".to_string())?;
+    let r = accion_de_cobro(&app, &action).await?;
+    let cuenta: RespuestaCuenta = serde_json::from_value(r).map_err(|_| "servidor".to_string())?;
+    Ok(cuenta.en_estado(email))
 }
 
 /// Si hay una sesión guardada en este equipo. No dice si el token sigue vigente: para eso está

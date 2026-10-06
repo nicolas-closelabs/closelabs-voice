@@ -25,6 +25,24 @@
 | `subscriptions` | Una fila por médico, creada al registrarse. El webhook la mantiene al día |
 | `stripe_eventos` | Bitácora de cada aviso recibido y qué se hizo. Para soporte |
 | closelabs.co `/voice/pago-listo`, `/pago-cancelado`, `/cuenta-actualizada` | A donde Stripe devuelve al médico |
+| App: `src/components/settings/account/Suscripcion.tsx` | El panel de "Mi cuenta": un estado y el botón que le toca. Al volver del navegador se pone al día solo (`sync` al recuperar el foco) |
+| App: `auth.rs` → `account_open_billing`, `account_billing_refresh` | Abren la página de Stripe en el navegador (solo `checkout.stripe.com` / `billing.stripe.com`) y reanudan o ponen al día |
+| `uso_de_la_cuenta()` | Dictados y minutos de voz para la pantalla de "gracias por probar" (solo contadores) |
+
+**Lo que ve el médico en "Mi cuenta"** (`situacion()` en `Suscripcion.tsx`):
+
+| Situación | Qué ve | Botón |
+|---|---|---|
+| En prueba, sin tarjeta | Días que le quedan | "Suscribirme · US$11 al mes" (destacado solo en los últimos 5 días) |
+| En prueba, con tarjeta | Fecha del primer cobro | Administrar pago · Cancelar suscripción |
+| Activa | Fecha de renovación | Administrar pago · Cancelar suscripción |
+| Canceló, le queda período | "Puedes seguir dictando hasta el…" | **Reanudar suscripción** · Administrar pago |
+| Cobro rechazado (reintentando) | "Sigues dictando con normalidad" | Actualizar tarjeta |
+| Fin de la prueba sin pagar | **"Gracias por probar"**, con sus dictados y horas de voz | Seguir dictando |
+| Suscripción terminada | Lo mismo, "Tu suscripción terminó" | Volver a suscribirme |
+| Reintentos agotados | "Pausamos el dictado…" | Actualizar tarjeta |
+
+Al terminar la prueba, un dictado negado ya NO muestra un aviso rojo: la app abre esta pantalla.
 
 **La regla que hace confiable el webhook:** nunca se escribe lo que trae el aviso; se le pregunta a
 Stripe cómo está la suscripción ahora y se escribe eso. Los avisos llegan repetidos, tarde y en

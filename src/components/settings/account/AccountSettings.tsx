@@ -2,89 +2,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Laptop, Monitor, LogOut, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { listen } from "@tauri-apps/api/event";
 import { commands, type EstadoCuenta } from "@/bindings";
-
-/** Días que faltan para una fecha en ISO. Negativo si ya pasó. */
-function diasHasta(iso: string | null): number | null {
-  if (!iso) return null;
-  const ms = new Date(iso).getTime() - Date.now();
-  if (Number.isNaN(ms)) return null;
-  return Math.ceil(ms / 86_400_000);
-}
-
-function fecha(iso: string | null): string {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("es", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-/**
- * Cómo se le cuenta al médico el estado de su suscripción.
- *
- * ⚠️ `past_due` NO dice "bloqueado", porque no lo está: el servidor deja dictar mientras Stripe
- * reintenta el cobro. Decirle que perdió el acceso cuando no es cierto lo haría llamar asustado
- * — y además es la ocasión de que arregle la tarjeta antes de que sí pase.
- */
-function resumen(e: EstadoCuenta): { titulo: string; detalle: string; tono: "bien" | "ojo" | "mal" } {
-  const finPrueba = diasHasta(e.trial_ends_at);
-  switch (e.status) {
-    case "trialing":
-      if (finPrueba !== null && finPrueba < 0) {
-        return {
-          titulo: "Tu prueba terminó",
-          detalle: "Activa tu suscripción para seguir dictando en la nube.",
-          tono: "mal",
-        };
-      }
-      return {
-        titulo: e.cancel_at_period_end
-          ? "Prueba activa — no se renovará"
-          : "Prueba gratuita",
-        detalle: e.cancel_at_period_end
-          ? `Cancelaste, pero puedes seguir usándola hasta el ${fecha(e.trial_ends_at)}.`
-          : `Te ${finPrueba === 1 ? "queda" : "quedan"} ${finPrueba} ${finPrueba === 1 ? "día" : "días"}, hasta el ${fecha(e.trial_ends_at)}.`,
-        tono: "bien",
-      };
-    case "active":
-      return {
-        titulo: e.cancel_at_period_end ? "Activa — no se renovará" : "Suscripción activa",
-        detalle: e.cancel_at_period_end
-          ? `Puedes seguir usándola hasta el ${fecha(e.current_period_end)}.`
-          : e.current_period_end
-            ? `Se renueva el ${fecha(e.current_period_end)}.`
-            : "Todo en orden.",
-        tono: "bien",
-      };
-    case "past_due":
-      return {
-        titulo: "No pudimos cobrar tu tarjeta",
-        detalle:
-          "Sigues dictando con normalidad. Actualiza tu medio de pago para no perder el acceso más adelante.",
-        tono: "ojo",
-      };
-    case "canceled":
-      return {
-        titulo: "Suscripción cancelada",
-        detalle: "Vuelve a activarla cuando quieras para seguir dictando en la nube.",
-        tono: "mal",
-      };
-    default:
-      return {
-        titulo: "Suscripción incompleta",
-        detalle: "Falta terminar el pago para activar tu cuenta.",
-        tono: "mal",
-      };
-  }
-}
-
-const TONOS = {
-  bien: "border-brand-border bg-brand-surface",
-  ojo: "border-amber-300 bg-amber-50",
-  mal: "border-red-200 bg-red-50",
-} as const;
+import { Suscripcion } from "./Suscripcion";
 
 export const AccountSettings: React.FC = () => {
   const [estado, setEstado] = useState<EstadoCuenta | null>(null);
@@ -99,6 +19,15 @@ export const AccountSettings: React.FC = () => {
 
   useEffect(() => {
     void recargar();
+  }, [recargar]);
+
+  // Si el servidor acaba de negar un dictado (fin de la prueba, por ejemplo), la app trae esta
+  // pantalla al frente: que muestre el estado de ahora, no el de cuando se abrió.
+  useEffect(() => {
+    const unlisten = listen("dictado-sin-permiso", () => void recargar());
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, [recargar]);
 
   const soltar = async (id: string, etiqueta: string) => {
@@ -177,7 +106,6 @@ export const AccountSettings: React.FC = () => {
     );
   }
 
-  const s = resumen(estado);
   const libres = estado.max_devices - estado.devices.length;
 
   return (
@@ -190,12 +118,7 @@ export const AccountSettings: React.FC = () => {
         </p>
       </div>
 
-      <section className={`rounded-2xl border p-5 ${TONOS[s.tono]}`}>
-        <div className="font-heading font-semibold text-[15px]">{s.titulo}</div>
-        <p className="text-sm text-brand-text-secondary mt-1 leading-relaxed">
-          {s.detalle}
-        </p>
-      </section>
+      <Suscripcion estado={estado} onEstado={setEstado} />
 
       <section className="flex flex-col gap-2.5">
         <div className="flex items-baseline justify-between gap-3">

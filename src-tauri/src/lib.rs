@@ -611,6 +611,8 @@ pub fn run(cli_args: CliArgs) {
             auth::auth_sign_out,
             auth::auth_send_recovery,
             auth::account_state,
+            auth::account_open_billing,
+            auth::account_billing_refresh,
             auth::auth_unlink_device,
             problem_report::send_problem_report,
             commands::cancel_operation,
