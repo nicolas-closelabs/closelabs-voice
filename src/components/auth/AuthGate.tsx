@@ -366,7 +366,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   );
 };
 
-/** Cada cuánto se reintenta entrar mientras el médico confirma su correo. */
+/**
+ * Cada cuánto se reintenta entrar mientras el médico confirma su correo: rápido al principio (casi
+ * todos confirman en los primeros minutos, y si confirma en el CELULAR la app no se entera por el
+ * foco: solo por este reintento), más despacio después.
+ */
+const REINTENTO_RAPIDO_MS = 10_000;
+const FASE_RAPIDA_MS = 3 * 60_000;
 const REINTENTO_MS = 30_000;
 /** Pasado este tiempo se deja de reintentar solo; queda el botón "Ya confirmé". */
 const ESPERA_MAX_MS = 60 * 60_000;
@@ -388,8 +394,15 @@ const SEPARACION_MIN_MS = 5_000;
  * confirmado, Supabase responde `sin_confirmar` y no pasa nada visible.
  *
  * ⚠️ El ritmo está medido contra el límite de Supabase: 30 intentos de entrar cada 5 minutos por
- * IP. Cada 30 s son 10, y en un consultorio varios médicos comparten IP. Si aun así frena, se hace
- * una pausa en vez de insistir.
+ * IP. Cada 10 s los primeros 3 minutos y cada 30 s después son ~22 en los primeros 5 minutos, y en
+ * un consultorio varios médicos comparten IP. Si aun así frena, se hace una pausa en vez de
+ * insistir.
+ *
+ * Lo que vio Nicolás (2026-10-06): "siempre toca poner «Ya confirmé»". Entrar tarda unos segundos
+ * (sesión + vincular el equipo + leer la cuenta) y la pantalla seguía diciendo "Esperando…" como si
+ * nada; si tocaba el botón en ese momento, el botón no hacía nada visible porque ya había un
+ * intento en curso, y parecía que el botón era lo que lo dejaba entrar. Ahora, al volver a la
+ * ventana o al tocar el botón, la pantalla dice "Comprobando…" mientras dura el intento.
  *
  * La contraseña vive solo en la memoria de esta pantalla, la misma que ya tenía el formulario.
  */
@@ -401,17 +414,27 @@ const EsperandoConfirmacion: React.FC<{
 }> = ({ correo, clave, onSignedIn, onVolver }) => {
   const [aviso, setAviso] = useState<string | null>(null);
   const [probando, setProbando] = useState(false);
+  /** Hay un intento a la vista del médico (volvió a la ventana o tocó el botón). */
+  const [comprobando, setComprobando] = useState(false);
   const enCurso = useRef(false);
   const pausaHasta = useRef(0);
   const terminado = useRef(false);
   const ultimo = useRef(0);
 
-  const intentar = async (manual: boolean) => {
-    if (enCurso.current || terminado.current) return;
+  /** `manual`: tocó el botón. `foco`: volvió a la ventana. `reloj`: el reintento periódico. */
+  const intentar = async (origen: "manual" | "foco" | "reloj") => {
+    const manual = origen === "manual";
+    if (terminado.current) return;
+    if (enCurso.current) {
+      // Ya hay un intento andando: que se VEA, en vez de un botón que no hace nada.
+      if (origen !== "reloj") setComprobando(true);
+      return;
+    }
     if (!manual && Date.now() < pausaHasta.current) return;
     if (!manual && Date.now() - ultimo.current < SEPARACION_MIN_MS) return;
     ultimo.current = Date.now();
     enCurso.current = true;
+    if (origen !== "reloj") setComprobando(true);
     if (manual) {
       setProbando(true);
       setAviso(null);
@@ -419,6 +442,7 @@ const EsperandoConfirmacion: React.FC<{
     const r = await commands.authSignIn(correo, clave);
     enCurso.current = false;
     setProbando(false);
+    setComprobando(false);
 
     if (r.status === "ok") {
       terminado.current = true;
@@ -444,21 +468,24 @@ const EsperandoConfirmacion: React.FC<{
 
   useEffect(() => {
     const inicio = Date.now();
-    const tick = setInterval(() => {
-      if (Date.now() - inicio > ESPERA_MAX_MS) {
-        clearInterval(tick);
-        return;
-      }
-      void intentarRef.current(false);
-    }, REINTENTO_MS);
+    let tick: ReturnType<typeof setTimeout>;
+    const programar = () => {
+      const transcurrido = Date.now() - inicio;
+      if (transcurrido > ESPERA_MAX_MS) return;
+      tick = setTimeout(() => {
+        void intentarRef.current("reloj");
+        programar();
+      }, transcurrido < FASE_RAPIDA_MS ? REINTENTO_RAPIDO_MS : REINTENTO_MS);
+    };
+    programar();
 
     const alVolver = () => {
-      if (document.visibilityState === "visible") void intentarRef.current(false);
+      if (document.visibilityState === "visible") void intentarRef.current("foco");
     };
     window.addEventListener("focus", alVolver);
     document.addEventListener("visibilitychange", alVolver);
     return () => {
-      clearInterval(tick);
+      clearTimeout(tick);
       window.removeEventListener("focus", alVolver);
       document.removeEventListener("visibilitychange", alVolver);
     };
@@ -481,19 +508,19 @@ const EsperandoConfirmacion: React.FC<{
 
       <div className="flex items-center gap-2 text-sm text-brand-text-muted">
         <Loader2 className="w-4 h-4 animate-spin" />
-        Esperando tu confirmación…
+        {comprobando ? "Comprobando tu confirmación…" : "Esperando tu confirmación…"}
       </div>
 
       {aviso && <Aviso>{aviso}</Aviso>}
 
       <button
         type="button"
-        onClick={() => void intentar(true)}
-        disabled={probando}
+        onClick={() => void intentar("manual")}
+        disabled={probando || comprobando}
         className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors disabled:opacity-40"
       >
-        {probando && <Loader2 className="w-4 h-4 animate-spin" />}
-        Ya confirmé mi correo
+        {(probando || comprobando) && <Loader2 className="w-4 h-4 animate-spin" />}
+        {comprobando ? "Comprobando…" : "Ya confirmé mi correo"}
       </button>
 
       <p className="text-sm text-brand-text-muted">
