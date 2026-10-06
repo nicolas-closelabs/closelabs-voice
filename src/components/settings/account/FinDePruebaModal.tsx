@@ -115,6 +115,7 @@ export const FinDePruebaModal: React.FC<{
           idTitulo={idTitulo}
           idDescripcion={idDescripcion}
           refBoton={boton}
+          cargando={estado === null}
         />
         <div className="mt-4 flex justify-center">
           <button

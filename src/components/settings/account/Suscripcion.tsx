@@ -377,7 +377,9 @@ export const ContenidoFin: React.FC<{
   idTitulo?: string;
   idDescripcion?: string;
   refBoton?: React.Ref<HTMLButtonElement>;
-}> = ({ estado, situacion: s, ocupado, onPagar, idTitulo, idDescripcion, refBoton }) => {
+  /** El estado todavía no llega (el pop-up sale antes que los números): se reserva su espacio. */
+  cargando?: boolean;
+}> = ({ estado, situacion: s, ocupado, onPagar, idTitulo, idDescripcion, refBoton, cargando = false }) => {
   const t = TEXTOS_FIN[s];
   const Icono = s === "sin_pagar" ? CreditCard : Hourglass;
   const dictados = estado?.dictados ?? 0;
@@ -415,8 +417,13 @@ export const ContenidoFin: React.FC<{
         Se abre una página segura de Stripe en tu navegador.
       </p>
 
-      {dictados > 0 && (
-        <p className="mt-6 pt-5 border-t border-brand-border w-full text-sm text-brand-text-secondary leading-relaxed">
+      {/* Mientras carga, el espacio queda reservado y el texto entra con un fundido: antes la línea
+          aparecía medio segundo después y empujaba el pop-up (lo notó Nicolás). */}
+      {(cargando || dictados > 0) && (
+        <p
+          aria-hidden={cargando}
+          className={`mt-6 pt-5 border-t border-brand-border w-full min-h-[4.75rem] text-sm text-brand-text-secondary leading-relaxed transition-opacity duration-300 ${cargando ? "opacity-0" : "opacity-100"}`}
+        >
           {s === "fin_prueba" ? "En tu prueba dictaste" : "Con CloseLabs Voice dictaste"}{" "}
           <strong className="font-semibold text-brand-text-secondary">
             {dictados.toLocaleString("es")} {dictados === 1 ? "vez" : "veces"}
