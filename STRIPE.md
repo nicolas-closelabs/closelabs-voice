@@ -75,11 +75,31 @@ Para ver el paso del tiempo sin esperar 30 días: **Test clocks** en el dashboar
 Para revisar: `select * from stripe_eventos order by recibido_at desc;` y la fila del médico en
 `subscriptions`. Pruebas automáticas: `bun supabase/functions/_tests/cobro.test.ts`.
 
+### Probado de punta a punta (2026-10-06, modo de prueba)
+
+| Caso | Resultado |
+|---|---|
+| Pagar en plena prueba | ✅ Tarjeta guardada, sin cobro; primer cobro el día que terminaba la prueba |
+| Pagar con la prueba vencida | ✅ US$11 al momento, activa por un mes |
+| "Suscribirme" estando suscrito | ✅ Lleva al portal, nunca a un segundo pago |
+| Cancelar en el portal (con motivo) | ✅ Sigue dictando hasta el fin del período; **un** correo |
+| Reanudar | ✅ La app recibe el estado al instante |
+
+⚠️ **Lo que encontró la prueba real:** al cancelar, Stripe manda dos avisos casi juntos (la
+cancelación y el motivo) y llegaban **dos correos**. Se arregló haciendo que la base decida la
+transición con una escritura condicional (ver `sincronizar`); hay una prueba con los dos avisos en
+paralelo.
+
+Cuentas de prueba en producción (datos inventados, `nicolas+prueba-stripe@` y
+`nicolas+prueba-stripe2@closelabs.co`): se usan para probar las pantallas de la app y se borran
+antes de pasar a pagos reales.
+
 ## Para cobrar de verdad (cuando la LLC tenga EIN)
 
 1. Activar la cuenta de Stripe (datos de la LLC, EIN, cuenta bancaria, descriptor `CLOSELABS`).
 2. Crear en modo real el mismo producto/precio, la llave restringida, el webhook y el portal.
 3. Cambiar los tres secretos juntos.
 4. Activar en Stripe los correos de recibo y de cobro fallido (en modo de prueba no se mandan).
-5. Retracto (5 días hábiles, Ley 1480): el reembolso se hace a mano desde el dashboard; la
+5. Borrar las dos cuentas de prueba (Supabase → Authentication).
+6. Retracto (5 días hábiles, Ley 1480): el reembolso se hace a mano desde el dashboard; la
    cancelación inmediata corta el dictado en ese momento (`ended_at`, ver `estadoDesdeStripe`).
