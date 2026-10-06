@@ -4,7 +4,13 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.8.4 publicada)
+## Estado actual (v0.8.4 publicada; v0.9.0 en prueba)
+
+> **v0.9.0 — EN PRUEBA (2026-10-06).** Cobro con Stripe en "Mi cuenta" (`Suscripcion.tsx`, ver
+> `STRIPE.md`), pantalla de "gracias por probar" al terminar la prueba (sin aviso rojo), "Eliminar
+> mi cuenta" en una Zona peligrosa con doble confirmación (`ZonaPeligrosa.tsx`; el servidor borra
+> primero en Stripe y después la cuenta, `_shared/borrar.ts`) y cerrar sesión SOLO en este
+> computador (`?scope=local`; antes cerraba en todos). Stripe sigue en modo de prueba.
 
 > **2026-09-29 — SE TRANSCRIBE CON OPENAI (`gpt-4o-mini-transcribe`), NO CON GROQ.** La primera
 > medición de la capa de voz (`pruebas-dictado/voz/`, audios reales del guion) mostró que Groq

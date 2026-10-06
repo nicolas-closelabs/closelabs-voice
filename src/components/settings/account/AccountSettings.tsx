@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { listen } from "@tauri-apps/api/event";
 import { commands, type EstadoCuenta } from "@/bindings";
 import { Suscripcion } from "./Suscripcion";
+import { ZonaPeligrosa } from "./ZonaPeligrosa";
 
 export const AccountSettings: React.FC = () => {
   const [estado, setEstado] = useState<EstadoCuenta | null>(null);
@@ -188,6 +189,8 @@ export const AccountSettings: React.FC = () => {
         <LogOut className="w-4 h-4" />
         Cerrar sesión en este equipo
       </button>
+
+      <ZonaPeligrosa estado={estado} />
     </div>
   );
 };

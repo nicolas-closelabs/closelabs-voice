@@ -143,7 +143,7 @@
     medible. Dejar la guarda de respaldo como está y volver a mirar si reaparece con el tier pago
     (puede que el 400 fuera el disfraz de un throttle).
 
-18. ⚠️ **IMPORTANTE — Cerrar sesión en un computador la cierra en TODOS, tarde y sin avisar**
+18. ✅ **ARREGLADO en la 0.9.0 (`?scope=local`).** ⚠️ **IMPORTANTE — Cerrar sesión en un computador la cierra en TODOS, tarde y sin avisar**
    (encontrado leyendo el código, 2026-09-28). `auth_sign_out` llama a `/auth/v1/logout` sin
    `scope`, y el valor por defecto de Supabase es `global`: revoca las sesiones de la cuenta en
    todos sus equipos. El otro computador no se entera en el momento —sigue dictando, porque dicta

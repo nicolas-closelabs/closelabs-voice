@@ -524,6 +524,24 @@ async authSignOut() : Promise<Result<null, string>> {
 }
 },
 /**
+ * "Eliminar mi cuenta" (la Zona peligrosa de Mi cuenta). `confirm_email` es lo que el médico
+ * escribió para confirmar: el servidor lo compara con el correo de la sesión y no borra nada si no
+ * coincide.
+ * 
+ * El servidor borra la cuenta, sus equipos y su suscripción (cancelándola en Stripe primero; ver
+ * `_shared/borrar.ts`). Aquí se borra lo que vive en este computador: la sesión, el token del
+ * equipo (su fila ya no existe) y el diccionario. Errores: `confirmacion`, `sin_conexion`,
+ * `sin_sesion`, `servidor`.
+ */
+async accountDelete(confirmEmail: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("account_delete", { confirmEmail }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Manda el correo para cambiar la contraseña. Devuelve `Ok` aunque el correo no exista: decir
  * "esa cuenta no existe" le confirmaría a un desconocido quién es cliente nuestro.
  */

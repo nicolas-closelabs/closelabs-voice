@@ -29,6 +29,9 @@ let fila: Record<string, any>;
 let subsStripe: Record<string, any>;
 let llamadas: { metodo: string; url: string; cuerpo: string }[];
 let correos: any[];
+/** Para el borrado: si Stripe falla al borrar el cliente, y qué se borró en Auth. */
+let stripeFallaAlBorrar = 0;
+let usuariosBorrados: string[];
 
 function reiniciar() {
   fila = {
@@ -43,6 +46,8 @@ function reiniciar() {
   subsStripe = {};
   llamadas = [];
   correos = [];
+  stripeFallaAlBorrar = 0;
+  usuariosBorrados = [];
 }
 
 (globalThis as any).fetch = async (url: string, init: RequestInit = {}) => {
@@ -50,6 +55,11 @@ function reiniciar() {
   const cuerpo = typeof init.body === "string" ? init.body : "";
   llamadas.push({ metodo, url, cuerpo });
   const u = new URL(url);
+
+  if (u.host === "db.test" && u.pathname.startsWith("/auth/v1/admin/users/") && metodo === "DELETE") {
+    usuariosBorrados.push(u.pathname.split("/").pop()!);
+    return json({});
+  }
 
   if (u.host === "db.test") {
     const tabla = u.pathname.replace("/rest/v1/", "");
@@ -80,6 +90,10 @@ function reiniciar() {
   if (u.host === "api.stripe.com") {
     const p = new URLSearchParams(cuerpo);
     if (u.pathname === "/v1/customers" && metodo === "POST") return json({ id: "cus_1" });
+    if (u.pathname.startsWith("/v1/customers/") && metodo === "DELETE") {
+      if (stripeFallaAlBorrar) return json({ error: { message: "x" } }, stripeFallaAlBorrar);
+      return json({ id: "cus_1", deleted: true });
+    }
     if (u.pathname.startsWith("/v1/customers/")) return json({ id: "cus_1", email: "ana@clinica.test" });
     if (u.pathname === "/v1/checkout/sessions") return json({ url: "https://checkout.stripe.test/s" });
     if (u.pathname === "/v1/billing_portal/sessions") return json({ url: "https://portal.stripe.test/p" });
@@ -106,6 +120,7 @@ function reiniciar() {
 };
 
 const cobro = await import(`${FN}/cobro.ts`);
+const borrar = await import(`${FN}/borrar.ts`);
 
 // ---- Mini marco de pruebas ----
 let fallos = 0;
@@ -396,6 +411,40 @@ await prueba("sin llave de Stripe: error claro", async () => {
   } finally {
     env.STRIPE_SECRET_KEY = k;
   }
+});
+
+// =============================================================================================
+// Eliminar la cuenta
+// =============================================================================================
+await prueba("eliminar: primero Stripe, después la cuenta", async () => {
+  fila.stripe_customer_id = "cus_1";
+  await borrar.eliminarCuenta(USER);
+  const iStripe = llamadas.findIndex((l) => l.metodo === "DELETE" && l.url.includes("/v1/customers/cus_1"));
+  const iAuth = llamadas.findIndex((l) => l.metodo === "DELETE" && l.url.includes("/auth/v1/admin/users/"));
+  ok(iStripe >= 0 && iAuth > iStripe, "borra el cliente de Stripe ANTES que la cuenta", { iStripe, iAuth });
+  ok(usuariosBorrados[0] === USER, "borra al usuario correcto");
+});
+
+await prueba("eliminar: si Stripe falla, NO se borra la cuenta", async () => {
+  fila.stripe_customer_id = "cus_1";
+  stripeFallaAlBorrar = 500;
+  let lanzo = false;
+  try { await borrar.eliminarCuenta(USER); } catch { lanzo = true; }
+  ok(lanzo, "el error sube (la app avisa)");
+  ok(usuariosBorrados.length === 0, "la cuenta sigue: nunca una cuenta borrada a la que se le cobra");
+});
+
+await prueba("eliminar: cliente que ya no existe en Stripe", async () => {
+  fila.stripe_customer_id = "cus_1";
+  stripeFallaAlBorrar = 404;
+  await borrar.eliminarCuenta(USER);
+  ok(usuariosBorrados.length === 1, "404 de Stripe no impide borrar la cuenta");
+});
+
+await prueba("eliminar: quien nunca pagó no toca Stripe", async () => {
+  await borrar.eliminarCuenta(USER);
+  ok(!llamadas.some((l) => l.url.includes("stripe.com")), "ninguna llamada a Stripe");
+  ok(usuariosBorrados.length === 1, "borra la cuenta");
 });
 
 console.log(`\n${pasan} comprobaciones bien, ${fallos} mal`);

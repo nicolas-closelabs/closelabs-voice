@@ -21,6 +21,7 @@ import {
   reanudar,
   sincronizarCuenta,
 } from "../_shared/cobro.ts";
+import { eliminarCuenta } from "../_shared/borrar.ts";
 
 interface Perfil {
   full_name: string;
@@ -138,7 +139,13 @@ Deno.serve(async (req) => {
 
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  let body: { action?: unknown; device_token?: unknown; device_id?: unknown; label?: unknown };
+  let body: {
+    action?: unknown;
+    device_token?: unknown;
+    device_id?: unknown;
+    label?: unknown;
+    confirm_email?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -183,6 +190,24 @@ Deno.serve(async (req) => {
     } catch (e) {
       console.error("no se pudo soltar el equipo:", (e as Error).message);
       return fail("provider_error", 500);
+    }
+  }
+
+  // ---- Eliminar la cuenta ----
+  // La segunda confirmación de la "Zona peligrosa": el médico escribe su correo. Se compara aquí,
+  // en el servidor, y no solo en la app: un botón mal cableado no puede borrar a nadie.
+  if (body.action === "delete") {
+    const escrito = typeof body.confirm_email === "string" ? body.confirm_email.trim().toLowerCase() : "";
+    if (!claims.email || escrito !== claims.email.toLowerCase()) {
+      return json({ error: "confirmacion" }, 400);
+    }
+    try {
+      await eliminarCuenta(userId);
+      console.log(`cuenta ${userId} eliminada a pedido del médico`);
+      return json({ ok: true });
+    } catch (e) {
+      console.error("no se pudo eliminar la cuenta:", (e as Error).message);
+      return fail("provider_error", 502);
     }
   }
 

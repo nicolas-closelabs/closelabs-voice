@@ -170,6 +170,9 @@ cambia la URL.
     - **Autorización OPCIONAL y separada** para recibir información de otros productos: hoy el
       teléfono es obligatorio "también para otros productos", y eso no sirve como autorización.
     - Si la web llega a usar cookies o analítica, actualizar la sección 11 de la Política.
+  - ✅ **0.9.0:** "Eliminar mi cuenta" hecho (`ZonaPeligrosa.tsx` + `_shared/borrar.ts`: Stripe
+    primero, después la cuenta). **Volver a aceptar la v1: descartado** (2026-10-06): los únicos
+    registrados antes de publicarla son del equipo (Santiago y Lucí).
   - **Eliminar mi cuenta** (Ley 1581; decidido 2026-10-05, va en la próxima versión): separado de
     cancelar y que se note la diferencia — una **"Zona peligrosa"** al final de "Mi cuenta", al estilo
     GitHub, en rojo, con **doble confirmación** (explicar qué se borra y pedir que escriba su correo

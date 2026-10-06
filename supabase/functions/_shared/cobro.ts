@@ -74,7 +74,7 @@ export function formulario(
 }
 
 export async function stripe<T>(
-  metodo: "GET" | "POST",
+  metodo: "GET" | "POST" | "DELETE",
   ruta: string,
   params: Record<string, unknown> = {},
   idempotencia?: string,

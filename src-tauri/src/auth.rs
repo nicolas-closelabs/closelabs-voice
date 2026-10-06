@@ -739,11 +739,15 @@ pub async fn auth_send_recovery(app: AppHandle, email: String) -> Result<(), Str
 ///
 /// ⚠️ NO desvincula el dispositivo: el médico cierra sesión, no se muda de computador. Si
 /// desvinculara, volver a entrar consumiría un cupo nuevo cada vez.
+///
+/// ⚠️ `scope=local`: sin él, Supabase usa `global` y revoca la sesión de la cuenta en TODOS sus
+/// computadores. El otro no se enteraba en el momento sino hasta una hora después, al renovar, y
+/// le pedía la contraseña "porque sí" (BACKLOG, ítem 18). Cerrar sesión aquí cierra solo aquí.
 #[tauri::command]
 #[specta::specta]
 pub async fn auth_sign_out(app: AppHandle) -> Result<(), String> {
     if let Some(acceso) = token_valido(&app).await {
-        let url = format!("{}/auth/v1/logout", base_supabase(&app));
+        let url = format!("{}/auth/v1/logout?scope=local", base_supabase(&app));
         // Se avisa al servidor por cortesía, pero el resultado no importa: lo que de verdad
         // cierra la sesión es borrar el token de este equipo, y eso pasa igual.
         let _ = cliente()?
@@ -757,6 +761,46 @@ pub async fn auth_sign_out(app: AppHandle) -> Result<(), String> {
     info!("Sesión cerrada");
     // La interfaz vuelve a la pantalla de entrar. Sin esto, cerrar sesión solo cambiaba el panel
     // de cuenta y la app seguía entera y dictando hasta reiniciarla.
+    let _ = app.emit("sesion-cerrada", ());
+    Ok(())
+}
+
+/// "Eliminar mi cuenta" (la Zona peligrosa de Mi cuenta). `confirm_email` es lo que el médico
+/// escribió para confirmar: el servidor lo compara con el correo de la sesión y no borra nada si no
+/// coincide.
+///
+/// El servidor borra la cuenta, sus equipos y su suscripción (cancelándola en Stripe primero; ver
+/// `_shared/borrar.ts`). Aquí se borra lo que vive en este computador: la sesión, el token del
+/// equipo (su fila ya no existe) y el diccionario. Errores: `confirmacion`, `sin_conexion`,
+/// `sin_sesion`, `servidor`.
+#[tauri::command]
+#[specta::specta]
+pub async fn account_delete(app: AppHandle, confirm_email: String) -> Result<(), String> {
+    let acceso = token_valido(&app).await.ok_or_else(|| "sin_sesion".to_string())?;
+    let url = format!("{}/account", get_settings(&app).proxy_base_url.trim_end_matches('/'));
+    let res = cliente()?
+        .post(&url)
+        .header("apikey", anon_key(&app))
+        .bearer_auth(&acceso)
+        .json(&serde_json::json!({ "action": "delete", "confirm_email": confirm_email }))
+        .send()
+        .await
+        .map_err(|_| "sin_conexion".to_string())?;
+
+    if res.status() == reqwest::StatusCode::BAD_REQUEST {
+        return Err("confirmacion".to_string());
+    }
+    if !res.status().is_success() {
+        warn!("Eliminar la cuenta devolvió {}", res.status());
+        return Err("servidor".to_string());
+    }
+
+    borrar_sesion(&app);
+    crate::proxy::olvidar_device_token(&app);
+    let mut ajustes = get_settings(&app);
+    ajustes.custom_words.clear();
+    crate::settings::write_settings(&app, ajustes);
+    info!("Cuenta eliminada; sesión, equipo y diccionario borrados de este computador");
     let _ = app.emit("sesion-cerrada", ());
     Ok(())
 }
