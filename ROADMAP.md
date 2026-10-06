@@ -326,6 +326,11 @@ cambia la URL.
 > Signing primero, SSL.com OV de respaldo; Apple como organización). Los dos ítems de abajo "a
 > nombre de Nicolás" quedan como plan B si la LLC se demora y hay que lanzar antes. Requisitos y
 > orden en `FIRMA-Y-DISTRIBUCION.md`, sección del 2026-10-02. Stripe en pausa hasta tener la LLC.
+- [x] **Pipeline de firma en el CI (2026-10-05), listo y APAGADO.** Un interruptor por plataforma
+  en `closelabs.yml` (Windows: Azure o SSL.com; Mac: Developer ID + notarización), corrida manual
+  para probar, y el build falla si algo sale sin firmar, a nombre de otro o sin sello de tiempo.
+  Falta: certificados → secretos → corrida manual firmada → prender. Ver *Pipeline de firma* en
+  `FIRMA-Y-DISTRIBUCION.md`.
 - [ ] **Firma Windows con SSL.com IV + eSigner** a nombre de Nicolás (~$309/año). Luz verde desde
   2026-09-21; va primero porque casi todos los médicos usan Windows.
 - [ ] Firma + notarización macOS (Apple Developer, persona natural, $99/año).
@@ -421,5 +426,5 @@ cambia la URL.
 | 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe (vía la cuenta del socio español; Stripe no opera en Colombia), $11/mes, 30 días de prueba, 3 dispositivos | Fase 2 |
 | 4 | Páginas en closelabs.co: confirmar email, recuperar contraseña, suscripción | Fase 2 |
 | 5 | Abogado: política de datos sensibles (salud), transferencia internacional (Groq/Supabase en EE. UU.) | Fase 2 |
-| 6 | Comprar SSL.com IV + eSigner (Windows, ~$309/año) y Apple Developer ($99/año). Azure Trusted Signing descartado: exige una sociedad | Fase 3 |
+| 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |

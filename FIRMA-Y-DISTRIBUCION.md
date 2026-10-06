@@ -2,7 +2,7 @@
 
 > Cómo firmar la app en Windows y macOS, qué hace cada quien y en qué orden.
 > Todo lo de aquí está verificado contra fuentes oficiales o confirmado por el proveedor.
-> **Última actualización: 2026-10-02.**
+> **Última actualización: 2026-10-05** (pipeline de firma listo y apagado).
 
 ---
 
@@ -64,6 +64,96 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
    o la oficina virtual).
 
 **Tiempo realista:** de 3 a 8 semanas desde que exista la LLC, sobre todo por el EIN y el D-U-N-S.
+
+## Pipeline de firma (2026-10-05) — LISTO, APAGADO
+
+El CI ya sabe firmar las dos plataformas a nombre de CLOSELABS LLC. Está **apagado** hasta que
+existan los certificados: hoy los instaladores salen exactamente como antes.
+
+**Los interruptores** están arriba de `.github/workflows/closelabs.yml`, uno por plataforma, porque
+los certificados van a llegar en momentos distintos:
+
+| Interruptor | Valores | Hoy |
+|---|---|---|
+| `FIRMA_WINDOWS_POR_DEFECTO` | `apagada` · `azure` · `sslcom` | `apagada` |
+| `FIRMA_MAC_POR_DEFECTO` | `false` · `true` | `false` |
+
+**Para probar sin encender nada:** Actions → *CloseLabs Voice — Build* → *Run workflow*, y escoger
+ahí la firma. Solo vale para esa corrida. El orden es siempre: cargar secretos → corrida manual
+firmada → revisar → cambiar el interruptor.
+
+### Qué comprueba (si algo falla, no hay instalador)
+
+- **Antes de compilar:** que estén todas las credenciales. Si falta una, falla en un minuto
+  diciendo cuál, en vez de después de 40 minutos de build.
+- **Windows, archivo por archivo** (`.github/scripts/firmar-windows.ps1`): firma válida, **a nombre
+  de CLOSELABS LLC** y **con sello de tiempo**. Sin sello, la firma muere el día que vence el
+  certificado y todo instalador ya entregado vuelve a "editor desconocido". Se comprueba aunque la
+  herramienta diga que firmó: CodeSignTool puede terminar "bien" sin haber firmado.
+- **Windows, al final:** los dos instaladores, y **todo `.exe` y `.dll` que queda en el computador
+  del médico** después de instalarlos. Smart App Control de Windows 11 revisa cada DLL que se
+  carga, no solo el instalador.
+- **Mac:** certificado *Developer ID Application* de CLOSELABS LLC, hardened runtime, Gatekeeper
+  (`spctl`) aceptándolo como **notarizado**, y el ticket engrapado en el `.app` y en el `.dmg`. El
+  `.dmg` se firma y se notariza aparte: es lo que el médico descarga y abre primero.
+
+### Cuántas firmas gasta cada build (Windows)
+
+**Más de las 3-4 que estimamos el 2026-09-21.** Tauri firma, además del `.exe` y los dos
+instaladores, **cada DLL propia sin firmar** (transcribe/ggml; las de Microsoft vienen firmadas y
+las salta), los plugins de NSIS y el desinstalador. Calculo **10-20 por build**. Con Azure (5.000 al
+mes) no importa; con **SSL.com (20 al mes) alcanzaría para uno o dos builds al mes**, otra razón
+para Azure. El número real sale en el resumen de cada corrida firmada.
+
+### Azure Artifact Signing — lo que hace Nicolás (cuando haya EIN y D-U-N-S)
+
+1. **Cuenta de Azure a nombre de la LLC**, con suscripción **de pago** (pay-as-you-go). El plan
+   gratis no sirve.
+2. En la suscripción, registrar el proveedor **`Microsoft.CodeSigning`** y crear una cuenta de
+   **Artifact Signing**, plan *Basic* ($9,99/mes). Escoger la región (p. ej. *East US*) y anotar el
+   **endpoint** que muestra (p. ej. `https://eus.codesigning.azure.net`) y el **nombre de la cuenta**.
+3. **Validación de identidad**: *Public Trust*, **organización**. Con EIN, D-U-N-S, la dirección de
+   /empresa letra por letra y un correo `@closelabs.co`. Tres intentos para aportar documentos:
+   revisar todo antes de enviar.
+4. Con la validación en *Completed*, crear un **perfil de certificado** *Public Trust* y anotar su
+   **nombre**.
+5. En **Microsoft Entra ID → App registrations**, crear una aplicación (p. ej. `github-firma`) y un
+   **client secret**. Anotar el **Application (client) ID**, el **Directory (tenant) ID** y el valor
+   del secreto (solo se ve una vez). ⚠️ El secreto vence (máx. 24 meses): **poner un recordatorio**,
+   porque el día que venza los builds firmados fallan.
+6. A esa aplicación darle el rol **Artifact Signing Certificate Profile Signer** sobre la cuenta de
+   firma (en documentos viejos se llama *Trusted Signing Certificate Profile Signer*).
+7. Cargar en GitHub (Settings → Secrets and variables → Actions). **Nunca por chat.**
+
+   | Dónde | Nombre | Qué es |
+   |---|---|---|
+   | Secret | `AZURE_CLIENT_ID` | Application (client) ID |
+   | Secret | `AZURE_CLIENT_SECRET` | el valor del client secret |
+   | Secret | `AZURE_TENANT_ID` | Directory (tenant) ID |
+   | Variable | `AZURE_SIGNING_ENDPOINT` | el endpoint del paso 2 |
+   | Variable | `AZURE_SIGNING_ACCOUNT` | el nombre de la cuenta del paso 2 |
+   | Variable | `AZURE_SIGNING_PROFILE` | el nombre del perfil del paso 4 |
+
+   Los tres últimos no son secretos (van en la pestaña *Variables*): así se pueden leer después.
+8. Avisarle a Claude: corrida manual con `azure`, revisión, y prender el interruptor.
+
+### SSL.com OV — si Azure rechaza la validación
+
+Igual que la sección de SSL.com de abajo, con dos diferencias: el certificado es **OV**
+(organización, a nombre de CLOSELABS LLC) en vez de IV, y la llamada de verificación va al teléfono
+**listado públicamente** de la LLC (el del D-U-N-S). Los cuatro secretos `ES_*` son los mismos.
+Probar con la corrida manual `sslcom` **dentro de los 30 días gratis de eSigner**: esa ruta nunca
+se ha corrido contra SSL.com.
+
+### Apple como organización — lo que hace Nicolás
+
+Los pasos de *macOS — Apple Developer Program* (abajo), con estas diferencias:
+- Inscribirse como **Organization** con el D-U-N-S de la LLC.
+- El certificado **Developer ID Application** solo lo puede crear el **Account Holder**.
+- Los secretos son seis: `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`,
+  `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `KEYCHAIN_PASSWORD`. (`APPLE_ID_PASSWORD` ya no hace falta.)
+- Lo que antes "hacía Claude" (hardened runtime, quitar la firma ad-hoc) **ya lo hace el CI solo al
+  firmar**: `tauri.conf.json` no cambia, así los builds sin firma siguen como siempre.
 
 ### Stripe
 
@@ -175,12 +265,10 @@ documentación publicada, y la garantía de 30 días cubre el caso de que se equ
   archivos después del build: el `.exe` que queda instalado en el computador del médico se
   quedaría sin firma, y solo se firmaría el instalador. El `signCommand` firma primero la app y
   luego los instaladores.
-- **Cada build gasta unas 3-4 firmas** (la app, el instalador NSIS y el MSI). Con 20 al mes salen
-  unos 5 builds. Alcanza, pero una tanda de builds de prueba puede agotarlas.
-- **Hoy el workflow no firmaría nada en Windows** aunque hubiera credenciales: lo heredamos de
-  Handy con la herramienta de Azure instalada (`trusted-signing-cli` y secretos `AZURE_*`) pero sin
-  ningún `signCommand`. **No borrar esos pasos**: quedan inactivos y son los que servirán el día
-  que exista una sociedad (ver *Más adelante* abajo).
+- ~~Cada build gasta unas 3-4 firmas~~ — **subestimado**: Tauri firma también cada DLL propia, los
+  plugins de NSIS y el desinstalador. Ver *Cuántas firmas gasta cada build* arriba.
+- ~~Hoy el workflow no firmaría nada en Windows~~ — **resuelto el 2026-10-05**: ver *Pipeline de
+  firma* arriba. Los pasos 1-3 de esta lista ya están hechos para Azure y para SSL.com.
 - **Por qué no se monta antes de tener las credenciales:** sin ellas no se puede probar, y un
   pipeline de firma montado a ciegas es justamente lo que heredamos de Handy — medio conectado y
   sin que nadie supiera que no firmaba.

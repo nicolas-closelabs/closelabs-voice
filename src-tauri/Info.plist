@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
   <key>NSMicrophoneUsageDescription</key>
-  <string>Request microphone access to transcribe audio locally</string>
+  <string>CloseLabs Voice usa el micrófono para escuchar tu dictado y convertirlo en texto.</string>
 </dict>
 </plist>

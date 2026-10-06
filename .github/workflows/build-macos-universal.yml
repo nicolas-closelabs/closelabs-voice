@@ -31,6 +31,9 @@ on:
 
 env:
   ORT_VERSION: "1.24.2"
+  # A nombre de quién TIENE que quedar firmado (el certificado sale "Developer ID Application:
+  # CLOSELABS LLC (TEAMID)"). Si sale a nombre de otro, no se publica.
+  FIRMA_PUBLISHER: "CLOSELABS LLC"
 
 jobs:
   slice:
@@ -154,6 +157,40 @@ jobs:
           jq --arg lib "$DYLIB" '.bundle.macOS.frameworks = [$lib]' \
             src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
 
+      # ---- Firma de macOS (solo con sign-binaries). Nada de esto corre en los builds sin firma. ----
+      # Falla en 1 minuto, diciendo qué falta, en vez de después de compilar.
+      - name: Check Apple signing secrets
+        if: inputs.sign-binaries
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          faltan=()
+          for v in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD KEYCHAIN_PASSWORD APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -n "${!v}" ] || faltan+=("$v")
+          done
+          if [ ${#faltan[@]} -gt 0 ]; then
+            echo "::error::Para firmar el Mac faltan en GitHub (Settings > Secrets and variables > Actions): ${faltan[*]}"
+            exit 1
+          fi
+
+      # tauri.conf.json queda como está para los builds sin firma (ad-hoc, sin hardened runtime:
+      # ver la nota del bug de Intel en CLAUDE.md). Al firmar se cambian dos cosas, SOLO aquí:
+      #   - hardenedRuntime: true — Apple no notariza sin él. El .dylib de ONNX (versión Intel)
+      #     sigue cargando porque Tauri lo firma con nuestra identidad, y el entitlement
+      #     disable-library-validation queda de respaldo.
+      #   - signingIdentity fuera — el "-" fuerza la firma ad-hoc y le ganaría a la del certificado.
+      - name: Switch config to Developer ID signing
+        if: inputs.sign-binaries
+        run: |
+          jq '.bundle.macOS.hardenedRuntime = true | del(.bundle.macOS.signingIdentity)' \
+            src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+          jq '.bundle.macOS' src-tauri/tauri.conf.json
+
       - name: import Apple Developer Certificate
         if: inputs.sign-binaries
         env:
@@ -169,6 +206,8 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           CERT_ID=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | awk -F'"' '{print $2}')
+          [ -n "$CERT_ID" ] || { echo "::error::El .p12 no trae un certificado 'Developer ID Application' (¿se exportó el de Mac App Store, o sin la clave privada?)"; exit 1; }
+          [[ "$CERT_ID" == *"$FIRMA_PUBLISHER"* ]] || { echo "::error::El certificado es de '$CERT_ID', no de $FIRMA_PUBLISHER"; exit 1; }
           echo "CERT_ID=$CERT_ID" >> "$GITHUB_ENV"
 
       # FASE 1 (sin firma): NO se define ninguna variable APPLE_*. Si se define
@@ -177,7 +216,8 @@ jobs:
         if: ${{ !inputs.sign-binaries }}
         run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
 
-      # FASE 2: firma y notariza el .app universal entero (las dos versiones y el .dylib).
+      # FIRMADO: Tauri firma el .app universal entero (las dos versiones y el .dylib), lo manda a
+      # notarizar a Apple, espera la respuesta y le engrapa el ticket.
       - name: Bundle universal (signed + notarized)
         if: inputs.sign-binaries
         env:
@@ -186,6 +226,24 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
         run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
+
+      # Tauri notariza el .app, pero el .dmg que se descarga es otro archivo. Se firma y se notariza
+      # también, para que la primera revisión de Gatekeeper (al abrir lo descargado, que es el .dmg)
+      # no dependa de que macOS mire adentro.
+      - name: Sign and notarize the .dmg
+        if: inputs.sign-binaries
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          for DMG in src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg; do
+            codesign --force --sign "$CERT_ID" --timestamp "$DMG"
+            xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" --wait --timeout 30m
+            xcrun stapler staple "$DMG"
+          done
 
       # Si cualquiera de estas comprobaciones falla, NO se publica el instalador.
       - name: Verify nothing was lost in the merge
@@ -219,6 +277,23 @@ jobs:
 
           echo "== Firma =="
           codesign --verify --deep --strict "$APP"
+          if [ "${{ inputs.sign-binaries }}" = "true" ]; then
+            # Lo mismo que hará el Mac del médico al abrir lo descargado.
+            # (Se guarda la salida y después se busca: con pipefail, `| grep -q` puede dar un falso fallo.)
+            INFO="$(codesign -dvv "$APP" 2>&1)"; echo "$INFO"
+            grep -q "^Authority=Developer ID Application: $FIRMA_PUBLISHER" <<<"$INFO" \
+              || fail "el .app no está firmado por $FIRMA_PUBLISHER"
+            grep -q 'flags=.*runtime' <<<"$INFO" || fail "el .app no tiene hardened runtime: Apple no lo habría notarizado"
+            GK="$(spctl --assess --type execute -vv "$APP" 2>&1)" || fail "Gatekeeper rechaza el .app: $GK"
+            echo "$GK"
+            grep -q 'source=Notarized Developer ID' <<<"$GK" || fail "Gatekeeper no ve el .app como notarizado"
+            xcrun stapler validate "$APP" || fail "el .app no tiene el ticket de notarización engrapado"
+            for DMG in "$BUNDLE"/dmg/*.dmg; do
+              xcrun stapler validate "$DMG" || fail "$(basename "$DMG") no tiene el ticket de notarización"
+              spctl --assess --type open --context context:primary-signature -vv "$DMG" \
+                || fail "Gatekeeper rechaza $(basename "$DMG")"
+            done
+          fi
 
           echo "== Arranque (versión ARM) =="
           arch -arm64 "$BIN" --list-devices

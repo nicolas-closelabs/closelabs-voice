@@ -1,24 +1,46 @@
 name: "CloseLabs Voice — Build"
 
 # Pipeline de CloseLabs Voice. Compila los instaladores en la nube (runners de
-# GitHub) para cada arquitectura y los deja descargables como artefactos.
+# GitHub) y los deja descargables como artefactos.
 #
 # macOS: UN SOLO .dmg universal (Intel + Apple Silicon dentro; macOS escoge al abrir).
 #   El médico no sabe qué chip tiene. Detalle y verificaciones en build-macos-universal.yml.
+# Windows: instalador .exe (NSIS) y .msi.
 #
-# FASE 1 (actual): SIN firma (sign-binaries: false). El .dmg abre con el truco
-#   `xattr -cr` en el Mac del tester.
+# ===================== FIRMA (a nombre de CLOSELABS LLC) =====================
+# Dos interruptores SEPARADOS, porque los certificados llegan en momentos distintos:
 #
-# FASE 2 (cuando exista la cuenta Apple Developer): poner los secretos APPLE_*
-#   y cambiar sign-binaries a true → los .dmg quedan firmados + notarizados y
-#   abren con doble clic, sin advertencias. (Windows se añade igual, aparte.)
+#   FIRMA_WINDOWS_POR_DEFECTO  apagada | azure | sslcom
+#   FIRMA_MAC_POR_DEFECTO      false | true
 #
-# SECRETOS: ninguno para compilar. Desde la Fase 1 el instalador NO lleva llaves de
-#   proveedor: la app habla con nuestras Edge Functions, que son las que guardan la de
-#   Groq. El secreto CLOSELABS_GROQ_API_KEY quedó sin uso y se puede borrar del repo.
+# Hoy los dos están APAGADOS: los instaladores salen como siempre (Windows con el aviso
+# de SmartScreen, Mac con el truco `xattr -cr`). Encender uno es cambiar su valor aquí,
+# DESPUÉS de cargar sus secretos en GitHub y de que una corrida manual firmada salga bien.
+# Qué secretos, en qué orden y cómo probar: FIRMA-Y-DISTRIBUCION.md, sección "Pipeline".
+#
+# Para PROBAR sin encender nada: pestaña Actions > "CloseLabs Voice — Build" > Run workflow,
+# y escoger ahí la firma. Solo afecta a esa corrida.
+#
+# Si falta una credencial, el build falla en el primer minuto diciendo cuál. Si algo sale
+# sin firmar, a nombre de otro o sin sello de tiempo, falla y no deja instalador: nunca se
+# entrega a medias un instalador que parece firmado.
+#
+# SECRETOS para compilar: ninguno. El instalador NO lleva llaves de proveedor: la app habla
+#   con nuestras Edge Functions. El secreto CLOSELABS_GROQ_API_KEY quedó sin uso.
 
 on:
   workflow_dispatch: # botón manual "Run workflow" en la pestaña Actions
+    inputs:
+      firma-windows:
+        description: "Firma de Windows para ESTA corrida"
+        type: choice
+        options: [por-defecto, apagada, azure, sslcom]
+        default: por-defecto
+      firma-mac:
+        description: "Firma y notarización de Mac para ESTA corrida"
+        type: choice
+        options: [por-defecto, apagada, encendida]
+        default: por-defecto
   push:
     branches: [main]
 
@@ -26,26 +48,57 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # ⬇️ LOS INTERRUPTORES. Ver arriba antes de tocarlos.
+  FIRMA_WINDOWS_POR_DEFECTO: apagada
+  FIRMA_MAC_POR_DEFECTO: false
+
 jobs:
+  # `env` no se puede leer en el `with:` de un workflow reutilizable; este job traduce los
+  # interruptores (y lo escogido a mano en Run workflow) a salidas que sí se pueden pasar.
+  firma:
+    runs-on: ubuntu-latest
+    outputs:
+      windows: ${{ steps.decidir.outputs.windows }}
+      mac: ${{ steps.decidir.outputs.mac }}
+    steps:
+      - id: decidir
+        env:
+          PEDIDA_WINDOWS: ${{ inputs.firma-windows }}
+          PEDIDA_MAC: ${{ inputs.firma-mac }}
+        run: |
+          W="${PEDIDA_WINDOWS:-por-defecto}"; [ "$W" = "por-defecto" ] && W="$FIRMA_WINDOWS_POR_DEFECTO"
+          case "$W" in apagada|azure|sslcom) ;; *) echo "::error::firma de Windows desconocida: $W"; exit 1;; esac
+          M="${PEDIDA_MAC:-por-defecto}"
+          case "$M" in
+            por-defecto) M="$FIRMA_MAC_POR_DEFECTO" ;;
+            encendida) M=true ;;
+            apagada) M=false ;;
+          esac
+          case "$M" in true|false) ;; *) echo "::error::firma de Mac desconocida: $M"; exit 1;; esac
+          echo "windows=$W" >> "$GITHUB_OUTPUT"
+          echo "mac=$M" >> "$GITHUB_OUTPUT"
+          echo "### Firma en esta corrida: Windows = $W · Mac = $M" >> "$GITHUB_STEP_SUMMARY"
+
   macos:
+    needs: firma
     permissions:
       contents: write
     uses: ./.github/workflows/build-macos-universal.yml
     with:
       asset-prefix: "closelabs-voice"
-      # FASE 2: cambiar a true cuando estén los secretos APPLE_* de notarización.
-      sign-binaries: false
+      sign-binaries: ${{ needs.firma.outputs.mac == 'true' }}
     secrets: inherit
 
   windows:
+    needs: firma
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Windows x64 — instalador .exe (NSIS). Sin firma: se abre con
-          # "Más info → Ejecutar de todas formas" (SmartScreen). Firma = Fase 2.
+          # Windows x64 — instalador .exe (NSIS) y .msi.
           - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
             args: ""
@@ -57,6 +110,6 @@ jobs:
       build-args: ${{ matrix.args }}
       asset-prefix: "closelabs-voice"
       upload-artifacts: true
-      # FASE 2: cambiar a true cuando estén los secretos APPLE_* de notarización.
-      sign-binaries: false
+      sign-binaries: ${{ needs.firma.outputs.windows != 'apagada' }}
+      windows-signer: ${{ needs.firma.outputs.windows != 'apagada' && needs.firma.outputs.windows || 'azure' }}
     secrets: inherit

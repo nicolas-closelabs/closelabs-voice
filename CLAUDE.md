@@ -195,6 +195,14 @@ Highlights acumulados:
 > organización** ($99). Faltan el EIN (~2026-10-09) y el D-U-N-S. Hasta entonces, nada comprado:
 > el plan anterior (todo a nombre de Nicolás) queda como plan B. Stripe en pausa: la cuenta será
 > de la LLC. Leer el documento antes de pagar.
+>
+> **2026-10-05 — PIPELINE DE FIRMA LISTO Y APAGADO.** Dos interruptores separados arriba de
+> `closelabs.yml` (`FIRMA_WINDOWS_POR_DEFECTO`: apagada | azure | sslcom; `FIRMA_MAC_POR_DEFECTO`)
+> y una corrida manual (*Run workflow*) para probar sin prender nada. Windows firma con
+> `.github/scripts/firmar-windows.ps1` vía `signCommand` (un `--config` aparte: `tauri.conf.json` no
+> cambia); Mac activa hardened runtime y quita la firma ad-hoc SOLO al firmar. ⚠️ El build **falla**
+> si un archivo sale sin firmar, a nombre de otro o sin sello de tiempo: no relajar esas
+> comprobaciones para "sacar un build" — un instalador que parece firmado y no lo está es el peor caso.
 
 
 ⚠️ **Un `.dmg` compilado localmente NO se distribuye a otros equipos.** Dos razones (confirmadas):
@@ -226,16 +234,15 @@ build). Peso: ~39 MB. `build.yml` sigue sirviendo para compilar una sola arquite
 - **`build.yml`** — workflow reusable heredado de Handy (compila, baja el **ONNX Runtime x86_64**
   para el slice Intel — `ort-sys` no trae prebuilt de `x86_64-apple-darwin`—, firma/notariza si
   hay secretos). Editado: inyecta `CLOSELABS_GROQ_API_KEY` (secreto), binario `closelabs-voice`.
-- **`closelabs.yml`** — orquestador propio. **Fase 1 (actual): macOS ARM+Intel, `sign-binaries:
-  false`** (artefactos `.dmg` descargables del run; abren con `xattr`). **Fase 2:** poner secretos
-  `APPLE_*` + `sign-binaries: true` → firmado+notarizado, doble clic sin advertencias. Windows se
-  añade a la matriz igual (aparte). Se **borraron** los orquestadores Handy (main-build, release,
+- **`closelabs.yml`** — orquestador propio: Mac universal + Windows. La firma se prende con sus
+  dos interruptores (ver la nota del 2026-10-05 arriba); hoy ambos apagados (el `.dmg` abre con
+  `xattr`, el `.exe` con el aviso de SmartScreen). Se **borraron** los orquestadores Handy (main-build, release,
   nix-check, test, etc.) para no lanzar jobs de Linux que fallan.
 - **Secreto requerido en el repo:** `CLOSELABS_GROQ_API_KEY` (Settings → Secrets → Actions).
-- **Fase 2 (notarización) requiere:** cuenta Apple Developer + secretos `APPLE_CERTIFICATE`,
+- **Firma de Mac requiere:** cuenta Apple Developer (organización) + secretos `APPLE_CERTIFICATE`,
   `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_PASSWORD` (app-specific), `APPLE_TEAM_ID`,
-  `KEYCHAIN_PASSWORD`. ⚠️ **Al pasar a Fase 2, volver a poner `hardenedRuntime: true`** en
-  `tauri.conf.json` (la notarización lo exige).
+  `KEYCHAIN_PASSWORD`. El `hardenedRuntime: true` que exige la notarización lo pone el CI al firmar;
+  NO cambiarlo en `tauri.conf.json` (rompería la versión Intel de los builds sin firma).
 
 ⚠️ **Bug Intel resuelto (build x86_64 se cerraba al abrir):** el build de Intel enlaza el ONNX
 Runtime **dinámicamente** (`libonnxruntime.1.24.2.dylib`, empaquetado en `Contents/Frameworks/`);

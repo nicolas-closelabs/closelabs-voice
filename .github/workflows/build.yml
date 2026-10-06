@@ -32,6 +32,12 @@ on:
         required: false
         type: boolean
         default: false
+      # Con qué se firma Windows cuando sign-binaries es true: azure | sslcom.
+      # Ver .github/scripts/firmar-windows.ps1 y FIRMA-Y-DISTRIBUCION.md.
+      windows-signer:
+        required: false
+        type: string
+        default: "azure"
       repository:
         required: false
         type: string
@@ -49,7 +55,12 @@ on:
         default: false
 
 env:
-  TSC_VERSION: "0.9.0"
+  # Herramienta de Azure Artifact Signing. Antes se llamaba trusted-signing-cli (la heredamos de
+  # Handy en 0.9.0); desde 0.10 el mismo proyecto la publica como artifact-signing-cli.
+  ASC_VERSION: "0.11.0"
+  # A nombre de quién TIENE que quedar firmado todo. Si un archivo sale firmado por otro, el build
+  # falla: es el nombre que ve el médico en el aviso de Windows.
+  FIRMA_PUBLISHER: "CLOSELABS LLC"
 
 jobs:
   build:
@@ -151,17 +162,79 @@ jobs:
           version: 1.4.309.0
           cache: true
 
-      - name: Cache trusted-signing-cli
-        if: contains(inputs.platform, 'windows') && inputs.sign-binaries
-        id: cache-tsc
+      # ---- Firma de Windows (solo con sign-binaries). Nada de esto corre en los builds sin firma. ----
+      - name: Cache artifact-signing-cli (Azure)
+        if: contains(inputs.platform, 'windows') && inputs.sign-binaries && inputs.windows-signer == 'azure'
+        id: cache-asc
         uses: actions/cache@v5
         with:
-          path: ~/.cargo/bin/trusted-signing-cli*
-          key: trusted-signing-cli-${{ env.TSC_VERSION }}-${{ runner.os }}-${{ runner.arch }}
+          path: ~/.cargo/bin/artifact-signing-cli*
+          key: artifact-signing-cli-${{ env.ASC_VERSION }}-${{ runner.os }}-${{ runner.arch }}
 
-      - name: Install trusted-signing-cli
-        if: contains(inputs.platform, 'windows') && inputs.sign-binaries && steps.cache-tsc.outputs.cache-hit != 'true'
-        run: cargo install trusted-signing-cli@${{ env.TSC_VERSION }}
+      - name: Install artifact-signing-cli (Azure)
+        if: contains(inputs.platform, 'windows') && inputs.sign-binaries && inputs.windows-signer == 'azure' && steps.cache-asc.outputs.cache-hit != 'true'
+        run: cargo install artifact-signing-cli@${{ env.ASC_VERSION }} --locked
+
+      # CodeSignTool de SSL.com. Trae su propio Java. Se usa el JAR directo (ver firmar-windows.ps1).
+      - name: Install CodeSignTool (SSL.com)
+        if: contains(inputs.platform, 'windows') && inputs.sign-binaries && inputs.windows-signer == 'sslcom'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dir = Join-Path $env:RUNNER_TEMP 'codesigntool'
+          Invoke-WebRequest -Uri 'https://www.ssl.com/download/codesigntool-for-windows/' -OutFile "$dir.zip"
+          Expand-Archive -Path "$dir.zip" -DestinationPath $dir -Force
+          $jar = Get-ChildItem $dir -Recurse -Filter 'code_sign_tool-*.jar' | Select-Object -First 1
+          $java = Get-ChildItem $dir -Recurse -Filter 'java.exe' | Select-Object -First 1
+          if (-not $jar -or -not $java) { throw "El zip de CodeSignTool cambió: no encontré el JAR o java.exe en $dir" }
+          $base = $jar.Directory.Parent.FullName
+          if (-not (Test-Path (Join-Path $base 'conf'))) { throw "No encontré conf/ junto a jar/ en $base" }
+          Write-Host "CodeSignTool: $($jar.Name)"
+          "CODESIGNTOOL_DIR=$base" >> $env:GITHUB_ENV
+          "CODESIGNTOOL_JAR=$($jar.FullName)" >> $env:GITHUB_ENV
+          "CODESIGNTOOL_JAVA=$($java.FullName)" >> $env:GITHUB_ENV
+
+      # Falla ANTES de compilar (40 min) si falta una credencial, diciendo cuál. Y arma el comando de
+      # firma que Tauri llama por cada archivo. Va en un --config aparte y no en tauri.conf.json para
+      # que los builds sin firma no cambien en nada.
+      - name: Prepare Windows signing
+        if: contains(inputs.platform, 'windows') && inputs.sign-binaries
+        shell: pwsh
+        env:
+          FIRMA_WINDOWS: ${{ inputs.windows-signer }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          AZURE_SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          ES_CREDENTIAL_ID: ${{ secrets.ES_CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $requeridas = switch ($env:FIRMA_WINDOWS) {
+            'azure'  { 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET', 'AZURE_TENANT_ID', 'AZURE_SIGNING_ENDPOINT', 'AZURE_SIGNING_ACCOUNT', 'AZURE_SIGNING_PROFILE' }
+            'sslcom' { 'ES_USERNAME', 'ES_PASSWORD', 'ES_CREDENTIAL_ID', 'ES_TOTP_SECRET' }
+            default  { throw "windows-signer='$env:FIRMA_WINDOWS': se esperaba 'azure' o 'sslcom'." }
+          }
+          $faltan = @($requeridas | Where-Object { -not [Environment]::GetEnvironmentVariable($_) })
+          if ($faltan.Count) {
+            throw "Para firmar con $env:FIRMA_WINDOWS faltan en GitHub (Settings > Secrets and variables > Actions): $($faltan -join ', ')"
+          }
+          $script = Join-Path $env:GITHUB_WORKSPACE '.github/scripts/firmar-windows.ps1'
+          $config = @{ bundle = @{ windows = @{ signCommand = @{
+            cmd  = 'pwsh'
+            args = @('-NoProfile', '-NonInteractive', '-File', $script, '%1')
+          } } } }
+          $ruta = Join-Path $env:RUNNER_TEMP 'firma-windows.json'
+          $config | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ruta -Encoding utf8NoBOM
+          Get-Content $ruta | Out-Host
+          $registro = Join-Path $env:RUNNER_TEMP 'firmas.txt'
+          New-Item -ItemType File -Force -Path $registro | Out-Null
+          "FIRMA_CONFIG=--config $($ruta -replace '\\', '/')" >> $env:GITHUB_ENV
+          "FIRMA_REGISTRO=$registro" >> $env:GITHUB_ENV
 
       - name: Prepare Vulkan SDK for Ubuntu 24.04
         if: contains(inputs.platform, 'ubuntu-24.04') && !contains(inputs.platform, 'arm')
@@ -543,12 +616,22 @@ jobs:
           assetNamePattern: ${{ steps.patch-release-name.outputs.platform }}
           args: ${{ inputs.build-args }}
 
-      # FASE 2 (firmado + notarizado): requiere los secretos APPLE_* en el repo.
+      # FIRMADO. macOS: secretos APPLE_* (solo si se compila una arquitectura suelta con este
+      # workflow; el instalador de Mac sale de build-macos-universal.yml). Windows: FIRMA_CONFIG
+      # (del paso "Prepare Windows signing") le dice a Tauri que firme con firmar-windows.ps1.
       - name: Build with Tauri (signed)
         if: inputs.sign-binaries
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FIRMA_WINDOWS: ${{ inputs.windows-signer }}
+          AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          AZURE_SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          ES_CREDENTIAL_ID: ${{ secrets.ES_CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -566,7 +649,7 @@ jobs:
           releaseName: ${{ inputs.release-id && format('v{0}', steps.get-version.outputs.version) || '' }}
           releaseId: ${{ inputs.release-id }}
           assetNamePattern: ${{ steps.patch-release-name.outputs.platform }}
-          args: ${{ inputs.build-args }}
+          args: ${{ inputs.build-args }} ${{ env.FIRMA_CONFIG }}
 
       - name: Verify macOS dylib bundling
         if: inputs.target == 'x86_64-apple-darwin'
@@ -892,6 +975,73 @@ jobs:
             }
             Assert-PackageContents -Root $installDir -Label "Installed MSI"
             Remove-Item -Recurse -Force $installDir
+          }
+
+      # Bloqueante (a diferencia de la auditoría de arriba): si algo salió sin firmar, a nombre de
+      # otro o sin sello de tiempo, NO hay instalador. Revisa lo que recibe el médico: los dos
+      # instaladores y TODO .exe/.dll que queda en su computador después de instalar (Smart App
+      # Control de Windows 11 revisa cada DLL que se carga, no solo el instalador).
+      - name: Verify Windows signatures
+        if: contains(inputs.platform, 'windows') && inputs.sign-binaries
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $profile = "${{ steps.build-profile.outputs.profile }}"
+          $target = "${{ inputs.target }}"
+          $base = "${{ steps.win-bundle-path.outputs.base }}"
+          if ($target -and $target -ne "x86_64-pc-windows-msvc") {
+            $bundleBase = Join-Path $base (Join-Path $target (Join-Path $profile "bundle"))
+          } else {
+            $bundleBase = Join-Path $base (Join-Path $profile "bundle")
+          }
+          $fallas = [System.Collections.Generic.List[string]]::new()
+          $nuestros = @('closelabs-voice.exe')
+
+          function Revisar([System.IO.FileInfo]$archivo, [bool]$debeSerNuestro) {
+            $f = Get-AuthenticodeSignature -LiteralPath $archivo.FullName
+            $quien = if ($f.SignerCertificate) { $f.SignerCertificate.Subject } else { '-' }
+            Write-Host ("{0,-10} {1}  [{2}]" -f $f.Status, $archivo.Name, $quien)
+            if ($f.Status -ne 'Valid') { $fallas.Add("$($archivo.Name): $($f.Status)"); return }
+            if (-not $f.TimeStamperCertificate) { $fallas.Add("$($archivo.Name): sin sello de tiempo") }
+            if ($debeSerNuestro -and $quien -notlike "*CN=$env:FIRMA_PUBLISHER*") {
+              $fallas.Add("$($archivo.Name): firmado por $quien")
+            }
+          }
+
+          Write-Host "== Instaladores =="
+          $instaladores = @(Get-ChildItem (Join-Path $bundleBase 'nsis') -Filter '*.exe') +
+                          @(Get-ChildItem (Join-Path $bundleBase 'msi') -Filter '*.msi')
+          if (-not $instaladores) { throw "No encontré instaladores en $bundleBase" }
+          foreach ($i in $instaladores) { Revisar $i $true }
+
+          foreach ($pkg in Get-ChildItem (Join-Path $bundleBase 'nsis') -Filter '*.exe') {
+            Write-Host "== Lo que deja instalado $($pkg.Name) =="
+            $dir = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid())
+            $p = Start-Process -FilePath $pkg.FullName -ArgumentList @('/S', '/PORTABLE', "/D=$dir") -Wait -PassThru
+            if ($p.ExitCode -ne 0) { throw "La instalación silenciosa de $($pkg.Name) falló ($($p.ExitCode))" }
+            foreach ($a in Get-ChildItem $dir -Recurse -Include '*.exe', '*.dll') { Revisar $a ($nuestros -contains $a.Name) }
+            Remove-Item -Recurse -Force $dir
+          }
+
+          foreach ($pkg in Get-ChildItem (Join-Path $bundleBase 'msi') -Filter '*.msi') {
+            Write-Host "== Lo que deja instalado $($pkg.Name) =="
+            $dir = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid())
+            New-Item -ItemType Directory -Path $dir | Out-Null
+            $p = Start-Process msiexec.exe -ArgumentList "/a `"$($pkg.FullName)`" /qn TARGETDIR=`"$dir`"" -Wait -PassThru
+            if ($p.ExitCode -ne 0) { throw "La extracción de $($pkg.Name) falló ($($p.ExitCode))" }
+            foreach ($a in Get-ChildItem $dir -Recurse -Include '*.exe', '*.dll') { Revisar $a ($nuestros -contains $a.Name) }
+            Remove-Item -Recurse -Force $dir
+          }
+
+          # Cuántas firmas gastó este build: SSL.com da 20 al mes; Azure, 5.000.
+          $firmas = @(Get-Content -LiteralPath $env:FIRMA_REGISTRO)
+          Write-Host "== Firmas gastadas en este build: $($firmas.Count) =="
+          $firmas | ForEach-Object { Write-Host "  $_" }
+          "### Firma de Windows ($env:FIRMA_PUBLISHER, ${{ inputs.windows-signer }}): $($firmas.Count) firmas en este build" >> $env:GITHUB_STEP_SUMMARY
+
+          if ($fallas.Count) {
+            $fallas | ForEach-Object { Write-Host "::error::$_" }
+            throw "$($fallas.Count) archivo(s) sin la firma correcta: no se publica el instalador."
           }
 
       - name: Upload artifacts (Windows)
