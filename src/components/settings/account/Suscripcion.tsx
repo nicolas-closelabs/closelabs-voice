@@ -37,6 +37,10 @@ function diasHasta(iso: string | null): number | null {
   return Number.isNaN(ms) ? null : Math.ceil(ms / 86_400_000);
 }
 
+/** Lo que cambia cuando el médico paga, cancela o cambia algo en Stripe. */
+const huella = (e: EstadoCuenta) =>
+  [e.status, e.cancel_at_period_end, e.has_billing, e.current_period_end, e.trial_ends_at].join("|");
+
 const futura = (iso: string | null) => !!iso && new Date(iso).getTime() > Date.now();
 
 type Situacion =
@@ -110,12 +114,21 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
   /** Abrimos una página de Stripe y esperamos que vuelva: al recuperar el foco, se pone al día. */
   const [esperando, setEsperando] = useState(false);
   const desde = useRef(0);
+  /** Cómo estaba la suscripción al abrir Stripe. Cuando cambia, ya volvió: se quita el aviso. */
+  const antes = useRef("");
 
-  const ponerAlDia = useCallback(async () => {
+  /** `confirmado`: el médico tocó "Ya terminé"; el aviso se quita aunque nada haya cambiado
+   *  (p. ej. solo cambió la tarjeta en el portal). */
+  const ponerAlDia = useCallback(async (confirmado = false) => {
     setOcupado("sync");
     const r = await commands.accountBillingRefresh("sync");
     setOcupado(null);
-    if (r.status === "ok") onEstado(r.data);
+    if (confirmado) setEsperando(false);
+    if (r.status !== "ok") return;
+    onEstado(r.data);
+    // Solo cuando algo cambió: si volvió a la app a mitad del pago, el aviso (y "Ya terminé")
+    // tiene que seguir ahí para cuando termine.
+    if (huella(r.data) !== antes.current) setEsperando(false);
   }, [onEstado]);
 
   useEffect(() => {
@@ -137,6 +150,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
     setOcupado(null);
     if (r.status === "ok") {
       desde.current = Date.now();
+      antes.current = huella(estado);
       setEsperando(true);
       return;
     }
@@ -155,6 +169,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
     setOcupado(null);
     if (r.status === "ok") {
       onEstado(r.data);
+      setEsperando(false);
       toast.success("Listo: tu suscripción sigue activa", {
         description: "No cambia nada: sigues dictando como siempre.",
       });
@@ -182,7 +197,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
         ocupado={ocupado}
         esperando={esperando}
         onPagar={() => void abrir(s === "sin_pagar" ? "portal" : "checkout")}
-        onYaTermine={() => void ponerAlDia()}
+        onYaTermine={() => void ponerAlDia(true)}
       />
     );
   }
@@ -284,7 +299,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
       <div className="font-heading font-semibold text-[15px]">{titulo}</div>
       <p className="text-sm text-brand-text-secondary mt-1 leading-relaxed">{detalle}</p>
       {acciones && <div className="flex flex-wrap items-center gap-3 mt-4">{acciones}</div>}
-      {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={() => void ponerAlDia()} />}
+      {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={() => void ponerAlDia(true)} />}
     </section>
   );
 };

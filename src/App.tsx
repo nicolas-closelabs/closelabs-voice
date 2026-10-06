@@ -531,7 +531,9 @@ function App() {
             toast:
               "bg-background border border-mid-gray/20 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 text-sm",
             title: "font-medium",
-            description: "text-mid-gray",
+            // El gris de antes (`mid-gray`) casi no se leía sobre blanco; la descripción suele ser
+            // lo que le dice al médico qué hacer.
+            description: "text-brand-text-secondary",
           },
         }}
       />
