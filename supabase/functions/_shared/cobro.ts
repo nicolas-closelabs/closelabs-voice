@@ -274,21 +274,30 @@ export async function sincronizar(subId: string): Promise<Sincronizado> {
     return { userId, resultado: "ignorada" };
   }
 
-  await update("subscriptions", `user_id=eq.${userId}`, {
-    ...nuevo,
-    updated_at: new Date().toISOString(),
-  });
+  const cambios = { ...nuevo, updated_at: new Date().toISOString() };
 
-  // Correo de cancelación: solo en la TRANSICIÓN a "cancelada al final del período", así un aviso
-  // repetido no manda dos correos (el segundo ya encuentra la marca puesta).
-  const yaEstabaCancelada = antes.cancel_at_period_end && antes.stripe_subscription_id === sub.id;
-  if (nuevo.cancel_at_period_end && !yaEstabaCancelada && VIVOS.has(nuevo.status)) {
-    return {
-      userId,
-      resultado: "escrita",
-      cancelacion: { customerId: nuevo.stripe_customer_id, hasta: dictaHasta(sub) },
-    };
+  // Correo de cancelación: solo en la TRANSICIÓN a "cancelada al final del período", y una sola vez.
+  //
+  // ⚠️ La transición la decide la BASE, no este código. Al cancelar, Stripe manda dos avisos casi
+  // juntos (la cancelación y el motivo); se procesaban en paralelo, los dos leían `antes` sin la
+  // marca y se mandaban DOS correos (pasó en la primera prueba, 2026-10-06). Ahora se escribe con
+  // la condición "si todavía no estaba cancelada esta suscripción": Postgres pone en fila al
+  // segundo y, cuando le toca, la condición ya no se cumple y no actualiza nada. Solo quien
+  // logró el cambio manda el correo.
+  if (nuevo.cancel_at_period_end && VIVOS.has(nuevo.status)) {
+    const sinMarca = `or=(cancel_at_period_end.eq.false,stripe_subscription_id.is.null,` +
+      `stripe_subscription_id.neq.${encodeURIComponent(sub.id)})`;
+    const gano = await update("subscriptions", `user_id=eq.${userId}&${sinMarca}`, cambios);
+    if (gano > 0) {
+      return {
+        userId,
+        resultado: "escrita",
+        cancelacion: { customerId: nuevo.stripe_customer_id, hasta: dictaHasta(sub) },
+      };
+    }
   }
+
+  await update("subscriptions", `user_id=eq.${userId}`, cambios);
   return { userId, resultado: "escrita" };
 }
 

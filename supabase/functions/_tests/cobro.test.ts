@@ -59,6 +59,17 @@ function reiniciar() {
       return json([fila]);
     }
     if (tabla === "subscriptions" && metodo === "PATCH") {
+      // Pausa: deja que otra petición "en paralelo" alcance a leer antes de que esta escriba.
+      await new Promise((r) => setTimeout(r, 5));
+      // La condición de la transición a "cancelada" (ver `sincronizar`). Como en Postgres, se
+      // evalúa y se escribe de una vez, sin pausa en medio (la fila queda bloqueada).
+      const or = u.searchParams.get("or");
+      if (or) {
+        const sub = or.match(/stripe_subscription_id\.neq\.([^,)]+)/)![1];
+        const sinMarca = fila.cancel_at_period_end === false || fila.stripe_subscription_id === null ||
+          fila.stripe_subscription_id !== decodeURIComponent(sub);
+        if (!sinMarca) return json([]);
+      }
       Object.assign(fila, JSON.parse(cuerpo));
       return json([fila]);
     }
@@ -294,6 +305,26 @@ await prueba("cancelar: un correo, una sola vez", async () => {
   ok(fila.cancel_at_period_end === true && fila.status === "active", "sigue activa hasta el fin del período");
   const r2 = await cobro.sincronizar("sub_1");
   ok(!r2.cancelacion, "el aviso repetido NO pide otro correo");
+});
+
+await prueba("cancelar: dos avisos A LA VEZ mandan un solo correo", async () => {
+  // Lo que pasó en la primera prueba real: la cancelación y el motivo llegan casi juntos.
+  Object.assign(fila, { status: "active", stripe_subscription_id: "sub_1", stripe_customer_id: "cus_1" });
+  sub("sub_1", { cancel_at_period_end: true });
+  const [a, b] = await Promise.all([cobro.sincronizar("sub_1"), cobro.sincronizar("sub_1")]);
+  const correosPedidos = [a, b].filter((r) => r.cancelacion).length;
+  ok(correosPedidos === 1, "exactamente un correo", { a, b });
+  ok(fila.cancel_at_period_end === true, "la fila queda cancelada");
+});
+
+await prueba("cancelar, reanudar y volver a cancelar: dos correos", async () => {
+  Object.assign(fila, { status: "active", stripe_subscription_id: "sub_1", stripe_customer_id: "cus_1" });
+  const s = sub("sub_1", { cancel_at_period_end: true });
+  ok((await cobro.sincronizar("sub_1")).cancelacion, "primera cancelación avisa");
+  s.cancel_at_period_end = false;
+  await cobro.sincronizar("sub_1");
+  s.cancel_at_period_end = true;
+  ok((await cobro.sincronizar("sub_1")).cancelacion, "la segunda cancelación también avisa");
 });
 
 await prueba("correo de cancelación", async () => {
