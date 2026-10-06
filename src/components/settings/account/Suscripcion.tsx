@@ -23,7 +23,7 @@ import { commands, type EstadoCuenta } from "@/bindings";
 /** El precio vive en Stripe; esto es solo el texto. Si cambia allá, cambiarlo aquí. */
 const PRECIO = "US$11 al mes";
 
-/** Después de abrir Stripe, cuánto tiempo seguimos poniéndonos al día cada vez que vuelve a la app. */
+/** Después de abrir Stripe, cuánto tiempo seguimos poniéndonos al día (en silencio) cada vez que vuelve a la app. */
 const ESPERA_MAX_MS = 15 * 60_000;
 
 function fecha(iso: string | null): string {
@@ -36,10 +36,6 @@ function diasHasta(iso: string | null): number | null {
   const ms = new Date(iso).getTime() - Date.now();
   return Number.isNaN(ms) ? null : Math.ceil(ms / 86_400_000);
 }
-
-/** Lo que cambia cuando el médico paga, cancela o cambia algo en Stripe. */
-const huella = (e: EstadoCuenta) =>
-  [e.status, e.cancel_at_period_end, e.has_billing, e.current_period_end, e.trial_ends_at].join("|");
 
 const futura = (iso: string | null) => !!iso && new Date(iso).getTime() > Date.now();
 
@@ -111,46 +107,44 @@ interface Props {
 
 export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
   const [ocupado, setOcupado] = useState<null | "checkout" | "portal" | "resume" | "sync">(null);
-  /** Abrimos una página de Stripe y esperamos que vuelva: al recuperar el foco, se pone al día. */
+  /**
+   * Se abrió una página de Stripe. Mientras `esperando`, se ve el aviso "vuelve aquí"; se quita en
+   * cuanto el médico vuelve a la app. Aparte, durante `ESPERA_MAX_MS` cada vuelta a la app pone al
+   * día el estado EN SILENCIO (sin ruedita ni botones grises): si volvió a mitad del pago y
+   * termina después, igual se entera. Lo encontró Nicolás probando la 0.9.0: el aviso quedaba
+   * pegado y cada vuelta a la ventana ponía los botones en gris.
+   */
   const [esperando, setEsperando] = useState(false);
-  const desde = useRef(0);
-  /** Cómo estaba la suscripción al abrir Stripe. Cuando cambia, ya volvió: se quita el aviso. */
-  const antes = useRef("");
+  const escucharHasta = useRef(0);
 
-  /** `confirmado`: el médico tocó "Ya terminé"; el aviso se quita aunque nada haya cambiado
-   *  (p. ej. solo cambió la tarjeta en el portal). */
-  const ponerAlDia = useCallback(async (confirmado = false) => {
-    setOcupado("sync");
+  const ponerAlDia = useCallback(async (visible: boolean) => {
+    if (visible) setOcupado("sync");
     const r = await commands.accountBillingRefresh("sync");
-    setOcupado(null);
-    if (confirmado) setEsperando(false);
-    if (r.status !== "ok") return;
-    onEstado(r.data);
-    // Solo cuando algo cambió: si volvió a la app a mitad del pago, el aviso (y "Ya terminé")
-    // tiene que seguir ahí para cuando termine.
-    if (huella(r.data) !== antes.current) setEsperando(false);
+    if (visible) setOcupado(null);
+    if (r.status === "ok") onEstado(r.data);
   }, [onEstado]);
 
   useEffect(() => {
-    if (!esperando) return;
     const alVolver = () => {
-      if (Date.now() - desde.current > ESPERA_MAX_MS) {
-        setEsperando(false);
-        return;
-      }
-      void ponerAlDia();
+      if (Date.now() > escucharHasta.current) return;
+      setEsperando(false);
+      void ponerAlDia(false);
     };
     window.addEventListener("focus", alVolver);
     return () => window.removeEventListener("focus", alVolver);
-  }, [esperando, ponerAlDia]);
+  }, [ponerAlDia]);
+
+  const yaTermine = () => {
+    setEsperando(false);
+    void ponerAlDia(true);
+  };
 
   const abrir = async (accion: "checkout" | "portal") => {
     setOcupado(accion);
     const r = await commands.accountOpenBilling(accion);
     setOcupado(null);
     if (r.status === "ok") {
-      desde.current = Date.now();
-      antes.current = huella(estado);
+      escucharHasta.current = Date.now() + ESPERA_MAX_MS;
       setEsperando(true);
       return;
     }
@@ -177,7 +171,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
     }
     if (r.error === "vencida") {
       toast.error("Tu suscripción ya terminó", { description: "Puedes volver a suscribirte aquí mismo." });
-      void ponerAlDia();
+      void ponerAlDia(true);
       return;
     }
     const m = MENSAJES_ERROR[r.error] ?? ERROR_GENERICO;
@@ -197,7 +191,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
         ocupado={ocupado}
         esperando={esperando}
         onPagar={() => void abrir(s === "sin_pagar" ? "portal" : "checkout")}
-        onYaTermine={() => void ponerAlDia(true)}
+        onYaTermine={yaTermine}
       />
     );
   }
@@ -299,7 +293,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
       <div className="font-heading font-semibold text-[15px]">{titulo}</div>
       <p className="text-sm text-brand-text-secondary mt-1 leading-relaxed">{detalle}</p>
       {acciones && <div className="flex flex-wrap items-center gap-3 mt-4">{acciones}</div>}
-      {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={() => void ponerAlDia(true)} />}
+      {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={yaTermine} />}
     </section>
   );
 };
