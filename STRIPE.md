@@ -67,13 +67,19 @@ pago, y el servidor rechaza pago, portal y reanudar (`canal_socio`). Dicta mient
 (`status`) esté en `active`; las fechas no cuentan. Un aviso de Stripe no lo toca.
 
 **Manual primero** (decisión de Nicolás): gMedic nos manda altas y bajas y nosotros las aplicamos
-en el SQL editor de Supabase:
+en **closelabs.co/voice/admin** (desde 2026-10-07): se entra con la cuenta de Voice si el correo
+está en la tabla `administradores` (hoy: nicolas@closelabs.co; para sumar a alguien,
+`insert into administradores (email) values ('…');`). Ahí se pegan correos para dar de alta o
+pausar, y está la facturación por mes (activos en el mes, dictados, historial de altas y bajas de
+cada médico, descarga para Excel). Cada alta y baja queda en `socio_cambios` con quién la hizo.
+
+Lo mismo desde el SQL editor de Supabase:
 
 ```sql
 select socio_autorizar('medica@clinica.com');   -- alta: si ya tiene cuenta, la pasa a gMedic y la activa;
                                                -- si no, entra activa (sin prueba) cuando se registre
 select socio_pausar('medica@clinica.com');      -- baja: deja de dictar desde ya
-select * from socio_medicos order by email;     -- médicos de gMedic, estado y uso del mes (para facturar)
+select * from socio_uso_mes('2026-10-01');      -- médicos de gMedic y su uso en ese mes (para facturar)
 ```
 
 Si estaba pausado y gMedic lo reactiva: `socio_autorizar` otra vez. Si alguien que pagaba directo
