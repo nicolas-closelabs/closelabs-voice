@@ -135,8 +135,12 @@ cambia la URL.
   ✅ Probado de punta a punta con tarjetas de prueba (dos caminos de pago, cancelar, reanudar).
   ✅ **Pantallas de la app** (próxima versión): panel de suscripción en "Mi cuenta" con el botón
   que toca en cada estado, Reanudar, y la pantalla de "gracias por probar" con sus dictados.
-  Falta: probarlas en la app instalada (sale en la próxima versión) y pasar a pagos reales cuando
-  haya EIN. Todo en `STRIPE.md`.
+  ✅ Probadas en la 0.9.0 instalada en el Mac de Nicolás (2026-10-06): pagar, cancelar, reanudar,
+  pop-up de fin de prueba y vuelta del navegador.
+  ⚠️ **La 0.9.0 NO se reparte a médicos hasta pasar Stripe a pagos reales**: en modo de prueba,
+  cualquiera "paga" con la tarjeta 4242 y queda suscrito gratis. Mientras tanto, la 0.8.4.
+  Falta: recorrido en **Windows** (Santiago o Lucí, incluida la confirmación del correo al crear
+  cuenta) y pagos reales cuando haya EIN. Todo en `STRIPE.md`.
   **Decisiones de Nicolás (2026-09-30), que reemplazan las del 2026-09-20:**
   - **La tarjeta se pide al FINAL de la prueba, no al registrarse.** Pedirla al instalar mete un
     paso difícil justo cuando un médico de 50+ está solo con la app, y ahí abandona. La prueba de
