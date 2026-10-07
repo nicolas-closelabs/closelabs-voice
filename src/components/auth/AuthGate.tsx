@@ -209,8 +209,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
         {creando ? "Crea tu cuenta" : "Inicia sesión"}
       </h1>
       <p className="text-[15px] text-brand-text-secondary leading-relaxed">
+        {/* Sin "30 días de prueba": esta pantalla la ve también el médico de gMedic, que no tiene
+            prueba (le cobra gMedic). Lo de la prueba lo dice "Mi cuenta", que sí sabe el canal. */}
         {creando
-          ? "30 días de prueba. No pedimos tarjeta para empezar."
+          ? "Crea tu cuenta para empezar a dictar. No pedimos tarjeta."
           : "Entra para dictar en este computador."}
       </p>
 
