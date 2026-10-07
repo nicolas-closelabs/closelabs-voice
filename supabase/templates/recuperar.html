@@ -1,3 +1,8 @@
+<!-- 2026-10-07: el enlace lleva a closelabs.co/voice/nueva-contrasena con un código ({{ .TokenHash }}),
+     y es ESA página la que lo canjea. Antes era {{ .ConfirmationURL }}, que terminaba en la portada
+     de closelabs.co sin ningún mensaje (y la recuperación no tenía dónde escribir la contraseña), y
+     que los filtros de correo de empresas y hospitales gastaban al revisarlo. Ver CuentaVoice.tsx en
+     el repo de la web. -->
 <!-- CloseLabs Voice — recuperar la contraseña.
      Tablas y estilos en línea, igual que la de confirmación: es lo único que rinde parejo en
      todos los clientes de correo. -->
@@ -21,7 +26,7 @@
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px">
               <tr>
                 <td style="background:#a439ff;border-radius:10px">
-                  <a href="{{ .ConfirmationURL }}"
+                  <a href="https://www.closelabs.co/voice/nueva-contrasena?token_hash={{ .TokenHash }}&type=recovery"
                      style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none">
                     Elegir contraseña nueva
                   </a>
@@ -33,7 +38,7 @@
               Si el botón no funciona, copia y pega esta dirección en tu navegador:
             </p>
             <p style="margin:0 0 28px;font-size:12px;line-height:1.5;color:#a439ff;word-break:break-all">
-              {{ .ConfirmationURL }}
+              https://www.closelabs.co/voice/nueva-contrasena?token_hash={{ .TokenHash }}&type=recovery
             </p>
 
             <hr style="border:none;border-top:1px solid #eeecf1;margin:0 0 20px">
