@@ -462,3 +462,9 @@ verify_jwt = false
 # que la función comprueba antes de tocar nada.
 [functions.stripe-webhook]
 verify_jwt = false
+
+# La llama la página closelabs.co/voice/admin desde el navegador (CORS: el preflight no lleva
+# sesión). La función verifica la sesión preguntándole a Supabase y exige estar en
+# `administradores`.
+[functions.admin]
+verify_jwt = false
