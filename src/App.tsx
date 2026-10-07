@@ -28,6 +28,7 @@ import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
 import { FinDePruebaModal } from "./components/settings/account/FinDePruebaModal";
+import { situacion } from "./components/settings/account/Suscripcion";
 import { useActualizacion } from "./stores/actualizacionStore";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
@@ -279,6 +280,36 @@ function App() {
       clearInterval(cada);
     };
   }, []);
+
+  // Últimos días de la prueba (venta directa, sin tarjeta): un aviso suave al abrir la app, como
+  // mucho una vez al día. Los correos de "te quedan 3 días" y "terminó" los manda el servidor
+  // (función `recordatorios`); esto es el recordatorio para quien abre la app sin leer el correo.
+  useEffect(() => {
+    if (!signedIn) return;
+    const hoy = new Date().toISOString().slice(0, 10);
+    try {
+      if (localStorage.getItem("aviso-fin-prueba") === hoy) return;
+    } catch {
+      /* sin almacenamiento: se avisa igual */
+    }
+    const espera = setTimeout(async () => {
+      const r = await commands.accountState();
+      if (r.status !== "ok" || r.data.offline || situacion(r.data) !== "prueba" || !r.data.trial_ends_at) return;
+      const dias = Math.ceil((new Date(r.data.trial_ends_at).getTime() - Date.now()) / 86_400_000);
+      if (dias > 3 || dias < 1) return;
+      try {
+        localStorage.setItem("aviso-fin-prueba", hoy);
+      } catch {
+        /* nada */
+      }
+      toast.info(t(dias === 1 ? "finPrueba.ultimoDia" : "finPrueba.quedan", { dias }), {
+        description: t("finPrueba.detalle"),
+        duration: 15000,
+        action: { label: t("finPrueba.verCuenta"), onClick: () => setCurrentSection("account") },
+      });
+    }, 8000);
+    return () => clearTimeout(espera);
+  }, [signedIn, t]);
 
   // La actualización terminó de bajar: un aviso (además del botón que queda en el pie).
   const estadoActualizacion = useActualizacion((s) => s.estado);

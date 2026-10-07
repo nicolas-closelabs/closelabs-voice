@@ -473,3 +473,8 @@ verify_jwt = false
 # firma la comprueba la app con nuestra llave pública.
 [functions.update]
 verify_jwt = false
+
+# La llama pg_cron una vez al día con el secreto de las alertas (`x-alert-secret`), que la función
+# verifica. Correos de fin de la prueba.
+[functions.recordatorios]
+verify_jwt = false

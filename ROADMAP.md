@@ -135,6 +135,10 @@ cambia la URL.
   ✅ Probado de punta a punta con tarjetas de prueba (dos caminos de pago, cancelar, reanudar).
   ✅ **Pantallas de la app** (próxima versión): panel de suscripción en "Mi cuenta" con el botón
   que toca en cada estado, Reanudar, y la pantalla de "gracias por probar" con sus dictados.
+  ✅ **Avisos de fin de prueba (2026-10-07):** correo a 3 días y al terminar, y aviso en la app los
+  últimos 3 días (ver `STRIPE.md`). Confirmar correo y recuperar contraseña ahora en páginas propias
+  de closelabs.co (`/voice/correo-confirmado`, `/voice/nueva-contrasena`): antes la recuperación
+  no funcionaba (terminaba en la portada sin dónde escribir la contraseña).
   ✅ Probadas en la 0.9.0 instalada en el Mac de Nicolás (2026-10-06): pagar, cancelar, reanudar,
   pop-up de fin de prueba y vuelta del navegador.
   ⚠️ **La 0.9.0 NO se reparte a médicos hasta pasar Stripe a pagos reales**: en modo de prueba,
@@ -184,7 +188,7 @@ cambia la URL.
     se cancela primero en Stripe.
 - [ ] Política de Tratamiento de Datos (Ley 1581, datos sensibles de salud). Los enlaces de la app
   ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
-- [ ] Páginas en closelabs.co: confirmar correo y recuperar contraseña usan hoy las de Supabase.
+- [x] Páginas en closelabs.co: confirmar correo y recuperar contraseña — HECHO 2026-10-07.
 
 ### Fase 2.5 — Listo para autoservicio y para producción · 🔨 EN CURSO (v0.8.x)
 

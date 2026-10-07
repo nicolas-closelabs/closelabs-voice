@@ -58,6 +58,24 @@ desorden, y con esta regla da igual.
 **Quien dicta lo decide `authorize_device_v2`, no Stripe:** la fecha manda sobre el estado (ver
 migración 20260920000006). Lo único que hace el webhook es tener las fechas al día.
 
+## Avisos de fin de la prueba (desde 2026-10-07)
+
+Solo venta directa, solo a quien no ha puesto tarjeta, cada uno una vez:
+
+| Cuándo | Por dónde | Qué dice |
+|---|---|---|
+| Le quedan 3 días o menos | Correo (9:00 de Bogotá) | La fecha, lo que dictó, cómo suscribirse, y que suscribirse antes no recorta la prueba |
+| Le quedan 3 días o menos | Aviso en la app al abrirla, máximo una vez al día | "Te quedan N días de prueba · Ver Mi cuenta" |
+| Ya terminó (hasta 3 días después) | Correo | "Tu prueba terminó", cómo seguir, sus cosas siguen ahí |
+| Intenta dictar sin prueba ni suscripción | Pop-up en la app | Ver la tabla de arriba |
+
+Quién recibe qué lo decide `recordatorios_pendientes()` en la base (se revisa con un `select`); la
+función `recordatorios` solo manda y marca (`aviso_prueba_quedan_at` / `aviso_prueba_termino_at`).
+La tarea diaria `recordatorios-prueba` (pg_cron) es una copia de la de las alertas: lleva el mismo
+secreto, por eso no está escrita en el repositorio. Para dispararla a mano: la llave de servicio en
+`x-service-key`. El correo de confirmación y la pantalla de crear cuenta NO mencionan la prueba: los
+ve también el médico de gMedic.
+
 ## Médicos de un socio (gMedic): sin Stripe, sin prueba
 
 Desde 2026-10-06 (migración `20261006000003_canal_socios.sql`). Cada suscripción tiene un **canal**:

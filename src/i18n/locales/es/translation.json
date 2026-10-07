@@ -676,5 +676,11 @@
     "listaDetalle": "Se instala en segundos y conservas tus ajustes y tu diccionario. Hazlo cuando no estés dictando.",
     "reiniciar": "Reiniciar ahora",
     "fallo": "No se pudo instalar la actualización. Sigues con tu versión actual."
+  },
+  "finPrueba": {
+    "quedan": "Te quedan {{dias}} días de prueba",
+    "ultimoDia": "Mañana termina tu prueba",
+    "detalle": "Para seguir dictando, suscríbete desde Mi cuenta. Si lo haces ahora, el primer cobro llega cuando termine tu prueba.",
+    "verCuenta": "Ver Mi cuenta"
   }
 }

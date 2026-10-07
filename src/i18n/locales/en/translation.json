@@ -676,5 +676,11 @@
     "listaDetalle": "It installs in seconds and keeps your settings and dictionary. Do it when you're not dictating.",
     "reiniciar": "Restart now",
     "fallo": "The update couldn't be installed. You're still on your current version."
+  },
+  "finPrueba": {
+    "quedan": "{{dias}} days left in your trial",
+    "ultimoDia": "Your trial ends tomorrow",
+    "detalle": "To keep dictating, subscribe from My account. If you do it now, the first charge comes when your trial ends.",
+    "verCuenta": "Open My account"
   }
 }
