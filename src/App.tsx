@@ -28,6 +28,7 @@ import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
 import { FinDePruebaModal } from "./components/settings/account/FinDePruebaModal";
+import { useActualizacion } from "./stores/actualizacionStore";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
 type OnboardingStep = "accessibility" | "model" | "done";
@@ -241,11 +242,14 @@ function App() {
     };
   }, []);
 
-  // Hay una versión nueva, pero esta sigue sirviendo: se avisa y se puede cerrar el aviso.
+  // Hay una versión nueva, pero esta sigue sirviendo. Si este computador tiene actualización
+  // automática (Windows; Mac cuando haya firma de Apple), se baja sola y avisa cuando esté lista
+  // (ver `actualizacionStore`). Si no, el aviso de siempre con el enlace de descarga.
   useEffect(() => {
     const unlisten = listen<{ latest_version: string; download_url: string }>(
       "update-available",
-      (event) => {
+      async (event) => {
+        if (await useActualizacion.getState().buscar()) return;
         toast.info(t("blocked.updateTitle"), {
           description: t("blocked.updateBody", {
             version: event.payload.latest_version,
@@ -262,6 +266,34 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, [t]);
+
+  // Actualización automática: se pregunta al abrir (con un margen, el arranque ya tiene trabajo) y
+  // cada 6 horas, porque la app se queda abierta días. Es aparte del aviso de `latest_version`:
+  // lo que se instala solo lo decide `version_automatica` en el servidor (ver ACTUALIZACIONES.md).
+  useEffect(() => {
+    const buscar = () => void useActualizacion.getState().buscar();
+    const primera = setTimeout(buscar, 20_000);
+    const cada = setInterval(buscar, 6 * 60 * 60_000);
+    return () => {
+      clearTimeout(primera);
+      clearInterval(cada);
+    };
+  }, []);
+
+  // La actualización terminó de bajar: un aviso (además del botón que queda en el pie).
+  const estadoActualizacion = useActualizacion((s) => s.estado);
+  useEffect(() => {
+    if (estadoActualizacion !== "lista") return;
+    const { version, instalar } = useActualizacion.getState();
+    toast.info(t("actualizacion.listaTitulo", { version }), {
+      description: t("actualizacion.listaDetalle"),
+      duration: 20000,
+      action: {
+        label: t("actualizacion.reiniciar"),
+        onClick: () => void instalar().catch(() => toast.error(t("actualizacion.fallo"))),
+      },
+    });
+  }, [estadoActualizacion, t]);
 
   // macOS sin permiso de Accesibilidad: el texto quedó en el portapapeles. Se muestra la
   // ventana (si estaba oculta el toast no se vería) con la acción para dar el permiso.

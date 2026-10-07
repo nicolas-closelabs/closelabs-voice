@@ -670,5 +670,11 @@
     "updateTitle": "Hay una versión nueva",
     "updateBody": "La versión {{version}} ya está disponible. Puedes seguir dictando mientras tanto.",
     "help": "¿Necesitas ayuda? Escríbenos por WhatsApp"
+  },
+  "actualizacion": {
+    "listaTitulo": "La versión {{version}} está lista",
+    "listaDetalle": "Se instala en segundos y conservas tus ajustes y tu diccionario. Hazlo cuando no estés dictando.",
+    "reiniciar": "Reiniciar ahora",
+    "fallo": "No se pudo instalar la actualización. Sigues con tu versión actual."
   }
 }

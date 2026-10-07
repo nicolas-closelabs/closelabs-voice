@@ -353,7 +353,10 @@ cambia la URL.
   encenderlo. Se decidió NO ponerlo en la app (2026-09-23: es ruido para el médico nuevo, que es
   la mayoría); a los testers se les avisa por fuera. Con Developer ID desaparece solo.
   Todo el detalle en `FIRMA-Y-DISTRIBUCION.md`.
-- [ ] Actualización automática: clave del updater, `latest.json` en un host público, "Actualización lista, reinicia".
+- [x] **Actualización automática — HECHA 2026-10-07 (0.9.x), solo Windows.** Llave propia del
+  updater, archivos firmados en el CI, función `update` + tabla `versiones`, "La versión X está
+  lista · Reiniciar ahora" (nunca se instala sola) y `scripts/publicar-version.sh`. Mac se prende
+  con la firma de Apple (`--con-mac`). Ver `ACTUALIZACIONES.md`.
 - [ ] Build Windows probado de punta a punta.
 
 ### Fase 4 — Diferenciadores

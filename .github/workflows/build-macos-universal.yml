@@ -142,6 +142,14 @@ jobs:
           name: slice-x86_64-apple-darwin
           path: slices/x86_64
 
+      # Archivos de actualización automática (.app.tar.gz + .sig). Ver build.yml y ACTUALIZACIONES.md.
+      - name: Enable updater artifacts
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "::error::Falta el secreto TAURI_SIGNING_PRIVATE_KEY (llave del updater)"; exit 1; }
+          jq '.bundle.createUpdaterArtifacts = true' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
       - name: Merge both architectures (lipo)
         run: |
           OUT=src-tauri/target/universal-apple-darwin/release
@@ -214,6 +222,9 @@ jobs:
       # APPLE_CERTIFICATE aunque sea vacía, Tauri intenta importar un cert vacío y falla.
       - name: Bundle universal (unsigned)
         if: ${{ !inputs.sign-binaries }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
 
       # FIRMADO: Tauri firma el .app universal entero (las dos versiones y el .dylib), lo manda a
@@ -225,6 +236,8 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
 
       # Tauri notariza el .app, pero el .dmg que se descarga es otro archivo. Se firma y se notariza
@@ -310,5 +323,8 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.asset-prefix }}-macos-universal
-          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          path: |
+            src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/universal-apple-darwin/release/bundle/macos/*.tar.gz
+            src-tauri/target/universal-apple-darwin/release/bundle/macos/*.sig
           retention-days: 30

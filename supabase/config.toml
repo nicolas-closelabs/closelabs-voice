@@ -468,3 +468,8 @@ verify_jwt = false
 # `administradores`.
 [functions.admin]
 verify_jwt = false
+
+# La llama el updater de la app, sin sesión. Solo dice dónde está el archivo de la versión nueva; la
+# firma la comprueba la app con nuestra llave pública.
+[functions.update]
+verify_jwt = false

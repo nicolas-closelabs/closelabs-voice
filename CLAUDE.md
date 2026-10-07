@@ -430,6 +430,13 @@ el eco de la pista. Lo que ve queda en la vista `revisiones_recientes`. Pruebas 
 idiomas, y `revisar.ts` lo compara contra el guion: datos clínicos perdidos, números que nadie dijo,
 palabras cortadas y texto colado de la pista. Ningún cambio de motor de voz o de pista sin pasarlo.
 
+**Actualización automática (desde la 0.9.x, 2026-10-07): `ACTUALIZACIONES.md`.** Windows se
+actualiza solo (el médico toca "Reiniciar ahora"); Mac NO hasta tener la firma de Apple (perdería el
+permiso de Accesibilidad). Publicar: `scripts/publicar-version.sh <run-id>`. Lo que se instala solo
+lo decide `app_config.version_automatica` (aparte de `latest_version`, el aviso con enlace).
+⚠️ La llave del updater (`~/.tauri/closelabs-voice-updater.key` + contraseña) NO se puede perder:
+sin ella las apps instaladas no aceptan más actualizaciones.
+
 **Cobro con Stripe (desde 2026-10-06, modo de prueba): `STRIPE.md`.** Lógica en
 `_shared/cobro.ts`; el webhook nunca escribe lo que trae el aviso, le pregunta a Stripe el estado
 actual. Médicos de gMedic: `subscriptions.canal`, sin prueba ni Stripe, altas y bajas a mano con

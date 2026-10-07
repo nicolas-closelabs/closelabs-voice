@@ -596,6 +596,22 @@ jobs:
           sudo cp -vL "$LIBDIR"/libtranscribe.so* "$LIBDIR"/libggml*.so* /usr/local/lib/ 2>/dev/null || true
           sudo ldconfig
 
+      # Archivos de ACTUALIZACIÓN AUTOMÁTICA (instalador + .sig firmado con nuestra llave del
+      # updater, que es otra cosa que la firma de Windows/Apple). Solo en el CI: localmente no está
+      # la llave privada y `tauri build` fallaría. Ver ACTUALIZACIONES.md.
+      - name: Enable updater artifacts
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::Falta el secreto TAURI_SIGNING_PRIVATE_KEY (llave del updater): sin él no hay actualizaciones automáticas"
+            exit 1
+          fi
+          RUTA="$RUNNER_TEMP/actualizaciones.json"
+          echo '{"bundle":{"createUpdaterArtifacts":true}}' > "$RUTA"
+          echo "ACTUALIZAR_CONFIG=--config $(echo "$RUTA" | sed 's|\\|/|g')" >> "$GITHUB_ENV"
+
       # FASE 1 (sin firma): NO se define ninguna variable APPLE_* — si se define
       # APPLE_CERTIFICATE aunque sea vacía, Tauri intenta importar un cert vacío
       # y falla (security import). El .app queda ad-hoc (como local).
@@ -609,12 +625,14 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ inputs.release-id && format('v{0}', steps.get-version.outputs.version) || '' }}
           releaseName: ${{ inputs.release-id && format('v{0}', steps.get-version.outputs.version) || '' }}
           releaseId: ${{ inputs.release-id }}
           assetNamePattern: ${{ steps.patch-release-name.outputs.platform }}
-          args: ${{ inputs.build-args }}
+          args: ${{ inputs.build-args }} ${{ env.ACTUALIZAR_CONFIG }}
 
       # FIRMADO. macOS: secretos APPLE_* (solo si se compila una arquitectura suelta con este
       # workflow; el instalador de Mac sale de build-macos-universal.yml). Windows: FIRMA_CONFIG
@@ -649,7 +667,7 @@ jobs:
           releaseName: ${{ inputs.release-id && format('v{0}', steps.get-version.outputs.version) || '' }}
           releaseId: ${{ inputs.release-id }}
           assetNamePattern: ${{ steps.patch-release-name.outputs.platform }}
-          args: ${{ inputs.build-args }} ${{ env.FIRMA_CONFIG }}
+          args: ${{ inputs.build-args }} ${{ env.FIRMA_CONFIG }} ${{ env.ACTUALIZAR_CONFIG }}
 
       - name: Verify macOS dylib bundling
         if: inputs.target == 'x86_64-apple-darwin'
@@ -1052,4 +1070,5 @@ jobs:
           path: |
             ${{ steps.win-bundle-path.outputs.base }}/${{ inputs.target != '' && inputs.target != 'x86_64-pc-windows-msvc' && format('{0}/{1}', inputs.target, steps.build-profile.outputs.profile) || steps.build-profile.outputs.profile }}/bundle/msi/*.msi
             ${{ steps.win-bundle-path.outputs.base }}/${{ inputs.target != '' && inputs.target != 'x86_64-pc-windows-msvc' && format('{0}/{1}', inputs.target, steps.build-profile.outputs.profile) || steps.build-profile.outputs.profile }}/bundle/nsis/*.exe
+            ${{ steps.win-bundle-path.outputs.base }}/${{ inputs.target != '' && inputs.target != 'x86_64-pc-windows-msvc' && format('{0}/{1}', inputs.target, steps.build-profile.outputs.profile) || steps.build-profile.outputs.profile }}/bundle/nsis/*.sig
           retention-days: 30
