@@ -187,8 +187,8 @@ cambia la URL.
     para confirmar). Borra perfil, equipos, diccionario y suscripción; si hay una suscripción activa,
     se cancela primero en Stripe.
 - [x] Política de Tratamiento de Datos y Términos — publicados 2026-10-05 (closelabs.co/privacidad y
-  /terminos). Términos 1.1 (precio US$12 y aliado comercial) el 2026-10-06. La 1.1 y la sección 11
-  de la Política (Vercel Analytics) **se le enviaron al abogado el 2026-10-07: esperando respuesta**.
+  /terminos). Términos 1.1 (precio US$12 y aliado comercial) el 2026-10-06. **El abogado aprobó la
+  1.1 y la sección 11 de la Política (Vercel Analytics) el 2026-10-07.**
 - [x] Páginas en closelabs.co: confirmar correo y recuperar contraseña — HECHO 2026-10-07.
 
 ### Fase 2.5 — Listo para autoservicio y para producción · 🔨 EN CURSO (v0.8.x)
@@ -458,7 +458,7 @@ cambia la URL.
 | 2 | ~~Plan B de proveedor~~ **RESUELTO 2026-09-20**: DeepInfra y OpenAI medidos y configurados; cambiar es una línea de SQL. Sigue pendiente Groq: **habilitar facturación (tier pago)** — el gratis tiene un techo de 8.000 tokens/minuto para toda la cuenta, o sea ~6 dictados por minuto entre TODOS los médicos; con eso no se puede vender. Además: **Zero Data Retention**, límite de gasto y alertas; key de OpenAI como plan B | Fase 1 |
 | 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe de **CLOSELABS LLC** (modo de prueba hasta el EIN), **US$12/mes en todos los canales**, 30 días de prueba en la venta directa, 3 dispositivos | Fase 2 |
 | 4 | ~~Páginas en closelabs.co~~ **HECHO 2026-10-07**: confirmar correo, nueva contraseña, pago, empresa, términos, privacidad | Fase 2 |
-| 5 | Abogado: ~~política y términos v1~~ (aprobados); Términos 1.1 y sección 11 de la Política **enviados el 2026-10-07, esperando respuesta** | Fase 2 |
+| 5 | ~~Abogado~~ **APROBADO**: Términos y Política v1 (2026-10-04); Términos 1.1 y sección 11 de la Política (2026-10-07) | Fase 2 |
 | 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |
 | 8 | **EIN de la LLC** → activar Stripe en pagos reales y repartir la 0.9.x | Lanzamiento |

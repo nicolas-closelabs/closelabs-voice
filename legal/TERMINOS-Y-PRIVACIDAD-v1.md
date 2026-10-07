@@ -1,7 +1,7 @@
 > **2026-10-06 — Términos 1.1 publicados** (closelabs.co/terminos, ver su "Historial de versiones"):
-> precio US$12 y cláusula del aliado comercial en la sección 5. Pendiente de revisión del abogado,
-> junto con la sección 11 de la Política (Vercel Analytics). El texto publicado manda; esta copia
-> se mantiene igual.
+> precio US$12 y cláusula del aliado comercial en la sección 5. **Aprobados por el abogado el
+> 2026-10-07**, junto con la sección 11 de la Política (Vercel Analytics). El texto publicado manda;
+> esta copia se mantiene igual.
 
 # Términos y Condiciones y Política de Tratamiento de Datos — CloseLabs Voice · v1
 
