@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { commands, type EstadoCuenta } from "@/bindings";
-import { situacion } from "./Suscripcion";
+import { nombreSocio, situacion } from "./Suscripcion";
 
 /**
  * "Eliminar mi cuenta" (Ley 1581). Decidido con Nicolás (2026-10-05): separado de cancelar y que se
@@ -70,6 +70,12 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
             <li>Tu suscripción{pagando ? ": se cancela en este momento, sin reembolso de los días que te quedan" : ""}.</li>
             <li>Tu diccionario en este computador.</li>
           </ul>
+          {s === "socio" && (
+            <p className="rounded-xl bg-brand-surface border border-brand-border px-4 py-3">
+              Esto <strong>no cancela tu suscripción con {nombreSocio(estado.canal)}</strong>: para
+              dejar de pagar, comunícate con {nombreSocio(estado.canal)}.
+            </p>
+          )}
           {pagando && (
             <p className="rounded-xl bg-brand-surface border border-brand-border px-4 py-3">
               Si solo quieres dejar de pagar, mejor <strong>cancela tu suscripción</strong> (arriba):

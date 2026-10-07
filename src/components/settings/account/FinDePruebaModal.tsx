@@ -1,5 +1,6 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useEffect, useId, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { commands, type EstadoCuenta } from "@/bindings";
 import { abrirCobro, avisarErrorDeCobro, ContenidoFin, situacion, type Fin } from "./Suscripcion";
@@ -21,19 +22,26 @@ export const FinDePruebaModal: React.FC<{
   onCobroAbierto: () => void;
 }> = ({ motivo, onCerrar, onCobroAbierto }) => {
   const [estado, setEstado] = useState<EstadoCuenta | null>(null);
+  /** Ya contestó la cuenta (bien o mal). */
+  const [cargado, setCargado] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const idTitulo = useId();
   const idDescripcion = useId();
   const caja = useRef<HTMLDivElement>(null);
   const boton = useRef<HTMLButtonElement>(null);
+  const cerrar = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!motivo) return;
     setEstado(null);
+    setCargado(false);
     let vivo = true;
-    void commands.accountState().then((r) => {
-      if (vivo && r.status === "ok" && !r.data.offline) setEstado(r.data);
-    });
+    void commands
+      .accountState()
+      .then((r) => {
+        if (vivo && r.status === "ok" && !r.data.offline) setEstado(r.data);
+      })
+      .finally(() => vivo && setCargado(true));
     return () => {
       vivo = false;
     };
@@ -43,7 +51,7 @@ export const FinDePruebaModal: React.FC<{
   useEffect(() => {
     if (!motivo) return;
     const anterior = document.activeElement as HTMLElement | null;
-    requestAnimationFrame(() => boton.current?.focus());
+    requestAnimationFrame(() => (boton.current ?? cerrar.current)?.focus());
     const teclas = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -72,9 +80,18 @@ export const FinDePruebaModal: React.FC<{
 
   if (!motivo) return null;
 
+  // `trial_ended` solo le pasa a la venta directa: se puede mostrar ya. `subscription_inactive`
+  // también le pasa a un médico de gMedic dado de baja, y a ese NO se le puede mostrar ni un
+  // instante "Volver a suscribirme · US$12" (le cobra gMedic): se espera a saber quién es.
+  const esperandoCuenta = !cargado && motivo !== "trial_ended";
   const s: Fin = (() => {
     const desdeEstado = estado ? situacion(estado) : null;
-    if (desdeEstado === "fin_prueba" || desdeEstado === "terminada" || desdeEstado === "sin_pagar") {
+    if (
+      desdeEstado === "fin_prueba" ||
+      desdeEstado === "terminada" ||
+      desdeEstado === "sin_pagar" ||
+      desdeEstado === "socio_pausado"
+    ) {
       return desdeEstado;
     }
     return motivo === "trial_ended" ? "fin_prueba" : "terminada";
@@ -107,22 +124,31 @@ export const FinDePruebaModal: React.FC<{
         aria-describedby={idDescripcion}
         className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-white px-7 pt-9 pb-6 shadow-2xl"
       >
-        <ContenidoFin
-          estado={estado}
-          situacion={s}
-          ocupado={ocupado}
-          onPagar={() => void pagar()}
-          idTitulo={idTitulo}
-          idDescripcion={idDescripcion}
-          refBoton={boton}
-          cargando={estado === null}
-        />
+        {esperandoCuenta ? (
+          <div className="grid place-items-center py-16" aria-busy="true">
+            <h2 id={idTitulo} className="sr-only">Revisando tu cuenta</h2>
+            <p id={idDescripcion} className="sr-only">Un momento.</p>
+            <Loader2 className="w-6 h-6 animate-spin text-brand-accent" aria-hidden="true" />
+          </div>
+        ) : (
+          <ContenidoFin
+            estado={estado}
+            situacion={s}
+            ocupado={ocupado}
+            onPagar={() => void pagar()}
+            idTitulo={idTitulo}
+            idDescripcion={idDescripcion}
+            refBoton={boton}
+            cargando={!cargado}
+          />
+        )}
         <div className="mt-4 flex justify-center">
           <button
+            ref={cerrar}
             onClick={onCerrar}
             className="px-4 py-2 rounded-xl text-sm font-medium text-brand-text-secondary hover:bg-brand-surface transition-colors"
           >
-            Ahora no
+            {s === "socio_pausado" ? "Entendido" : "Ahora no"}
           </button>
         </div>
       </div>

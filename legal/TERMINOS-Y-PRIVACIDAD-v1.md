@@ -16,7 +16,7 @@
 - **Empresa:** CLOSELABS LLC, Florida (EE.UU.), dos socios. 7345 W Sand Lake Rd, Ste 210, Office
   4824, Orlando, FL 32819, United States.
 - **Producto:** app de escritorio (Windows y macOS) de dictado por voz para médicos.
-- **Precio:** prueba de 30 días sin tarjeta; luego US$11 al mes, **impuestos incluidos**, por Stripe,
+- **Precio:** prueba de 30 días sin tarjeta; luego US$12 al mes, **impuestos incluidos**, por Stripe,
   renovación mensual. Hasta 3 computadores por cuenta.
 - **Datos:** cuenta (nombre, correo, teléfono, contraseña cifrada, aceptación), computadores, métricas
   de uso SIN contenido (Supabase, servidores en Brasil). El audio y el texto de los dictados **no se
@@ -127,7 +127,7 @@ contenido.**
 ## 5. Prueba gratis, precio y pago
 
 - **Prueba gratis:** 30 días desde el registro, sin necesidad de tarjeta.
-- **Precio:** US$11 (once dólares de los Estados Unidos) al mes, **impuestos incluidos**.
+- **Precio:** US$12 (doce dólares de los Estados Unidos) al mes, **impuestos incluidos**.
 - **Cómo se paga:** con tarjeta, a través de Stripe, nuestro procesador de pagos. CloseLabs no ve
   ni guarda los datos de la tarjeta.
 - **Renovación automática:** la suscripción se renueva y se cobra cada mes hasta que el Usuario la

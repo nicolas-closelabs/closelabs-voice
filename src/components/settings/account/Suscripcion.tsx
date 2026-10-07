@@ -20,8 +20,14 @@ import { commands, type EstadoCuenta } from "@/bindings";
  * (la fecha manda sobre el estado) solo para escoger qué mostrar.
  */
 
-/** El precio vive en Stripe; esto es solo el texto. Si cambia allá, cambiarlo aquí. */
-const PRECIO = "US$11 al mes";
+/** El precio vive en Stripe; esto es solo el texto. Si cambia allá, cambiarlo aquí (y en la web y
+ *  los Términos). US$12 en TODOS los canales desde 2026-10-06, para no competir con gMedic. */
+const MONTO = "US$12";
+const PRECIO = `${MONTO} al mes`;
+
+/** Socios que cobran por su cuenta (columna `subscriptions.canal`). */
+const SOCIOS: Record<string, string> = { gmedic: "gMedic" };
+export const nombreSocio = (canal: string | null) => (canal && SOCIOS[canal]) || "tu proveedor";
 
 /** Después de abrir Stripe, cuánto tiempo seguimos poniéndonos al día (en silencio) cada vez que vuelve a la app. */
 const ESPERA_MAX_MS = 15 * 60_000;
@@ -40,6 +46,8 @@ function diasHasta(iso: string | null): number | null {
 const futura = (iso: string | null) => !!iso && new Date(iso).getTime() > Date.now();
 
 type Situacion =
+  | "socio" // le cobra un socio (gMedic) y está activo: nada de pagos aquí
+  | "socio_pausado" // el socio lo dio de baja: no dicta
   | "prueba" // en prueba, sin tarjeta
   | "prueba_con_tarjeta" // en prueba, ya suscrito: el primer cobro llega al terminar la prueba
   | "activa"
@@ -50,6 +58,7 @@ type Situacion =
   | "terminada"; // tuvo suscripción y ya terminó
 
 export function situacion(e: EstadoCuenta): Situacion {
+  if (e.canal && e.canal !== "directo") return e.status === "active" ? "socio" : "socio_pausado";
   const vigente = futura(e.trial_ends_at) || futura(e.current_period_end);
   const status = e.status ?? "trialing";
   const viva = status === "trialing" || status === "active" || status === "past_due";
@@ -209,7 +218,7 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
 
   const s = situacion(estado);
 
-  if (s === "fin_prueba" || s === "terminada" || s === "sin_pagar") {
+  if (s === "fin_prueba" || s === "terminada" || s === "sin_pagar" || s === "socio_pausado") {
     return (
       <FinDePrueba
         estado={estado}
@@ -246,6 +255,12 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
   );
 
   switch (s) {
+    case "socio": {
+      const socio = nombreSocio(estado.canal);
+      titulo = "Suscripción activa";
+      detalle = `Tu suscripción la maneja ${socio}. Para dudas de pago o para cancelar, comunícate con ${socio}.`;
+      break;
+    }
     case "prueba": {
       const ultimos = dias !== null && dias <= 5;
       titulo = "Prueba gratuita";
@@ -270,13 +285,13 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
     }
     case "prueba_con_tarjeta":
       titulo = "Prueba gratuita · suscripción lista";
-      detalle = `Tu tarjeta quedó guardada. El primer cobro de US$11 será el ${fecha(estado.trial_ends_at)}, cuando termine tu prueba.`;
+      detalle = `Tu tarjeta quedó guardada. El primer cobro de ${MONTO} será el ${fecha(estado.trial_ends_at)}, cuando termine tu prueba.`;
       acciones = <>{administrar}{cancelar}</>;
       break;
     case "activa":
       titulo = "Suscripción activa";
       detalle = estado.current_period_end
-        ? `Se renueva el ${fecha(estado.current_period_end)} por US$11.`
+        ? `Se renueva el ${fecha(estado.current_period_end)} por ${MONTO}.`
         : "Todo en orden.";
       acciones = <>{administrar}{cancelar}</>;
       break;
@@ -334,9 +349,12 @@ const AvisoNavegador: React.FC<{ ocupado: boolean; onYaTermine: () => void }> = 
   </div>
 );
 
-export type Fin = "fin_prueba" | "terminada" | "sin_pagar";
+export type Fin = "fin_prueba" | "terminada" | "sin_pagar" | "socio_pausado";
 
-const TEXTOS_FIN: Record<Fin, { titulo: string; subtitulo: string; boton: string; conPrecio: boolean }> = {
+const TEXTOS_FIN: Record<
+  Exclude<Fin, "socio_pausado">,
+  { titulo: string; subtitulo: string; boton: string; conPrecio: boolean }
+> = {
   fin_prueba: {
     titulo: "Tu prueba gratuita terminó",
     subtitulo: "Suscríbete para seguir dictando.",
@@ -380,7 +398,17 @@ export const ContenidoFin: React.FC<{
   /** El estado todavía no llega (el pop-up sale antes que los números): se reserva su espacio. */
   cargando?: boolean;
 }> = ({ estado, situacion: s, ocupado, onPagar, idTitulo, idDescripcion, refBoton, cargando = false }) => {
-  const t = TEXTOS_FIN[s];
+  // Médico de un socio dado de baja: no hay nada que pagarnos; que hable con quien le cobra.
+  const socio = nombreSocio(estado?.canal ?? null);
+  const t =
+    s === "socio_pausado"
+      ? {
+          titulo: "Tu acceso está pausado",
+          subtitulo: `Tu suscripción con ${socio} no está activa. Comunícate con ${socio} para reactivarla.`,
+          boton: null,
+          conPrecio: false,
+        }
+      : TEXTOS_FIN[s];
   const Icono = s === "sin_pagar" ? CreditCard : Hourglass;
   const dictados = estado?.dictados ?? 0;
   const minutos = estado?.minutos_dictados ?? 0;
@@ -399,23 +427,27 @@ export const ContenidoFin: React.FC<{
 
       {t.conPrecio && (
         <div className="mt-6 flex items-baseline justify-center gap-2">
-          <span className="font-heading font-bold text-4xl tabular-nums">US$11</span>
+          <span className="font-heading font-bold text-4xl tabular-nums">{MONTO}</span>
           <span className="text-[15px] text-brand-text-secondary">al mes · cancelas cuando quieras</span>
         </div>
       )}
 
-      <button
-        ref={refBoton}
-        onClick={onPagar}
-        disabled={ocupado}
-        className={`${BOTON_PRINCIPAL} mt-6 w-full max-w-xs py-3 text-base`}
-      >
-        {ocupado && <Loader2 className="w-4 h-4 animate-spin" />}
-        {t.boton}
-      </button>
-      <p className="mt-2.5 text-xs text-brand-text-muted">
-        Se abre una página segura de Stripe en tu navegador.
-      </p>
+      {t.boton && (
+        <>
+          <button
+            ref={refBoton}
+            onClick={onPagar}
+            disabled={ocupado}
+            className={`${BOTON_PRINCIPAL} mt-6 w-full max-w-xs py-3 text-base`}
+          >
+            {ocupado && <Loader2 className="w-4 h-4 animate-spin" />}
+            {t.boton}
+          </button>
+          <p className="mt-2.5 text-xs text-brand-text-muted">
+            Se abre una página segura de Stripe en tu navegador.
+          </p>
+        </>
+      )}
 
       {/* Mientras carga, el espacio queda reservado y el texto entra con un fundido: antes la línea
           aparecía medio segundo después y empujaba el pop-up (lo notó Nicolás). */}

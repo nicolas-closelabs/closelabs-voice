@@ -36,6 +36,7 @@ interface Suscripcion {
   cancel_at_period_end: boolean;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  canal: string;
 }
 
 interface Equipo {
@@ -74,7 +75,7 @@ async function estado(userId: string): Promise<Response> {
     select<Perfil>("user_profiles", `select=full_name,phone_country,phone&id=eq.${userId}`),
     select<Suscripcion>(
       "subscriptions",
-      `select=status,trial_ends_at,current_period_end,cancel_at_period_end,stripe_customer_id,stripe_subscription_id&user_id=eq.${userId}`,
+      `select=status,trial_ends_at,current_period_end,cancel_at_period_end,stripe_customer_id,stripe_subscription_id,canal&user_id=eq.${userId}`,
     ),
     select<Equipo>(
       "devices",
@@ -104,6 +105,8 @@ async function estado(userId: string): Promise<Response> {
         current_period_end: sub.current_period_end,
         cancel_at_period_end: sub.cancel_at_period_end,
         has_billing: Boolean(sub.stripe_subscription_id),
+        // `directo` o el socio que le cobra (gMedic): la app no le muestra pagos a quien le cobra otro.
+        canal: sub.canal ?? "directo",
       }
       : null,
     devices: equipos,
@@ -118,6 +121,7 @@ async function estado(userId: string): Promise<Response> {
  * de fin de prueba salga sin números.
  */
 function puedeDictar(s: Suscripcion): boolean {
+  if (s.canal && s.canal !== "directo") return s.status === "active";
   const fechas = [s.trial_ends_at, s.current_period_end].filter(Boolean).map((f) => Date.parse(f!));
   if (fechas.some((f) => f > Date.now())) return true;
   return s.status === "past_due" || (s.status === "active" && !s.current_period_end);

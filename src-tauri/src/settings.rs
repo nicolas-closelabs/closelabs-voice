@@ -608,8 +608,8 @@ fn default_post_process_enabled() -> bool {
 /// Proxy de CloseLabs. Configurable por si hace falta apuntar a un entorno de pruebas.
 /// Versión de la Política de Tratamiento de Datos que acepta quien se registra. Ante la SIC hay
 /// que poder demostrar QUÉ versión aceptó cada médico, no solo que aceptó algo. Subir este valor
-/// cuando cambie la política.
-pub const TERMS_VERSION: &str = "v1";
+/// cuando cambie la política. "v1.1" = Términos 1.1 (precio a US$12, 2026-10-06) + Política 1.
+pub const TERMS_VERSION: &str = "v1.1";
 
 fn default_supabase_anon_key() -> String {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkaXptYnV6ZXB4bmtpYWhiZW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Mzg0MTksImV4cCI6MjEwNTQxNDQxOX0.bl7TlxQj050lpcCchq_yJYVy1HOa15LUtro3-gPBdbw".to_string()

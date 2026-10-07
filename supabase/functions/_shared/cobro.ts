@@ -233,11 +233,13 @@ interface Fila {
   status: string;
   cancel_at_period_end: boolean;
   stripe_subscription_id: string | null;
+  canal: string;
 }
 
 export interface Sincronizado {
   userId: string | null;
-  /** `ignorada`: un aviso de una suscripción vieja y muerta que no debe pisar la actual. */
+  /** `ignorada`: un aviso de una suscripción vieja y muerta que no debe pisar la actual, o de un
+   *  médico que hoy es de un socio (su acceso lo maneja el interruptor, no Stripe). */
   resultado: "escrita" | "ignorada" | "sin_dueno";
   /** Lleno solo cuando el médico ACABA de cancelar: hay que mandarle el correo. */
   cancelacion?: { customerId: string; hasta: string | null };
@@ -260,9 +262,14 @@ export async function sincronizar(subId: string): Promise<Sincronizado> {
 
   const antes = (await select<Fila>(
     "subscriptions",
-    `select=user_id,status,cancel_at_period_end,stripe_subscription_id&user_id=eq.${userId}`,
+    `select=user_id,status,cancel_at_period_end,stripe_subscription_id,canal&user_id=eq.${userId}`,
   ))[0];
   if (!antes) return { userId, resultado: "sin_dueno" };
+
+  // Médico de un socio (gMedic): quién dicta lo decide el interruptor que manejamos a mano
+  // (`socio_autorizar` / `socio_pausar`). Un aviso de una suscripción directa que tuvo antes no
+  // puede pisarlo.
+  if (antes.canal && antes.canal !== "directo") return { userId, resultado: "ignorada" };
 
   // Un médico que canceló y volvió a suscribirse tiene dos suscripciones en Stripe. Un aviso tardío
   // de la vieja (ya muerta) no puede pisar la nueva y dejarlo sin dictar.
@@ -371,7 +378,7 @@ export async function enviarCorreoCancelacion(
 
 /** El médico pidió algo que su cuenta no permite (p. ej. el portal sin haber pagado nunca). */
 export class NoAplica extends Error {
-  constructor(public codigo: "sin_pago" | "vencida") {
+  constructor(public codigo: "sin_pago" | "vencida" | "canal_socio") {
     super(codigo);
   }
 }
@@ -384,15 +391,19 @@ interface FilaCobro {
   trial_ends_at: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  canal: string;
 }
 
 async function filaCobro(userId: string): Promise<FilaCobro> {
   const fila = (await select<FilaCobro>(
     "subscriptions",
-    `select=status,trial_ends_at,stripe_customer_id,stripe_subscription_id&user_id=eq.${userId}`,
+    `select=status,trial_ends_at,stripe_customer_id,stripe_subscription_id,canal&user_id=eq.${userId}`,
   ))[0];
   // La crea el disparador de registro; si falta, algo está roto y es mejor que se note.
   if (!fila) throw new Error(`el médico ${userId} no tiene fila en subscriptions`);
+  // Médico de un socio: le cobra el socio. Ni pago, ni portal, ni reanudar con nosotros: un
+  // botón mal puesto le cobraría dos veces.
+  if (fila.canal && fila.canal !== "directo") throw new NoAplica("canal_socio");
   return fila;
 }
 

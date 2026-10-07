@@ -235,6 +235,9 @@ pub struct EstadoCuenta {
     pub cancel_at_period_end: bool,
     /// Ya puso tarjeta alguna vez: "Administrar pago" en vez de "Suscribirme".
     pub has_billing: bool,
+    /// `directo` (venta nuestra, Stripe) o el socio que le cobra (`gmedic`). A quien le cobra un
+    /// socio no se le muestran pagos: los maneja el socio.
+    pub canal: Option<String>,
     /// Dictados y minutos de audio de la cuenta. Solo llegan cuando ya no puede dictar (fin de
     /// prueba o suscripción vencida): son los números de la pantalla de "gracias por probar".
     pub dictados: Option<u32>,
@@ -257,6 +260,7 @@ impl EstadoCuenta {
             current_period_end: None,
             cancel_at_period_end: false,
             has_billing: false,
+            canal: None,
             dictados: None,
             minutos_dictados: None,
             devices: Vec::new(),
@@ -299,6 +303,8 @@ struct SuscripcionResp {
     cancel_at_period_end: bool,
     #[serde(default)]
     has_billing: bool,
+    #[serde(default)]
+    canal: Option<String>,
 }
 #[derive(Deserialize)]
 struct EquipoResp {
@@ -330,6 +336,7 @@ impl RespuestaCuenta {
             current_period_end: sub.as_ref().and_then(|s| s.current_period_end.clone()),
             cancel_at_period_end: sub.as_ref().map(|s| s.cancel_at_period_end).unwrap_or(false),
             has_billing: sub.as_ref().map(|s| s.has_billing).unwrap_or(false),
+            canal: sub.as_ref().and_then(|s| s.canal.clone()),
             dictados: self.usage.as_ref().map(|u| u.dictados),
             minutos_dictados: self.usage.as_ref().map(|u| u.minutos),
             offline: false,
@@ -621,6 +628,7 @@ fn es_pagina_de_stripe(url: &str) -> bool {
 
 /// Llama a una acción de cobro de `account`. Errores: `sin_conexion`, `sin_sesion`, `sin_pago`
 /// (pidió el portal sin haber pagado nunca), `vencida` (reanudar algo que ya terminó),
+/// `canal_socio` (le cobra un socio como gMedic, no nosotros),
 /// `cobro_no_disponible` (Stripe sin configurar del lado del servidor) o `servidor`.
 async fn accion_de_cobro(app: &AppHandle, accion: &str) -> Result<serde_json::Value, String> {
     let acceso = token_valido(app).await.ok_or_else(|| "sin_sesion".to_string())?;
@@ -641,7 +649,7 @@ async fn accion_de_cobro(app: &AppHandle, accion: &str) -> Result<serde_json::Va
     }
     warn!("La acción de cobro {accion} devolvió {estado}");
     Err(match (estado.as_u16(), cuerpo["error"].as_str()) {
-        (409, Some(codigo @ ("sin_pago" | "vencida"))) => codigo.to_string(),
+        (409, Some(codigo @ ("sin_pago" | "vencida" | "canal_socio"))) => codigo.to_string(),
         (503, _) => "cobro_no_disponible".to_string(),
         _ => "servidor".to_string(),
     })

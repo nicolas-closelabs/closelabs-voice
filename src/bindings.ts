@@ -1079,6 +1079,11 @@ status: string | null; trial_ends_at: string | null; current_period_end: string 
  */
 has_billing: boolean; 
 /**
+ * `directo` (venta nuestra, Stripe) o el socio que le cobra (`gmedic`). A quien le cobra un
+ * socio no se le muestran pagos: los maneja el socio.
+ */
+canal: string | null; 
+/**
  * Dictados y minutos de audio de la cuenta. Solo llegan cuando ya no puede dictar (fin de
  * prueba o suscripción vencida): son los números de la pantalla de "gracias por probar".
  */

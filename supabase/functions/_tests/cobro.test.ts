@@ -15,7 +15,7 @@ const env: Record<string, string> = {
   SUPABASE_URL: "https://db.test",
   SUPABASE_SERVICE_ROLE_KEY: "x",
   STRIPE_SECRET_KEY: "rk_test_x",
-  STRIPE_PRICE_ID: "price_11usd",
+  STRIPE_PRICE_ID: "price_12usd",
   RESEND_API_KEY: "re_x",
 };
 (globalThis as any).Deno = { env: { get: (k: string) => env[k] } };
@@ -42,6 +42,7 @@ function reiniciar() {
     cancel_at_period_end: false,
     stripe_customer_id: null,
     stripe_subscription_id: null,
+    canal: "directo",
   };
   subsStripe = {};
   llamadas = [];
@@ -244,7 +245,7 @@ await prueba("pago en plena prueba", async () => {
   const p = new URLSearchParams(crear.cuerpo);
   ok(p.get("metadata[user_id]") === USER && p.get("email") === "ana@clinica.test", "cliente con correo y dueño", crear.cuerpo);
   const s = new URLSearchParams(llamadas.find((l) => l.url.endsWith("/v1/checkout/sessions"))!.cuerpo);
-  ok(s.get("mode") === "subscription" && s.get("line_items[0][price]") === "price_11usd", "suscripción al precio de US$11");
+  ok(s.get("mode") === "subscription" && s.get("line_items[0][price]") === "price_12usd", "suscripción al precio de US$12");
   ok(s.get("subscription_data[trial_end]") === String(unix(Date.parse(fila.trial_ends_at))), "primer cobro el día que termina la prueba", s.get("subscription_data[trial_end]"));
   ok(s.get("subscription_data[metadata][user_id]") === USER, "la suscripción sabe de quién es");
   ok((s.get("success_url") ?? "").includes("primer_cobro="), "la página de listo sabe cuándo es el primer cobro");
@@ -411,6 +412,30 @@ await prueba("sin llave de Stripe: error claro", async () => {
   } finally {
     env.STRIPE_SECRET_KEY = k;
   }
+});
+
+// =============================================================================================
+// Canal de un socio (gMedic): le cobra el socio, nunca nosotros
+// =============================================================================================
+await prueba("socio: ni pago, ni portal, ni reanudar", async () => {
+  Object.assign(fila, { canal: "gmedic", status: "active", stripe_customer_id: "cus_1", stripe_subscription_id: "sub_1" });
+  for (const [nombre, fn] of [
+    ["pago", () => cobro.abrirPago(USER, null)],
+    ["portal", () => cobro.abrirPortal(USER)],
+    ["reanudar", () => cobro.reanudar(USER)],
+  ] as const) {
+    let codigo = "";
+    try { await fn(); } catch (e: any) { codigo = e.codigo; }
+    ok(codigo === "canal_socio", `${nombre} → NoAplica('canal_socio')`, codigo);
+  }
+  ok(!llamadas.some((l) => l.url.includes("stripe.com")), "ninguna llamada a Stripe");
+});
+
+await prueba("socio: un aviso de Stripe no pisa su interruptor", async () => {
+  Object.assign(fila, { canal: "gmedic", status: "active", stripe_subscription_id: "sub_1", stripe_customer_id: "cus_1" });
+  sub("sub_1", { status: "canceled", ended_at: unix(AHORA - DIA) });
+  const r = await cobro.sincronizar("sub_1");
+  ok(r.resultado === "ignorada" && fila.status === "active", "sigue activo", { r, fila });
 });
 
 // =============================================================================================

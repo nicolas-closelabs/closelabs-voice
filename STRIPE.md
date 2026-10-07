@@ -5,7 +5,8 @@
 
 ## Lo decidido (ver ROADMAP, Fase 2)
 
-- **US$11 al mes**, en dólares. Cuenta de Stripe de **CLOSELABS LLC**.
+- **US$12 al mes**, en dólares, **igual en todos los canales** (desde 2026-10-06; antes US$11):
+  comprar directo no puede salir más barato que comprar por gMedic. Cuenta de **CLOSELABS LLC**.
 - La prueba de 30 días arranca **sin tarjeta**. La tarjeta se pone al final, desde "Mi cuenta".
 - Quien pone la tarjeta en plena prueba **no pierde días**: el primer cobro llega el día que la
   prueba iba a terminar. Si le quedan menos de 48 h, Stripe no acepta esa fecha y se le corre a
@@ -33,7 +34,7 @@
 
 | Situación | Qué ve | Botón |
 |---|---|---|
-| En prueba, sin tarjeta | Días que le quedan | "Suscribirme · US$11 al mes" (destacado solo en los últimos 5 días) |
+| En prueba, sin tarjeta | Días que le quedan | "Suscribirme · US$12 al mes" (destacado solo en los últimos 5 días) |
 | En prueba, con tarjeta | Fecha del primer cobro | Administrar pago · Cancelar suscripción |
 | Activa | Fecha de renovación | Administrar pago · Cancelar suscripción |
 | Canceló, le queda período | "Puedes seguir dictando hasta el…" | **Reanudar suscripción** · Administrar pago |
@@ -57,13 +58,35 @@ desorden, y con esta regla da igual.
 **Quien dicta lo decide `authorize_device_v2`, no Stripe:** la fecha manda sobre el estado (ver
 migración 20260920000006). Lo único que hace el webhook es tener las fechas al día.
 
+## Médicos de un socio (gMedic): sin Stripe, sin prueba
+
+Desde 2026-10-06 (migración `20261006000003_canal_socios.sql`). Cada suscripción tiene un **canal**:
+`directo` (todo lo de este documento) o `gmedic`. Al médico de gMedic le cobra gMedic: entra
+**activo y sin prueba**, "Mi cuenta" dice "Tu suscripción la maneja gMedic" sin ningún botón de
+pago, y el servidor rechaza pago, portal y reanudar (`canal_socio`). Dicta mientras su interruptor
+(`status`) esté en `active`; las fechas no cuentan. Un aviso de Stripe no lo toca.
+
+**Manual primero** (decisión de Nicolás): gMedic nos manda altas y bajas y nosotros las aplicamos
+en el SQL editor de Supabase:
+
+```sql
+select socio_autorizar('medica@clinica.com');   -- alta: si ya tiene cuenta, la pasa a gMedic y la activa;
+                                               -- si no, entra activa (sin prueba) cuando se registre
+select socio_pausar('medica@clinica.com');      -- baja: deja de dictar desde ya
+select * from socio_medicos order by email;     -- médicos de gMedic, estado y uso del mes (para facturar)
+```
+
+Si estaba pausado y gMedic lo reactiva: `socio_autorizar` otra vez. Si alguien que pagaba directo
+pasa a gMedic, `socio_autorizar` lo avisa: hay que cancelar a mano su suscripción en Stripe para que
+no pague dos veces.
+
 ## Secretos (Supabase → Edge Functions → Secrets)
 
 | Secreto | Qué es |
 |---|---|
 | `STRIPE_SECRET_KEY` | Llave **restringida** (`rk_…`): Customers W, Checkout Sessions W, Customer Portal W, Subscriptions W, Prices R, Products R. Nada más |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret del endpoint (`whsec_…`) |
-| `STRIPE_PRICE_ID` | El precio de US$11 mensual (`price_…`) |
+| `STRIPE_PRICE_ID` | El precio de US$12 mensual (`price_…`) |
 | `RESEND_API_KEY` | Ya existía; manda el correo de cancelación desde `cuenta@closelabs.co` |
 
 ⚠️ **Los tres de Stripe se cambian JUNTOS** al pasar a pagos reales. Una llave de prueba con un
@@ -101,7 +124,7 @@ Para revisar: `select * from stripe_eventos order by recibido_at desc;` y la fil
 | Caso | Resultado |
 |---|---|
 | Pagar en plena prueba | ✅ Tarjeta guardada, sin cobro; primer cobro el día que terminaba la prueba |
-| Pagar con la prueba vencida | ✅ US$11 al momento, activa por un mes |
+| Pagar con la prueba vencida | ✅ US$11 (el precio de entonces) al momento, activa por un mes |
 | "Suscribirme" estando suscrito | ✅ Lleva al portal, nunca a un segundo pago |
 | Cancelar en el portal (con motivo) | ✅ Sigue dictando hasta el fin del período; **un** correo |
 | Reanudar | ✅ La app recibe el estado al instante |

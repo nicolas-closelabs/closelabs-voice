@@ -146,7 +146,7 @@ cambia la URL.
     paso difícil justo cuando un médico de 50+ está solo con la app, y ahí abandona. La prueba de
     30 días arranca sin tarjeta (como hoy); la tarjeta se agrega desde "Mi cuenta", con avisos en
     los últimos días.
-  - **US$11 al mes, en dólares.**
+  - **US$12 al mes, en dólares** (era US$11; subió el 2026-10-06 para igualar el canal gMedic).
   - **Fin de la prueba sin pagar:** una pantalla amable ("gracias por probar"), con lo que el médico
     dictó en su prueba y UN botón para seguir. Nada de mensajes de error.
   - Pago y portal: páginas de Stripe en el navegador (Checkout + Customer Portal); la tarjeta nunca
@@ -397,6 +397,12 @@ cambia la URL.
   arrancar la app si está cerrada).
 
 **3. Usuarios y pagos los maneja gMedic.**
+- [x] **Canal de socio — HECHO 2026-10-06** (aprobado por Nicolás; va en la 0.9.0): cada cuenta
+  tiene `canal` (directo | gmedic). El médico de gMedic entra activo, sin prueba, y no ve nada de
+  pagos; nosotros lo activamos y pausamos con `socio_autorizar` / `socio_pausar` y vemos el uso
+  del mes en `socio_medicos`. Cómo se usa: `STRIPE.md`, "Médicos de un socio".
+- [x] **Precio igual en todos los canales: US$12** (2026-10-06). La venta directa estaba en US$11,
+  más barata que gMedic. Términos 1.1 publicados (solo cambia el precio).
 - [x] **Cortar el acceso a quien no paga — HECHO 2026-09-23 (v0.8.3).** El respaldo local se
   activaba con CUALQUIER error, incluidos 'no pagó' y 'se acabó la prueba': bastaba apagar el wifi
   para dictar gratis para siempre. Era condición para cualquier trato donde otro cobre. Ver BACKLOG.
