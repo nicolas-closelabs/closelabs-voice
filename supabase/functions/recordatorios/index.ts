@@ -23,12 +23,28 @@ interface Pendiente {
   minutos: number;
 }
 
+/**
+ * ¿Es una llave de servicio del proyecto? Se prueba contra la base leyendo `app_config`, que solo
+ * la llave de servicio puede leer. No se compara el texto: Supabase tiene dos formatos de llave
+ * (el JWT de siempre y `sb_secret_…`) y la del entorno de la función puede ser la otra.
+ */
+async function esLlaveDeServicio(llave: string): Promise<boolean> {
+  if (!llave) return false;
+  const res = await fetchWithTimeout(
+    `${Deno.env.get("SUPABASE_URL")}/rest/v1/app_config?select=id&limit=1`,
+    { headers: { apikey: llave, authorization: `Bearer ${llave}` } },
+    10_000,
+  ).catch(() => null);
+  if (!res?.ok) return false;
+  const filas = await res.json().catch(() => []);
+  return Array.isArray(filas) && filas.length > 0;
+}
+
 Deno.serve(async (req) => {
   const secretoCron = Deno.env.get("ALERT_CRON_SECRET") ?? "";
-  const llave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const autorizado =
     (secretoCron && req.headers.get("x-alert-secret") === secretoCron) ||
-    (llave && req.headers.get("x-service-key") === llave);
+    (await esLlaveDeServicio(req.headers.get("x-service-key") ?? ""));
   if (!autorizado) return json({ error: "unauthorized" }, 401);
 
   const resend = Deno.env.get("RESEND_API_KEY");
