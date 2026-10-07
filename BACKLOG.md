@@ -1,7 +1,7 @@
 # BACKLOG — CloseLabs Voice
 
 > Feedback y pendientes acumulados para hacer **un build grande con todo junto** (no builds
-> sueltos). Última actualización: 2026-09-30. Lo abierto de verdad está resumido en la sección
+> sueltos). Última actualización: 2026-10-07. Lo abierto de verdad está resumido en la sección
 > "Para la próxima versión de la app" de ROADMAP.md (Fase 2.5).
 
 ## Estado actual (ya EN PRODUCCIÓN, probado en Silicon + Intel)
@@ -157,7 +157,48 @@
    cuenta (tope 3), con su token y su cupo diario. ⚠️ Nota de negocio: por lo mismo, tres médicos
    pueden compartir una cuenta y pagar una sola suscripción; el tope de 3 lo limita, no lo impide.
 
-## 2026-09-22 — El dictado no se escribía dentro de la propia app
+## 2026-10-05 a 2026-10-07 — v0.9.0: cobro, canal gMedic, actualizaciones y correos de cuenta
+
+Todo en la 0.9.0, probada en el Mac de Nicolás. **No se reparte hasta pasar Stripe a pagos reales**
+(EIN de la LLC): en modo de prueba cualquiera se suscribe gratis con la tarjeta 4242.
+
+| Qué | Dónde está el detalle |
+|---|---|
+| Pipeline de firma (Windows Azure/SSL.com, Mac Developer ID), **listo y apagado** | `FIRMA-Y-DISTRIBUCION.md` |
+| Cobro con Stripe (modo de prueba): pagar, portal, cancelar, reanudar, webhook | `STRIPE.md` |
+| Pop-up de fin de prueba al intentar dictar, y avisos (correo a 3 días, al terminar, y en la app) | `STRIPE.md` |
+| Eliminar mi cuenta (Zona peligrosa) y cerrar sesión solo en este computador | `ZonaPeligrosa.tsx`, `_shared/borrar.ts` |
+| Canal gMedic (sin prueba ni Stripe) y página closelabs.co/voice/admin | `STRIPE.md`, "Médicos de un socio" |
+| Precio US$12 en todos los canales; Términos 1.1 | ROADMAP, Fase 2 |
+| Actualización automática (solo Windows hasta la firma de Apple) | `ACTUALIZACIONES.md` |
+| Páginas propias de confirmar correo y nueva contraseña | `CuentaVoice.tsx` en el repo de la web |
+
+**Lo que encontraron las pruebas (y quedó arreglado):**
+1. **Recuperar la contraseña no funcionaba**: el enlace terminaba en la portada de closelabs.co, sin
+   dónde escribir la nueva. Además, los filtros de correo gastan los enlaces de un solo uso al
+   revisarlos. Ahora el correo lleva un código y lo canjea nuestra página.
+2. **Dos correos de cancelación**: Stripe manda dos avisos casi juntos y se procesaban en paralelo.
+   La transición la decide ahora la base con una escritura condicional.
+3. **"Gracias por probar" no se entendía** (parecía un fallo): se rehízo como pop-up con el orden de
+   una pantalla de pago (qué pasó, qué hacer, precio, botón).
+4. **El aviso "vuelve del navegador" quedaba pegado** y ponía los botones en gris al volver: ahora
+   la puesta al día es silenciosa y el estado de espera sobrevive al cambiar de sección.
+5. **Confirmar el correo parecía exigir "Ya confirmé"**: entrar tarda unos segundos y la pantalla
+   no lo mostraba. Ahora dice "Comprobando…" y reintenta cada 10 s los primeros 3 minutos.
+6. **La venta directa (US$11) era más barata que gMedic (US$12)**: subió a US$12.
+7. **El correo de confirmación y la pantalla de crear cuenta prometían "30 días de prueba"** también
+   al médico de gMedic, que no tiene prueba: ahora no mencionan la prueba.
+8. **El updater heredado traía la llave pública de Handy** (no servía): llave propia.
+
+**Lecciones:**
+- Probar sobre tablas de historial (`socio_cambios`) deja rastro que el servidor no puede borrar (a
+  propósito): hubo que limpiar con migraciones. Probar el historial con cuentas desechables y
+  limpiar en la misma migración.
+- La llave de servicio del CLI y la del entorno de las Edge Functions no son el mismo texto (dos
+  formatos): para autorizarla, probarla contra la base, no compararla.
+- `supabase db query --linked` sí corre SQL (incluido `cron.job`).
+
+
 
 El tutorial "Tu primer dictado" nunca funcionaba (lo encontró Nicolás en Mac Intel con la 0.8.0), y
 tampoco dictar en cualquier campo de la app. Causa: `clipboard::paste` corre en el hilo PRINCIPAL y

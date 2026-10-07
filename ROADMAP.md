@@ -99,7 +99,7 @@ cambia la URL.
   cada 15 min y avisa a `admin@closelabs.co` cuando hay algo accionable. Resend configurado y
   probado con correos reales.
 
-### Fase 2 — Usuarios y suscripción · 🔨 EN CURSO (v0.7.0) — falta solo Stripe
+### Fase 2 — Usuarios y suscripción · ✅ CONSTRUIDA (v0.9.0) — Stripe en modo de prueba hasta tener el EIN
 
 > **Decidido con el cliente el 2026-09-20:** Stripe · **$11/mes** · **30 días de prueba** ·
 > tarjeta al registrarse sin cobro · **3 dispositivos** por cuenta · teléfono obligatorio (además
@@ -186,8 +186,9 @@ cambia la URL.
     GitHub, en rojo, con **doble confirmación** (explicar qué se borra y pedir que escriba su correo
     para confirmar). Borra perfil, equipos, diccionario y suscripción; si hay una suscripción activa,
     se cancela primero en Stripe.
-- [ ] Política de Tratamiento de Datos (Ley 1581, datos sensibles de salud). Los enlaces de la app
-  ya apuntan a `closelabs.co/terminos` y `/privacidad`; faltan las páginas.
+- [x] Política de Tratamiento de Datos y Términos — publicados 2026-10-05 (closelabs.co/privacidad y
+  /terminos). Términos 1.1 (precio US$12 y aliado comercial) el 2026-10-06, **pendiente de que el
+  abogado revise la 1.1 y la sección 11 de la Política** (Vercel Analytics).
 - [x] Páginas en closelabs.co: confirmar correo y recuperar contraseña — HECHO 2026-10-07.
 
 ### Fase 2.5 — Listo para autoservicio y para producción · 🔨 EN CURSO (v0.8.x)
@@ -299,10 +300,11 @@ cambia la URL.
   Resuelto 2026-09-29: no era la duración, eran tramos degradados de Groq turbo. OpenAI no lo hace.
 
 **Para la próxima versión de la app (se juntan en un solo build):**
-- [ ] ⚠️ **Cerrar sesión solo en ESTE computador** (`?scope=local` en `auth_sign_out`): hoy la
-  cierra en todos, tarde y sin avisar. Ítem 18 del BACKLOG.
+- [x] **Cerrar sesión solo en ESTE computador** (`?scope=local`) — en la 0.9.0. Ítem 18 del BACKLOG.
 - [ ] Avisar al médico cuando la red de seguridad actúe (si algún día pasa a `enforce`).
-- [ ] Repartir la 0.8.4 y subir `latest_version` (sigue en 0.6.0).
+- [ ] **Repartir la 0.9.x** cuando Stripe pase a pagos reales (no antes: en modo de prueba cualquiera
+  se suscribe gratis con la tarjeta 4242). Es la ÚLTIMA que se instala a mano: de ahí en adelante
+  Windows se actualiza solo. Subir entonces `latest_version` (sigue en 0.6.0).
 
 **Producción con más de 20 médicos (proveedores):**
 - [x] **Respaldo automático en el proxy.** ✅ 2026-09-21, EN PRODUCCIÓN. Cadenas en `app_config`:
@@ -349,9 +351,10 @@ cambia la URL.
   para probar, y el build falla si algo sale sin firmar, a nombre de otro o sin sello de tiempo.
   Falta: certificados → secretos → corrida manual firmada → prender. Ver *Pipeline de firma* en
   `FIRMA-Y-DISTRIBUCION.md`.
-- [ ] **Firma Windows con SSL.com IV + eSigner** a nombre de Nicolás (~$309/año). Luz verde desde
-  2026-09-21; va primero porque casi todos los médicos usan Windows.
-- [ ] Firma + notarización macOS (Apple Developer, persona natural, $99/año).
+- [ ] **Firma Windows a nombre de CLOSELABS LLC** (Azure Artifact Signing; SSL.com OV de respaldo).
+  Necesita EIN y D-U-N-S. _Plan B si la LLC se demora: SSL.com IV a nombre de Nicolás._
+- [ ] Firma + notarización macOS (Apple Developer **como organización**, $99/año; necesita D-U-N-S).
+  Con ella se prende también la actualización automática en Mac (`--con-mac`).
   ⚠️ **Mientras no esté firmada, el permiso de Accesibilidad se cae en CADA versión nueva** (va
   atado al hash del binario): el interruptor se ve encendido pero no vale, y hay que apagarlo y
   encenderlo. Se decidió NO ponerlo en la app (2026-09-23: es ruido para el médico nuevo, que es
@@ -361,7 +364,9 @@ cambia la URL.
   updater, archivos firmados en el CI, función `update` + tabla `versiones`, "La versión X está
   lista · Reiniciar ahora" (nunca se instala sola) y `scripts/publicar-version.sh`. Mac se prende
   con la firma de Apple (`--con-mac`). Ver `ACTUALIZACIONES.md`.
-- [ ] Build Windows probado de punta a punta.
+- [ ] **Build Windows probado de punta a punta** con una persona real (Santiago o Lucí, instalador
+  "prueba 4"): crear cuenta y confirmar el correo, pagar/cancelar/reanudar, y recibir una
+  actualización automática (0.9.1 publicada con `--probar`).
 
 ### Fase 4 — Diferenciadores
 - [ ] Sincronizar el diccionario MANUAL en la nube (nunca las palabras aprendidas).
@@ -369,7 +374,7 @@ cambia la URL.
 - [ ] Inicio con los dictados de la sesión (solo en memoria) + clic para copiar.
 - [ ] Instrucciones con videos cortos.
 
-### Fase 5 — Canal gMedic (socio distribuidor) · ❓ SIN DECIDIR (propuesta enviada 2026-09-23)
+### Fase 5 — Canal gMedic (socio distribuidor) · 🔨 CANAL CONSTRUIDO (2026-10-06/07) — falta cerrar el trato
 
 > **No arranca hasta que gMedic acepte.** gMedic es un software de historias clínicas que vio Voice
 > y quiere ofrecerlo a sus médicos. Nada de esta fase se construye "por si acaso": el orden está
@@ -413,10 +418,11 @@ cambia la URL.
 - [x] **Cortar el acceso a quien no paga — HECHO 2026-09-23 (v0.8.3).** El respaldo local se
   activaba con CUALQUIER error, incluidos 'no pagó' y 'se acabó la prueba': bastaba apagar el wifi
   para dictar gratis para siempre. Era condición para cualquier trato donde otro cobre. Ver BACKLOG.
-- [ ] **Manual primero, a propósito** (decisión de Nicolás, 2026-09-23): gMedic manda la lista de
-  activos y avisa las bajas cuando pasan; nosotros encendemos y apagamos. Ya se puede hacer hoy con
-  la base tal como está: cero código, cero piezas nuevas que se rompan.
-- [ ] Reporte mensual de uso por médico para conciliar la factura (sale de `usage_events`).
+- [x] **Manual primero** (decisión de Nicolás, 2026-09-23): gMedic manda altas y bajas y nosotros
+  las aplicamos — desde 2026-10-07 en **closelabs.co/voice/admin** (administradores: Nicolás,
+  Santiago, admin@), sin SQL. Cada alta y baja queda registrada con quién y cuándo.
+- [x] Reporte mensual de uso por médico para conciliar la factura — en la misma página
+  (activos en el mes, dictados, historial, descarga para Excel).
 - [ ] Automatizar con una API para socios (crear/activar/suspender cupos) **solo pasando ~100
   médicos**, cuando los 10 minutos al mes dejen de ser suficientes.
 
@@ -450,8 +456,12 @@ cambia la URL.
 |---|---|---|
 | 1 | Crear proyecto Supabase (org CloseLabs) y compartir URL + anon key; service role solo como secreto | Fase 1 |
 | 2 | ~~Plan B de proveedor~~ **RESUELTO 2026-09-20**: DeepInfra y OpenAI medidos y configurados; cambiar es una línea de SQL. Sigue pendiente Groq: **habilitar facturación (tier pago)** — el gratis tiene un techo de 8.000 tokens/minuto para toda la cuenta, o sea ~6 dictados por minuto entre TODOS los médicos; con eso no se puede vender. Además: **Zero Data Retention**, límite de gasto y alertas; key de OpenAI como plan B | Fase 1 |
-| 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe (vía la cuenta del socio español; Stripe no opera en Colombia), $11/mes, 30 días de prueba, 3 dispositivos | Fase 2 |
-| 4 | Páginas en closelabs.co: confirmar email, recuperar contraseña, suscripción | Fase 2 |
-| 5 | Abogado: política de datos sensibles (salud), transferencia internacional (Groq/Supabase en EE. UU.) | Fase 2 |
+| 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe de **CLOSELABS LLC** (modo de prueba hasta el EIN), **US$12/mes en todos los canales**, 30 días de prueba en la venta directa, 3 dispositivos | Fase 2 |
+| 4 | ~~Páginas en closelabs.co~~ **HECHO 2026-10-07**: confirmar correo, nueva contraseña, pago, empresa, términos, privacidad | Fase 2 |
+| 5 | Abogado: ~~política y términos v1~~ (aprobados); **revisar Términos 1.1 y la sección 11 de la Política** | Fase 2 |
 | 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |
+| 8 | **EIN de la LLC** → activar Stripe en pagos reales y repartir la 0.9.x | Lanzamiento |
+| 9 | **D-U-N-S de la LLC** → firmas de Windows (Azure) y Apple | Fase 3 |
+| 10 | **Guardar la llave del updater** (`~/.tauri/closelabs-voice-updater.*`) en un gestor de contraseñas | Actualizaciones |
+| 11 | **gMedic**: cerrar el trato y mandar los correos de sus médicos | Fase 5 |
