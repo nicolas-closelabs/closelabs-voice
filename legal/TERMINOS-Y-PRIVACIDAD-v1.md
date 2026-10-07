@@ -1,3 +1,8 @@
+> **2026-10-06 — Términos 1.1 publicados** (closelabs.co/terminos, ver su "Historial de versiones"):
+> precio US$12 y cláusula del aliado comercial en la sección 5. Pendiente de revisión del abogado,
+> junto con la sección 11 de la Política (Vercel Analytics). El texto publicado manda; esta copia
+> se mantiene igual.
+
 # Términos y Condiciones y Política de Tratamiento de Datos — CloseLabs Voice · v1
 
 > **Estado: v1 PUBLICADA en closelabs.co (2026-10-05).** El sitio salió de Lovable: el texto vive
@@ -81,7 +86,7 @@ PÁGINA 1 — ruta /terminos
 
 # Términos y Condiciones de Uso de CloseLabs Voice
 
-Versión 1 · Vigentes desde el 5 de octubre de 2026
+Versión 1.1 · Vigentes desde el 6 de octubre de 2026
 
 ## 1. Quiénes somos
 
@@ -139,6 +144,9 @@ contenido.**
   desde el período siguiente al aviso, y el Usuario puede cancelar antes si no está de acuerdo.
 - El banco del Usuario puede cobrar comisiones por compras internacionales o por conversión de
   moneda; esas comisiones no dependen de CloseLabs.
+- **Si el Usuario contrató a través de un aliado comercial** (por ejemplo, un software de historias
+  clínicas que le ofrece CloseLabs Voice): no aplica la prueba gratis; el servicio queda activo
+  desde el registro, y el cobro, la facturación y la forma de pago los gestiona ese aliado.
 
 ## 6. Cancelación, retracto y reembolsos
 
