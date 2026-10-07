@@ -16,6 +16,8 @@ nadie puede colarle un instalador ajeno.
 | Contraseña | `~/.tauri/closelabs-voice-updater.password`, y el secreto `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` |
 | Llave pública | `plugins.updater.pubkey` en `src-tauri/tauri.conf.json` |
 
+✅ **Respaldo: guardado por Nicolás en su gestor de contraseñas (2026-10-07)**, llave y contraseña.
+
 **Si se pierde la llave privada, las apps instaladas no aceptan ninguna actualización más**: habría
 que reinstalar a mano en cada computador. **Guardar la llave y la contraseña en un gestor de
 contraseñas** (1Password, Bitwarden…) y no borrarlas de ahí nunca. GitHub no deja leer los secretos
