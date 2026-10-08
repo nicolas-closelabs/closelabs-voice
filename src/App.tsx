@@ -597,17 +597,25 @@ function App() {
         onCerrar={cerrarFinDePrueba}
         onCobroAbierto={cerrarFinDePrueba}
       />
+      {/* ⚠️ theme="light", no "system": la app es siempre clara, y con el Mac en modo oscuro sonner
+          pintaba la descripción casi blanca (su regla de tema oscuro le gana a cualquier clase)
+          sobre nuestro fondo blanco. Lo vio Nicolás en el aviso de la actualización. */}
       <Toaster
-        theme="system"
+        theme="light"
         toastOptions={{
           unstyled: true,
           classNames: {
             toast:
-              "bg-background border border-mid-gray/20 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 text-sm",
-            title: "font-medium",
-            // El gris de antes (`mid-gray`) casi no se leía sobre blanco; la descripción suele ser
-            // lo que le dice al médico qué hacer.
-            description: "text-brand-text-secondary",
+              "bg-background border border-mid-gray/20 rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 text-sm w-[392px]",
+            content: "flex-1 min-w-0 flex flex-col gap-0.5",
+            title: "font-semibold",
+            // La descripción suele ser lo que le dice al médico qué hacer: tiene que leerse.
+            description: "text-brand-text-secondary leading-snug",
+            // Sin esto el botón se comprimía hasta partirse en tres líneas ("Reinic / iar / ahora").
+            actionButton:
+              "shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg bg-brand-accent text-white text-[13px] font-semibold hover:bg-brand-accent-secondary transition-colors",
+            cancelButton:
+              "shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg border border-mid-gray/30 text-[13px] font-medium",
           },
         }}
       />
