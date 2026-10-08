@@ -190,6 +190,14 @@ Todo en la 0.9.0, probada en el Mac de Nicolás. **No se reparte hasta pasar Str
    al médico de gMedic, que no tiene prueba: ahora no mencionan la prueba.
 8. **El updater heredado traía la llave pública de Handy** (no servía): llave propia.
 
+**El ícono se ve gris con efecto de vidrio en macOS 26 — se DEJA ASÍ (decisión de Nicolás, 2026-10-07).**
+No es el archivo: la 0.9.2 trae el isotipo limpio de Presenter Tools, negro y más grande. Es que el
+CI compila con el SDK de macOS 26 (`macos-latest` se actualizó solo), y macOS 26 convierte a su
+estilo "Liquid Glass" el ícono `.icns` de toda app compilada con ese SDK. Presenter Tools (SDK 14)
+se ve tal cual. Si algún día molesta: (A) fijar el runner en `macos-15` (una línea; vuelve al SDK
+15) o (B) un ícono en formato Icon Composer (`CFBundleIconName` + Assets.car), lo que Apple espera
+a futuro; conviene hacerlo junto con la firma de Apple.
+
 **Lecciones:**
 - Probar sobre tablas de historial (`socio_cambios`) deja rastro que el servidor no puede borrar (a
   propósito): hubo que limpiar con migraciones. Probar el historial con cuentas desechables y
