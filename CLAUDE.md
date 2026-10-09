@@ -35,6 +35,13 @@
 > primer respaldo). Ganó la prueba ácida con la regla fijada antes de medir: 0 fallos de contenido
 > contra 4, a cambio de ~3 s más en dictados largos. Ver `pruebas-dictado/README.md`.
 >
+> **2026-10-09 — gpt-6-luna PASÓ A ESFUERZO `none`** (antes `low`; el primer médico real se quejó
+> de lentitud en dictados largos). Banco: 240/240 respuestas sin perder contenido (15 × 16 casos),
+> mediana 2,1 s contra 3,5 s, y el de 6 min de 6,2 a 2,7 s. `minimal` no lo acepta el modelo.
+> Volver atrás es una fila: `update providers set format_reasoning_effort = 'low' where name =
+> 'openai-luna';`. Para medir variantes sin tocar a los médicos: filas aparte (`openai-luna-none`)
+> y `bun pruebas-dictado/correr.ts --forzar <proveedor>` (usa la llave de servicio).
+>
 > **2026-09-29 — BUG GRAVE CORREGIDO en el corte del dictado:** `enFrases` descartaba, en todo
 > dictado de más de 600 caracteres, las frases que tenían un decimal ("7.2", "38.2"): se perdían
 > signos vitales y laboratorios sin aviso. Estuvo desde el 2026-09-23. Ahora hay una guarda: si los

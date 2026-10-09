@@ -1,0 +1,31 @@
+{
+  "etiqueta": "humo-openai-luna-none",
+  "fecha": "2026-10-09T19:23:48.160Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "1/1",
+        "conserva": "1/1",
+        "formato_basico": "1/1",
+        "longitud": "1/1"
+      },
+      "medianaMs": 4321,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna-none": 1
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 4,
+    "de": 4,
+    "medianaMs": 4321,
+    "peorMs": 4321,
+    "fallosContenido": 0,
+    "respuestasMedidas": 1,
+    "proveedor": "openai-luna-none",
+    "deRespaldo": 0
+  }
+}

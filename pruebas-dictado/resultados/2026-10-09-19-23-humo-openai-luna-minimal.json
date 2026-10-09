@@ -1,0 +1,29 @@
+{
+  "etiqueta": "humo-openai-luna-minimal",
+  "fecha": "2026-10-09T19:23:45.242Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "0/0",
+        "conserva": "0/0",
+        "formato_basico": "0/0",
+        "longitud": "0/0"
+      },
+      "medianaMs": 0,
+      "errores": 1,
+      "deRespaldo": 0,
+      "servidoPor": {},
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 0,
+    "de": 4,
+    "medianaMs": 0,
+    "peorMs": 0,
+    "fallosContenido": 0,
+    "respuestasMedidas": 0,
+    "proveedor": "openai-luna-minimal",
+    "deRespaldo": 0
+  }
+}

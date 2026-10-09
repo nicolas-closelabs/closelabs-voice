@@ -1,0 +1,282 @@
+{
+  "etiqueta": "rapidez-openai-luna",
+  "fecha": "2026-10-09T19:24:20.680Z",
+  "casos": {
+    "corto-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "conserva": "4/4",
+        "formato_basico": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 4708,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "corto-signos": {
+      "comprobaciones": {
+        "contiene:140/90": "4/4",
+        "contiene:98": "4/4",
+        "contiene:94": "4/4",
+        "contiene:36": "4/4",
+        "formato_basico": "4/4"
+      },
+      "medianaMs": 3383,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "largo-3min": {
+      "comprobaciones": {
+        "termina_en": "4/4",
+        "conserva": "4/4",
+        "numeros_intactos": "4/4",
+        "contiene:hospitalización": "4/4",
+        "no_contiene:urgencias": "4/4",
+        "no_contiene:mentira": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 5761,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "largo-6min": {
+      "comprobaciones": {
+        "termina_en": "4/4",
+        "conserva": "4/4",
+        "contiene:850": "4/4",
+        "no_contiene:1000": "4/4",
+        "no_contiene:mentira": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 6206,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "muletillas-ingles": {
+      "comprobaciones": {
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "contiene:2022": "4/4",
+        "formato_basico": "4/4"
+      },
+      "medianaMs": 3152,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-1-3-laboratorios": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 3496,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-1-5-medicamentos": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 3515,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-2-2b-examen": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "termina_en": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 3797,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-3-2-prenatal": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "contiene:niega": "4/4",
+        "contiene:29 semanas": "4/4",
+        "contiene:28 semanas": "4/4",
+        "no_contiene:perdón": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 4153,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-3-5-ansiedad": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "contiene:niega ideación suicida": "4/4",
+        "contiene:50 mg|50 miligramos": "4/4",
+        "no_contiene:mentira": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 5038,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-3-6-urgencias": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "termina_en": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 3112,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "real-3-7-pluripatologico": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "formato_basico": "4/4",
+        "sin_muletillas": "4/4",
+        "conserva": "4/4",
+        "contiene:endocrinolog": "4/4",
+        "no_contiene:nefrolog": "4/4",
+        "no_contiene:me equivoqué": "4/4",
+        "termina_en": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 3761,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "retract-dosis": {
+      "comprobaciones": {
+        "numeros_intactos": "4/4",
+        "no_contiene:mentira": "4/4",
+        "conserva": "4/4"
+      },
+      "medianaMs": 2458,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "retract-lista": {
+      "comprobaciones": {
+        "contiene:850": "4/4",
+        "no_contiene:1000": "4/4",
+        "no_contiene:mentira": "4/4",
+        "conserva": "4/4"
+      },
+      "medianaMs": 4748,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "retract-remision": {
+      "comprobaciones": {
+        "contiene:neurolog": "4/4",
+        "no_contiene:cardiolog": "4/4",
+        "no_contiene:equivoqu": "4/4",
+        "contiene:valoración": "4/4"
+      },
+      "medianaMs": 2576,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    },
+    "trampa-palabras": {
+      "comprobaciones": {
+        "contiene:mentiras": "4/4",
+        "contiene:perdón": "4/4",
+        "contiene:coma": "4/4",
+        "contiene:punto de sutura": "4/4",
+        "longitud": "4/4"
+      },
+      "medianaMs": 2646,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 4
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 90,
+    "de": 90,
+    "medianaMs": 3511,
+    "peorMs": 6417,
+    "fallosContenido": 0,
+    "respuestasMedidas": 64,
+    "proveedor": "openai-luna",
+    "deRespaldo": 0
+  }
+}
