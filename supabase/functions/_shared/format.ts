@@ -74,6 +74,8 @@ export async function formatText(
   deviceId: string,
   text: string,
   systemPrompt: string,
+  /** Solo el banco de pruebas: medir un proveedor que no está en la cadena de producción. */
+  forzar?: string,
 ): Promise<FormatResult> {
   if (!text.trim() || !systemPrompt.trim()) {
     return { ok: false, code: "bad_request", status: 400 };
@@ -85,7 +87,7 @@ export async function formatText(
 
   let routes: Route[];
   try {
-    routes = await resolveRoutes("format");
+    routes = await resolveRoutes("format", forzar);
   } catch (e) {
     console.error("ruteo:", (e as Error).message);
     return { ok: false, code: "provider_error", status: 503 };

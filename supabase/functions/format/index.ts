@@ -7,6 +7,7 @@
 import { fail, json } from "../_shared/http.ts";
 import { authorize, touchDevice, type DenyReason } from "../_shared/auth.ts";
 import { formatText } from "../_shared/format.ts";
+import { esLlaveDeServicio } from "../_shared/servicio.ts";
 
 /**
  * Traduce el motivo de la base a una respuesta HTTP.
@@ -48,7 +49,14 @@ Deno.serve(async (req) => {
     return fail("bad_request", 400);
   }
 
-  const result = await formatText(auth.device.deviceId, text, systemPrompt);
+  // Banco de pruebas: medir un proveedor que NO está en producción (p. ej. otro esfuerzo de
+  // razonamiento) sin cambiarle nada a ningún médico. Solo con la llave de servicio del proyecto.
+  const forzar = req.headers.get("x-proveedor-prueba")?.trim() || undefined;
+  if (forzar && !(await esLlaveDeServicio(req.headers.get("x-service-key") ?? ""))) {
+    return fail("auth", 403);
+  }
+
+  const result = await formatText(auth.device.deviceId, text, systemPrompt, forzar);
   if (!result.ok) return fail(result.code, result.status);
 
   return json({ text: result.text, provider: result.provider });

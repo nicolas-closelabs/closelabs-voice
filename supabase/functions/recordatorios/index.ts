@@ -12,6 +12,7 @@ import { json } from "../_shared/http.ts";
 import { rpc, rpcRows } from "../_shared/db.ts";
 import { fetchWithTimeout } from "../_shared/http.ts";
 import { correoRecordatorio, type TipoRecordatorio } from "../_shared/recordatorios.ts";
+import { esLlaveDeServicio } from "../_shared/servicio.ts";
 
 interface Pendiente {
   user_id: string;
@@ -21,23 +22,6 @@ interface Pendiente {
   trial_ends_at: string;
   dictados: number;
   minutos: number;
-}
-
-/**
- * ¿Es una llave de servicio del proyecto? Se prueba contra la base leyendo `app_config`, que solo
- * la llave de servicio puede leer. No se compara el texto: Supabase tiene dos formatos de llave
- * (el JWT de siempre y `sb_secret_…`) y la del entorno de la función puede ser la otra.
- */
-async function esLlaveDeServicio(llave: string): Promise<boolean> {
-  if (!llave) return false;
-  const res = await fetchWithTimeout(
-    `${Deno.env.get("SUPABASE_URL")}/rest/v1/app_config?select=id&limit=1`,
-    { headers: { apikey: llave, authorization: `Bearer ${llave}` } },
-    10_000,
-  ).catch(() => null);
-  if (!res?.ok) return false;
-  const filas = await res.json().catch(() => []);
-  return Array.isArray(filas) && filas.length > 0;
 }
 
 Deno.serve(async (req) => {

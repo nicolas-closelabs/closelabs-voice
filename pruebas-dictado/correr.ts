@@ -11,6 +11,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CASOS = join(AQUI, "casos");
@@ -100,7 +101,12 @@ async function formatear(texto: string, prompt: string, base: string, token: str
   const t0 = Date.now();
   const res = await fetch(`${base.replace(/\/+$/, "")}/format`, {
     method: "POST",
-    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      // --forzar: ese proveedor y ningún otro, aunque no esté en producción (ver /format).
+      ...(forzar ? { "x-proveedor-prueba": forzar, "x-service-key": llaveServicio() } : {}),
+    },
     body: JSON.stringify({ text: texto, system_prompt: prompt }),
   });
   const ms = Date.now() - t0;
@@ -147,7 +153,26 @@ const etiqueta = opcion("etiqueta", "sin-etiqueta")!;
  * mezclaba los dos modelos y parecía de uno solo. El respaldo protege al médico; aquí no puede
  * maquillar la medición.
  */
-const soloProveedor = opcion("proveedor");
+/**
+ * Medir un proveedor que NO está en producción (p. ej. otro esfuerzo de razonamiento) sin cambiarle
+ * nada a ningún médico: /format lo usa solo si la petición trae la llave de servicio. Implica
+ * --proveedor con el mismo nombre (y sin respaldo: si falla, se ve).
+ */
+const forzar = opcion("forzar");
+const soloProveedor = opcion("proveedor") ?? forzar;
+
+let llaveCache = "";
+/** La llave de servicio, pedida al CLI de Supabase en el momento. Nunca se escribe ni se imprime. */
+function llaveServicio(): string {
+  if (!llaveCache) {
+    const salida = execSync("supabase projects api-keys --project-ref gdizmbuzepxnkiahbeoz -o json", {
+      stdio: ["ignore", "pipe", "ignore"],
+    }).toString();
+    llaveCache = JSON.parse(salida).find((k: { name: string }) => k.name === "service_role")?.api_key ?? "";
+    if (!llaveCache) throw new Error("no pude obtener la llave de servicio del CLI de Supabase");
+  }
+  return llaveCache;
+}
 
 const casos: Caso[] = readdirSync(CASOS)
   .filter((f) => f.endsWith(".json"))

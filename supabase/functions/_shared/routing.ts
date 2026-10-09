@@ -182,8 +182,11 @@ function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
  * registros en vez de tumbar la petición: el principal puede estar perfecto. Solo falla si no
  * queda ninguno utilizable.
  */
-export async function resolveRoutes(kind: Kind): Promise<Route[]> {
+export async function resolveRoutes(kind: Kind, forzar?: string): Promise<Route[]> {
   const cfg = await routingConfig();
+  // Solo el banco de pruebas (con la llave de servicio, ver /format): ESE proveedor y ninguno más.
+  // Sin respaldo a propósito: si falla, la medición tiene que verlo, no taparlo con otro modelo.
+  if (forzar) return [buildRoute(cfg, kind, forzar)];
   const principal = kind === "transcribe" ? cfg.transcribeProvider : cfg.formatProvider;
   const respaldo = kind === "transcribe" ? cfg.transcribeFallbacks : cfg.formatFallbacks;
 
