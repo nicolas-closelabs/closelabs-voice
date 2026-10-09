@@ -463,6 +463,10 @@ pub struct AppSettings {
     pub mute_while_recording: bool,
     #[serde(default)]
     pub append_trailing_space: bool,
+    /// Todo el dictado en MAYÚSCULAS (pedido por el primer médico real, 2026-10-09: su historia
+    /// clínica se escribe así). Se aplica al final de todo, ver `process_transcription_output`.
+    #[serde(default)]
+    pub uppercase_output: bool,
     #[serde(default = "default_app_language")]
     pub app_language: String,
     #[serde(default)]
@@ -1023,6 +1027,7 @@ pub fn get_default_settings() -> AppSettings {
         post_process_selected_prompt_id: default_post_process_selected_prompt_id(),
         mute_while_recording: true,
         append_trailing_space: false,
+        uppercase_output: false,
         app_language: default_app_language(),
         experimental_enabled: false,
         lazy_stream_close: false,

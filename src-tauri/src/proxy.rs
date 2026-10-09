@@ -13,11 +13,13 @@
 //! proxy no lo guarda: solo anota cuántos segundos duró. Sin internet, nada de esto corre y el
 //! dictado se resuelve con el Parakeet local.
 
-use std::time::Duration;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
+use std::time::{Duration, Instant};
 
 use log::{debug, info, warn};
 use serde::Deserialize;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 use crate::settings::{get_settings, write_settings};
 
@@ -78,12 +80,81 @@ struct ErrorResponse {
     error: String,
 }
 
-fn client(timeout: Duration) -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
-        .connect_timeout(CONNECT_TIMEOUT)
-        .timeout(timeout)
-        .build()
-        .map_err(|e| format!("cliente http: {e}"))
+/// Un solo cliente para toda la app, que guarda las conexiones abiertas entre un dictado y otro.
+///
+/// ⚠️ Antes se creaba uno nuevo en CADA llamada, y cada dictado pagaba de cero la conexión segura
+/// con el servidor (DNS, TCP y TLS hasta São Paulo) antes de empezar a subir el audio. Con un
+/// cliente compartido, la conexión que abre [`calentar`] al empezar a grabar es la misma que usa
+/// el dictado al terminar. El tope de tiempo va en cada llamada (`.timeout(…)`), no en el cliente.
+fn client() -> Result<&'static reqwest::Client, String> {
+    static CLIENTE: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
+    CLIENTE
+        .get_or_init(|| {
+            reqwest::Client::builder()
+                .connect_timeout(CONNECT_TIMEOUT)
+                .build()
+                .map_err(|e| format!("cliente http: {e}"))
+        })
+        .as_ref()
+        .map_err(|e| e.clone())
+}
+
+/// Cada cuánto se vuelve a tocar el servidor mientras el médico sigue hablando. Por debajo de los
+/// 90 s que el cliente guarda una conexión sin uso, para que un dictado largo no la pierda.
+const RECALENTAR_CADA: Duration = Duration::from_secs(40);
+/// Tope de vueltas: si el atajo de parar nunca llega (la app se colgó a mitad), no se queda
+/// tocando el servidor para siempre. 15 × 40 s = 10 min de dictado.
+const MAX_VUELTAS: u32 = 15;
+const CALENTAR_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Cambia con cada grabación que empieza: si el médico vuelve a grabar antes de que el
+/// calentamiento anterior termine, queda uno solo.
+static GRABACION: AtomicU64 = AtomicU64::new(0);
+
+/// Deja lista la línea con el servidor MIENTRAS el médico habla, para que al soltar el atajo el
+/// audio salga de inmediato.
+///
+/// Hace un GET a `/dictate`, que contesta 405 sin mirar la cuenta ni tocar ningún proveedor. Con
+/// eso se consiguen dos cosas: la conexión segura queda abierta en el cliente compartido y la
+/// función del servidor queda despierta (si llevaba un rato sin uso, el primer dictado pagaba su
+/// arranque). No sube audio ni gasta cupo.
+///
+/// Se repite cada [`RECALENTAR_CADA`] mientras dure la grabación (se pare o se cancele, se detiene
+/// en la vuelta siguiente). Si falla (sin internet) no pasa nada: el dictado hará lo mismo de
+/// siempre.
+pub fn calentar(app: &AppHandle) {
+    let settings = get_settings(app);
+    if !settings.cloud_transcription_enabled {
+        return;
+    }
+    let url = format!("{}/dictate", settings.proxy_base_url.trim_end_matches('/'));
+    let esta = GRABACION.fetch_add(1, Ordering::SeqCst) + 1;
+    let app = app.clone();
+
+    tauri::async_runtime::spawn(async move {
+        for _ in 0..MAX_VUELTAS {
+            let inicio = Instant::now();
+            match client() {
+                Ok(c) => match c.get(&url).timeout(CALENTAR_TIMEOUT).send().await {
+                    // Se lee el cuerpo entero: una conexión con respuesta a medio leer no vuelve
+                    // al grupo y no se podría reutilizar.
+                    Ok(res) => {
+                        let _ = res.bytes().await;
+                        debug!("Conexión con el servidor lista en {:?}", inicio.elapsed());
+                    }
+                    Err(e) => debug!("No se pudo calentar la conexión: {e}"),
+                },
+                Err(e) => debug!("{e}"),
+            }
+            tokio::time::sleep(RECALENTAR_CADA).await;
+            let sigue_grabando = app
+                .state::<std::sync::Arc<crate::managers::audio::AudioRecordingManager>>()
+                .is_recording();
+            if !sigue_grabando || GRABACION.load(Ordering::SeqCst) != esta {
+                break;
+            }
+        }
+    });
 }
 
 /// Lee el cuerpo de un error y devuelve el CÓDIGO que mandó el servidor (`rate_limit`,
@@ -132,9 +203,10 @@ pub async fn ensure_device_token(app: &AppHandle) -> Option<String> {
         "app_version": app.package_info().version.to_string(),
     });
 
-    let res = client(REGISTER_TIMEOUT)
+    let res = client()
         .ok()?
         .post(&url)
+        .timeout(REGISTER_TIMEOUT)
         .json(&body)
         .send()
         .await
@@ -213,13 +285,18 @@ pub async fn dictate(
     let timeout = request_timeout(audio_seconds) + FORMAT_TIMEOUT;
     let url = format!("{}/dictate", settings.proxy_base_url.trim_end_matches('/'));
 
-    let res = client(timeout)?
+    let enviado = Instant::now();
+    let res = client()?
         .post(&url)
+        .timeout(timeout)
         .bearer_auth(&token)
         .multipart(form)
         .send()
         .await
         .map_err(|e| format!("proxy dictate: {e}"))?;
+    // Desde que sale el audio hasta que llega la respuesta: subida + transcripción + limpieza. Lo
+    // del servidor está en `usage_events`; la diferencia es la red del médico.
+    let espera = enviado.elapsed();
 
     if !res.status().is_success() {
         return Err(error_code(res).await);
@@ -229,6 +306,12 @@ pub async fn dictate(
         .json()
         .await
         .map_err(|e| format!("respuesta del proxy: {e}"))?;
+    info!(
+        "Tiempos del dictado: {:.1} s de audio, subida+servidor {} ms, respuesta leída a los {} ms",
+        audio_seconds,
+        espera.as_millis(),
+        enviado.elapsed().as_millis()
+    );
 
     if prompt.is_some() && !body.prompt_sent {
         debug!("El proveedor actual no acepta la pista del diccionario; se transcribió sin ella");
@@ -257,8 +340,9 @@ pub async fn format(app: &AppHandle, text: &str, system_prompt: &str) -> Result<
         .ok_or_else(|| "sin token de instalación".to_string())?;
 
     let url = format!("{}/format", settings.proxy_base_url.trim_end_matches('/'));
-    let res = client(FORMAT_TIMEOUT)?
+    let res = client()?
         .post(&url)
+        .timeout(FORMAT_TIMEOUT)
         .bearer_auth(&token)
         .json(&serde_json::json!({ "text": text, "system_prompt": system_prompt }))
         .send()
@@ -300,6 +384,7 @@ pub async fn dictate_with_fallback(
 
     let mut last = "no se pudo codificar el audio en ningún formato".to_string();
     for format in crate::groq_transcribe::UPLOAD_FORMATS {
+        let codificando = Instant::now();
         let bytes = match (format.encode)(samples) {
             Ok(b) => b,
             Err(e) => {
@@ -309,6 +394,11 @@ pub async fn dictate_with_fallback(
             }
         };
         let kb = bytes.len() / 1024;
+        info!(
+            "Audio codificado en {} en {} ms ({kb} KB)",
+            format.label,
+            codificando.elapsed().as_millis()
+        );
         match dictate(
             app,
             bytes,

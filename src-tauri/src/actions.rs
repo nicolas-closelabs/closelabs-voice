@@ -15,7 +15,7 @@ use crate::utils::{
 };
 use crate::TranscriptionCoordinator;
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -442,6 +442,18 @@ pub(crate) async fn process_transcription_output(
         }
     }
 
+    // MAYÚSCULAS, si el médico las pidió. Va DESPUÉS del diccionario a propósito: es una regla
+    // de presentación sobre el texto ya terminado, y así también sus términos salen en mayúsculas
+    // (en su historia clínica todo va igual). Sin tocar el formateo: el modelo limpia como
+    // siempre y el banco de pruebas sigue valiendo.
+    if settings.uppercase_output {
+        let upper = final_text.to_uppercase();
+        if upper != final_text {
+            final_text = upper;
+            post_processed_text = Some(final_text.clone());
+        }
+    }
+
     if post_processed_text.is_none() && final_text != transcription {
         post_processed_text = Some(final_text.clone());
     }
@@ -605,6 +617,9 @@ impl ShortcutAction for TranscribeAction {
         }
 
         if recording_error.is_none() {
+            // Mientras el médico habla, se deja abierta la conexión con el servidor: al soltar el
+            // atajo el audio sale de inmediato (ver `proxy::calentar`).
+            crate::proxy::calentar(app);
             // Dynamically register the cancel shortcut in a separate task to avoid deadlock
             shortcut::register_cancel_shortcut(app);
         } else {
@@ -802,9 +817,10 @@ impl ShortcutAction for TranscribeAction {
                                     }
 
                                     match utils::paste(final_text, ah_clone.clone()) {
-                                        Ok(()) => debug!(
-                                            "Text pasted successfully in {:?}",
-                                            paste_time.elapsed()
+                                        Ok(()) => info!(
+                                            "Dictado pegado: {} ms desde que se paró la grabación (pegar: {} ms)",
+                                            stop_time.elapsed().as_millis(),
+                                            paste_time.elapsed().as_millis()
                                         ),
                                         Err(e) => {
                                             error!("Failed to paste transcription: {}", e);

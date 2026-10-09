@@ -5,6 +5,7 @@ import { ShortcutInput } from "../ShortcutInput";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { PushToTalk } from "../PushToTalk";
 import { PasteMethodSetting } from "../PasteMethod";
+import { TodoMayusculas } from "../TodoMayusculas";
 import { MicrophoneSelector } from "../MicrophoneSelector";
 import { MuteWhileRecording } from "../MuteWhileRecording";
 import { AudioFeedback } from "../AudioFeedback";
@@ -39,6 +40,7 @@ export const GeneralSettings: React.FC = () => {
 
       <SettingsGroup title="Entrega del texto">
         <PasteMethodSetting descriptionMode="tooltip" grouped={true} />
+        <TodoMayusculas descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
 
       <SettingsGroup title="Sonido">
