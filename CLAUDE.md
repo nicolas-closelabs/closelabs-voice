@@ -42,6 +42,15 @@
 > 'openai-luna';`. Para medir variantes sin tocar a los médicos: filas aparte (`openai-luna-none`)
 > y `bun pruebas-dictado/correr.ts --forzar <proveedor>` (usa la llave de servicio).
 >
+> **2026-10-15 — `/dictate` hace a la vez lo de antes de transcribir.** Verificar la cuenta, leer el
+> audio y leer la configuración iban en fila: ~1,5 s por dictado (mediana) antes de que OpenAI
+> recibiera nada. En paralelo quedan ~0,85 s; un dictado de 27 s pasó de 4,3 a 3,4 s. La respuesta
+> trae `Server-Timing` (solo duraciones) y `bun pruebas-dictado/tiempos-servidor.ts` lo mide.
+> ⚠️ Dos cosas medidas que NO sirven: (1) las cachés en memoria de la función (`authCache`, ruteo)
+> casi nunca aciertan: cada petición cae en otra instancia, así que el calentamiento con caché no
+> ahorra la ida a la base; (2) fijar la función en São Paulo (`x-region: sa-east-1`, junto a la base)
+> baja la base de ~450 a ~130 ms pero sube OpenAI más: mediana 4,3 s contra 3,4 s en Virginia.
+>
 > **2026-09-29 — BUG GRAVE CORREGIDO en el corte del dictado:** `enFrases` descartaba, en todo
 > dictado de más de 600 caracteres, las frases que tenían un decimal ("7.2", "38.2"): se perdían
 > signos vitales y laboratorios sin aviso. Estuvo desde el 2026-09-23. Ahora hay una guarda: si los
