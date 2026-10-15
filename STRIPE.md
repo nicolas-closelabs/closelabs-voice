@@ -76,6 +76,16 @@ secreto, por eso no está escrita en el repositorio. Para dispararla a mano: la 
 `x-service-key`. El correo de confirmación y la pantalla de crear cuenta NO mencionan la prueba: los
 ve también el médico de gMedic.
 
+## Extender o cortar una prueba (desde 2026-10-15)
+
+Mientras estamos en pruebas con médicos, la prueba gratis de una cuenta de venta directa se
+extiende o se corta en **closelabs.co/voice/admin → Pruebas gratis** (o con
+`select prueba_ajustar('medico@x.com', '2026-12-31 23:59:59-05', 'yo');`; una fecha pasada corta).
+Solo cuentas que ya existen y **sin suscripción en Stripe**: a quien puso tarjeta lo maneja Stripe.
+Al extender, los correos de fin de prueba vuelven a contar desde la fecha nueva; al cortar se dan
+por enviados (no llega "tu prueba terminó, suscríbete"). Historial en `prueba_cambios`.
+La cuenta **demo@closelabs.co** tiene prueba hasta el 31 de diciembre de 2026 (la usa un médico).
+
 ## Médicos de un socio (gMedic): sin Stripe, sin prueba
 
 Desde 2026-10-06 (migración `20261006000003_canal_socios.sql`). Cada suscripción tiene un **canal**:

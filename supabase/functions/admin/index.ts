@@ -9,9 +9,15 @@
 // verifica. Por eso `verify_jwt = false` en config.toml: la llamada viene de un navegador, y el
 // preflight de CORS no lleva sesión.
 //
-// GET  ?mes=YYYY-MM                         → { admin, mes, medicos: [...] }
+// GET  ?mes=YYYY-MM                         → { admin, mes, medicos: [...], pruebas: [...] }
 // POST { accion: "alta" | "baja", correos }  → { resultados: [{ email, resultado }] }
 // POST { accion: "historial", email }        → { cambios: [...] }
+// POST { accion: "prueba", email, hasta }    → { resultado }   (hasta = "YYYY-MM-DD", fin del día en Bogotá)
+// POST { accion: "cortar_prueba", email }    → { resultado }
+//
+// Las pruebas (desde 2026-10-15) son las de venta directa: extender o cortar la prueba gratis de
+// una cuenta mientras estamos en pruebas con médicos. La lógica está en `prueba_ajustar` (migración
+// 20261015000001).
 
 import { rpc, rpcRows, select } from "../_shared/db.ts";
 
@@ -24,6 +30,8 @@ function origenPermitido(origen: string | null): string | null {
 }
 
 const MAX_CORREOS = 200;
+/** Tope de una extensión, para que un error al escribir el año no regale acceso por una década. */
+const MAX_DIAS_PRUEBA = 366;
 
 Deno.serve(async (req) => {
   const origen = origenPermitido(req.headers.get("origin"));
@@ -60,8 +68,11 @@ Deno.serve(async (req) => {
     if (req.method === "GET") {
       const pedido = new URL(req.url).searchParams.get("mes") ?? "";
       const mes = /^\d{4}-\d{2}$/.test(pedido) ? pedido : new Date().toISOString().slice(0, 7);
-      const medicos = await rpcRows("socio_uso_mes", { p_mes: `${mes}-01` });
-      return responder({ admin: correo, mes, medicos });
+      const [medicos, pruebas] = await Promise.all([
+        rpcRows("socio_uso_mes", { p_mes: `${mes}-01` }),
+        rpcRows("pruebas_ajustadas", {}),
+      ]);
+      return responder({ admin: correo, mes, medicos, pruebas });
     }
 
     if (req.method !== "POST") return responder({ error: "metodo" }, 405);
@@ -74,6 +85,29 @@ Deno.serve(async (req) => {
         `select=accion,resultado,por,at&email=eq.${encodeURIComponent(email)}&order=at.desc&limit=50`,
       );
       return responder({ cambios });
+    }
+
+    if ((cuerpo.accion === "prueba" || cuerpo.accion === "cortar_prueba") && typeof cuerpo.email === "string") {
+      const email = cuerpo.email.trim().toLowerCase();
+      let hasta = new Date();
+      if (cuerpo.accion === "prueba") {
+        if (typeof cuerpo.hasta !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(cuerpo.hasta)) {
+          return responder({ error: "fecha" }, 400);
+        }
+        // Hasta el final de ese día en Bogotá: "hasta el 31" incluye el 31 entero.
+        hasta = new Date(`${cuerpo.hasta}T23:59:59-05:00`);
+        const dias = (hasta.getTime() - Date.now()) / 86_400_000;
+        if (!Number.isFinite(dias) || dias <= 0 || dias > MAX_DIAS_PRUEBA) {
+          return responder({ error: "fecha" }, 400);
+        }
+      }
+      const resultado = await rpc<string>("prueba_ajustar", {
+        p_email: email,
+        p_hasta: hasta.toISOString(),
+        p_por: correo,
+      });
+      console.log(`admin: ${correo} hizo ${cuerpo.accion} de un correo`);
+      return responder({ resultado: String(resultado) });
     }
 
     if ((cuerpo.accion === "alta" || cuerpo.accion === "baja") && Array.isArray(cuerpo.correos)) {
