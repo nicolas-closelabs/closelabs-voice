@@ -13,7 +13,7 @@
 | 1 | Pie con "© 2026 CLOSELABS GROUP LLC" + página /empresa | Apple y Microsoft verifican que la web sea de la empresa (firmas) | ✅ En vivo (2026-10-05) |
 | 2 | Las 3 páginas de después del pago | Stripe necesita a dónde mandar al médico | ✅ En vivo (2026-10-05), fuera de Google |
 | 2b | Páginas /terminos y /privacidad (v1) | Las enlaza la app al registrarse; las pide Stripe | ✅ En vivo (2026-10-05) |
-| 3 | Dominio a nombre de la LLC en Namecheap | Microsoft acepta la factura del dominio como prueba (firmas) | Pendiente |
+| 3 | Dominio a nombre de la LLC en Namecheap | Microsoft acepta el registro o la factura del dominio como prueba (firmas) | ✅ Titular cambiado (2026-10-15). Falta una factura a nombre de la LLC: renovar antes de tiempo (ver el paso 6) |
 | — | Buzones `contacto@` y `nicolas@` | Verificaciones de Microsoft y contacto | ✅ Hechos (Private Email de Namecheap, 2026-10-05) |
 
 ---
@@ -102,6 +102,11 @@ Página 3 — ruta /voice/cuenta-actualizada
 6. En **Account → Profile**, poner los datos de facturación a nombre de **CLOSELABS GROUP LLC**, para que
    la próxima factura de renovación salga a nombre de la empresa (Microsoft acepta "la factura del
    dominio" como prueba).
+7. **Factura a nombre de la LLC sin esperar la renovación anual:** renovar closelabs.co **un año
+   antes de tiempo** (se suma al vencimiento actual, no se pierde nada). Sale una factura nueva con
+   los datos del paso 6. Microsoft pide documentos emitidos en los **últimos 12 meses** que muestren
+   la empresa, el nombre de contacto y el dominio. Descargar el PDF y comprobar que diga
+   CLOSELABS GROUP LLC; si no, pedirle a soporte de Namecheap que la reemita.
 
 ⚠️ **No tocar los registros DNS.** Verificado el 2026-10-05: el correo de Private Email (MX y SPF
 del dominio principal) y los correos de cuenta de la app (Resend, en el subdominio `send.` y la
