@@ -182,6 +182,15 @@ function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
  * registros en vez de tumbar la petición: el principal puede estar perfecto. Solo falla si no
  * queda ninguno utilizable.
  */
+/**
+ * Deja la configuración de ruteo en la caché de esta instancia, sin usarla todavía. Lo usa
+ * `/dictate` para leerla MIENTRAS verifica la cuenta y recibe el audio, y en el calentamiento que
+ * manda la app al empezar a grabar. Si falla, no pasa nada: el dictado la vuelve a pedir.
+ */
+export async function precalentarRuteo(): Promise<void> {
+  await routingConfig();
+}
+
 export async function resolveRoutes(kind: Kind, forzar?: string): Promise<Route[]> {
   const cfg = await routingConfig();
   // Solo el banco de pruebas (con la llave de servicio, ver /format): ESE proveedor y ninguno más.
