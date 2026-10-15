@@ -13,7 +13,7 @@ ninguna sociedad. **Con la LLC, la recomendación cambia: firmar todo a nombre d
 primer instalador.** Y el momento es ideal: todavía no se ha firmado nada, así que no hay reputación
 que perder (ver *La regla de la identidad*).
 
-**Lo que gana el médico:** el aviso de Windows y el de Mac muestran **"CloseLabs LLC"** (o el
+**Lo que gana el médico:** el aviso de Windows y el de Mac muestran **"CloseLabs Group LLC"** (o el
 nombre legal exacto que tenga), no el nombre de una persona. Para alguien que está decidiendo si
 instala, una empresa con el nombre del producto da más confianza. También pesa con gMedic.
 
@@ -43,7 +43,10 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
 
 ### Datos de la LLC (2026-10-02)
 
-- **Nombre legal: CLOSELABS LLC**, con **dos socios** (Nicolás y el socio español).
+- **Nombre legal: CLOSELABS GROUP LLC**, con **dos socios** (Nicolás y el socio español).
+  ⚠️ **2026-10-15: el nombre oficial es CLOSELABS GROUP LLC**, no "CLOSELABS LLC" como se escribió
+  al principio (hubo un problema con ese nombre). Las firmas, la web, Stripe y los textos legales
+  tienen que decir exactamente CLOSELABS GROUP LLC: Apple y Microsoft comparan los nombres.
 - **EIN: esperado hacia el 2026-10-09.**
 - **D-U-N-S: pedirlo YA, no necesita el EIN.** Por la herramienta de Apple
   (developer.apple.com/enroll/duns-lookup): es gratis, D&B lo emite en **hasta 5 días hábiles** y
@@ -67,7 +70,7 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
 
 ## Pipeline de firma (2026-10-05) — LISTO, APAGADO
 
-El CI ya sabe firmar las dos plataformas a nombre de CLOSELABS LLC. Está **apagado** hasta que
+El CI ya sabe firmar las dos plataformas a nombre de CLOSELABS GROUP LLC. Está **apagado** hasta que
 existan los certificados: hoy los instaladores salen exactamente como antes.
 
 **Los interruptores** están arriba de `.github/workflows/closelabs.yml`, uno por plataforma, porque
@@ -87,13 +90,13 @@ firmada → revisar → cambiar el interruptor.
 - **Antes de compilar:** que estén todas las credenciales. Si falta una, falla en un minuto
   diciendo cuál, en vez de después de 40 minutos de build.
 - **Windows, archivo por archivo** (`.github/scripts/firmar-windows.ps1`): firma válida, **a nombre
-  de CLOSELABS LLC** y **con sello de tiempo**. Sin sello, la firma muere el día que vence el
+  de CLOSELABS GROUP LLC** y **con sello de tiempo**. Sin sello, la firma muere el día que vence el
   certificado y todo instalador ya entregado vuelve a "editor desconocido". Se comprueba aunque la
   herramienta diga que firmó: CodeSignTool puede terminar "bien" sin haber firmado.
 - **Windows, al final:** los dos instaladores, y **todo `.exe` y `.dll` que queda en el computador
   del médico** después de instalarlos. Smart App Control de Windows 11 revisa cada DLL que se
   carga, no solo el instalador.
-- **Mac:** certificado *Developer ID Application* de CLOSELABS LLC, hardened runtime, Gatekeeper
+- **Mac:** certificado *Developer ID Application* de CLOSELABS GROUP LLC, hardened runtime, Gatekeeper
   (`spctl`) aceptándolo como **notarizado**, y el ticket engrapado en el `.app` y en el `.dmg`. El
   `.dmg` se firma y se notariza aparte: es lo que el médico descarga y abre primero.
 
@@ -140,7 +143,7 @@ para Azure. El número real sale en el resumen de cada corrida firmada.
 ### SSL.com OV — si Azure rechaza la validación
 
 Igual que la sección de SSL.com de abajo, con dos diferencias: el certificado es **OV**
-(organización, a nombre de CLOSELABS LLC) en vez de IV, y la llamada de verificación va al teléfono
+(organización, a nombre de CLOSELABS GROUP LLC) en vez de IV, y la llamada de verificación va al teléfono
 **listado públicamente** de la LLC (el del D-U-N-S). Los cuatro secretos `ES_*` son los mismos.
 Probar con la corrida manual `sslcom` **dentro de los 30 días gratis de eSigner**: esa ruta nunca
 se ha corrido contra SSL.com.

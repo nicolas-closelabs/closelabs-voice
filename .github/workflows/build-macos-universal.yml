@@ -32,8 +32,8 @@ on:
 env:
   ORT_VERSION: "1.24.2"
   # A nombre de quién TIENE que quedar firmado (el certificado sale "Developer ID Application:
-  # CLOSELABS LLC (TEAMID)"). Si sale a nombre de otro, no se publica.
-  FIRMA_PUBLISHER: "CLOSELABS LLC"
+  # CLOSELABS GROUP LLC (TEAMID)"). Si sale a nombre de otro, no se publica.
+  FIRMA_PUBLISHER: "CLOSELABS GROUP LLC"
 
 jobs:
   slice:

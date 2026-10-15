@@ -10,7 +10,7 @@
 
 | | Qué | Por qué | Estado |
 |---|---|---|---|
-| 1 | Pie con "© 2026 CLOSELABS LLC" + página /empresa | Apple y Microsoft verifican que la web sea de la empresa (firmas) | ✅ En vivo (2026-10-05) |
+| 1 | Pie con "© 2026 CLOSELABS GROUP LLC" + página /empresa | Apple y Microsoft verifican que la web sea de la empresa (firmas) | ✅ En vivo (2026-10-05) |
 | 2 | Las 3 páginas de después del pago | Stripe necesita a dónde mandar al médico | ✅ En vivo (2026-10-05), fuera de Google |
 | 2b | Páginas /terminos y /privacidad (v1) | Las enlaza la app al registrarse; las pide Stripe | ✅ En vivo (2026-10-05) |
 | 3 | Dominio a nombre de la LLC en Namecheap | Microsoft acepta la factura del dominio como prueba (firmas) | Pendiente |
@@ -18,17 +18,17 @@
 
 ---
 
-## 1. Prompt de Lovable — la web a nombre de CLOSELABS LLC
+## 1. Prompt de Lovable — la web a nombre de CLOSELABS GROUP LLC
 
 La dirección ya está puesta; tiene que ser **la misma** que la del D-U-N-S, letra por letra.
 
 ```
-Necesito que el sitio muestre claramente que pertenece a la empresa CLOSELABS LLC. No cambies el
+Necesito que el sitio muestre claramente que pertenece a la empresa CLOSELABS GROUP LLC. No cambies el
 diseño ni el contenido existente: solo agrega lo siguiente, con el mismo estilo visual del sitio.
 
 1. Pie de página en TODAS las páginas (incluida /voice y cualquier página nueva):
-   - Una línea legal: "© 2026 CLOSELABS LLC. Todos los derechos reservados."
-   - El nombre debe ir exactamente así: CLOSELABS LLC (en mayúsculas, con "LLC").
+   - Una línea legal: "© 2026 CLOSELABS GROUP LLC. Todos los derechos reservados."
+   - El nombre debe ir exactamente así: CLOSELABS GROUP LLC (en mayúsculas, con "LLC").
    - Un enlace de contacto al correo contacto@closelabs.co
    - Enlaces a /terminos y /privacidad (déjalos visibles aunque esas páginas todavía no existan;
      si no existen, no crees contenido legal inventado).
@@ -39,7 +39,7 @@ diseño ni el contenido existente: solo agrega lo siguiente, con el mismo estilo
      inteligencia artificial para clínicas y consultorios médicos en Latinoamérica, como CloseLabs
      Voice, una aplicación de dictado por voz para médicos."
    - Un bloque "Datos de la empresa" con:
-     Razón social: CLOSELABS LLC
+     Razón social: CLOSELABS GROUP LLC
      Dirección: 7345 W Sand Lake Rd, Ste 210, Office 4824, Orlando, FL 32819, United States
      Correo: contacto@closelabs.co
      WhatsApp: +57 310 299 1182 (enlace a https://wa.me/573102991182)
@@ -89,7 +89,7 @@ Página 3 — ruta /voice/cuenta-actualizada
 
 1. Entrar a Namecheap → **Domain List** (menú izquierdo) → botón **Manage** junto a `closelabs.co`.
 2. Bajar hasta la sección de **contactos del dominio** y editar el **Registrant**:
-   - **Organization:** `CLOSELABS LLC`
+   - **Organization:** `CLOSELABS GROUP LLC`
    - **Nombre:** Nicolás, como representante.
    - **Dirección:** 7345 W Sand Lake Rd, Ste 210, Office 4824, Orlando, FL 32819, United States (la misma del D-U-N-S).
    - **Correo:** dejar el Gmail personal, **no** uno `@closelabs.co`: si algún día el dominio
@@ -99,7 +99,7 @@ Página 3 — ruta /voice/cuenta-actualizada
    solo**, y este cambio **no bloquea** el dominio 60 días.
 5. **Dejar activada la privacidad del dominio**: Microsoft no mira el registro público, pide
    documentos.
-6. En **Account → Profile**, poner los datos de facturación a nombre de **CLOSELABS LLC**, para que
+6. En **Account → Profile**, poner los datos de facturación a nombre de **CLOSELABS GROUP LLC**, para que
    la próxima factura de renovación salga a nombre de la empresa (Microsoft acepta "la factura del
    dominio" como prueba).
 

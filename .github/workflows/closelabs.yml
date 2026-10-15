@@ -7,7 +7,7 @@ name: "CloseLabs Voice — Build"
 #   El médico no sabe qué chip tiene. Detalle y verificaciones en build-macos-universal.yml.
 # Windows: instalador .exe (NSIS) y .msi.
 #
-# ===================== FIRMA (a nombre de CLOSELABS LLC) =====================
+# ===================== FIRMA (a nombre de CLOSELABS GROUP LLC) =====================
 # Dos interruptores SEPARADOS, porque los certificados llegan en momentos distintos:
 #
 #   FIRMA_WINDOWS_POR_DEFECTO  apagada | azure | sslcom

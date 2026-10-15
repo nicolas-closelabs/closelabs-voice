@@ -130,7 +130,7 @@ cambia la URL.
 - [x] **Pantallas**: bienvenida, registro con teléfono y consentimiento fechado, recuperar
   contraseña, y "Mi cuenta" con suscripción y equipos.
 - [ ] **Stripe** — lo único grande que falta. 🔨 Arrancado el 2026-09-30, en MODO DE PRUEBA.
-  ✅ **2026-10-06: servidor listo** (cuenta de Stripe de CLOSELABS LLC en modo de prueba,
+  ✅ **2026-10-06: servidor listo** (cuenta de Stripe de CLOSELABS GROUP LLC en modo de prueba,
   `account` con checkout/portal/resume/sync, `stripe-webhook`, correo de cancelación, 58 pruebas).
   ✅ Probado de punta a punta con tarjetas de prueba (dos caminos de pago, cancelar, reanudar).
   ✅ **Pantallas de la app** (próxima versión): panel de suscripción en "Mi cuenta" con el botón
@@ -351,7 +351,7 @@ cambia la URL.
   para probar, y el build falla si algo sale sin firmar, a nombre de otro o sin sello de tiempo.
   Falta: certificados → secretos → corrida manual firmada → prender. Ver *Pipeline de firma* en
   `FIRMA-Y-DISTRIBUCION.md`.
-- [ ] **Firma Windows a nombre de CLOSELABS LLC** (Azure Artifact Signing; SSL.com OV de respaldo).
+- [ ] **Firma Windows a nombre de CLOSELABS GROUP LLC** (Azure Artifact Signing; SSL.com OV de respaldo).
   Necesita EIN y D-U-N-S. _Plan B si la LLC se demora: SSL.com IV a nombre de Nicolás._
 - [ ] Firma + notarización macOS (Apple Developer **como organización**, $99/año; necesita D-U-N-S).
   Con ella se prende también la actualización automática en Mac (`--con-mac`).
@@ -456,10 +456,10 @@ cambia la URL.
 |---|---|---|
 | 1 | Crear proyecto Supabase (org CloseLabs) y compartir URL + anon key; service role solo como secreto | Fase 1 |
 | 2 | ~~Plan B de proveedor~~ **RESUELTO 2026-09-20**: DeepInfra y OpenAI medidos y configurados; cambiar es una línea de SQL. Sigue pendiente Groq: **habilitar facturación (tier pago)** — el gratis tiene un techo de 8.000 tokens/minuto para toda la cuenta, o sea ~6 dictados por minuto entre TODOS los médicos; con eso no se puede vender. Además: **Zero Data Retention**, límite de gasto y alertas; key de OpenAI como plan B | Fase 1 |
-| 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe de **CLOSELABS LLC** (modo de prueba hasta el EIN), **US$12/mes en todos los canales**, 30 días de prueba en la venta directa, 3 dispositivos | Fase 2 |
+| 3 | ~~Decidir pasarela de pago~~ **RESUELTO**: Stripe de **CLOSELABS GROUP LLC** (modo de prueba hasta el EIN), **US$12/mes en todos los canales**, 30 días de prueba en la venta directa, 3 dispositivos | Fase 2 |
 | 4 | ~~Páginas en closelabs.co~~ **HECHO 2026-10-07**: confirmar correo, nueva contraseña, pago, empresa, términos, privacidad | Fase 2 |
 | 5 | ~~Abogado~~ **APROBADO**: Términos y Política v1 (2026-10-04); Términos 1.1 y sección 11 de la Política (2026-10-07) | Fase 2 |
-| 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
+| 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS GROUP LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |
 | 8 | **EIN de la LLC** → activar Stripe en pagos reales y repartir la 0.9.x | Lanzamiento |
 | 9 | **D-U-N-S de la LLC** → firmas de Windows (Azure) y Apple | Fase 3 |

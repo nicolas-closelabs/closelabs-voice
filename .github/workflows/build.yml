@@ -60,7 +60,7 @@ env:
   ASC_VERSION: "0.11.0"
   # A nombre de quién TIENE que quedar firmado todo. Si un archivo sale firmado por otro, el build
   # falla: es el nombre que ve el médico en el aviso de Windows.
-  FIRMA_PUBLISHER: "CLOSELABS LLC"
+  FIRMA_PUBLISHER: "CLOSELABS GROUP LLC"
 
 jobs:
   build:

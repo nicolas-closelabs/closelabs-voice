@@ -202,7 +202,9 @@ Highlights acumulados:
 
 > 📄 **Todo lo de firmar (Apple y Windows) vive en `FIRMA-Y-DISTRIBUCION.md`**: precios, pasos,
 > secretos, y qué puede hacer cada entidad según su país.
-> ⚠️ **2026-10-02: se está constituyendo CLOSELABS LLC (EE.UU., dos socios).** Plan: firmar TODO a
+> ⚠️ **Nombre legal: CLOSELABS GROUP LLC** (desde 2026-10-15; el nombre anterior, "CLOSELABS LLC",
+> tuvo un problema y ya no se usa en ninguna parte). Términos 1.2 / Política 1.1 = `TERMS_VERSION` "v1.2".
+> ⚠️ **2026-10-02: se está constituyendo CLOSELABS GROUP LLC (EE.UU., dos socios).** Plan: firmar TODO a
 > nombre de la LLC — Windows con **Azure Artifact Signing** (~$120/año, 5.000 firmas/mes) y
 > **SSL.com OV** de respaldo (~$309/año) si Azure rechaza la validación; macOS con **Apple como
 > organización** ($99). Faltan el EIN (~2026-10-09) y el D-U-N-S. Hasta entonces, nada comprado:
@@ -365,7 +367,7 @@ Atajo global (toggle) → grabar audio
 | Refine | Nube Groq, offline→raw | Cero RAM/peso local; costo trivial cobrando $30; potente |
 | API key refine | Embebida (v1), límite de gasto + endpoint configurable | Rápido de montar (como Aztec); migrar a proxy = solo cambiar URL |
 | Modelo | Descarga automática 1er arranque (no bundled) | Instalador liviano; UX sin fricción |
-| Firma | A nombre de CLOSELABS LLC: Windows con Azure Artifact Signing (SSL.com OV de respaldo); macOS con Apple como organización | El médico ve "CLOSELABS LLC" en los avisos, no una persona; Azure es más barato y da 5.000 firmas/mes. Ver `FIRMA-Y-DISTRIBUCION.md` (2026-10-02) |
+| Firma | A nombre de CLOSELABS GROUP LLC: Windows con Azure Artifact Signing (SSL.com OV de respaldo); macOS con Apple como organización | El médico ve "CLOSELABS GROUP LLC" en los avisos, no una persona; Azure es más barato y da 5.000 firmas/mes. Ver `FIRMA-Y-DISTRIBUCION.md` (2026-10-02) |
 
 Investigamos a fondo **Aztec Voice** (`co.azteclab.voice`), otro fork de Handy que el cliente
 admira: transcripción híbrida (Groq Whisper online / Parakeet offline), refine con Groq
@@ -519,7 +521,7 @@ cuando lleva pista. Detalle en `BACKLOG.md` (2026-09-20).
 
 ## Roadmap (fuera del v1)
 
-- Firmar a nombre de CLOSELABS LLC (Azure Artifact Signing / SSL.com OV, Apple como organización).
+- Firmar a nombre de CLOSELABS GROUP LLC (Azure Artifact Signing / SSL.com OV, Apple como organización).
   Detalle en `FIRMA-Y-DISTRIBUCION.md`.
 - Proxy propio de refine (sacar la key del binario, medir uso, gating de suscripción).
 - Capa de cuentas/suscripción (estilo Aztec/Supabase) para cobrar.

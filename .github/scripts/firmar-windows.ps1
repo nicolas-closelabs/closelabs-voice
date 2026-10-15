@@ -1,4 +1,4 @@
-# Firma UN archivo de Windows a nombre de CLOSELABS LLC.
+# Firma UN archivo de Windows a nombre de CLOSELABS GROUP LLC.
 #
 # Lo llama Tauri (`bundle.windows.signCommand`, armado en build.yml) por cada archivo que firma: el
 # .exe de la app, nuestras DLL (transcribe/ggml; las de Microsoft ya vienen firmadas y Tauri las
@@ -14,7 +14,7 @@
 # haya firmado, y un instalador que parece firmado y no lo está es lo peor que puede salir de aquí:
 # el médico ve "editor desconocido" y nadie se entera. Se exige, archivo por archivo:
 #   1. firma válida,
-#   2. a nombre de FIRMA_PUBLISHER (CLOSELABS LLC),
+#   2. a nombre de FIRMA_PUBLISHER (CLOSELABS GROUP LLC),
 #   3. con sello de tiempo — sin él, la firma muere el día que vence el certificado y todos los
 #      instaladores ya entregados pasan a "editor desconocido".
 

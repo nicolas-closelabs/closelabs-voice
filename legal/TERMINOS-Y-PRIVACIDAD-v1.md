@@ -18,7 +18,7 @@
 
 ## Parte A — Lo que hay que saber del producto (hechos verificados en el código)
 
-- **Empresa:** CLOSELABS LLC, Florida (EE.UU.), dos socios. 7345 W Sand Lake Rd, Ste 210, Office
+- **Empresa:** CLOSELABS GROUP LLC, Florida (EE.UU.), dos socios. 7345 W Sand Lake Rd, Ste 210, Office
   4824, Orlando, FL 32819, United States.
 - **Producto:** app de escritorio (Windows y macOS) de dictado por voz para médicos.
 - **Precio:** prueba de 30 días sin tarjeta; luego US$12 al mes, **impuestos incluidos**, por Stripe,
@@ -90,7 +90,7 @@ Versión 1.1 · Vigentes desde el 6 de octubre de 2026
 
 ## 1. Quiénes somos
 
-CloseLabs Voice es un servicio de CLOSELABS LLC, sociedad constituida en el Estado de Florida,
+CloseLabs Voice es un servicio de CLOSELABS GROUP LLC, sociedad constituida en el Estado de Florida,
 Estados Unidos de América, con domicilio en 7345 W Sand Lake Rd, Ste 210, Office 4824, Orlando,
 FL 32819, United States ("CloseLabs", "nosotros"). Correo: contacto@closelabs.co ·
 WhatsApp: +57 310 299 1182.
@@ -296,7 +296,7 @@ Versión 1 · Vigente desde el 5 de octubre de 2026
 
 ## 1. Responsable del tratamiento
 
-CLOSELABS LLC
+CLOSELABS GROUP LLC
 Domicilio: 7345 W Sand Lake Rd, Ste 210, Office 4824, Orlando, FL 32819, United States
 Correo: contacto@closelabs.co
 WhatsApp: +57 310 299 1182

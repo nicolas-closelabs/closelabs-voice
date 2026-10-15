@@ -6,7 +6,7 @@
 ## Lo decidido (ver ROADMAP, Fase 2)
 
 - **US$12 al mes**, en dólares, **igual en todos los canales** (desde 2026-10-06; antes US$11):
-  comprar directo no puede salir más barato que comprar por gMedic. Cuenta de **CLOSELABS LLC**.
+  comprar directo no puede salir más barato que comprar por gMedic. Cuenta de **CLOSELABS GROUP LLC**.
 - La prueba de 30 días arranca **sin tarjeta**. La tarjeta se pone al final, desde "Mi cuenta".
 - Quien pone la tarjeta en plena prueba **no pierde días**: el primer cobro llega el día que la
   prueba iba a terminar. Si le quedan menos de 48 h, Stripe no acepta esa fecha y se le corre a
