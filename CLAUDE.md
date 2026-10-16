@@ -4,7 +4,14 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.8.4 publicada; v0.9.0 en prueba)
+## Estado actual (v0.9.3 publicada, 2026-10-16)
+
+> **v0.9.3 — PUBLICADA PARA TODOS (2026-10-16).** La web descarga la 0.9.3 y las 0.9.x se actualizan
+> solas, también en Mac (`version_automatica` con archivos de Mac): sin firma de Apple, cada versión
+> nueva le quita el permiso de Accesibilidad al médico de Mac. Trae "Escribir todo en MAYÚSCULAS"
+> (Configuración → Entrega del texto) y la conexión abierta mientras el médico habla. ⚠️ Stripe
+> sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
+> ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
 > **v0.9.0 — EN PRUEBA (2026-10-06).** Cobro con Stripe en "Mi cuenta" (`Suscripcion.tsx`, ver
 > `STRIPE.md`), pantalla de "gracias por probar" al terminar la prueba (sin aviso rojo), "Eliminar
