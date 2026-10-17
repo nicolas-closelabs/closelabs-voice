@@ -14,6 +14,7 @@
 // POST { accion: "historial", email }        → { cambios: [...] }
 // POST { accion: "prueba", email, hasta }    → { resultado }   (hasta = "YYYY-MM-DD", fin del día en Bogotá)
 // POST { accion: "cortar_prueba", email }    → { resultado }
+// POST { accion: "uso", dias, equipo }        → { medicos: [...], dias: [...] }   (dias = 7, 30, 90 o null)
 //
 // Las pruebas (desde 2026-10-15) son las de venta directa: extender o cortar la prueba gratis de
 // una cuenta mientras estamos en pruebas con médicos. La lógica está en `prueba_ajustar` (migración
@@ -85,6 +86,18 @@ Deno.serve(async (req) => {
         `select=accion,resultado,por,at&email=eq.${encodeURIComponent(email)}&order=at.desc&limit=50`,
       );
       return responder({ cambios });
+    }
+
+    // Panel de uso (desde 2026-10-17): un médico por fila y un día por fila, solo contadores.
+    // `panel_uso` y `panel_uso_diario` en la migración 20261017000001.
+    if (cuerpo.accion === "uso") {
+      const dias = [7, 30, 90].includes(cuerpo.dias) ? cuerpo.dias : null;
+      const equipo = cuerpo.equipo === true;
+      const [medicos, porDia] = await Promise.all([
+        rpcRows("panel_uso", { p_dias: dias, p_equipo: equipo }),
+        rpcRows("panel_uso_diario", { p_dias: dias, p_equipo: equipo }),
+      ]);
+      return responder({ medicos, dias: porDia });
     }
 
     if ((cuerpo.accion === "prueba" || cuerpo.accion === "cortar_prueba") && typeof cuerpo.email === "string") {

@@ -86,6 +86,15 @@ Al extender, los correos de fin de prueba vuelven a contar desde la fecha nueva;
 por enviados (no llega "tu prueba terminó, suscríbete"). Historial en `prueba_cambios`.
 La cuenta **demo@closelabs.co** tiene prueba hasta el 31 de diciembre de 2026 (la usa un médico).
 
+## Panel de uso (desde 2026-10-17)
+
+closelabs.co/voice/admin → **Uso**: médicos registrados, quién dictó en el período, dictados y voz
+por día, y una tabla médico por médico (estado, días con uso, último dictado, equipo y versión,
+enlace a WhatsApp) con grupos para hacer seguimiento: dictando, se enfriaron, nunca dictaron,
+prueba por vencer. Solo contadores (`panel_uso`, `panel_uso_diario`). Las cuentas del equipo están
+en `cuentas_internas` y los equipos nuestros dentro de la cuenta de un médico, en `devices.interno`
+(hoy el Mac de Nicolás con demo@): no cuentan salvo con «Incluir cuentas del equipo».
+
 ## Médicos de un socio (gMedic): sin Stripe, sin prueba
 
 Desde 2026-10-06 (migración `20261006000003_canal_socios.sql`). Cada suscripción tiene un **canal**:
