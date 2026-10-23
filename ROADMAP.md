@@ -462,6 +462,6 @@ cambia la URL.
 | 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS GROUP LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |
 | 8 | ✅ **EIN recibido (2026-10-23)** → falta activar Stripe en pagos reales (`STRIPE.md`, "Para cobrar de verdad") | Lanzamiento |
-| 9 | **D-U-N-S de la LLC** → firmas de Windows (Azure) y Apple | Fase 3 |
+| 9 | 🔨 **D-U-N-S pedido (2026-10-23)**, llega ~2026-10-30 (Apple lo ve ~2026-11-03) → firmas de Windows (Azure) y Apple. Antes de Azure: renovar closelabs.co para tener la factura a nombre de la LLC | Fase 3 |
 | 10 | ~~Guardar la llave del updater en un gestor de contraseñas~~ **HECHO 2026-10-07** (llave + contraseña) | Actualizaciones |
 | 11 | **gMedic**: cerrar el trato y mandar los correos de sus médicos | Fase 5 |
