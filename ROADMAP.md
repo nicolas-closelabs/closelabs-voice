@@ -461,7 +461,7 @@ cambia la URL.
 | 5 | ~~Abogado~~ **APROBADO**: Términos y Política v1 (2026-10-04); Términos 1.1 y sección 11 de la Política (2026-10-07) | Fase 2 |
 | 6 | ~~SSL.com IV a nombre de Nicolás~~ **CAMBIÓ 2026-10-02 (LLC):** Azure Artifact Signing a nombre de CLOSELABS GROUP LLC (SSL.com OV de respaldo) y Apple como organización. Necesita EIN y D-U-N-S. El pipeline ya está listo (2026-10-05) | Fase 3 |
 | 7 | 20-30 dictados reales **anonimizados** (texto crudo) para el A/B del formateador | Fase 0 |
-| 8 | **EIN de la LLC** → activar Stripe en pagos reales y repartir la 0.9.x | Lanzamiento |
+| 8 | ✅ **EIN recibido (2026-10-23)** → falta activar Stripe en pagos reales (`STRIPE.md`, "Para cobrar de verdad") | Lanzamiento |
 | 9 | **D-U-N-S de la LLC** → firmas de Windows (Azure) y Apple | Fase 3 |
 | 10 | ~~Guardar la llave del updater en un gestor de contraseñas~~ **HECHO 2026-10-07** (llave + contraseña) | Actualizaciones |
 | 11 | **gMedic**: cerrar el trato y mandar los correos de sus médicos | Fase 5 |

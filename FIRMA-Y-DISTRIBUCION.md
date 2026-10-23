@@ -47,7 +47,7 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
   ⚠️ **2026-10-15: el nombre oficial es CLOSELABS GROUP LLC**, no "CLOSELABS LLC" como se escribió
   al principio (hubo un problema con ese nombre). Las firmas, la web, Stripe y los textos legales
   tienen que decir exactamente CLOSELABS GROUP LLC: Apple y Microsoft comparan los nombres.
-- **EIN: pedido con el nombre CLOSELABS GROUP LLC** (confirmado 2026-10-15); todavía no llega.
+- **EIN: ✅ recibido (2026-10-23)**, a nombre de CLOSELABS GROUP LLC.
 - **D-U-N-S: pedirlo YA, no necesita el EIN.** Por la herramienta de Apple
   (developer.apple.com/enroll/duns-lookup): es gratis, D&B lo emite en **hasta 5 días hábiles** y
   Apple lo recibe en **2 días hábiles** más. Por la web de D&B directamente es gratis pero tarda
