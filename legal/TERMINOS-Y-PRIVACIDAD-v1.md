@@ -1,3 +1,9 @@
+> **2026-10-25 — Términos 1.3 y Política 1.2 publicados:** la sociedad se constituyó en **Wyoming**
+> (no en Florida; Orlando es solo la dirección) y el nombre del registro lleva coma: **CLOSELABS
+> GROUP, LLC**. Registro de Wyoming: Filing ID 2026-002097295, constituida el 10/02/2026. La ley
+> aplicable a usuarios fuera de Colombia sigue siendo la de Florida (sección 17): es una elección
+> del contrato, no un error. Esta copia NO se actualizó entera: el texto publicado manda.
+>
 > **2026-10-06 — Términos 1.1 publicados** (closelabs.co/terminos, ver su "Historial de versiones"):
 > precio US$12 y cláusula del aliado comercial en la sección 5. **Aprobados por el abogado el
 > 2026-10-07**, junto con la sección 11 de la Política (Vercel Analytics). El texto publicado manda;
@@ -18,7 +24,7 @@
 
 ## Parte A — Lo que hay que saber del producto (hechos verificados en el código)
 
-- **Empresa:** CLOSELABS GROUP LLC, Florida (EE.UU.), dos socios. 7345 W Sand Lake Rd, Ste 210, Office
+- **Empresa:** CLOSELABS GROUP, LLC, constituida en Wyoming (EE.UU.), dos socios. 7345 W Sand Lake Rd, Ste 210, Office
   4824, Orlando, FL 32819, United States.
 - **Producto:** app de escritorio (Windows y macOS) de dictado por voz para médicos.
 - **Precio:** prueba de 30 días sin tarjeta; luego US$12 al mes, **impuestos incluidos**, por Stripe,
