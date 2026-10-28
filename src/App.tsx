@@ -29,7 +29,7 @@ import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
 import { FinDePruebaModal } from "./components/settings/account/FinDePruebaModal";
 import { situacion } from "./components/settings/account/Suscripcion";
-import { useActualizacion } from "./stores/actualizacionStore";
+import { puedeInstalarSola, useActualizacion } from "./stores/actualizacionStore";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
 type OnboardingStep = "accessibility" | "model" | "done";
@@ -311,19 +311,31 @@ function App() {
     return () => clearTimeout(espera);
   }, [signedIn, t]);
 
-  // La actualización terminó de bajar: un aviso (además del botón que queda en el pie).
+  // La actualización terminó de bajar. Recién arrancada y sin uso (Windows), se instala sola; si
+  // no, un aviso (además del botón que queda en el pie). Ver `puedeInstalarSola`.
   const estadoActualizacion = useActualizacion((s) => s.estado);
   useEffect(() => {
     if (estadoActualizacion !== "lista") return;
     const { version, instalar } = useActualizacion.getState();
-    toast.info(t("actualizacion.listaTitulo", { version }), {
-      description: t("actualizacion.listaDetalle"),
-      duration: 20000,
-      action: {
-        label: t("actualizacion.reiniciar"),
-        onClick: () => void instalar().catch(() => toast.error(t("actualizacion.fallo"))),
-      },
-    });
+    void (async () => {
+      if (await puedeInstalarSola()) {
+        try {
+          await instalar();
+          return;
+        } catch (e) {
+          // Falló la instalación sola: queda el aviso con el botón, como antes.
+          console.warn("No se pudo instalar sola la actualización:", e);
+        }
+      }
+      toast.info(t("actualizacion.listaTitulo", { version }), {
+        description: t("actualizacion.listaDetalle"),
+        duration: 20000,
+        action: {
+          label: t("actualizacion.reiniciar"),
+          onClick: () => void instalar().catch(() => toast.error(t("actualizacion.fallo"))),
+        },
+      });
+    })();
   }, [estadoActualizacion, t]);
 
   // macOS sin permiso de Accesibilidad: el texto quedó en el portapapeles. Se muestra la

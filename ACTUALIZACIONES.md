@@ -34,8 +34,12 @@ de vuelta: no sirve de respaldo.
    `app_config.version_automatica`, si es más nueva que la suya y tiene archivos para su plataforma.
    Ante cualquier duda contesta "nada" (una app que no se actualiza sigue dictando).
 4. **La app** pregunta al abrir y cada 6 horas. Si hay versión, la baja en segundo plano, avisa
-   "La versión X está lista" y deja un botón en el pie de la ventana. **Se instala solo cuando el
-   médico toca "Reiniciar ahora"**: nunca a mitad de una consulta.
+   "La versión X está lista" y deja un botón en el pie de la ventana. Se instala cuando el médico
+   toca "Reiniciar ahora": nunca a mitad de una consulta.
+5. **Windows, desde el 2026-10-28: se instala SOLA al arrancar** si la app arrancó hace menos de
+   15 min, nadie ha dictado y la ventana está cerrada (así arranca con el computador). El
+   instalador la vuelve a abrir con los mismos argumentos (`--start-hidden`), así que sigue oculta.
+   El médico no hace nada. Ver `puedeInstalarSola` en `src/stores/actualizacionStore.ts`.
 
 **Dos columnas, a propósito:**
 - `latest_version`: el **aviso** de "hay versión nueva" con el enlace de descarga. Lo ven todas las
