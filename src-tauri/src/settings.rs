@@ -612,8 +612,8 @@ fn default_post_process_enabled() -> bool {
 /// Proxy de CloseLabs. Configurable por si hace falta apuntar a un entorno de pruebas.
 /// Versión de la Política de Tratamiento de Datos que acepta quien se registra. Ante la SIC hay
 /// que poder demostrar QUÉ versión aceptó cada médico, no solo que aceptó algo. Subir este valor
-/// cuando cambie la política. "v1.3" = Términos 1.3 + Política 1.2 (2026-10-25: constituida en
-/// Wyoming, no en Florida, y el nombre exacto del registro, CLOSELABS GROUP, LLC). Antes, "v1.2" =
+/// cuando cambie la política. "v1.3" = Términos 1.3 + Política 1.1 (2026-10-28: constituida en
+/// Wyoming, no en Florida). Antes, "v1.2" =
 /// Términos 1.2 + Política 1.1 (nombre legal) y "v1.1" = Términos 1.1 (precio a US$12) + Política 1.
 pub const TERMS_VERSION: &str = "v1.3";
 

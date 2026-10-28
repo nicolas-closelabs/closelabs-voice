@@ -48,7 +48,10 @@ asociado a la sociedad (closelabs.co tiene que decir el nombre legal, por ejempl
   al principio (hubo un problema con ese nombre). Las firmas, la web, Stripe y los textos legales
   tienen que decir exactamente CLOSELABS GROUP LLC: Apple y Microsoft comparan los nombres.
 - **EIN: ✅ recibido (2026-10-23)**, a nombre de CLOSELABS GROUP LLC.
-- **D-U-N-S: 🔨 pedido el 2026-10-23** por la herramienta de Apple ("Your information is being
+- **D-U-N-S: ✅ 150006339 (2026-10-28).** Nombre en D&B: CLOSELABS GROUP LLC (sin coma; Wyoming lo
+  escribe con coma). ⚠️ Al salir, la ficha tenía el teléfono como si fuera de EE.UU. (3102991182, sin
+  +57) y la forma legal como "Corporation": hay que pedirle a D&B que corrija las dos.
+- _(Histórico)_ **D-U-N-S: pedido el 2026-10-23** por la herramienta de Apple ("Your information is being
   processed"). D&B lo manda por correo en hasta 5 días hábiles (~2026-10-30) y Apple lo recibe 2
   días hábiles después (~2026-11-03). Si D&B escribe o llama para verificar, contestar el mismo día.
 - **D-U-N-S: pedirlo YA, no necesita el EIN.** Por la herramienta de Apple

@@ -218,11 +218,10 @@ Highlights acumulados:
 
 > 📄 **Todo lo de firmar (Apple y Windows) vive en `FIRMA-Y-DISTRIBUCION.md`**: precios, pasos,
 > secretos, y qué puede hacer cada entidad según su país.
-> ⚠️ **Nombre legal: CLOSELABS GROUP, LLC** — con la coma, así figura en el registro (Wyoming,
-> Filing ID 2026-002097295, constituida el 10/02/2026; Orlando, FL es solo la dirección). El nombre
-> anterior, "CLOSELABS LLC", tuvo un problema y ya no se usa. Términos 1.3 / Política 1.2 =
-> `TERMS_VERSION` "v1.3" (2026-10-25). ⚠️ La app y el CI de firma aún dicen "CLOSELABS GROUP LLC"
-> sin coma: alinearlos con el nombre exacto que salga en el certificado.
+> ⚠️ **Nombre legal: CLOSELABS GROUP LLC**, sin coma, como en el **D-U-N-S 150006339** (2026-10-28).
+> Wyoming lo escribe "CLOSELABS GROUP, LLC" (Filing ID 2026-002097295, constituida el 10/02/2026;
+> Orlando, FL es solo la dirección), pero Apple y Microsoft comparan contra D&B. El nombre anterior,
+> "CLOSELABS LLC", tuvo un problema y ya no se usa. Términos 1.3 / Política 1.1 = `TERMS_VERSION` "v1.3".
 > ⚠️ **2026-10-02: se está constituyendo CLOSELABS GROUP LLC (EE.UU., dos socios).** Plan: firmar TODO a
 > nombre de la LLC — Windows con **Azure Artifact Signing** (~$120/año, 5.000 firmas/mes) y
 > **SSL.com OV** de respaldo (~$309/año) si Azure rechaza la validación; macOS con **Apple como
