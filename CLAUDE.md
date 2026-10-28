@@ -13,6 +13,17 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
+> **2026-10-28 — SE COMPRUEBA QUE EL DICTADO ENTRÓ (`campo_enfocado.rs`).** Un médico de gMedic
+> dictaba, la app mandaba Cmd+V, el log decía "Dictado pegado" y el campo seguía vacío (con el
+> cursor parpadeando; a mano sí pegaba). El log no podía ver el último paso. Ahora se lee el campo
+> seleccionado antes y después de pegar (Accesibilidad / UI Automation) y se compara: si entró, se
+> devuelve el portapapeles anterior; si es SEGURO que no entró, el texto queda copiado y la
+> ventanita avisa (estilo Wispr Flow); si no se puede saber, queda copiado sin aviso. El
+> portapapeles ya no se devuelve a ciegas a los 200 ms (si la página leía tarde, pegaba lo viejo).
+> El log dice "Entrega comprobada / NO entró / sin comprobar" con app, tipo de campo y Bloq Mayús
+> (sospecha abierta: Bloq Mayús activado). Nunca el contenido. Además, cada reporte manda un
+> correo a `alert_config.send_to` (antes caían en la tabla y nadie se enteraba).
+
 > **v0.9.0 — EN PRUEBA (2026-10-06).** Cobro con Stripe en "Mi cuenta" (`Suscripcion.tsx`, ver
 > `STRIPE.md`), pantalla de "gracias por probar" al terminar la prueba (sin aviso rojo), "Eliminar
 > mi cuenta" en una Zona peligrosa con doble confirmación (`ZonaPeligrosa.tsx`; el servidor borra

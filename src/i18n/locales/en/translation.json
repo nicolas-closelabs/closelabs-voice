@@ -662,7 +662,9 @@
   },
   "overlay": {
     "transcribing": "Transcribing...",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "noEntroTitulo": "The text didn't go in",
+    "noEntroCuerpo": "It's copied: click the field and press {{atajo}}."
   },
   "blocked": {
     "title": "You need to update CloseLabs Voice",

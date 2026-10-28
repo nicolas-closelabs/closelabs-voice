@@ -659,7 +659,9 @@
   },
   "overlay": {
     "transcribing": "Transcribiendo...",
-    "processing": "Procesando..."
+    "processing": "Procesando...",
+    "noEntroTitulo": "El texto no entró",
+    "noEntroCuerpo": "Quedó copiado: haz clic en el campo y presiona {{atajo}}."
   },
   "whatsNew": {
     "title": "Nuevo en CloseLabs Voice v{{version}}"

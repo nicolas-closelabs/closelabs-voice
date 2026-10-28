@@ -483,6 +483,12 @@ async stopOverlayDrag() : Promise<void> {
     await TAURI_INVOKE("stop_overlay_drag");
 },
 /**
+ * La X del aviso de "no entró". No reutiliza `cancel_operation`: no hay nada que cancelar.
+ */
+async cerrarAvisoOverlay() : Promise<void> {
+    await TAURI_INVOKE("cerrar_aviso_overlay");
+},
+/**
  * Lo mismo, para el frontend.
  * 
  * Hace falta además del evento `app-blocked` por una carrera real: la consulta al servidor puede

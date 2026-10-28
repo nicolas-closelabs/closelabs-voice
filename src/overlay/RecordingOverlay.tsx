@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { type as osType } from "@tauri-apps/plugin-os";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
@@ -12,8 +13,16 @@ import type {
 } from "@/bindings";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import { getLanguageDirection } from "@/lib/utils/rtl";
+import { pasteShortcut } from "@/lib/utils/shortcutLabels";
 
-type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
+// "no-entro": el dictado no apareció en el campo y quedó en el portapapeles
+// (clipboard::comprobar_entrega en el backend).
+type OverlayState =
+  | "recording"
+  | "streaming"
+  | "transcribing"
+  | "processing"
+  | "no-entro";
 
 // Number of reactive bars in the waveform (the simple, smoothed style shared by
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
@@ -275,6 +284,50 @@ const RecordingOverlay: React.FC = () => {
                 true,
               )
             : listeningRow(open, true)}
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Aviso: el dictado no entró. Sin cancelar (no hay nada en curso): la X solo cierra.
+  if (state === "no-entro") {
+    const so = osType();
+    const atajo = pasteShortcut(
+      so === "macos" ? "macos" : so === "windows" ? "windows" : "linux",
+    );
+    return (
+      <div
+        dir={direction}
+        className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
+      >
+        <div
+          onPointerDown={onCardPointerDown}
+          className="scard cbrand caviso"
+          role="alert"
+        >
+          <div className="ovlogo">
+            <img src="/brand/closelabs-white.png" alt="CloseLabs Voice" />
+          </div>
+          <div className="saviso">
+            <div className="saviso-texto">
+              <strong>{t("overlay.noEntroTitulo")}</strong>
+              <span>{t("overlay.noEntroCuerpo", { atajo })}</span>
+            </div>
+            <button
+              className="sx"
+              aria-label="close"
+              onClick={() => void commands.cerrarAvisoOverlay()}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M4 4 L12 12 M12 4 L4 12"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     );

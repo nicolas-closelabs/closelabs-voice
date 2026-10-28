@@ -1,3 +1,4 @@
+use crate::campo_enfocado::{self, Campo};
 use crate::input::{self, EnigoState};
 #[cfg(target_os = "linux")]
 use crate::settings::TypingTool;
@@ -6,24 +7,26 @@ use enigo::{Direction, Enigo, Key, Keyboard};
 use log::info;
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 #[cfg(target_os = "linux")]
 use crate::utils::{is_kde_wayland, is_wayland};
 
-/// Espera antes de devolver el portapapeles original. Apps Electron/Chromium leen el
-/// portapapeles de forma asíncrona: restaurarlo demasiado pronto pega el contenido VIEJO.
-const CLIPBOARD_RESTORE_DELAY_MS: u64 = 200;
+/// Cuánto se espera a que el texto aparezca en el campo antes de darlo por no entregado. Las
+/// apps Electron/Chromium leen el portapapeles de forma asíncrona y su árbol de Accesibilidad se
+/// actualiza un poco después; en las pruebas tarda bastante menos que esto.
+const ESPERA_ENTREGA: Duration = Duration::from_millis(2000);
+const INTERVALO_ENTREGA: Duration = Duration::from_millis(100);
 
 /// Si la ventana principal de la app está al frente. Lo mantiene `lib.rs` con los eventos de foco.
 ///
 /// ⚠️ Por qué importa: el pegado corre en el hilo PRINCIPAL y lo tiene ocupado mientras pone el
-/// texto en el portapapeles, simula Cmd+V y, 200 ms después, devuelve el portapapeles anterior.
-/// Cualquier otra app atiende ese Cmd+V al instante, pero NUESTRA ventana no puede atenderlo hasta
-/// que el hilo quede libre, y para entonces el portapapeles ya volvió a lo de antes: dentro de la
-/// app no se pegaba nada. Pasaba en "Tu primer dictado", justo lo primero que hace un médico nuevo.
+/// texto en el portapapeles y simula Cmd+V (hasta 2026-10-28 además devolvía el portapapeles
+/// anterior 200 ms después). Cualquier otra app atiende ese Cmd+V al instante, pero NUESTRA ventana
+/// no puede atenderlo hasta que el hilo quede libre, y para entonces el portapapeles ya había
+/// vuelto a lo de antes: dentro de la app no se pegaba nada. Pasaba en "Tu primer dictado", justo lo primero que hace un médico nuevo.
 /// Por eso, dentro de nuestra ventana el texto se le entrega directo a la página (evento
 /// `dictado-en-la-app`), sin portapapeles ni teclas simuladas. Así además funciona antes de dar el
 /// permiso de Accesibilidad.
@@ -43,16 +46,20 @@ fn accessibility_trusted() -> bool {
     unsafe { AXIsProcessTrusted() }
 }
 
-/// Pastes text using the clipboard: saves current content, writes text, sends paste keystroke, restores clipboard.
+/// Pega con el portapapeles: guarda lo que había, pone el texto y simula el atajo de pegar.
+///
+/// ⚠️ NO devuelve el portapapeles anterior: devuelve lo que había para que lo haga
+/// `comprobar_entrega`, y solo cuando confirmó que el texto entró. Antes se devolvía a ciegas a los
+/// 200 ms; si la página estaba ocupada y leía el portapapeles más tarde, pegaba lo VIEJO (o nada).
 fn paste_via_clipboard(
     enigo: &mut Enigo,
     text: &str,
     app_handle: &AppHandle,
     paste_method: &PasteMethod,
     paste_delay_ms: u64,
-) -> Result<(), String> {
+) -> Result<Option<String>, String> {
     let clipboard = app_handle.clipboard();
-    let clipboard_content = clipboard.read_text().unwrap_or_default();
+    let clipboard_content = clipboard.read_text().ok();
 
     // Write text to clipboard first
     // On Wayland, prefer wl-copy for better compatibility (especially with umlauts)
@@ -92,31 +99,7 @@ fn paste_via_clipboard(
         }
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(CLIPBOARD_RESTORE_DELAY_MS));
-
-    // CloseLabs: si el usuario copió algo durante el pegado, no se lo pisamos.
-    if clipboard
-        .read_text()
-        .map(|current| current != text)
-        .unwrap_or(false)
-    {
-        info!("Clipboard changed during paste window; skipping restore");
-        return Ok(());
-    }
-
-    // Restore original clipboard content
-    // On Wayland, prefer wl-copy for better compatibility
-    #[cfg(target_os = "linux")]
-    if is_wayland() && is_wl_copy_available() {
-        let _ = write_clipboard_via_wl_copy(&clipboard_content);
-    } else {
-        let _ = clipboard.write_text(&clipboard_content);
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    let _ = clipboard.write_text(&clipboard_content);
-
-    Ok(())
+    Ok(clipboard_content)
 }
 
 /// Attempts to send a key combination using Linux-native tools.
@@ -695,13 +678,21 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
             )?;
         }
         PasteMethod::CtrlV | PasteMethod::CtrlShiftV | PasteMethod::ShiftInsert => {
-            paste_via_clipboard(
+            let antes = campo_enfocado::leer();
+            let original = paste_via_clipboard(
                 &mut enigo,
                 &text,
                 &app_handle,
                 &paste_method,
                 paste_delay_ms,
-            )?
+            )?;
+            comprobar_entrega(
+                app_handle.clone(),
+                text.clone(),
+                antes,
+                original,
+                settings.clipboard_handling == ClipboardHandling::CopyToClipboard,
+            );
         }
         PasteMethod::ExternalScript => {
             let script_path = settings
@@ -731,6 +722,119 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+enum Entrega {
+    /// El texto apareció en el campo.
+    Entro,
+    /// El campo se pudo leer antes y después, y el texto no está.
+    NoEntro,
+    /// No hay forma de saberlo: la app no expone el campo, o el foco cambió de lugar.
+    SinComprobar,
+}
+
+/// Lee el campo hasta ver el texto, o hasta `ESPERA_ENTREGA`.
+///
+/// Solo devuelve `NoEntro` cuando es SEGURO: el campo se pudo leer antes de pegar, se sigue
+/// pudiendo leer en la misma app y con el mismo tipo de campo al final, y el texto no está. Todo
+/// lo demás es `SinComprobar`: con un aviso falso el médico pegaría el texto dos veces.
+fn esperar_entrega(antes: &Campo, texto: &str) -> (Entrega, Campo) {
+    let Campo::Texto {
+        app: app_antes,
+        rol: rol_antes,
+        valor: valor_antes,
+    } = antes
+    else {
+        return (Entrega::SinComprobar, antes.clone());
+    };
+    let inicio = Instant::now();
+    loop {
+        std::thread::sleep(INTERVALO_ENTREGA);
+        let despues = campo_enfocado::leer();
+        if let Campo::Texto { valor, .. } = &despues {
+            match campo_enfocado::texto_entro(valor_antes, valor, texto) {
+                Some(true) => return (Entrega::Entro, despues),
+                None => return (Entrega::SinComprobar, despues),
+                Some(false) => {}
+            }
+        }
+        if inicio.elapsed() >= ESPERA_ENTREGA {
+            let mismo_campo = matches!(
+                &despues,
+                Campo::Texto { app, rol, .. } if app == app_antes && rol == rol_antes
+            );
+            let entrega = if mismo_campo {
+                Entrega::NoEntro
+            } else {
+                Entrega::SinComprobar
+            };
+            return (entrega, despues);
+        }
+    }
+}
+
+/// Comprueba en segundo plano que el dictado entró, y decide qué hacer con el portapapeles.
+///
+/// - Entró: se devuelve lo que el médico tenía copiado (como antes, pero ya sin carrera).
+/// - No entró: el texto se queda copiado y se le avisa en la ventanita, estilo Wispr Flow.
+/// - No se puede saber: el texto se queda copiado, sin aviso. Si no llegó, basta con Cmd+V.
+///
+/// En el log queda el resultado, la app, el tipo de campo y Bloq Mayús; nunca el texto.
+fn comprobar_entrega(
+    app_handle: AppHandle,
+    texto: String,
+    antes: Campo,
+    original: Option<String>,
+    conservar_en_portapapeles: bool,
+) {
+    std::thread::spawn(move || {
+        let bloq_mayus = match campo_enfocado::bloq_mayus() {
+            Some(true) => "sí",
+            Some(false) => "no",
+            None => "?",
+        };
+        let inicio = Instant::now();
+        let (entrega, despues) = esperar_entrega(&antes, &texto);
+        let clipboard = app_handle.clipboard();
+        let sigue_nuestro = clipboard.read_text().map(|c| c == texto).unwrap_or(false);
+
+        match entrega {
+            Entrega::Entro => {
+                info!(
+                    "Entrega comprobada: el dictado entró en {} ms ({}; Bloq Mayús: {})",
+                    inicio.elapsed().as_millis(),
+                    despues.describir(),
+                    bloq_mayus
+                );
+                // Si el médico copió otra cosa mientras tanto, no se le pisa.
+                if !conservar_en_portapapeles && sigue_nuestro {
+                    if let Some(original) = original.filter(|o| !o.is_empty()) {
+                        let _ = clipboard.write_text(original);
+                    }
+                }
+            }
+            Entrega::NoEntro => {
+                log::warn!(
+                    "El dictado NO entró en el campo (antes: {}; después: {}; Bloq Mayús: {}). \
+                     Se dejó en el portapapeles y se avisó al médico",
+                    antes.describir(),
+                    despues.describir(),
+                    bloq_mayus
+                );
+                if !sigue_nuestro {
+                    let _ = clipboard.write_text(texto);
+                }
+                crate::overlay::mostrar_aviso_no_entro(&app_handle);
+            }
+            Entrega::SinComprobar => {
+                info!(
+                    "Entrega sin comprobar ({}; Bloq Mayús: {}): el dictado queda en el portapapeles",
+                    despues.describir(),
+                    bloq_mayus
+                );
+            }
+        }
+    });
 }
 
 #[cfg(test)]

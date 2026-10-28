@@ -504,6 +504,10 @@ impl ShortcutAction for TranscribeAction {
         let start_time = Instant::now();
         debug!("TranscribeAction::start called for binding: {}", binding_id);
 
+        // Que el navegador exponga la página a Accesibilidad mientras el médico habla, para poder
+        // comprobar al final que el dictado entró en el campo (ver campo_enfocado.rs).
+        crate::campo_enfocado::preparar();
+
         // Load model in the background
         let tm = app.state::<Arc<TranscriptionManager>>();
         let rm = app.state::<Arc<AudioRecordingManager>>();
@@ -817,8 +821,11 @@ impl ShortcutAction for TranscribeAction {
                                     }
 
                                     match utils::paste(final_text, ah_clone.clone()) {
+                                        // "Enviado", no "pegado": aquí solo se sabe que se
+                                        // mandó el atajo. Si entró al campo lo dice después
+                                        // "Entrega comprobada" (clipboard::comprobar_entrega).
                                         Ok(()) => info!(
-                                            "Dictado pegado: {} ms desde que se paró la grabación (pegar: {} ms)",
+                                            "Dictado enviado: {} ms desde que se paró la grabación (pegar: {} ms)",
                                             stop_time.elapsed().as_millis(),
                                             paste_time.elapsed().as_millis()
                                         ),
