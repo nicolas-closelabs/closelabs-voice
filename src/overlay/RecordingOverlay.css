@@ -428,34 +428,3 @@
 .scard.cbrand .stimer {
   color: color-mix(in srgb, #f5edff 55%, transparent);
 }
-
-/* Aviso "el dictado no entró" (estado no-entro): título + instrucción, con la X a la derecha.
-   Reemplaza la fila de ondas y el tagline; la card mantiene su ancho y su lugar. */
-.scard.cbrand.caviso {
-  border-color: color-mix(in srgb, #ffb547 45%, transparent);
-}
-.scard.cbrand .saviso {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-}
-.scard.cbrand .saviso-texto {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-.scard.cbrand .saviso-texto strong {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffd08a;
-  line-height: 1.3;
-}
-.scard.cbrand .saviso-texto span {
-  font-size: 11.5px;
-  line-height: 1.35;
-  color: color-mix(in srgb, #f5edff 82%, transparent);
-}

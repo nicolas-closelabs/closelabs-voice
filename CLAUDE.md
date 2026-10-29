@@ -13,16 +13,17 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
-> **2026-10-28 — SE COMPRUEBA QUE EL DICTADO ENTRÓ (`campo_enfocado.rs`).** Un médico de gMedic
-> dictaba, la app mandaba Cmd+V, el log decía "Dictado pegado" y el campo seguía vacío (con el
-> cursor parpadeando; a mano sí pegaba). El log no podía ver el último paso. Ahora se lee el campo
-> seleccionado antes y después de pegar (Accesibilidad / UI Automation) y se compara: si entró, se
-> devuelve el portapapeles anterior; si es SEGURO que no entró, el texto queda copiado y la
-> ventanita avisa (estilo Wispr Flow); si no se puede saber, queda copiado sin aviso. El
-> portapapeles ya no se devuelve a ciegas a los 200 ms (si la página leía tarde, pegaba lo viejo).
-> El log dice "Entrega comprobada / NO entró / sin comprobar" con app, tipo de campo y Bloq Mayús
-> (sospecha abierta: Bloq Mayús activado). Nunca el contenido. Además, cada reporte manda un
-> correo a `alert_config.send_to` (antes caían en la tabla y nadie se enteraba).
+> **2026-10-28 — EL DICTADO SE QUEDA EN EL PORTAPAPELES.** Un médico de gMedic dictaba, la app
+> mandaba Cmd+V y el campo seguía vacío (con el cursor parpadeando; a mano sí pegaba). Sospecha
+> principal: el portapapeles se devolvía a ciegas a los 200 ms y, si la página leía tarde, pegaba
+> lo viejo o nada. Ya no se devuelve: el dictado queda copiado (si no entra, basta Cmd+V). El log
+> dice "Dictado enviado" (no "pegado": la app no sabe si entró) y anota Bloq Mayús, la otra
+> sospecha. Cada reporte manda además un correo a `alert_config.send_to`.
+> ⚠️ **Se probó y se DESCARTÓ comprobar si el texto entró leyendo el campo por Accesibilidad**
+> (estilo Wispr Flow): en Chrome exige encenderle el modo del lector de pantalla
+> (`AXEnhancedUserInterface`; `AXManualAccessibility` es solo de Electron), con riesgo de
+> lentitud, y en la primera prueba no leyó ni Chrome ni WhatsApp. El código está en git
+> (commits dd1f3fb y siguientes en `feat/sprint1-paridad-aztec`) por si se retoma con mediciones.
 
 > **v0.9.0 — EN PRUEBA (2026-10-06).** Cobro con Stripe en "Mi cuenta" (`Suscripcion.tsx`, ver
 > `STRIPE.md`), pantalla de "gracias por probar" al terminar la prueba (sin aviso rojo), "Eliminar

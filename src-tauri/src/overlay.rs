@@ -1,7 +1,7 @@
 use crate::input;
 use crate::settings;
 use crate::settings::{OverlayPosition, OverlayStyle};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 #[cfg(not(target_os = "macos"))]
@@ -371,22 +371,12 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     }
 }
 
-/// Sube cada vez que la ventanita se muestra o se oculta. Lo que se programa para "más tarde"
-/// (ocultar tras la animación, cerrar el aviso de "no entró") solo se aplica si no cambió nada
-/// entretanto: si no, el aviso de un dictado podía tapar —u ocultar— la grabación del siguiente.
-static OVERLAY_GENERATION: AtomicU64 = AtomicU64::new(0);
-
-/// Cuánto se queda el aviso de "no entró" si el médico no lo cierra.
-const AVISO_NO_ENTRO_MS: u64 = 8000;
-
-fn show_overlay_state(app_handle: &AppHandle, state: &str) -> u64 {
-    let generation = OVERLAY_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
-
+fn show_overlay_state(app_handle: &AppHandle, state: &str) {
     // Whether the overlay shows at all is governed by overlay_style; position
     // only chooses Top vs Bottom placement.
     let settings = settings::get_settings(app_handle);
     if settings.overlay_style == OverlayStyle::None {
-        return generation;
+        return;
     }
 
     // Size the overlay for this state (compact vs. streaming), then position it.
@@ -432,32 +422,11 @@ fn show_overlay_state(app_handle: &AppHandle, state: &str) -> u64 {
             show_elapsed
         );
     }
-    generation
 }
 
 /// Shows the recording overlay window with fade-in animation
 pub fn show_recording_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "recording");
-}
-
-/// El dictado no entró en el campo (ver `clipboard::comprobar_entrega`): se le dice al médico que
-/// quedó copiado. Se cierra solo, salvo que para entonces la ventanita ya muestre otra cosa.
-pub fn mostrar_aviso_no_entro(app_handle: &AppHandle) {
-    let generation = show_overlay_state(app_handle, "no-entro");
-    let app = app_handle.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(AVISO_NO_ENTRO_MS));
-        if OVERLAY_GENERATION.load(Ordering::SeqCst) == generation {
-            hide_recording_overlay(&app);
-        }
-    });
-}
-
-/// La X del aviso de "no entró". No reutiliza `cancel_operation`: no hay nada que cancelar.
-#[tauri::command]
-#[specta::specta]
-pub fn cerrar_aviso_overlay(app: AppHandle) {
-    hide_recording_overlay(&app);
 }
 
 /// Shows the larger streaming overlay that displays live transcription text
@@ -498,18 +467,14 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     // Always hide the overlay regardless of settings - if setting was changed while recording,
     // we still want to hide it properly
-    let generation = OVERLAY_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
         // Emit event to trigger fade-out animation
         let _ = overlay_window.emit("hide-overlay", ());
-        // Hide the window after a short delay to allow animation to complete — salvo que en
-        // esos 300 ms se haya vuelto a mostrar (el aviso de "no entró", o un dictado nuevo).
+        // Hide the window after a short delay to allow animation to complete
         let window_clone = overlay_window.clone();
         std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(300));
-            if OVERLAY_GENERATION.load(Ordering::SeqCst) == generation {
-                let _ = window_clone.hide();
-            }
+            let _ = window_clone.hide();
         });
     }
 }
