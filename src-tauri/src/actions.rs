@@ -663,6 +663,10 @@ impl ShortcutAction for TranscribeAction {
         let stop_time = Instant::now();
         debug!("TranscribeAction::stop called for binding: {}", binding_id);
 
+        // Leer el campo donde se va a pegar MIENTRAS el servidor transcribe, no justo antes de
+        // pegar: así no se le suma nada al dictado (ver campo_enfocado::tomar_foto_previa).
+        crate::campo_enfocado::tomar_foto_previa();
+
         let ah = app.clone();
         let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
         let tm = Arc::clone(&app.state::<Arc<TranscriptionManager>>());

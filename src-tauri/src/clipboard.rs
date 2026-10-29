@@ -17,7 +17,7 @@ use crate::utils::{is_kde_wayland, is_wayland};
 /// Cuánto se espera a que el texto aparezca en el campo antes de darlo por no entregado. Las
 /// apps Electron/Chromium leen el portapapeles de forma asíncrona y su árbol de Accesibilidad se
 /// actualiza un poco después; en las pruebas tarda bastante menos que esto.
-const ESPERA_ENTREGA: Duration = Duration::from_millis(2000);
+const ESPERA_ENTREGA: Duration = Duration::from_millis(3000);
 const INTERVALO_ENTREGA: Duration = Duration::from_millis(100);
 
 /// Si la ventana principal de la app está al frente. Lo mantiene `lib.rs` con los eventos de foco.
@@ -678,7 +678,7 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
             )?;
         }
         PasteMethod::CtrlV | PasteMethod::CtrlShiftV | PasteMethod::ShiftInsert => {
-            let antes = campo_enfocado::leer();
+            let antes = campo_enfocado::campo_antes_de_pegar();
             let original = paste_via_clipboard(
                 &mut enigo,
                 &text,
@@ -750,7 +750,7 @@ fn esperar_entrega(antes: &Campo, texto: &str) -> (Entrega, Campo) {
     let inicio = Instant::now();
     loop {
         std::thread::sleep(INTERVALO_ENTREGA);
-        let despues = campo_enfocado::leer();
+        let despues = campo_enfocado::leer(campo_enfocado::TOPE_EN_SEGUNDO_PLANO);
         if let Campo::Texto { valor, .. } = &despues {
             match campo_enfocado::texto_entro(valor_antes, valor, texto) {
                 Some(true) => return (Entrega::Entro, despues),

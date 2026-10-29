@@ -15,8 +15,8 @@
 //! Todo falla hacia "no se sabe" (`Campo::Desconocido`): sin permiso, sin respuesta a tiempo o en
 //! una app que no expone su contenido, se pega como siempre y no se le avisa nada al médico.
 
-use std::sync::mpsc;
-use std::time::Duration;
+use std::sync::{mpsc, Mutex};
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub enum Campo {
@@ -29,7 +29,14 @@ pub enum Campo {
     /// Hay algo seleccionado, pero no es un campo cuyo texto se pueda leer.
     Otro { app: String, rol: String },
     /// No se pudo preguntar: sin permiso, sin respuesta a tiempo o plataforma sin soporte.
-    Desconocido,
+    /// `motivo` dice en qué paso falló y con qué código, para el log (sin contenido).
+    Desconocido { motivo: String },
+}
+
+fn desconocido(motivo: impl Into<String>) -> Campo {
+    Campo::Desconocido {
+        motivo: motivo.into(),
+    }
 }
 
 impl Campo {
@@ -40,7 +47,7 @@ impl Campo {
                 format!("app={app} campo={rol} ({} caracteres)", valor.chars().count())
             }
             Campo::Otro { app, rol } => format!("app={app} campo={rol} (no es de texto)"),
-            Campo::Desconocido => "campo desconocido".to_string(),
+            Campo::Desconocido { motivo } => format!("campo desconocido: {motivo}"),
         }
     }
 }
@@ -49,21 +56,59 @@ impl Campo {
 /// releerlo varias veces por segundo no vale la pena.
 const MAX_VALOR: usize = 200_000;
 
-/// Lo máximo que se espera a que la otra app conteste. Una app colgada no puede colgar el pegado.
-const TOPE_LECTURA: Duration = Duration::from_millis(400);
+/// Lo máximo que se espera a que la otra app conteste justo antes de pegar (hilo principal, el
+/// médico está esperando). Una app colgada no puede colgar el pegado.
+pub const TOPE_ANTES_DE_PEGAR: Duration = Duration::from_millis(400);
 
-/// Lee el campo seleccionado en la app que está al frente.
-pub fn leer() -> Campo {
+/// En segundo plano (foto previa, comprobación después de pegar) se puede esperar más: Chrome,
+/// recién encendida su accesibilidad, tarda en contestar en páginas pesadas.
+pub const TOPE_EN_SEGUNDO_PLANO: Duration = Duration::from_millis(1500);
+
+/// Lee el campo seleccionado en la app que está al frente, esperando como mucho `tope`.
+pub fn leer(tope: Duration) -> Campo {
     let (tx, rx) = mpsc::channel();
     // En un hilo propio: así el tope de tiempo vale aunque la otra app no conteste, y en Windows
     // UI Automation corre en un hilo MTA nuevo, no en el hilo de la interfaz.
     std::thread::spawn(move || {
         let _ = tx.send(plataforma::leer());
     });
-    match rx.recv_timeout(TOPE_LECTURA) {
-        Ok(Campo::Texto { valor, .. }) if valor.chars().count() > MAX_VALOR => Campo::Desconocido,
+    match rx.recv_timeout(tope) {
+        Ok(Campo::Texto { valor, .. }) if valor.chars().count() > MAX_VALOR => {
+            desconocido("campo demasiado grande")
+        }
         Ok(campo) => campo,
-        Err(_) => Campo::Desconocido,
+        Err(_) => desconocido(format!("la app no contestó en {} ms", tope.as_millis())),
+    }
+}
+
+/// La foto del campo tomada al parar la grabación (ver `tomar_foto_previa`).
+static FOTO_PREVIA: Mutex<Option<(Instant, Campo)>> = Mutex::new(None);
+
+/// Una foto más vieja que esto ya no describe el campo donde se va a pegar.
+const VIGENCIA_FOTO: Duration = Duration::from_secs(120);
+
+/// Se llama al parar la grabación: lee el campo en segundo plano MIENTRAS el servidor transcribe
+/// (2-4 s). Así se le puede dar a la app todo `TOPE_EN_SEGUNDO_PLANO` sin sumarle un milisegundo
+/// al dictado: antes la lectura iba justo antes de pegar, con 400 ms, y Chrome no alcanzaba.
+pub fn tomar_foto_previa() {
+    if let Ok(mut foto) = FOTO_PREVIA.lock() {
+        *foto = None;
+    }
+    std::thread::spawn(|| {
+        let campo = leer(TOPE_EN_SEGUNDO_PLANO);
+        if let Ok(mut foto) = FOTO_PREVIA.lock() {
+            *foto = Some((Instant::now(), campo));
+        }
+    });
+}
+
+/// El campo antes de pegar: la foto previa si está lista y es reciente (se usa una sola vez), o
+/// una lectura rápida si no la hay (por ejemplo, "Pegar último dictado" desde la bandeja).
+pub fn campo_antes_de_pegar() -> Campo {
+    let foto = FOTO_PREVIA.lock().ok().and_then(|mut f| f.take());
+    match foto {
+        Some((cuando, campo)) if cuando.elapsed() < VIGENCIA_FOTO => campo,
+        _ => leer(TOPE_ANTES_DE_PEGAR),
     }
 }
 
@@ -143,20 +188,26 @@ mod plataforma {
 
     const ROLES_DE_TEXTO: &[&str] = &["AXTextField", "AXTextArea", "AXComboBox", "AXSearchField"];
 
-    fn atributo(elemento: AXUIElementRef, nombre: &str) -> Option<CFType> {
+    /// El atributo, o el código de error de Accesibilidad (-25204 = no contestó a tiempo,
+    /// -25212 = no hay valor, -25205 = la app no lo maneja…), para el log.
+    fn atributo(elemento: AXUIElementRef, nombre: &str) -> Result<CFType, i32> {
         let nombre = CFString::new(nombre);
         let mut valor: CFTypeRef = std::ptr::null();
         let err = unsafe {
             AXUIElementCopyAttributeValue(elemento, nombre.as_concrete_TypeRef(), &mut valor)
         };
-        if err != AX_OK || valor.is_null() {
-            return None;
+        if err != AX_OK {
+            return Err(err);
         }
-        Some(unsafe { CFType::wrap_under_create_rule(valor) })
+        if valor.is_null() {
+            return Err(0);
+        }
+        Ok(unsafe { CFType::wrap_under_create_rule(valor) })
     }
 
     fn texto(elemento: AXUIElementRef, nombre: &str) -> Option<String> {
-        atributo(elemento, nombre)?
+        atributo(elemento, nombre)
+            .ok()?
             .downcast::<CFString>()
             .map(|s| s.to_string())
     }
@@ -170,22 +221,52 @@ mod plataforma {
         err == AX_OK && settable != 0
     }
 
-    /// La app al frente, ya con el tope de espera puesto.
-    fn app_al_frente() -> Option<CFType> {
+    /// Lo que se espera a cada respuesta. El tope de verdad lo pone `super::leer`.
+    const ESPERA_MENSAJE_S: f32 = 1.5;
+
+    /// La app al frente (y el elemento del sistema), ya con el tope de espera puesto.
+    fn app_al_frente() -> Result<(CFType, CFType), String> {
         let sistema = unsafe { AXUIElementCreateSystemWide() };
         if sistema.is_null() {
-            return None;
+            return Err("sin elemento del sistema".into());
         }
         let sistema = unsafe { CFType::wrap_under_create_rule(sistema) };
-        unsafe { AXUIElementSetMessagingTimeout(sistema.as_CFTypeRef(), 0.3) };
-        let app = atributo(sistema.as_CFTypeRef(), "AXFocusedApplication")?;
-        unsafe { AXUIElementSetMessagingTimeout(app.as_CFTypeRef(), 0.3) };
-        Some(app)
+        unsafe { AXUIElementSetMessagingTimeout(sistema.as_CFTypeRef(), ESPERA_MENSAJE_S) };
+        let app = atributo(sistema.as_CFTypeRef(), "AXFocusedApplication")
+            .map_err(|e| format!("sin app al frente (AX {e})"))?;
+        unsafe { AXUIElementSetMessagingTimeout(app.as_CFTypeRef(), ESPERA_MENSAJE_S) };
+        Ok((sistema, app))
     }
 
-    /// Chromium y Electron no exponen la página a Accesibilidad hasta que se les pide con
-    /// `AXManualAccessibility` (lo que hacen también Wispr Flow y Grammarly). Las demás apps
-    /// ignoran el atributo.
+    /// Navegadores hechos sobre Chromium. Escuchan `AXEnhancedUserInterface` (el atributo que
+    /// pone el lector de pantalla de Apple), NO `AXManualAccessibility`, que es de Electron: con
+    /// solo ese, Chrome nunca exponía la página y todo salía "sin comprobar" (prueba del
+    /// 2026-10-28).
+    const NAVEGADORES_CHROMIUM: &[&str] = &[
+        "Google Chrome",
+        "Chromium",
+        "Microsoft Edge",
+        "Brave Browser",
+        "Opera",
+        "Vivaldi",
+        "Arc",
+    ];
+
+    fn poner(app: &CFType, atributo: &str) -> i32 {
+        let nombre = CFString::new(atributo);
+        unsafe {
+            AXUIElementSetAttributeValue(
+                app.as_CFTypeRef(),
+                nombre.as_concrete_TypeRef(),
+                CFBoolean::true_value().as_CFTypeRef(),
+            )
+        }
+    }
+
+    /// Pide a la app que exponga su contenido a Accesibilidad: `AXManualAccessibility` para
+    /// Electron (VS Code, Slack, WhatsApp de escritorio…) y `AXEnhancedUserInterface` para los
+    /// navegadores Chromium. Las demás apps ignoran ambos. Se hace una vez por proceso y queda en
+    /// el log con el código que devolvió cada uno.
     fn exponer_contenido(app: &CFType) {
         let mut pid: i32 = 0;
         if unsafe { AXUIElementGetPid(app.as_CFTypeRef(), &mut pid) } != AX_OK {
@@ -200,34 +281,47 @@ mod plataforma {
                 return;
             }
         }
-        let nombre = CFString::new("AXManualAccessibility");
-        unsafe {
-            AXUIElementSetAttributeValue(
-                app.as_CFTypeRef(),
-                nombre.as_concrete_TypeRef(),
-                CFBoolean::true_value().as_CFTypeRef(),
-            )
-        };
+        let nombre_app = texto(app.as_CFTypeRef(), "AXTitle").unwrap_or_else(|| "?".into());
+        let manual = poner(app, "AXManualAccessibility");
+        if NAVEGADORES_CHROMIUM.contains(&nombre_app.as_str()) {
+            let mejorada = poner(app, "AXEnhancedUserInterface");
+            log::info!(
+                "Accesibilidad pedida a {nombre_app}: AXManualAccessibility={manual}, AXEnhancedUserInterface={mejorada}"
+            );
+        } else {
+            log::info!("Accesibilidad pedida a {nombre_app}: AXManualAccessibility={manual}");
+        }
     }
 
     pub fn preparar() {
-        if let Some(app) = app_al_frente() {
+        if let Ok((_, app)) = app_al_frente() {
             exponer_contenido(&app);
         }
     }
 
     pub fn leer() -> Campo {
-        let Some(app) = app_al_frente() else {
-            return Campo::Desconocido;
+        let (sistema, app) = match app_al_frente() {
+            Ok(par) => par,
+            Err(motivo) => return super::desconocido(motivo),
         };
         exponer_contenido(&app);
         let nombre_app = texto(app.as_CFTypeRef(), "AXTitle").unwrap_or_else(|| "?".into());
 
-        let Some(foco) = atributo(app.as_CFTypeRef(), "AXFocusedUIElement") else {
-            return Campo::Desconocido;
+        // Primero se le pregunta a la app; si no contesta, al sistema (algunas apps solo
+        // responden por ahí).
+        let foco = match atributo(app.as_CFTypeRef(), "AXFocusedUIElement") {
+            Ok(foco) => foco,
+            Err(e_app) => match atributo(sistema.as_CFTypeRef(), "AXFocusedUIElement") {
+                Ok(foco) => foco,
+                Err(e_sis) => {
+                    return super::desconocido(format!(
+                        "app={nombre_app}, sin campo con el foco (AX {e_app} / {e_sis})"
+                    ))
+                }
+            },
         };
         let Some(rol) = texto(foco.as_CFTypeRef(), "AXRole") else {
-            return Campo::Desconocido;
+            return super::desconocido(format!("app={nombre_app}, el campo no dice su tipo"));
         };
         let valor = texto(foco.as_CFTypeRef(), "AXValue");
         let es_de_texto =
@@ -271,7 +365,8 @@ mod plataforma {
     pub fn leer() -> Campo {
         // Hilo nuevo (ver `super::leer`): se inicializa COM aquí y se libera al salir.
         let iniciado = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) }.is_ok();
-        let campo = leer_con_com().unwrap_or(Campo::Desconocido);
+        let campo = leer_con_com()
+            .unwrap_or_else(|e| super::desconocido(format!("UI Automation: {e}")));
         if iniciado {
             unsafe { CoUninitialize() };
         }
@@ -321,7 +416,7 @@ mod plataforma {
     pub fn preparar() {}
 
     pub fn leer() -> Campo {
-        Campo::Desconocido
+        super::desconocido("plataforma sin soporte")
     }
 
     pub fn bloq_mayus() -> Option<bool> {
