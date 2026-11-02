@@ -123,7 +123,11 @@ para Azure. El número real sale en el resumen de cada corrida firmada.
 > (In Progress)**: CLOSELABS GROUP LLC, identificador D-U-N-S 150006339, 7345 W Sand Lake Rd Ste 210
 > Office 4824, Orlando, Florida 32819, US; correos nicolas@ y admin@closelabs.co; solicitante NICOLAS
 > WALTEROS FLOREZ. Sujeto previsto: CN=O=CLOSELABS GROUP LLC (coincide con `FIRMA_PUBLISHER`).
-> Siguiente: el correo de "Action Required" para verificar a Nicolás (pasaporte + Authenticator).
+> 2026-11-02: verificación de Nicolás hecha (se interrumpió al compartir desde Authenticator, pero
+> Microsoft la tomó). Luego pidieron un documento de la empresa (Categoría 1, se admite UN archivo):
+> se subió `wyoming-registro-completo.pdf` = Filing Information oficial de la Secretaría de Wyoming +
+> la ficha web impresa con el enlace visible. **Primer intento de documentos usado; quedan dos.**
+> Estado: In Progress.
 
 1. **Cuenta de Azure a nombre de la LLC**, con suscripción **de pago** (pay-as-you-go). El plan
    gratis no sirve.
