@@ -119,7 +119,11 @@ para Azure. El número real sale en el resumen de cada corrida firmada.
 > **Avance 2026-11-02:** suscripción creada con la cuenta Microsoft personal de Nicolás (crear una
 > cuenta nueva con correo @closelabs.co la bloqueó el antifraude de Microsoft; el correo de entrada no
 > sale en el certificado). Cuenta de firma **`closelabsfirma`**, grupo `closelabs-firma`, **East US**
-> → endpoint `https://eus.codesigning.azure.net`. Siguiente: validación de la organización.
+> → endpoint `https://eus.codesigning.azure.net`. **Validación de organización enviada el 2026-11-02
+> (In Progress)**: CLOSELABS GROUP LLC, identificador D-U-N-S 150006339, 7345 W Sand Lake Rd Ste 210
+> Office 4824, Orlando, Florida 32819, US; correos nicolas@ y admin@closelabs.co; solicitante NICOLAS
+> WALTEROS FLOREZ. Sujeto previsto: CN=O=CLOSELABS GROUP LLC (coincide con `FIRMA_PUBLISHER`).
+> Siguiente: el correo de "Action Required" para verificar a Nicolás (pasaporte + Authenticator).
 
 1. **Cuenta de Azure a nombre de la LLC**, con suscripción **de pago** (pay-as-you-go). El plan
    gratis no sirve.
