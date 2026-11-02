@@ -27,6 +27,11 @@ export interface Route {
   reasoningModel: boolean;
   extraBody: Record<string, unknown> | null;
   /**
+   * Solo para formatear: si un trozo no volvió en estos ms, se repite la misma petición al mismo
+   * modelo y gana la primera respuesta buena. `null` = sin relevo. Ver la migración 20261102000001.
+   */
+  hedgeMs: number | null;
+  /**
    * Solo para transcribir. ⚠️ Medido el 2026-09-19: el Whisper turbo de DeepInfra DEVUELVE LA
    * TRANSCRIPCIÓN VACÍA cuando la pista de vocabulario pasa de ~150 caracteres, y con pistas
    * medianas la TRUNCA EN SILENCIO — media historia clínica sin que el médico se entere. Por eso
@@ -97,6 +102,7 @@ interface ProviderRow {
   enabled: boolean;
   /** Campos extra del cuerpo. Hoy solo OpenRouter: elige qué servidor sirve el modelo. */
   extra_body: Record<string, unknown> | null;
+  format_hedge_ms: number | null;
 }
 
 async function routingConfig(): Promise<RoutingConfig> {
@@ -118,7 +124,7 @@ async function routingConfig(): Promise<RoutingConfig> {
     ),
     select<ProviderRow>(
       "providers",
-      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,format_reasoning_model,supports_transcribe_prompt,transcribe_uses_vocabulary,enabled,extra_body",
+      "select=name,base_url,api_key_env,transcribe_model,format_model,format_reasoning_effort,format_reasoning_model,supports_transcribe_prompt,transcribe_uses_vocabulary,enabled,extra_body,format_hedge_ms",
     ),
   ]);
   const row = cfgRows[0];
@@ -164,6 +170,7 @@ function buildRoute(cfg: RoutingConfig, kind: Kind, name: string): Route {
     reasoningEffort: p.format_reasoning_effort,
     reasoningModel: p.format_reasoning_model === true,
     extraBody: p.extra_body ?? null,
+    hedgeMs: p.format_hedge_ms && p.format_hedge_ms > 0 ? p.format_hedge_ms : null,
     supportsTranscribePrompt: p.supports_transcribe_prompt,
     transcribeVocabulary: p.transcribe_uses_vocabulary === true ? cfg.transcribeVocabulary : null,
     dailyQuota: cfg.dailyQuota,

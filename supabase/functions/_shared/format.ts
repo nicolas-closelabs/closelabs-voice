@@ -379,6 +379,57 @@ async function llamar(
   return { ok: true, texto: limpio.trim(), tokensIn, tokensOut };
 }
 
+/**
+ * `llamar` con relevo: si el trozo no volvió en `route.hedgeMs`, se manda la MISMA petición al
+ * MISMO modelo y se usa la primera respuesta buena. Sin `hedgeMs`, es `llamar` a secas.
+ *
+ * Por qué (2026-11-02): gpt-6-luna formatea en 1-2 s, pero a ratos OpenAI tarda 4-10 s en
+ * contestar, y el médico lo siente como lentitud de la app. El pico de una petición casi nunca
+ * coincide con el de la otra. Es el mismo modelo, así que la calidad no cambia; solo cuesta una
+ * segunda llamada en los trozos lentos. La que pierde se deja terminar (no hay cómo cancelarla
+ * desde aquí) y su respuesta se descarta; sus tokens no se cuentan en `usage_events`.
+ */
+async function llamarConRelevo(
+  route: Route,
+  trozo: string,
+  systemPrompt: string,
+  limite: number,
+): Promise<Respuesta> {
+  const primera = llamar(route, trozo, systemPrompt, limite, true);
+  if (!route.hedgeMs) return primera;
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const espera = new Promise<"relevo">((r) => {
+    timer = setTimeout(() => r("relevo"), route.hedgeMs!);
+  });
+  const temprana = await Promise.race([primera, espera]);
+  clearTimeout(timer);
+  // Volvió a tiempo (bien o mal): como siempre. Un fallo rápido lo atiende la cadena de respaldo.
+  if (temprana !== "relevo") return temprana;
+  if (limite - Date.now() < MINIMO_INTENTO_MS) return primera;
+
+  console.log(`${route.provider}: el trozo tardó más de ${route.hedgeMs} ms; se pide el relevo`);
+  const segunda = llamar(route, trozo, systemPrompt, limite, true);
+  return primeraBuena([primera, segunda]);
+}
+
+/** La primera respuesta buena; si todas fallan, el fallo de la que terminó primero. */
+function primeraBuena(intentos: Promise<Respuesta>[]): Promise<Respuesta> {
+  return new Promise((resolve) => {
+    let pendientes = intentos.length;
+    let primerFallo: Respuesta | null = null;
+    for (const intento of intentos) {
+      intento
+        .catch((): Respuesta => ({ ok: false, code: "provider_error", status: 502 }))
+        .then((r) => {
+          if (r.ok) return resolve(r);
+          primerFallo ??= r;
+          if (--pendientes === 0) resolve(primerFallo);
+        });
+    }
+  });
+}
+
 /** Un intento contra UN proveedor: parte el dictado y formatea los trozos en paralelo. */
 async function formatearCon(
   route: Route,
@@ -390,7 +441,7 @@ async function formatearCon(
   const trozos = partirDictado(text);
   const started = performance.now();
   const partes = await Promise.all(
-    trozos.map((trozo) => llamar(route, trozo, systemPrompt, limite, true)),
+    trozos.map((trozo) => llamarConRelevo(route, trozo, systemPrompt, limite)),
   );
   const latencyMs = performance.now() - started;
 

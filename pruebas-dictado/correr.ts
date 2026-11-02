@@ -262,12 +262,14 @@ const medianaGlobal = latencias.length
   ? latencias.sort((a, b) => a - b)[Math.floor(latencias.length / 2)]
   : 0;
 const peorMs = latencias.length ? Math.max(...latencias) : 0;
+// p90: los picos. La mediana no los ve y son justo lo que el médico siente como "está lento".
+const p90Ms = latencias.length ? latencias[Math.min(latencias.length - 1, Math.floor(latencias.length * 0.9))] : 0;
 resumen.total = {
-  ok: totalOk, de: total, medianaMs: medianaGlobal, peorMs,
+  ok: totalOk, de: total, medianaMs: medianaGlobal, p90Ms, peorMs,
   fallosContenido, respuestasMedidas,
   proveedor: soloProveedor ?? null, deRespaldo: totalRespaldo,
 };
-console.log(`TOTAL: ${totalOk}/${total} comprobaciones sin un solo fallo · mediana ${(medianaGlobal / 1000).toFixed(1)}s · peor ${(peorMs / 1000).toFixed(1)}s`);
+console.log(`TOTAL: ${totalOk}/${total} comprobaciones sin un solo fallo · mediana ${(medianaGlobal / 1000).toFixed(1)}s · p90 ${(p90Ms / 1000).toFixed(1)}s · peor ${(peorMs / 1000).toFixed(1)}s`);
 console.log(`CONTENIDO: ${fallosContenido} de ${respuestasMedidas} respuestas cambiaron o perdieron contenido`);
 if (soloProveedor) {
   console.log(

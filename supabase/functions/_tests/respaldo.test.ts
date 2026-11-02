@@ -20,7 +20,11 @@ const env: Record<string, string> = {
 };
 (globalThis as any).Deno = { env: { get: (k: string) => env[k] } };
 
-type Comportamiento = "ok" | "429" | "500" | "400" | "vacio" | "cuelga" | "400-siempre" | "truncado";
+type Comportamiento = "ok" | "429" | "500" | "400" | "vacio" | "cuelga" | "400-siempre" | "truncado" | "lenta-primera" | "lenta-siempre" | "falla-tarde";
+/** Llamadas de formateo por proveedor en el caso actual: "lenta-primera" solo frena la primera. */
+let llamadasPorProv: Record<string, number> = {};
+/** Lo que tarda una respuesta "lenta": bastante más que el relevo de prueba (50 ms). */
+const LENTA_MS = 400;
 const conducta: Record<string, Comportamiento> = {};
 let llamadas: string[] = [];
 /** `app_config.content_check` que devuelve la base falsa. */
@@ -34,6 +38,8 @@ const proveedores = [
   { name: "groq", base_url: "https://groq.test", api_key_env: "GROQ_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, enabled: true },
   { name: "deepinfra", base_url: "https://deepinfra.test", api_key_env: "DEEPINFRA_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: "low", format_reasoning_model: true, supports_transcribe_prompt: true, enabled: true },
   { name: "openai", base_url: "https://openai.test", api_key_env: "OPENAI_API_KEY", transcribe_model: "w", format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: true, transcribe_uses_vocabulary: true, enabled: true },
+  // Solo para el relevo (2026-11-02): fuera de la cadena, se usa con `forzar`.
+  { name: "relevo", base_url: "https://relevo.test", api_key_env: "GROQ_API_KEY", transcribe_model: null, format_model: "f", format_reasoning_effort: null, supports_transcribe_prompt: false, enabled: true, format_hedge_ms: 50 },
 ];
 
 const json = (b: unknown, status = 200) =>
@@ -53,6 +59,11 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   if (tipo === "F") cuerpos[prov] = JSON.parse(init.body);
   if (tipo === "T") pistas[prov] = String(init.body?.get?.("prompt") ?? "");
   const c = conducta[prov] ?? "ok";
+  const n = (llamadasPorProv[prov] = (llamadasPorProv[prov] ?? 0) + 1);
+  if (c === "lenta-siempre" || (c === "lenta-primera" && n === 1) || c === "falla-tarde") {
+    await new Promise((r) => setTimeout(r, LENTA_MS));
+    if (c === "falla-tarde") return json({ error: "x" }, 500);
+  }
   if (c === "cuelga") {
     return new Promise((_, rechazar) =>
       init.signal?.addEventListener("abort", () => rechazar(new DOMException("abort", "AbortError"))),
@@ -89,6 +100,7 @@ async function caso(nombre: string, c: Record<string, Comportamiento>, fn: () =>
   for (const k of Object.keys(conducta)) delete conducta[k];
   Object.assign(conducta, c);
   llamadas = [];
+  llamadasPorProv = {};
   const t0 = performance.now();
   const r = await fn();
   const ms = Math.round(performance.now() - t0);
@@ -151,6 +163,21 @@ await caso("Groq COLGADO → DeepInfra dentro de los 30 s de la app", { groq: "c
 // por perdido. Por eso son DOS llamadas al mismo proveedor, y ninguna al respaldo: cambiar de
 // proveedor no sirve, todos sirven el mismo modelo y truncarían igual.
 await caso("dictado que no cabe: se repite con techo amplio y NO prueba el respaldo", { groq: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F", "groq:F"]);
+
+// --- Relevo (2026-11-02): si el modelo tarda, la misma petición otra vez; gana la primera buena ---
+console.log("— RELEVO —");
+{
+  const t0 = performance.now();
+  await caso("relevo: la primera tarda → gana la segunda, sin esperarla", { relevo: "lenta-primera" }, () => formatText("d1", "hola", "prompt", "relevo"), (r) => r.ok && r.provider === "relevo", ["relevo:F", "relevo:F"]);
+  const ms = performance.now() - t0;
+  if (ms >= LENTA_MS) fallas++;
+  console.log(ms < LENTA_MS ? `✅ relevo: respondió en ${Math.round(ms)} ms (la lenta tardaba ${LENTA_MS})` : `❌ relevo: esperó a la lenta (${Math.round(ms)} ms)`);
+}
+await caso("relevo: si contesta a tiempo, una sola llamada", {}, () => formatText("d1", "hola", "prompt", "relevo"), (r) => r.ok && r.provider === "relevo", ["relevo:F"]);
+await caso("relevo: las dos lentas → espera y entrega", { relevo: "lenta-siempre" }, () => formatText("d1", "hola", "prompt", "relevo"), (r) => r.ok && r.provider === "relevo", ["relevo:F", "relevo:F"]);
+await caso("relevo: las dos fallan tarde → falla (no inventa)", { relevo: "falla-tarde" }, () => formatText("d1", "hola", "prompt", "relevo"), (r) => !r.ok, ["relevo:F", "relevo:F"]);
+await caso("relevo: un fallo RÁPIDO no pide relevo (lo atiende la cadena)", { relevo: "500" }, () => formatText("d1", "hola", "prompt", "relevo"), (r) => !r.ok, ["relevo:F"]);
+await caso("sin relevo configurado: una sola llamada aunque tarde", { groq: "lenta-primera" }, () => formatText("d1", "hola", "prompt"), (r) => r.ok && r.provider === "groq", ["groq:F"]);
 await caso("truncado no se confunde con empty_result", { groq: "truncado", deepinfra: "truncado" }, () => formatText("d1", "hola", "prompt"), (r) => !r.ok && r.code === "truncated", ["groq:F", "groq:F"]);
 
 // Red de seguridad (2026-09-30). El proveedor falso devuelve "limpio por groq": para un dictado
