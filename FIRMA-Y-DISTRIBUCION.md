@@ -116,6 +116,11 @@ para Azure. El número real sale en el resumen de cada corrida firmada.
 
 ### Azure Artifact Signing — lo que hace Nicolás (cuando haya EIN y D-U-N-S)
 
+> **Avance 2026-11-02:** suscripción creada con la cuenta Microsoft personal de Nicolás (crear una
+> cuenta nueva con correo @closelabs.co la bloqueó el antifraude de Microsoft; el correo de entrada no
+> sale en el certificado). Cuenta de firma **`closelabsfirma`**, grupo `closelabs-firma`, **East US**
+> → endpoint `https://eus.codesigning.azure.net`. Siguiente: validación de la organización.
+
 1. **Cuenta de Azure a nombre de la LLC**, con suscripción **de pago** (pay-as-you-go). El plan
    gratis no sirve.
 2. En la suscripción, registrar el proveedor **`Microsoft.CodeSigning`** y crear una cuenta de
