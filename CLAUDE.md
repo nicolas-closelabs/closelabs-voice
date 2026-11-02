@@ -13,6 +13,16 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
+> **2026-11-02 — RELEVO DEL FORMATEO: GUARDADO, NO ACTIVO.** A ratos gpt-6-luna tarda 4-10 s en
+> un dictado corto (picos el 21/10, 28/10 y tres seguidos el 2/11) y el médico lo siente como "la
+> app está lenta" aunque nada nuestro cambió. `providers.format_hedge_ms`: si un trozo no volvió
+> en ese tiempo, se repite la misma petición al mismo modelo y gana la primera buena. Nulo en
+> producción; la fila `openai-luna-relevo` (3000 ms) es solo para el banco. Medido el 2/11, las dos
+> variantes a la vez, 128 respuestas cada una: calidad idéntica (0 pérdidas) y tiempos iguales
+> (mediana 2,2/2,1 s, p90 3,1/3,0 s, peor 6,5/6,6 s) porque OpenAI no tuvo picos en ese rato.
+> Nicolás decidió dejarlo guardado. Para activarlo: desplegar `dictate` (hoy solo `format` tiene el
+> código) y poner la columna en la fila de producción; medir antes los picos en `usage_events`.
+
 > **2026-10-28 — EL DICTADO SE QUEDA EN EL PORTAPAPELES.** Un médico de gMedic dictaba, la app
 > mandaba Cmd+V y el campo seguía vacío (con el cursor parpadeando; a mano sí pegaba). Sospecha
 > principal: el portapapeles se devolvía a ciegas a los 200 ms y, si la página leía tarde, pegaba
