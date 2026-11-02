@@ -124,6 +124,14 @@ para Azure. El número real sale en el resumen de cada corrida firmada.
 3. **Validación de identidad**: *Public Trust*, **organización**. Con EIN, D-U-N-S, la dirección de
    /empresa letra por letra y un correo `@closelabs.co`. Tres intentos para aportar documentos:
    revisar todo antes de enviar.
+   **Revisado contra la guía de Microsoft (2026-11-02):** (a) hay que asignarse a uno mismo el rol
+   **Artifact Signing Identity Verifier** (ser Owner no basta: sin él, "New identity" sale gris);
+   (b) piden **dos buzones distintos en @closelabs.co** que reciban correos externos con enlaces;
+   (c) si piden documentos, aceptan el registro de la sociedad y **el registro o la factura del
+   dominio a nombre de la sociedad**: poner CLOSELABS GROUP LLC como organización del titular de
+   closelabs.co ANTES de enviar; (d) quien representa a la LLC se verifica con pasaporte (AU10TIX) y
+   la app Microsoft Authenticator; (e) el cobro empieza al crear la cuenta de firma; (f) toma de 1
+   a 20 días hábiles.
 4. Con la validación en *Completed*, crear un **perfil de certificado** *Public Trust* y anotar su
    **nombre**.
 5. En **Microsoft Entra ID → App registrations**, crear una aplicación (p. ej. `github-firma`) y un
