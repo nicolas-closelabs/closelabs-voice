@@ -31,9 +31,11 @@ on:
 
 env:
   ORT_VERSION: "1.24.2"
-  # A nombre de quién TIENE que quedar firmado (el certificado sale "Developer ID Application:
-  # CLOSELABS GROUP LLC (TEAMID)"). Si sale a nombre de otro, no se publica.
-  FIRMA_PUBLISHER: "CLOSELABS GROUP LLC"
+  # A nombre de quién TIENE que quedar firmado. Si sale a nombre de otro, no se publica.
+  # ⚠️ Es el texto EXACTO del certificado (2026-11-09): Apple lo emitió como "Developer ID
+  # Application: CLOSELABS GROUP, LLC (4AZF9399UY)", CON coma (D&B lo tiene sin ella). El Team ID
+  # va incluido para que ningún otro certificado con el mismo nombre pase la comprobación.
+  FIRMA_PUBLISHER: "CLOSELABS GROUP, LLC (4AZF9399UY)"
 
 jobs:
   slice:
