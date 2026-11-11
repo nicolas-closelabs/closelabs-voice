@@ -13,8 +13,9 @@ name: "CloseLabs Voice — Build"
 #   FIRMA_WINDOWS_POR_DEFECTO  apagada | azure | sslcom
 #   FIRMA_MAC_POR_DEFECTO      false | true
 #
-# Hoy los dos están APAGADOS: los instaladores salen como siempre (Windows con el aviso
-# de SmartScreen, Mac con el truco `xattr -cr`). Encender uno es cambiar su valor aquí,
+# Mac: ENCENDIDA desde el 2026-11-10 (Developer ID de CLOSELABS GROUP, LLC; primera corrida
+# firmada y notarizada: 42741561929). Windows: APAGADA (sale con el aviso de SmartScreen) hasta
+# tener el certificado de Azure. Encender uno es cambiar su valor aquí,
 # DESPUÉS de cargar sus secretos en GitHub y de que una corrida manual firmada salga bien.
 # Qué secretos, en qué orden y cómo probar: FIRMA-Y-DISTRIBUCION.md, sección "Pipeline".
 #
@@ -51,7 +52,7 @@ concurrency:
 env:
   # ⬇️ LOS INTERRUPTORES. Ver arriba antes de tocarlos.
   FIRMA_WINDOWS_POR_DEFECTO: apagada
-  FIRMA_MAC_POR_DEFECTO: false
+  FIRMA_MAC_POR_DEFECTO: true
 
 jobs:
   # `env` no se puede leer en el `with:` de un workflow reutilizable; este job traduce los

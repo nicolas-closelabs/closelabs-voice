@@ -353,7 +353,9 @@ cambia la URL.
   `FIRMA-Y-DISTRIBUCION.md`.
 - [ ] **Firma Windows a nombre de CLOSELABS GROUP LLC** (Azure Artifact Signing; SSL.com OV de respaldo).
   Necesita EIN y D-U-N-S. _Plan B si la LLC se demora: SSL.com IV a nombre de Nicolás._
-- [ ] Firma + notarización macOS (Apple Developer **como organización**, $99/año; necesita D-U-N-S).
+- [x] **Firma + notarización macOS — HECHA 2026-11-10.** Developer ID de CLOSELABS GROUP, LLC
+  (4AZF9399UY), encendida por defecto en el CI. Falta: publicar la primera versión firmada y
+  confirmar que el permiso de Accesibilidad sobrevive a la siguiente.
   Con ella se prende también la actualización automática en Mac (`--con-mac`).
   ⚠️ **Mientras no esté firmada, el permiso de Accesibilidad se cae en CADA versión nueva** (va
   atado al hash del binario): el interruptor se ve encendido pero no vale, y hay que apagarlo y

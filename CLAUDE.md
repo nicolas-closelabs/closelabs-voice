@@ -13,6 +13,15 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
+> **2026-11-10 — LA APP DE MAC SALE FIRMADA Y NOTARIZADA.** Developer ID Application de
+> **CLOSELABS GROUP, LLC (4AZF9399UY)** — Apple lo emitió CON coma; la comprobación del CI exige ese
+> texto exacto con el Team ID. Vence el 2027-12-10 (respaldo: Llavero del Mac de Nicolás; la
+> contraseña, en su app Contraseñas). `FIRMA_MAC_POR_DEFECTO: true` en `closelabs.yml`. Primera
+> corrida firmada: 42741561929 (notarización Accepted, ticket engrapado, Gatekeeper la acepta).
+> Ya no hace falta `xattr -cr`. ⚠️ Los médicos de Mac dan el permiso de Accesibilidad UNA vez más
+> (de ad-hoc a Developer ID); de ahí en adelante se conserva entre versiones. Pendiente: confirmar
+> eso con dos versiones firmadas seguidas antes de dejar que Mac se instale sola al arrancar.
+
 > **2026-11-02 — RELEVO DEL FORMATEO: GUARDADO, NO ACTIVO.** A ratos gpt-6-luna tarda 4-10 s en
 > un dictado corto (picos el 21/10, 28/10 y tres seguidos el 2/11) y el médico lo siente como "la
 > app está lenta" aunque nada nuestro cambió. `providers.format_hedge_ms`: si un trozo no volvió
