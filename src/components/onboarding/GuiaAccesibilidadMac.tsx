@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string */
-import React from "react";
+import React, { useState } from "react";
 
 /**
  * Guía visual del permiso de Accesibilidad en Mac.
@@ -25,32 +25,58 @@ const PASOS = [
   "Toca el interruptor para encenderlo.",
 ];
 
-export const GuiaAccesibilidadMac: React.FC = () => (
-  <div className="w-full rounded-2xl border border-brand-border bg-brand-surface p-4 flex flex-col gap-3">
-    <p className="text-[15px] font-semibold text-brand-text">
-      Así se ve en tu Mac:
-    </p>
+/**
+ * Video real de lo que va a ver (10-15 s, sin sonido, en bucle), grabado en un Mac con la app
+ * instalada. Un video de la pantalla de verdad se reconoce mejor que cualquier dibujo. Mientras el
+ * archivo no exista, se ve el dibujo: el video solo aparece cuando ya cargó.
+ */
+const VIDEO = "/guias/accesibilidad-mac.mp4";
 
-    <Dibujo />
+export const GuiaAccesibilidadMac: React.FC = () => {
+  const [hayVideo, setHayVideo] = useState(false);
+  return (
+    <div className="w-full rounded-2xl border border-brand-border bg-brand-surface p-4 flex flex-col gap-3">
+      <p className="text-[15px] font-semibold text-brand-text">
+        Así se ve en tu Mac:
+      </p>
 
-    <ol className="flex flex-col gap-1.5">
-      {PASOS.map((paso, i) => (
-        <li key={i} className="flex items-start gap-2 text-[14px] leading-snug">
-          <span className="grid place-items-center w-5 h-5 shrink-0 rounded-full bg-brand-accent text-white text-[11px] font-semibold font-heading">
-            {i + 1}
-          </span>
-          <span className="text-brand-text-secondary">{paso}</span>
-        </li>
-      ))}
-    </ol>
+      <video
+        src={VIDEO}
+        autoPlay
+        loop
+        muted
+        playsInline
+        onLoadedData={() => setHayVideo(true)}
+        onError={() => setHayVideo(false)}
+        className={
+          hayVideo ? "w-full rounded-xl border border-brand-border" : "hidden"
+        }
+        aria-label="Video: cómo encender CloseLabs Voice en Accesibilidad"
+      />
+      {!hayVideo && <Dibujo />}
 
-    <p className="text-[13px] leading-snug text-brand-text-muted">
-      Si te pide la contraseña de tu Mac o tu huella, es normal: la pide el sistema, no nosotros.
-      Cuando lo enciendas, vuelve aquí; esta pantalla sigue sola.
-    </p>
+      <ol className="flex flex-col gap-1.5">
+        {PASOS.map((paso, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-2 text-[14px] leading-snug"
+          >
+            <span className="grid place-items-center w-5 h-5 shrink-0 rounded-full bg-brand-accent text-white text-[11px] font-semibold font-heading">
+              {i + 1}
+            </span>
+            <span className="text-brand-text-secondary">{paso}</span>
+          </li>
+        ))}
+      </ol>
 
-  </div>
-);
+      <p className="text-[13px] leading-snug text-brand-text-muted">
+        Si te pide la contraseña de tu Mac o tu huella, es normal: la pide el
+        sistema, no nosotros. Cuando lo enciendas, esta ventana vuelve sola al
+        frente.
+      </p>
+    </div>
+  );
+};
 
 /** La ventana de ajustes, simplificada: lista de apps y el interruptor señalado. */
 const Dibujo: React.FC = () => (
@@ -75,7 +101,15 @@ const Dibujo: React.FC = () => (
     <FilaApp y={80} nombre="Otra aplicación" encendido={false} />
 
     {/* La nuestra, resaltada y encendida */}
-    <rect x="12" y="108" width="396" height="36" rx="9" fill="#f3e9ff" stroke="#a439ff" />
+    <rect
+      x="12"
+      y="108"
+      width="396"
+      height="36"
+      rx="9"
+      fill="#f3e9ff"
+      stroke="#a439ff"
+    />
     <rect x="24" y="117" width="18" height="18" rx="5" fill="#1a1620" />
     <text x="52" y="131" fontSize="12" fontWeight="700" fill="#1a1620">
       CloseLabs Voice
@@ -93,7 +127,12 @@ const Dibujo: React.FC = () => (
       fill="none"
       strokeLinecap="round"
     />
-    <path d="M374 146 l-7 6 M374 146 l1 9" stroke="#a439ff" strokeWidth="2.5" strokeLinecap="round" />
+    <path
+      d="M374 146 l-7 6 M374 146 l1 9"
+      stroke="#a439ff"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
     <text x="196" y="178" fontSize="12" fontWeight="700" fill="#8b2ff3">
       enciéndelo aquí
     </text>

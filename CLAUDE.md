@@ -13,6 +13,17 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
+> **2026-11-10 — REVISIÓN DE UX DEL PRIMER USO (sin publicar todavía).** Windows: instalador en
+> español y de UNA pantalla ("Instalar" → barra → la app se abre sola + ícono en el escritorio);
+> se saltan portátil/carpeta/final y la de "ya está instalada" (se instala encima). Las rutas `/P`
+> de la actualización automática no cambian. Mac: el .dmg trae fondo con flecha
+> (`src-tauri/dmg/`) — ⚠️ en CI hace falta `TAURI_BUNDLER_DMG_IGNORE_CI=true` o Tauri lo arma sin
+> fondo; y si la app se abre desde el .dmg, `InstalarEnAplicaciones` la copia a Aplicaciones
+> (`instalacion_mac.rs`). Cuenta: abre en "Crear" si nadie entró antes en ese computador, etiquetas
+> visibles, "Mostrar" contraseña, el botón dice qué falta, "reenviar el correo" (`/auth/v1/resend`)
+> y una sola cosa girando a la vez al esperar la confirmación. Tutorial: la frase sigue a la vista
+> mientras graba. ⚠️ Nada de esto se ha probado en una compilación: primero una corrida manual.
+
 > **2026-11-10 — LA APP DE MAC SALE FIRMADA Y NOTARIZADA.** Developer ID Application de
 > **CLOSELABS GROUP, LLC (4AZF9399UY)** — Apple lo emitió CON coma; la comprobación del CI exige ese
 > texto exacto con el Team ID. Vence el 2027-12-10 (respaldo: Llavero del Mac de Nicolás; la

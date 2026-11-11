@@ -215,6 +215,9 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
             clearInterval(pollingRef.current);
             pollingRef.current = null;
           }
+          // El médico está mirando Ajustes del Sistema, que tapa nuestra ventana. Se la traemos al
+          // frente: un "vuelve aquí" escrito no basta para quien no sabe cambiar de ventana.
+          await commands.showMainWindowCommand().catch(() => {});
           await completeOnboarding();
         }
 
@@ -311,7 +314,8 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   // presionar "Conceder permiso". Para entonces el médico ya estaba mirando la ventana del
   // sistema y no volvía a la nuestra: la ayuda llegaba tarde. Ahora primero ve el dibujo de lo
   // que va a pasar, y el botón abre Ajustes cuando él dice que está listo.
-  const pasoActual = permissions.microphone !== "granted" ? "microfono" : "accesibilidad";
+  const pasoActual =
+    permissions.microphone !== "granted" ? "microfono" : "accesibilidad";
   const totalPasos = isMacOS ? 2 : 1;
   const numeroPaso = pasoActual === "microfono" ? 1 : 2;
 
@@ -321,7 +325,10 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
         <div className="flex flex-col items-center gap-2 shrink-0">
           <Logo width={130} />
           <span className="text-[13px] font-semibold text-brand-text-muted">
-            {t("onboarding.permissions.step", { actual: numeroPaso, total: totalPasos })}
+            {t("onboarding.permissions.step", {
+              actual: numeroPaso,
+              total: totalPasos,
+            })}
           </span>
         </div>
 
@@ -381,17 +388,21 @@ const Paso: React.FC<{
       <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft shrink-0">
         {icono}
       </span>
-      <h2 className="font-heading text-2xl font-bold text-brand-text">{titulo}</h2>
-      <p className="text-[16px] leading-relaxed text-brand-text-secondary">{descripcion}</p>
+      <h2 className="font-heading text-2xl font-bold text-brand-text">
+        {titulo}
+      </h2>
+      <p className="text-[16px] leading-relaxed text-brand-text-secondary">
+        {descripcion}
+      </p>
     </div>
     {children}
   </div>
 );
 
-const BotonGrande: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({
-  onClick,
-  children,
-}) => (
+const BotonGrande: React.FC<{
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ onClick, children }) => (
   <button
     onClick={onClick}
     className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"

@@ -8,6 +8,19 @@
 
 /* Register the shared color tokens (src/styles/theme.css) as Tailwind
    utilities */
+/* Tamaños de letra para el público real: médicos de 50 años o más. Con la raíz en 15 px, los de
+   Tailwind quedaban en 13 px (`text-sm`, el más usado: ~110 veces) y 11 px (`text-xs`), ilegibles
+   sin acercarse a la pantalla. Se suben solo las letras, en px fijos; los espaciados siguen igual
+   (dependen de la raíz) para no descuadrar las pantallas en la ventana mínima de 680x570. */
+@theme {
+  --text-xs: 13px;
+  --text-xs--line-height: 18px;
+  --text-sm: 15px;
+  --text-sm--line-height: 22px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+}
+
 @theme inline {
   --color-text: var(--color-text);
   --color-background: var(--color-background);

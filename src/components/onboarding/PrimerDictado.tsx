@@ -99,12 +99,19 @@ function comoPresionar(keys: string[]): string {
  */
 const tieneDictado = (texto: string) => /\p{L}{2,}/u.test(texto);
 
-const Teclas: React.FC<{ keys: string[]; grande?: boolean }> = ({ keys, grande }) => (
-  <span className={`inline-flex items-center align-middle ${grande ? "gap-3" : "gap-1.5"}`}>
+const Teclas: React.FC<{ keys: string[]; grande?: boolean }> = ({
+  keys,
+  grande,
+}) => (
+  <span
+    className={`inline-flex items-center align-middle ${grande ? "gap-3" : "gap-1.5"}`}
+  >
     {keys.map((k, i) => (
       <React.Fragment key={i}>
         {i > 0 && (
-          <span className={`text-brand-text-muted ${grande ? "text-2xl" : ""}`}>+</span>
+          <span className={`text-brand-text-muted ${grande ? "text-2xl" : ""}`}>
+            +
+          </span>
         )}
         <kbd
           className={`rounded-lg border border-brand-border bg-white font-heading font-semibold shadow-[0_2px_0_rgba(26,22,32,0.08)] ${
@@ -118,10 +125,10 @@ const Teclas: React.FC<{ keys: string[]; grande?: boolean }> = ({ keys, grande }
   </span>
 );
 
-export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = ({
-  cuenta,
-  onDone,
-}) => {
+export const PrimerDictado: React.FC<{
+  cuenta: string;
+  onDone: () => void;
+}> = ({ cuenta, onDone }) => {
   const { keys, os } = useShortcutKeys();
   const [texto, setTexto] = useState("");
   const [fase, setFase] = useState<Fase>("esperando");
@@ -150,7 +157,9 @@ export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = (
     const t = setTimeout(() => {
       if (faseRef.current === "esperando") {
         setPista(
-          `¿No pasa nada? ${comoPresionar(keys)}`,
+          keys.length > 1
+            ? "¿No pasa nada? Las teclas van al mismo tiempo, no una después de la otra. Vuelve a intentarlo."
+            : `¿No pasa nada? ${comoPresionar(keys)}`,
         );
       }
     }, PISTA_SIN_GRABAR_MS);
@@ -176,9 +185,7 @@ export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = (
         sinTexto = setTimeout(() => {
           if (faseRef.current !== "listo") {
             setFase("esperando");
-            setPista(
-              "El texto no apareció. Vuelve a intentarlo.",
-            );
+            setPista("El texto no apareció. Vuelve a intentarlo.");
           }
         }, PISTA_SIN_TEXTO_MS);
       }),
@@ -221,6 +228,26 @@ export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = (
     return () => window.removeEventListener("focus", alVolver);
   }, []);
 
+  // La frase a dictar, en su propia tarjeta. ⚠️ Tiene que seguir a la vista MIENTRAS graba: antes
+  // la instrucción entera se cambiaba por "Te escucho…" en cuanto se presionaba el atajo, y el
+  // médico que no la había memorizado se quedaba sin saber qué decir justo cuando tenía que hablar.
+  const tarjetaFrase = (
+    <div
+      className={`w-full rounded-2xl border-2 px-5 py-4 text-center transition-colors ${
+        fase === "grabando"
+          ? "border-brand-accent bg-brand-accent-soft"
+          : "border-brand-border bg-brand-surface"
+      }`}
+    >
+      <p className="text-[15px] font-semibold text-brand-text-secondary">
+        {fase === "grabando" ? "Ahora di en voz alta:" : "Vas a decir:"}
+      </p>
+      <p className="mt-1 font-heading text-[22px] font-bold leading-snug text-brand-text">
+        «{FRASE}»
+      </p>
+    </div>
+  );
+
   // Una sola instrucción a la vez, grande. El público se pierde con listas de pasos: la primera
   // versión tenía cuatro tarjetas numeradas, avisos y enlaces, y resultó abrumadora.
   const instruccion =
@@ -230,6 +257,7 @@ export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = (
           <Mic className="w-7 h-7 animate-pulse" />
         </span>
         <p className="font-heading text-xl font-bold">Te escucho…</p>
+        {tarjetaFrase}
         <p className="text-[18px] text-brand-text-secondary">
           Cuando termines, presiona otra vez
         </p>
@@ -247,18 +275,24 @@ export const PrimerDictado: React.FC<{ cuenta: string; onDone: () => void }> = (
         </span>
         <p className="font-heading text-xl font-bold">¡Listo! Así de fácil</p>
         <p className="text-[18px] text-brand-text-secondary max-w-md">
-          Hazlo igual en tu historia clínica o donde escribas: haz clic ahí y presiona{" "}
-          <Teclas keys={keys} />
+          Hazlo igual en tu historia clínica o donde escribas: haz clic ahí y
+          presiona <Teclas keys={keys} />
         </p>
       </>
     ) : (
       <>
-        <p className="text-[18px] text-brand-text-secondary">Presiona</p>
-        <Teclas keys={keys} grande />
-        <p className="text-[18px] text-brand-text-secondary max-w-md">
-          y di en voz alta:{" "}
-          <span className="font-semibold text-brand-text">«{FRASE}»</span>
+        {tarjetaFrase}
+        <p className="text-[18px] text-brand-text-secondary">
+          Para empezar, presiona
         </p>
+        <Teclas keys={keys} grande />
+        {/* Desde el principio, no solo como pista a los 25 s: "⌥ + Espacio" no le dice nada a
+            quien nunca ha usado un atajo de dos teclas. */}
+        {keys.length > 1 && (
+          <p className="text-[16px] text-brand-text-secondary max-w-md">
+            {comoPresionar(keys)}
+          </p>
+        )}
       </>
     );
 
@@ -372,7 +406,9 @@ const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     const limpia = nueva.trim().replace(/[<>"'&]/g, "");
     if (!limpia) return;
     if (limpia.split(/\s+/).length > 3 || limpia.length > 50) {
-      setAviso("Escribe una palabra o un nombre corto, de máximo tres palabras.");
+      setAviso(
+        "Escribe una palabra o un nombre corto, de máximo tres palabras.",
+      );
       return;
     }
     if (palabras.includes(limpia)) {
@@ -392,10 +428,12 @@ const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
           <span className="grid place-items-center w-14 h-14 mt-1 rounded-full bg-brand-accent-soft text-brand-accent">
             <BookOpen className="w-7 h-7" />
           </span>
-          <h1 className="font-heading text-2xl font-bold">Enséñale tus palabras</h1>
+          <h1 className="font-heading text-2xl font-bold">
+            Enséñale tus palabras
+          </h1>
           <p className="text-[17px] leading-relaxed text-brand-text-secondary max-w-md">
-            Si escribe mal un medicamento, un nombre o una palabra que usas mucho, agrégala aquí y
-            la escribirá bien siempre.
+            Si escribe mal un medicamento, un nombre o una palabra que usas
+            mucho, agrégala aquí y la escribirá bien siempre.
           </p>
         </div>
 
@@ -452,8 +490,8 @@ const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
             </div>
           )}
           <p className="text-[15px] text-brand-text-muted">
-            Puedes agregar más cuando quieras en <strong>Diccionario</strong>, en el menú de la
-            izquierda.
+            Puedes agregar más cuando quieras en <strong>Diccionario</strong>,
+            en el menú de la izquierda.
           </p>
         </div>
 

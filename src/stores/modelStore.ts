@@ -40,6 +40,7 @@ interface ModelsStore {
   rescanLocalModels: () => Promise<void>;
   selectModel: (modelId: string) => Promise<boolean>;
   downloadModel: (modelId: string) => Promise<boolean>;
+  descargarRespaldo: () => void;
   cancelDownload: (modelId: string) => Promise<boolean>;
   deleteModel: (modelId: string) => Promise<boolean>;
   getModelInfo: (modelId: string) => ModelInfo | undefined;
@@ -425,24 +426,27 @@ export const useModelStore = create<ModelsStore>()(
         get().loadModels();
       });
 
-      // CloseLabs Voice: hay un único modelo (Parakeet). En el primer arranque se
-      // descarga AUTOMÁTICAMENTE en segundo plano, sin selector ni paso manual.
-      // El ModelSelector del footer muestra el progreso y auto-selecciona el modelo
-      // al completar la descarga (evento "model-download-complete").
-      {
-        const st = get();
-        const target = st.models.find((m) => m.is_recommended) ?? st.models[0];
-        if (
-          target &&
-          !target.is_downloaded &&
-          !target.is_downloading &&
-          !st.downloadingModels[target.id]
-        ) {
-          void st.downloadModel(target.id);
-        }
-      }
-
       set({ initialized: true });
+    },
+
+    // CloseLabs Voice: hay un único modelo (Parakeet), el respaldo sin internet. Se descarga solo,
+    // en segundo plano, sin selector ni paso manual. El ModelSelector del footer muestra el
+    // progreso y auto-selecciona el modelo al completar la descarga ("model-download-complete").
+    //
+    // ⚠️ Ya NO arranca al abrir la app: lo llama App cuando el médico terminó cuenta, permisos y
+    // tutorial. Antes empezaba en la pantalla de registro, y sus ~550 MB competían con el primer
+    // dictado en el internet de la clínica — justo el dictado que decide si la app "es lenta".
+    descargarRespaldo: () => {
+      const st = get();
+      const target = st.models.find((m) => m.is_recommended) ?? st.models[0];
+      if (
+        target &&
+        !target.is_downloaded &&
+        !target.is_downloading &&
+        !st.downloadingModels[target.id]
+      ) {
+        void st.downloadModel(target.id);
+      }
     },
   })),
 );

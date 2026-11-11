@@ -225,6 +225,9 @@ jobs:
       - name: Bundle universal (unsigned)
         if: ${{ !inputs.sign-binaries }}
         env:
+          # Sin esto, en CI Tauri arma el .dmg sin fondo ni posiciones (pasa --skip-jenkins): el
+          # médico veía una ventana vacía con dos íconos sueltos y nada que dijera qué hacer.
+          TAURI_BUNDLER_DMG_IGNORE_CI: "true"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
@@ -234,6 +237,9 @@ jobs:
       - name: Bundle universal (signed + notarized)
         if: inputs.sign-binaries
         env:
+          # Sin esto, en CI Tauri arma el .dmg sin fondo ni posiciones (pasa --skip-jenkins): el
+          # médico veía una ventana vacía con dos íconos sueltos y nada que dijera qué hacer.
+          TAURI_BUNDLER_DMG_IGNORE_CI: "true"
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

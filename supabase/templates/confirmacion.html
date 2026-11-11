@@ -6,6 +6,10 @@
      de closelabs.co sin ningún mensaje (y la recuperación no tenía dónde escribir la contraseña), y
      que los filtros de correo de empresas y hospitales gastaban al revisarlo. Ver CuentaVoice.tsx en
      el repo de la web. -->
+<!-- 2026-11-10: el CÓDIGO va primero ({{ .Token }}, 6 números = otp_length en config.toml). La app
+     lo pide en la pantalla "Revisa tu correo" y el médico no tiene que salir al navegador y volver,
+     que era donde se perdía. El botón se queda: las versiones anteriores de la app solo saben
+     esperar al enlace, y a quien lea el correo en el celular le es más fácil tocarlo. -->
 <!-- CloseLabs Voice — confirmar el correo al registrarse.
      Estructura con tablas y estilos en línea a propósito: Outlook y varios clientes de correo
      ignoran <div> con flex y las hojas de estilo externas. Feo de escribir, pero llega bien. -->
@@ -21,9 +25,20 @@
             <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#1a1620;line-height:1.3">
               Confirma tu correo para empezar
             </h1>
-            <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#56505f">
-              Ya casi. Toca el botón y tu cuenta queda activa: vuelve a CloseLabs Voice y empieza a
-              dictar.
+            <p style="margin:0 0 12px;font-size:16px;line-height:1.6;color:#56505f">
+              Ya casi. Escribe este código en CloseLabs Voice:
+            </p>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+              <tr>
+                <td align="center" style="background:#f5edff;border-radius:12px;padding:18px 12px;font-size:36px;font-weight:700;letter-spacing:10px;color:#1a1620;font-family:'SF Mono',Menlo,Consolas,monospace">
+                  {{ .Token }}
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#56505f">
+              O, si lo prefieres, toca este botón:
             </p>
 
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px">

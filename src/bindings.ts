@@ -562,6 +562,53 @@ async authSendRecovery(email: string) : Promise<Result<null, string>> {
 }
 },
 /**
+ * Vuelve a mandar el correo de "Confirmar mi correo".
+ * 
+ * Sin esto, el médico al que no le llegó el mensaje (filtro de la clínica, correo mal escrito y
+ * corregido, o simplemente lo borró) no tenía salida: crear la cuenta otra vez responde
+ * `ya_existe` y entrar responde `sin_confirmar`. Supabase frena los reenvíos seguidos (429).
+ */
+async authResendConfirmation(email: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_resend_confirmation", { email }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Confirma el correo con el código de 6 números que llega en el mensaje.
+ * 
+ * No inicia sesión: la interfaz entra después con `auth_sign_in`, que además vincula el equipo.
+ */
+async authVerifyCode(email: string, code: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_verify_code", { email, code }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * `true` si la app corre desde el disco del instalador o desde la copia temporal que macOS crea al
+ * abrir algo descargado sin moverlo (App Translocation). En Windows y en desarrollo, `false`.
+ */
+async abiertaDesdeInstalador() : Promise<boolean> {
+    return await TAURI_INVOKE("abierta_desde_instalador");
+},
+/**
+ * Copia la app a /Applications, la abre desde ahí y cierra esta. Si ya había una versión en
+ * Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que quiere usar.
+ */
+async moverAAplicaciones() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("mover_a_aplicaciones") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Estado de la cuenta. Devuelve "desconectado" en vez de error cuando no hay sesión: para la
  * interfaz no es un fallo, es la pantalla de entrar.
  */

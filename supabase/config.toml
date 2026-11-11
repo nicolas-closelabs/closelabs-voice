@@ -232,7 +232,8 @@ secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1m0s"
 # Number of characters used in the email OTP.
-otp_length = 8
+# ⚠️ 6, no 8: el médico lo escribe a mano en la app (LARGO_CODIGO en AuthGate.tsx debe coincidir).
+otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 

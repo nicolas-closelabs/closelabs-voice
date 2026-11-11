@@ -111,20 +111,20 @@
       "microphone": {
         "recommended": "recomendado",
         "bluetoothWarning": "Los audífonos Bluetooth (AirPods y similares) tardan 1 o 2 segundos en activarse, y se pueden perder las primeras palabras. Para que responda al instante, usa el micrófono del computador.",
-        "title": "Acceso al Micrófono",
-        "description": "Necesario para escuchar tu voz para la transcripción.",
+        "title": "Deja que la app te escuche",
+        "description": "Para convertir tu voz en texto, la app necesita usar el micrófono.",
         "boton": "Permitir el micrófono",
         "avisoMac": "Al tocar el botón, tu Mac te va a preguntar si permites el micrófono. Responde «Permitir».",
         "avisoWindows": "Se abrirá la Configuración de Windows. Enciende el acceso al micrófono para aplicaciones de escritorio."
       },
       "accessibility": {
-        "title": "Acceso de Accesibilidad",
-        "description": "Necesario para escribir el texto transcrito en tus aplicaciones.",
+        "title": "Deja que la app escriba por ti",
+        "description": "Para poner el texto donde tengas el cursor (tu historia clínica, WhatsApp, el correo), tu Mac pide un permiso que se llama «Accesibilidad».",
         "boton": "Ya entendí, abrir Ajustes del Sistema"
       },
       "step": "Paso {{actual}} de {{total}}",
       "waitingMic": "Esperando tu respuesta…",
-      "waitingAcc": "Aquí seguimos. Enciende el interruptor y esta pantalla continúa sola.",
+      "waitingAcc": "Aquí seguimos. Cuando enciendas el interruptor, esta ventana vuelve sola.",
       "grant": "Conceder Permiso",
       "granted": "Concedido",
       "waiting": "Esperando...",

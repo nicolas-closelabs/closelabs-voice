@@ -19,6 +19,7 @@ import VersionBlocked from "./components/VersionBlocked";
 import AuthGate from "./components/auth/AuthGate";
 import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
+import InstalarEnAplicaciones from "./components/onboarding/InstalarEnAplicaciones";
 import PrimerDictado, {
   ABRIR_PRIMER_DICTADO,
   primerDictadoHecho,
@@ -26,10 +27,14 @@ import PrimerDictado, {
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
+import { useModelStore } from "./stores/modelStore";
 import { commands } from "@/bindings";
 import { FinDePruebaModal } from "./components/settings/account/FinDePruebaModal";
 import { situacion } from "./components/settings/account/Suscripcion";
-import { puedeInstalarSola, useActualizacion } from "./stores/actualizacionStore";
+import {
+  puedeInstalarSola,
+  useActualizacion,
+} from "./stores/actualizacionStore";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
 type OnboardingStep = "accessibility" | "model" | "done";
@@ -74,7 +79,15 @@ function App() {
   // "Tu primer dictado". Se abre una sola vez por CUENTA, al entrar, y desde el botón de Inicio
   // cuando se quiera. Quien ya lo hizo antes de la 0.8.1 conserva su marca (ver PrimerDictado).
   const [primerDictado, setPrimerDictado] = useState(false);
+  // Mac: ¿se abrió desde el .dmg sin moverla a Aplicaciones? (ver `instalacion_mac.rs`)
+  const [desdeInstalador, setDesdeInstalador] = useState<boolean | null>(null);
 
+  useEffect(() => {
+    commands
+      .abiertaDesdeInstalador()
+      .then(setDesdeInstalador)
+      .catch(() => setDesdeInstalador(false));
+  }, []);
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -294,19 +307,33 @@ function App() {
     }
     const espera = setTimeout(async () => {
       const r = await commands.accountState();
-      if (r.status !== "ok" || r.data.offline || situacion(r.data) !== "prueba" || !r.data.trial_ends_at) return;
-      const dias = Math.ceil((new Date(r.data.trial_ends_at).getTime() - Date.now()) / 86_400_000);
+      if (
+        r.status !== "ok" ||
+        r.data.offline ||
+        situacion(r.data) !== "prueba" ||
+        !r.data.trial_ends_at
+      )
+        return;
+      const dias = Math.ceil(
+        (new Date(r.data.trial_ends_at).getTime() - Date.now()) / 86_400_000,
+      );
       if (dias > 3 || dias < 1) return;
       try {
         localStorage.setItem("aviso-fin-prueba", hoy);
       } catch {
         /* nada */
       }
-      toast.info(t(dias === 1 ? "finPrueba.ultimoDia" : "finPrueba.quedan", { dias }), {
-        description: t("finPrueba.detalle"),
-        duration: 15000,
-        action: { label: t("finPrueba.verCuenta"), onClick: () => setCurrentSection("account") },
-      });
+      toast.info(
+        t(dias === 1 ? "finPrueba.ultimoDia" : "finPrueba.quedan", { dias }),
+        {
+          description: t("finPrueba.detalle"),
+          duration: 15000,
+          action: {
+            label: t("finPrueba.verCuenta"),
+            onClick: () => setCurrentSection("account"),
+          },
+        },
+      );
     }, 8000);
     return () => clearTimeout(espera);
   }, [signedIn, t]);
@@ -332,7 +359,8 @@ function App() {
         duration: 20000,
         action: {
           label: t("actualizacion.reiniciar"),
-          onClick: () => void instalar().catch(() => toast.error(t("actualizacion.fallo"))),
+          onClick: () =>
+            void instalar().catch(() => toast.error(t("actualizacion.fallo"))),
         },
       });
     })();
@@ -506,6 +534,20 @@ function App() {
     }
   }, [onboardingStep, correo]);
 
+  // El respaldo sin internet (~550 MB) se baja cuando el médico ya está en la app, no durante el
+  // registro ni el tutorial (ver `descargarRespaldo`).
+  const modelosListos = useModelStore((s) => s.initialized);
+  useEffect(() => {
+    if (
+      signedIn &&
+      onboardingStep === "done" &&
+      !primerDictado &&
+      modelosListos
+    ) {
+      useModelStore.getState().descargarRespaldo();
+    }
+  }, [signedIn, onboardingStep, primerDictado, modelosListos]);
+
   // El servidor dice que esta cuenta no puede dictar (no pagó, se acabó la prueba, cupo del día).
   // Se lleva a Mi cuenta, que es donde puede resolverlo.
   //
@@ -521,8 +563,7 @@ function App() {
         return;
       }
       const clave =
-        motivo === "subscription_missing" ||
-        motivo === "quota_exceeded"
+        motivo === "subscription_missing" || motivo === "quota_exceeded"
           ? motivo
           : "no_account";
       toast.error(t(`errors.sinPermiso.${clave}Titulo`), {
@@ -566,8 +607,18 @@ function App() {
   }
 
   // Still checking onboarding status
-  if (onboardingStep === null || signedIn === null) {
+  if (
+    onboardingStep === null ||
+    signedIn === null ||
+    desdeInstalador === null
+  ) {
     return null;
+  }
+
+  // Antes que la cuenta y los permisos: todo lo que se haga en una copia que corre desde el .dmg
+  // se pierde al expulsarlo.
+  if (desdeInstalador) {
+    return <InstalarEnAplicaciones />;
   }
 
   // Sin sesión, no se entra. La cuenta es obligatoria: es lo que permite cobrar, limitar los

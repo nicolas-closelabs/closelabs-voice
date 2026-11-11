@@ -151,9 +151,26 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 !define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
 
 ; Installer pages, must be ordered as they appear
+;
+; --- CLOSELABS --- UNA sola pantalla para el médico: la bienvenida con el botón "Instalar".
+; El público son médicos de 50 años o más, casi todos en Windows. El instalador heredado de Handy
+; tenía bienvenida, "instalación normal o portátil" (en inglés), carpeta, progreso con detalles y
+; pantalla final con casillas: seis decisiones que nadie tiene por qué tomar. Ahora: "Instalar",
+; barra de progreso, y la app se abre sola con un ícono en el escritorio. Las páginas siguen en el
+; archivo (saltadas) para que comparar con la plantilla de Tauri al actualizarla sea fácil.
+;
 ; 1. Welcome Page
+!define MUI_WELCOMEPAGE_TITLE "Instalar ${PRODUCTNAME}"
+!define MUI_WELCOMEPAGE_TEXT "Toca el botón Instalar, abajo a la derecha.$\r$\n$\r$\nTarda menos de un minuto. Al terminar, ${PRODUCTNAME} se abrirá sola y te pedirá crear tu cuenta."
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW WelcomeShowInstallButton
 !insertmacro MUI_PAGE_WELCOME
+
+; --- CLOSELABS --- El botón dice "Instalar", no "Siguiente": no hay un "siguiente" que esperar.
+Function WelcomeShowInstallButton
+  GetDlgItem $0 $HWNDPARENT 1
+  SendMessage $0 ${WM_SETTEXT} 0 "STR:Instalar"
+FunctionEnd
 
 ; 2. License Page (if defined)
 !if "${LICENSE}" != ""
@@ -173,6 +190,8 @@ Var InstallTypeRadioPortable
 Page custom PageInstallType PageLeaveInstallType
 
 Function PageInstallType
+  ; --- CLOSELABS --- Nunca se muestra: "portátil" solo confunde. Sigue disponible con /PORTABLE.
+  Abort
   ; Skip for passive/silent/update modes — portable flag is handled via /PORTABLE
   ${If} $PassiveMode = 1
   ${OrIf} ${Silent}
@@ -322,6 +341,10 @@ Function PageReinstall
   ; we are downgrading or not.
   ${If} $PassiveMode = 1
     Call PageLeaveReinstall
+  ${ElseIf} $WixMode = 0
+    ; --- CLOSELABS --- Ya estaba instalada (el médico volvió a bajarla de la web): no se pregunta
+    ; si desinstalar antes. Se instala encima, que es lo que hace la actualización automática.
+    Abort
   ${Else}
     nsDialogs::Create 1018
     Pop $R4
@@ -441,7 +464,8 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
-!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
+; --- CLOSELABS --- Saltada: la carpeta de siempre (.onInit la fija, igual que en las actualizaciones).
+!define MUI_PAGE_CUSTOMFUNCTION_PRE Skip
 !insertmacro MUI_PAGE_DIRECTORY
 
 ; 6. Start menu shortcut page
@@ -460,9 +484,9 @@ Var AppStartMenuFolder
 
 ; 8. Finish page
 ;
-; Don't auto jump to finish page after installation page,
-; because the installation page has useful info that can be used debug any issues with the installer.
-!define MUI_FINISHPAGE_NOAUTOCLOSE
+;
+; --- CLOSELABS --- Sin MUI_FINISHPAGE_NOAUTOCLOSE: al terminar la barra, sigue solo. La pantalla
+; final también se salta: el escritorio recibe el ícono siempre y la app se abre en .onInstSuccess.
 ; Use show readme button in the finish page as a button create a desktop shortcut
 !define MUI_FINISHPAGE_SHOWREADME
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "$(createDesktop)"
@@ -470,7 +494,7 @@ Var AppStartMenuFolder
 ; Show run app after installation.
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION RunMainBinary
-!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
+!define MUI_PAGE_CUSTOMFUNCTION_PRE Skip
 !insertmacro MUI_PAGE_FINISH
 
 Function RunMainBinary
@@ -824,12 +848,10 @@ Section Install
       Call CreateOrUpdateStartMenuShortcut
     !insertmacro MUI_STARTMENU_WRITE_END
 
-    ; Create desktop shortcut for silent and passive installers
-    ; because finish page will be skipped
-    ${If} $PassiveMode = 1
-    ${OrIf} ${Silent}
-      Call CreateOrUpdateDesktopShortcut
-    ${EndIf}
+    ; --- CLOSELABS --- Ícono en el escritorio SIEMPRE (la pantalla final con la casilla ya no
+    ; existe). Es por donde el médico la vuelve a abrir. En actualizaciones y con /NS no se crea:
+    ; eso lo decide CreateOrUpdateDesktopShortcut.
+    Call CreateOrUpdateDesktopShortcut
   ${EndIf} ; --- END PORTABLE MODE guard ---
 
   !ifmacrodef NSIS_HOOK_POSTINSTALL
@@ -843,6 +865,13 @@ Section Install
 SectionEnd
 
 Function .onInstSuccess
+  ; --- CLOSELABS --- Instalación con ventana: la app se abre sola (ya no hay pantalla final con
+  ; la casilla "Ejecutar"). Un médico que termina de instalar y no ve nada cree que falló.
+  ${IfNot} ${Silent}
+  ${AndIf} $PassiveMode <> 1
+    Call RunMainBinary
+  ${EndIf}
+
   ; Check for `/R` flag only in silent and passive installers because
   ; GUI installer has a toggle for the user to (re)start the app
   ${If} $PassiveMode = 1

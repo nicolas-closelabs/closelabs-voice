@@ -180,6 +180,8 @@ async fn codigo_de_error(res: reqwest::Response) -> String {
     match (status, code.as_str()) {
         (400, "invalid_credentials") | (400, "invalid_grant") => "credenciales",
         (_, "email_not_confirmed") => "sin_confirmar",
+        // GoTrue responde lo mismo para un código equivocado que para uno vencido.
+        (_, "otp_expired") | (_, "otp_disabled") => "codigo_invalido",
         (_, "user_already_exists") | (422, _) if msg.contains("already") => "ya_existe",
         (429, _) | (_, "over_email_send_rate_limit") => "demasiados_intentos",
         (400, "weak_password") => "clave_debil",
@@ -740,6 +742,62 @@ pub async fn auth_send_recovery(app: AppHandle, email: String) -> Result<(), Str
     if res.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
         return Err("demasiados_intentos".to_string());
     }
+    Ok(())
+}
+
+/// Vuelve a mandar el correo de "Confirmar mi correo".
+///
+/// Sin esto, el médico al que no le llegó el mensaje (filtro de la clínica, correo mal escrito y
+/// corregido, o simplemente lo borró) no tenía salida: crear la cuenta otra vez responde
+/// `ya_existe` y entrar responde `sin_confirmar`. Supabase frena los reenvíos seguidos (429).
+#[tauri::command]
+#[specta::specta]
+pub async fn auth_resend_confirmation(app: AppHandle, email: String) -> Result<(), String> {
+    let url = format!("{}/auth/v1/resend", base_supabase(&app));
+    let res = cliente()?
+        .post(&url)
+        .header("apikey", anon_key(&app))
+        .json(&serde_json::json!({ "type": "signup", "email": email.trim().to_lowercase() }))
+        .send()
+        .await
+        .map_err(|_| "sin_conexion".to_string())?;
+
+    if !res.status().is_success() {
+        return Err(codigo_de_error(res).await);
+    }
+    info!("Se reenvió el correo de confirmación");
+    Ok(())
+}
+
+/// Confirma el correo con el código de 6 números que llega en el mensaje.
+///
+/// Por qué existe: con solo el enlace, el médico tenía que salir al navegador, tocar el botón y
+/// encontrar el camino de vuelta a la app; ahí se perdía gente. Con el código lo escribe aquí mismo,
+/// como el que le manda el banco. El enlace sigue funcionando (y las versiones viejas lo usan).
+///
+/// No inicia sesión: la interfaz entra después con `auth_sign_in`, que además vincula el equipo.
+/// `type: "email"` sirve para el código de confirmación de registro (`signup` está en desuso).
+#[tauri::command]
+#[specta::specta]
+pub async fn auth_verify_code(app: AppHandle, email: String, code: String) -> Result<(), String> {
+    let codigo: String = code.chars().filter(|c| c.is_ascii_digit()).collect();
+    let url = format!("{}/auth/v1/verify", base_supabase(&app));
+    let res = cliente()?
+        .post(&url)
+        .header("apikey", anon_key(&app))
+        .json(&serde_json::json!({
+            "type": "email",
+            "email": email.trim().to_lowercase(),
+            "token": codigo,
+        }))
+        .send()
+        .await
+        .map_err(|_| "sin_conexion".to_string())?;
+
+    if !res.status().is_success() {
+        return Err(codigo_de_error(res).await);
+    }
+    info!("Correo confirmado con el código");
     Ok(())
 }
 
