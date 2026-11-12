@@ -43,9 +43,40 @@
   --color-brand-border: var(--brand-border);
   --color-brand-border-strong: var(--brand-border-strong);
 
-  /* Fonts (utilities: font-heading, font-body) */
+  /* Fonts (utilities: font-heading, font-body, font-serif) */
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
+  --font-serif: var(--font-serif);
+
+  /* «Tinta y voz» (diseno/SISTEMA.md §5): bg-tinta, text-tinta-2, border-linea, bg-lila… */
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-tinta-3: var(--tinta-3);
+  --color-papel: var(--papel);
+  --color-lino: var(--lino);
+  --color-lino-2: var(--lino-2);
+  --color-linea: var(--linea);
+  --color-linea-fuerte: var(--linea-fuerte);
+  --color-tarjeta-cab: var(--tarjeta-cab);
+  --color-lila: var(--lila);
+  --color-lila-hover: var(--lila-hover);
+  --color-lila-presion: var(--lila-presion);
+  --color-lila-suave: var(--lila-suave);
+  --color-lila-tinta: var(--lila-tinta);
+  --color-lila-claro: var(--lila-claro);
+  --color-foco: var(--foco);
+  --color-noche: var(--noche);
+  --color-noche-2: var(--noche-2);
+  --color-hecho: var(--hecho);
+  --color-aviso: var(--aviso);
+  --color-aviso-fondo: var(--aviso-fondo);
+  --color-aviso-punto: var(--aviso-punto);
+  --color-error: var(--error);
+  --color-error-borde: var(--error-borde);
+
+  --shadow-1: 0 1px 2px rgba(24, 20, 29, 0.06);
+  --shadow-2: 0 1px 2px rgba(24, 20, 29, 0.05), 0 10px 28px rgba(24, 20, 29, 0.08);
+  --shadow-flota: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
 :root {
@@ -84,7 +115,8 @@
   font-family: var(--font-body);
 }
 
-/* Headings use Inter (CloseLabs) */
+/* Encabezados: la sans de la interfaz. Los títulos de pantalla usan la serif de forma explícita
+   (componente `Titulo`), no por ser h1: así un h2 de un renglón no se vuelve serif sin querer. */
 h1,
 h2,
 h3,
@@ -153,4 +185,49 @@ h6 {
   fill: var(--color-logo-stroke);
   stroke: var(--color-logo-stroke);
   stroke-width: 1;
+}
+
+/* «Tinta y voz»: la serif ajusta su forma al tamaño (eje óptico de Newsreader). */
+.font-serif {
+  font-optical-sizing: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 120ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+  }
+}
+
+/* «Tinta y voz» — movimiento (diseno/SISTEMA.md §12). */
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes crecer {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes etiqueta {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

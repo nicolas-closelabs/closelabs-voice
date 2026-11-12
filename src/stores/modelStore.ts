@@ -331,6 +331,16 @@ export const useModelStore = create<ModelsStore>()(
           }),
         );
         get().loadModels();
+        // Selecciona el modo sin internet en cuanto termina de bajar. Antes lo hacía el pie de
+        // página (ModelSelector); desde «Tinta y voz» no hay pie, y sin esto el modelo quedaba
+        // bajado pero sin usar. Se espera a que no haya un dictado en curso.
+        setTimeout(async () => {
+          try {
+            if (!(await commands.isRecording())) await get().selectModel(modelId);
+          } catch {
+            /* se reintenta al abrir la app (descargarRespaldo) */
+          }
+        }, 1000);
       });
 
       listen<{ model_id: string; error: string }>(

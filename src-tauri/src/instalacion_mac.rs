@@ -42,13 +42,27 @@ pub fn abierta_desde_instalador() -> bool {
     false
 }
 
-/// Copia la app a Aplicaciones, la abre desde ahí, expulsa el disco del instalador y cierra esta.
-/// Si ya había una versión en Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que
-/// quiere usar.
+/// Paso 1 y 2 de "Instalando": copia la app a Aplicaciones (o a ~/Applications sin permiso de
+/// administrador) y le quita la cuarentena. Devuelve dónde quedó. La interfaz muestra cada paso al
+/// menos 1,2 s y después llama a `relanzar_instalada`.
 #[tauri::command]
 #[specta::specta]
-pub fn mover_a_aplicaciones(app: AppHandle) -> Result<(), String> {
-    mover(&app)
+pub fn copiar_a_aplicaciones() -> Result<String, String> {
+    copiar()
+}
+
+/// Paso 3: abre la copia instalada, expulsa el disco del instalador y cierra esta.
+#[tauri::command]
+#[specta::specta]
+pub fn relanzar_instalada(app: AppHandle, destino: String) -> Result<(), String> {
+    relanzar(&app, destino)
+}
+
+/// `true` si esta es la copia que la del disco acaba de abrir desde Aplicaciones (`--recien-instalada`).
+#[tauri::command]
+#[specta::specta]
+pub fn recien_instalada(args: tauri::State<'_, crate::cli::CliArgs>) -> bool {
+    args.recien_instalada
 }
 
 /// Copia `origen` dentro de `carpeta`, reemplazando la versión anterior si la hay.
@@ -105,13 +119,11 @@ fn discos_del_instalador(nombre: &std::ffi::OsStr) -> Vec<PathBuf> {
 }
 
 #[cfg(target_os = "macos")]
-fn mover(app: &AppHandle) -> Result<(), String> {
+fn copiar() -> Result<String, String> {
     use log::{info, warn};
     use std::process::Command;
 
     let origen = paquete_actual().ok_or("sin_paquete")?;
-    let nombre = origen.file_name().ok_or("sin_paquete")?.to_owned();
-
     let destino = match copiar_en(&origen, std::path::Path::new("/Applications")) {
         Ok(d) => d,
         Err(e) => {
@@ -129,7 +141,25 @@ fn mover(app: &AppHandle) -> Result<(), String> {
         .args(["-dr", "com.apple.quarantine"])
         .arg(&destino)
         .status();
-    info!("App copiada a {}; se abre desde ahí", destino.display());
+    info!("App copiada a {}", destino.display());
+    Ok(destino.to_string_lossy().to_string())
+}
+
+#[cfg(target_os = "macos")]
+fn relanzar(app: &AppHandle, destino: String) -> Result<(), String> {
+    use log::{info, warn};
+    use std::process::Command;
+
+    let destino = PathBuf::from(destino);
+    // Solo se relanza una app que de verdad está en una carpeta Aplicaciones.
+    let en_aplicaciones = destino
+        .parent()
+        .is_some_and(|p| p.file_name().is_some_and(|n| n == "Applications"));
+    if !en_aplicaciones || !destino.exists() {
+        return Err("destino".to_string());
+    }
+    let nombre = destino.file_name().ok_or("sin_paquete")?.to_owned();
+    info!("Se abre desde {}", destino.display());
 
     // ⚠️ Todo esto ocurre UN SEGUNDO DESPUÉS de que esta copia termine: si la nueva arrancara
     // mientras esta sigue viva, el plugin de instancia única le pasaría el turno a esta y la nueva
@@ -137,19 +167,23 @@ fn mover(app: &AppHandle) -> Result<(), String> {
     // (cierra también la ventana del instalador) y después se abre la copia instalada. Las rutas van
     // como argumentos (`$0`, `$@`) y no pegadas al comando: así un nombre con espacios no rompe nada.
     //
+    // La primera apertura lleva `--recien-instalada`: la app nueva abre mostrando el mismo cuadro de
+    // "Instalando" (pasos 1 y 2 hechos, el 3 en curso) en el mismo tamaño y lugar, y de ahí funde a la
+    // bienvenida (diseno/SISTEMA.md §8).
+    //
     // ⚠️ El `open` se repite a los 3 y a los 7 segundos, y no sobra: desde macOS 14 una app que abre
     // un proceso en segundo plano (este `sh`, huérfano tras `app.exit`) arranca SIN pasar al frente.
     // En la revisión del 2026-11-11 la app reinstalada quedó escondida detrás del Finder y el médico
     // pasó ~20 s sin ver nada. Un `open` sobre la app ya abierta sí la trae al frente (y dispara
     // `RunEvent::Reopen`, que muestra la ventana) sin pedir ningún permiso; dos, por si un
-    // computador lento todavía no la terminó de abrir a los 3 s. AppleScript `activate` también
-    // serviría, pero puede pedir el permiso de Automatización.
+    // computador lento todavía no la terminó de abrir a los 3 s.
     let discos = discos_del_instalador(&nombre);
     Command::new("/bin/sh")
         .arg("-c")
         .arg(
             "sleep 1; for d in \"$@\"; do /usr/bin/hdiutil detach \"$d\" -quiet || true; done; \
-             /usr/bin/open \"$0\"; sleep 3; /usr/bin/open \"$0\"; sleep 4; /usr/bin/open \"$0\"",
+             /usr/bin/open \"$0\" --args --recien-instalada; sleep 3; /usr/bin/open \"$0\"; \
+             sleep 4; /usr/bin/open \"$0\"",
         )
         .arg(&destino)
         .args(&discos)
@@ -163,6 +197,11 @@ fn mover(app: &AppHandle) -> Result<(), String> {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn mover(_app: &AppHandle) -> Result<(), String> {
+fn copiar() -> Result<String, String> {
+    Err("solo_mac".to_string())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn relanzar(_app: &AppHandle, _destino: String) -> Result<(), String> {
     Err("solo_mac".to_string())
 }

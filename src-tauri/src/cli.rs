@@ -28,6 +28,12 @@ pub struct CliArgs {
     #[arg(long)]
     pub debug: bool,
 
+    /// CloseLabs (Mac): la app se acaba de copiar sola a Aplicaciones desde el .dmg. La interfaz
+    /// abre mostrando el mismo cuadro de "Instalando" que la copia del disco tenía en pantalla,
+    /// para que el relevo entre las dos no se vea como un parpadeo (ver `instalacion_mac.rs`).
+    #[arg(long)]
+    pub recien_instalada: bool,
+
     /// Transcribe this WAV (16 kHz mono) headlessly and exit. Runs the same
     /// batch transcription path as the app — no mic, no VAD, no download
     /// (the model must already be installed).

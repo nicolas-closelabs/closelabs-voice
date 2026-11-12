@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { platform } from "@tauri-apps/plugin-os";
@@ -10,9 +11,9 @@ import {
 import { toast } from "sonner";
 import { commands } from "@/bindings";
 import { useSettingsStore } from "@/stores/settingsStore";
-import Logo from "../icons/Logo";
-import GuiaAccesibilidadMac from "./GuiaAccesibilidadMac";
-import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
+import PlantillaPrimerUso from "../tinta/PlantillaPrimerUso";
+import { ListaPasos, type EstadoPaso } from "../tinta/Pasos";
+import { IlustracionVoz } from "../auth/Bienvenida";
 
 interface AccessibilityOnboardingProps {
   onComplete: () => void;
@@ -217,6 +218,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
           }
           // El médico está mirando Ajustes del Sistema, que tapa nuestra ventana. Se la traemos al
           // frente: un "vuelve aquí" escrito no basta para quien no sabe cambiar de ventana.
+          await commands.ocultarGuiaAjustes().catch(() => {});
           await commands.showMainWindowCommand().catch(() => {});
           await completeOnboarding();
         }
@@ -242,6 +244,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   // Cleanup polling and timeouts on unmount
   useEffect(() => {
     return () => {
+      void commands.ocultarGuiaAjustes().catch(() => {});
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
       }
@@ -255,6 +258,8 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
     try {
       await requestAccessibilityPermission();
       setPermissions((prev) => ({ ...prev, accessibility: "waiting" }));
+      // La ventanita pegada debajo de Ajustes del Sistema: dice qué tocar (guia_ajustes.rs).
+      void commands.mostrarGuiaAjustes().catch(() => {});
       startPolling();
     } catch (error) {
       console.error("Failed to request accessibility permission:", error);
@@ -285,137 +290,162 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
       permissions.microphone === "checking") ||
     (isWindows && permissions.microphone === "checking");
 
-  // Still checking platform/initial permissions
+  // Mientras se averigua (un instante): la misma hoja en blanco, sin ruedas girando.
   if (isChecking) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-text/50" />
-      </div>
-    );
+    return <div className="h-screen w-screen bg-papel" />;
   }
 
-  // All permissions granted - show success briefly
-  if (allGranted) {
-    return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center gap-4">
-        <div className="p-4 rounded-full bg-emerald-500/20">
-          <Check className="w-12 h-12 text-emerald-400" />
-        </div>
-        <p className="text-lg font-medium text-text">
-          {t("onboarding.permissions.allGranted")}
-        </p>
-      </div>
-    );
-  }
-
-  // Un permiso a la vez, y en macOS la guía ANTES de abrir Ajustes del Sistema.
+  // «Tinta y voz» (diseno/SISTEMA.md §7, pantalla 4): una lista de dos pasos y UN botón.
   //
-  // ⚠️ Por qué: antes se mostraban los dos permisos juntos y la guía visual aparecía DESPUÉS de
-  // presionar "Conceder permiso". Para entonces el médico ya estaba mirando la ventana del
-  // sistema y no volvía a la nuestra: la ayuda llegaba tarde. Ahora primero ve el dibujo de lo
-  // que va a pasar, y el botón abre Ajustes cuando él dice que está listo.
-  const pasoActual =
-    permissions.microphone !== "granted" ? "microfono" : "accesibilidad";
-  const totalPasos = isMacOS ? 2 : 1;
-  const numeroPaso = pasoActual === "microfono" ? 1 : 2;
+  // ⚠️ El botón hace lo que toca ahora: primero pide el micrófono (macOS muestra su aviso) y después
+  // abre Ajustes del Sistema. Al abrir Ajustes aparece la ventanita pegada debajo de Ajustes
+  // (`guia_ajustes.rs`) que dice qué tocar: el dibujo de antes quedaba DETRÁS de Ajustes justo cuando
+  // el médico lo necesitaba.
+  const micListo = permissions.microphone === "granted";
+  const accListo = permissions.accessibility === "granted";
+  const estadoDe = (p: PermissionStatus, turno: boolean): EstadoPaso =>
+    p === "granted"
+      ? "hecho"
+      : p === "waiting"
+        ? "en-curso"
+        : turno
+          ? "ahora"
+          : "pendiente";
+
+  const pasos = [
+    {
+      nombre: "Micrófono",
+      frase: "Para oír lo que dictas.",
+      estado: estadoDe(permissions.microphone, true),
+    },
+    ...(isMacOS
+      ? [
+          {
+            nombre: "Accesibilidad",
+            frase: "Para escribir el texto donde tengas el cursor.",
+            estado: estadoDe(permissions.accessibility, micListo),
+          },
+        ]
+      : []),
+  ];
+
+  const principal = allGranted
+    ? undefined
+    : !micListo
+      ? {
+          texto: isWindows
+            ? "Abrir la configuración de Windows"
+            : "Permitir el micrófono",
+          onClick: () => void handleGrantMicrophone(),
+        }
+      : {
+          texto:
+            permissions.accessibility === "waiting"
+              ? "Abrir Ajustes del Sistema otra vez"
+              : "Abrir Ajustes del Sistema",
+          onClick: () => void handleGrantAccessibility(),
+        };
 
   return (
-    <div className="min-h-screen w-screen overflow-y-auto flex justify-center px-6 py-7">
-      <div className="w-full max-w-md flex flex-col items-center gap-5">
-        <div className="flex flex-col items-center gap-2 shrink-0">
-          <Logo width={130} />
-          <span className="text-[13px] font-semibold text-brand-text-muted">
-            {t("onboarding.permissions.step", {
-              actual: numeroPaso,
-              total: totalPasos,
-            })}
-          </span>
-        </div>
+    <PlantillaPrimerUso
+      clave="permisos"
+      etapa={isMacOS ? "permisos" : "cuenta"}
+      titulo={isMacOS ? "Dos permisos y *listo*." : "Un permiso y *listo*."}
+      apoyo={
+        isMacOS
+          ? "macOS te los pide una sola vez."
+          : "Windows te lo pide una sola vez."
+      }
+      principal={principal}
+      escenario={isMacOS && micListo && !accListo ? <MiniAjustes /> : <IlustracionVoz />}
+      notaEscenario={
+        isMacOS && micListo && !accListo
+          ? "Se abre Ajustes del Sistema y te señalamos dónde tocar."
+          : undefined
+      }
+      mensajeAyuda="Hola, no logro dar los permisos de CloseLabs Voice."
+    >
+      <ListaPasos pasos={pasos} />
+    </PlantillaPrimerUso>
+  );
+};
 
-        {pasoActual === "microfono" ? (
-          <Paso
-            icono={<Mic className="w-7 h-7 text-brand-accent" />}
-            titulo={t("onboarding.permissions.microphone.title")}
-            descripcion={t("onboarding.permissions.microphone.description")}
-          >
-            {permissions.microphone === "waiting" ? (
-              <Esperando texto={t("onboarding.permissions.waitingMic")} />
-            ) : (
-              <>
-                <p className="text-[15px] leading-relaxed text-brand-text-secondary">
-                  {isWindows
-                    ? t("onboarding.permissions.microphone.avisoWindows")
-                    : t("onboarding.permissions.microphone.avisoMac")}
-                </p>
-                <BotonGrande onClick={handleGrantMicrophone}>
-                  {isWindows
-                    ? t("accessibility.openWindowsSettings")
-                    : t("onboarding.permissions.microphone.boton")}
-                </BotonGrande>
-              </>
-            )}
-          </Paso>
-        ) : (
-          <Paso
-            icono={<Keyboard className="w-7 h-7 text-brand-accent" />}
-            titulo={t("onboarding.permissions.accessibility.title")}
-            descripcion={t("onboarding.permissions.accessibility.description")}
-          >
-            <GuiaAccesibilidadMac />
-            {permissions.accessibility === "waiting" ? (
-              <Esperando texto={t("onboarding.permissions.waitingAcc")} />
-            ) : (
-              <BotonGrande onClick={handleGrantAccessibility}>
-                {t("onboarding.permissions.accessibility.boton")}
-              </BotonGrande>
-            )}
-          </Paso>
-        )}
+/**
+ * Adelanto de lo que va a ver: Ajustes del Sistema en Accesibilidad, con CloseLabs Voice apagado, y
+ * nuestra ventanita pegada debajo. Dibujado con la interfaz del sistema, no con nuestro estilo, para
+ * que lo reconozca al verlo de verdad.
+ */
+const MiniAjustes: React.FC = () => {
+  const filas: [string, boolean, boolean][] = [
+    ["Google Chrome", true, false],
+    ["CloseLabs Voice", false, true],
+    ["Microsoft Word", true, false],
+    ["Zoom", false, false],
+  ];
+  return (
+    <div className="flex flex-col items-center" aria-hidden>
+      <div className="w-[436px] h-[250px] rounded-[12px] bg-[#F6F5F8] shadow-2 border border-linea overflow-hidden flex">
+        <div className="w-[120px] bg-[#ECEAF0] p-4 flex flex-col gap-2.5">
+          {[70, 54, 82, 64, 76, 50].map((w, i) => (
+            <span key={i} className="h-2 rounded bg-[#D6D3DC]" style={{ width: w }} />
+          ))}
+        </div>
+        <div className="flex-1 p-4 font-[system-ui] text-left">
+          <div className="text-[13px] font-semibold text-[#1d1d1f]">Accesibilidad</div>
+          <div className="text-[10px] text-[#6e6e73] mb-3">
+            Permite que estas apps controlen tu computador.
+          </div>
+          <div className="rounded-[8px] bg-white border border-[#E3E1E7] overflow-hidden">
+            {filas.map(([nombre, on, nuestra]) => (
+              <div
+                key={nombre}
+                className="h-[34px] px-3 flex items-center gap-2.5 border-b last:border-b-0 border-[#EEECF1]"
+              >
+                {nuestra ? (
+                  <img
+                    src="/brand/closelabs-isotype-black.png"
+                    alt=""
+                    className="w-[18px] h-[18px] object-contain"
+                  />
+                ) : (
+                  <span className="w-[18px] h-[18px] rounded-[5px] bg-[#E3E1E7]" />
+                )}
+                <span className="flex-1 text-[12px] text-[#1d1d1f]">{nombre}</span>
+                <span
+                  className={`w-[30px] h-[18px] rounded-full relative ${
+                    on ? "bg-[#3478F6]" : "bg-[#E1DFE5]"
+                  } ${nuestra ? "ring-[3px] ring-lila ring-offset-1" : ""}`}
+                >
+                  <span
+                    className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow ${
+                      on ? "left-[14px]" : "left-[2px]"
+                    }`}
+                  />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="-mt-2 w-[380px] rounded-[14px] bg-noche border border-white/18 shadow-flota px-4 py-3 flex items-center gap-3">
+        <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-lila">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 19V5M12 5l-6 6M12 5l6 6"
+              stroke="#fff"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <span className="flex-1 text-[13px] leading-[18px] text-white text-left">
+          Busca <strong>CloseLabs Voice</strong> en la lista de arriba y enciende
+          su interruptor.
+        </span>
       </div>
     </div>
   );
 };
-
-/** La tarjeta de un paso: ícono, título, explicación y lo que toque hacer. */
-const Paso: React.FC<{
-  icono: React.ReactNode;
-  titulo: string;
-  descripcion: string;
-  children: React.ReactNode;
-}> = ({ icono, titulo, descripcion, children }) => (
-  <div className="w-full flex flex-col gap-4">
-    <div className="flex flex-col items-center text-center gap-2">
-      <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft shrink-0">
-        {icono}
-      </span>
-      <h2 className="font-heading text-2xl font-bold text-brand-text">
-        {titulo}
-      </h2>
-      <p className="text-[16px] leading-relaxed text-brand-text-secondary">
-        {descripcion}
-      </p>
-    </div>
-    {children}
-  </div>
-);
-
-const BotonGrande: React.FC<{
-  onClick: () => void;
-  children: React.ReactNode;
-}> = ({ onClick, children }) => (
-  <button
-    onClick={onClick}
-    className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
-  >
-    {children}
-  </button>
-);
-
-const Esperando: React.FC<{ texto: string }> = ({ texto }) => (
-  <div className="flex items-center justify-center gap-2 text-[15px] text-brand-text-secondary">
-    <Loader2 className="w-5 h-5 animate-spin text-brand-accent" />
-    {texto}
-  </div>
-);
 
 export default AccessibilityOnboarding;

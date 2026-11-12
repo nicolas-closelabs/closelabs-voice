@@ -13,6 +13,20 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
+> **2026-11-12 — REDISEÑO «TINTA Y VOZ» (sin publicar; versión 0.9.4).** Dirección visual hecha con
+> Fable y elegida por Nicolás (la primera de tres rondas, con más lila). La especificación manda:
+> `diseno/SISTEMA.md` (tokens, plantilla, componentes, la "dosis de lila", lo que NUNCA va) y las
+> maquetas `diseno/maquetas/index.html`. Componentes en `src/components/tinta/` (plantilla del primer
+> uso, título con una palabra en cursiva, botones, campos, teclas, pasos). Newsreader + Plus Jakarta
+> Sans (Inter sale). Ventana 1120 × 680 (mínimo 960 × 600, con zoom en pantallas chicas). Primer uso:
+> Instalando (Mac) → bienvenida → cuenta → código → permisos (con la ventanita pegada a Ajustes,
+> `guia_ajustes.rs`) → prueba de micrófono y de atajo → 3 prácticas (historia, WhatsApp, fórmula)
+> con etiquetas que salen SOLO si una comprobación exacta lo confirma → recompensa. Píldora mínima
+> (✕ · onda · ✓, sin logo) encima del Dock; aviso "¿No apareció? Quedó copiado" los primeros 7
+> días. Mi cuenta: el médico renombra sus computadores (`devices.nombre`, migración 20261112000001).
+> ⚠️ Antes de publicar: pasar las tres frases de práctica por `pruebas-dictado/` con decenas de
+> repeticiones, y desplegar la migración ANTES que la función `account`.
+
 > **2026-11-10 — REVISIÓN DE UX DEL PRIMER USO (sin publicar todavía).** Windows: instalador en
 > español y de UNA pantalla ("Instalar" → barra → la app se abre sola + ícono en el escritorio);
 > se saltan portátil/carpeta/final y la de "ya está instalada" (se instala encima). Las rutas `/P`

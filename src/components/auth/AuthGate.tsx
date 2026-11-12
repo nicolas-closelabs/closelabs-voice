@@ -1,18 +1,10 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Loader2,
-  ArrowLeft,
-  MailCheck,
-  MessageCircle,
-  Eye,
-  EyeOff,
-} from "lucide-react";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { commands } from "@/bindings";
-import { supportWhatsappUrl } from "../../branding";
-import Logo from "../icons/Logo";
 import Bienvenida from "./Bienvenida";
+import PlantillaPrimerUso from "../tinta/PlantillaPrimerUso";
+import { Aviso, Campo, CampoClave, Casilla } from "../tinta/Campos";
+import { Enlace } from "../tinta/Botones";
 
 interface AuthGateProps {
   /** Se llama cuando el médico entra. El contenedor recarga el estado de la cuenta. */
@@ -49,10 +41,6 @@ const MENSAJES: Record<string, string> = {
 };
 
 const explicar = (codigo: string) => MENSAJES[codigo] ?? MENSAJES.desconocido;
-
-const base =
-  "px-3.5 py-3 rounded-xl border border-brand-border bg-white text-[16px] focus:outline-none focus:border-brand-accent transition-colors disabled:opacity-50";
-const campo = `w-full ${base}`;
 
 /**
  * ¿Ya entró alguien a una cuenta en este computador? Decide si la pantalla abre en "Crear tu
@@ -162,8 +150,16 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
     );
   }
 
+  /** Volver a la bienvenida solo si se llegó desde ella (nadie entró antes en este computador). */
+  const volverABienvenida = yaEntroAqui()
+    ? undefined
+    : () => {
+        setError(null);
+        setBienvenida(true);
+      };
+
   // -------------------------------------------------------------------------------------------
-  // Pantallas de "ya hicimos lo nuestro, revisa tu correo"
+  // El código del correo
   // -------------------------------------------------------------------------------------------
   if (modo === "revisa-correo") {
     return (
@@ -182,30 +178,27 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
 
   if (modo === "correo-enviado") {
     return (
-      <Marco>
-        <div className="w-12 h-12 rounded-2xl bg-brand-accent-soft grid place-items-center mb-1">
-          <MailCheck className="w-6 h-6 text-brand-accent" />
-        </div>
-        <h1 className="font-heading text-xl font-bold">
-          Te enviamos un enlace
-        </h1>
-        <p className="text-[15px] text-brand-text-secondary leading-relaxed">
-          Si existe una cuenta con <strong>{correo}</strong>, ahí llegará el
-          enlace para cambiar la contraseña.
-        </p>
-        <p className="text-[15px] text-brand-text-muted">
-          ¿No lo ves? Revisa el correo no deseado.
-        </p>
-        <button
-          onClick={() => {
+      <PlantillaPrimerUso
+        clave="correo-enviado"
+        etapa="cuenta"
+        titulo="Revisa tu *correo*."
+        apoyo={
+          <>
+            Si existe una cuenta con <strong className="text-tinta">{correo}</strong>, ahí
+            llegará el enlace para elegir una contraseña nueva. Si no lo ves, revisa el correo no
+            deseado.
+          </>
+        }
+        principal={{
+          texto: "Volver a iniciar sesión",
+          onClick: () => {
             setModo("entrar");
             setError(null);
-          }}
-          className="text-[15px] font-semibold text-brand-accent hover:underline"
-        >
-          Volver a iniciar sesión
-        </button>
-      </Marco>
+          },
+        }}
+        escenario={<Ilustracion archivo="correo-codigo" />}
+        mensajeAyuda="Hola, no logro recuperar mi contraseña de CloseLabs Voice."
+      />
     );
   }
 
@@ -214,82 +207,105 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   // -------------------------------------------------------------------------------------------
   if (modo === "recuperar") {
     return (
-      <Marco>
-        <button
-          onClick={() => {
-            setModo("entrar");
-            setError(null);
-          }}
-          className="self-start inline-flex items-center gap-1.5 text-[15px] text-brand-text-secondary hover:text-brand-accent"
-        >
-          <ArrowLeft className="w-4 h-4" /> Volver
-        </button>
-        <h1 className="font-heading text-xl font-bold">Recuperar contraseña</h1>
-        <p className="text-[15px] text-brand-text-secondary leading-relaxed">
-          Escribe tu correo y te enviamos un enlace para elegir una nueva.
-        </p>
+      <PlantillaPrimerUso
+        clave="recuperar"
+        etapa="cuenta"
+        atras={() => {
+          setModo("entrar");
+          setError(null);
+        }}
+        titulo="Recupera tu *contraseña*."
+        apoyo="Escribe tu correo y te enviamos un enlace para elegir una nueva."
+        principal={{
+          texto: "Enviarme el enlace",
+          form: "form-recuperar",
+          ocupado,
+          disabled: !correo.trim(),
+        }}
+        escenario={<Ilustracion archivo="correo-codigo" />}
+        mensajeAyuda="Hola, no logro recuperar mi contraseña de CloseLabs Voice."
+      >
         <form
+          id="form-recuperar"
           noValidate
-          className="w-full flex flex-col gap-3"
+          className="flex flex-col gap-3.5"
           onSubmit={(e) => {
             e.preventDefault();
             void recuperar();
           }}
         >
-          <input
+          <Campo
             id="recuperar-correo"
+            etiqueta="Correo"
             type="email"
             autoComplete="email"
-            required
+            autoFocus
             placeholder="tu@correo.com"
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             disabled={ocupado}
-            className={campo}
           />
           {error && <Aviso>{error}</Aviso>}
-          <Principal ocupado={ocupado} disabled={!correo.trim()}>
-            Enviarme el enlace
-          </Principal>
         </form>
-      </Marco>
+      </PlantillaPrimerUso>
     );
   }
 
   // -------------------------------------------------------------------------------------------
-  // Entrar y crear cuenta
+  // Crear cuenta e iniciar sesión
   // -------------------------------------------------------------------------------------------
   const creando = modo === "crear";
 
   return (
-    <Marco>
-      <Logo width={170} className="mb-1" />
-      <h1 className="font-heading text-xl font-bold">
-        {creando ? "Crea tu cuenta" : "Inicia sesión"}
-      </h1>
-      <p className="text-[15px] text-brand-text-secondary leading-relaxed">
-        {/* Sin "30 días de prueba": esta pantalla la ve también el médico de gMedic, que no tiene
-            prueba (le cobra gMedic). Lo de la prueba lo dice "Mi cuenta", que sí sabe el canal. */}
-        {creando
-          ? "Crea tu cuenta para empezar a dictar. No pedimos tarjeta."
-          : "Entra para dictar en este computador."}
-      </p>
-
+    <PlantillaPrimerUso
+      clave={modo}
+      etapa="cuenta"
+      atras={
+        creando
+          ? volverABienvenida
+          : volverABienvenida ??
+            (() => {
+              setModo("crear");
+              setError(null);
+            })
+      }
+      titulo={creando ? "Crea tu *cuenta*." : "Inicia *sesión*."}
+      principal={{
+        texto: creando ? "Crear mi cuenta" : "Entrar",
+        form: "form-cuenta",
+        ocupado,
+      }}
+      enlace={
+        creando
+          ? {
+              texto: "Ya tengo una cuenta",
+              onClick: () => {
+                setModo("entrar");
+                setError(null);
+              },
+            }
+          : {
+              texto: "Olvidé mi contraseña",
+              onClick: () => {
+                setModo("recuperar");
+                setError(null);
+              },
+            }
+      }
+      escenario={<Ilustracion archivo="privacidad" />}
+      notaEscenario="Tus dictados no se almacenan ni se usan para entrenar modelos."
+      mensajeAyuda="Hola, tengo problemas para entrar a CloseLabs Voice."
+    >
       <form
+        id="form-cuenta"
         // Sin la validación del navegador: mostraba "Fill out this field", en inglés, y tapaba
         // nuestro aviso en español de qué falta (revisión del 2026-11-11).
         noValidate
-        className="w-full flex flex-col gap-3"
+        className="flex flex-col gap-3.5"
         onSubmit={(e) => {
           e.preventDefault();
-          // El botón nunca queda gris sin explicación: antes, si faltaba algo o la casilla, el botón no respondía y el médico no sabía por qué. Ahora dice qué falta.
-          const falta = queFalta({
-            creando,
-            nombre,
-            correo,
-            clave,
-            acepta,
-          });
+          // El botón nunca queda gris sin explicación: si falta algo, se dice qué.
+          const falta = queFalta({ creando, nombre, correo, clave, acepta });
           if (falta) {
             setError(falta);
             return;
@@ -298,69 +314,52 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
         }}
       >
         {creando && (
-          <Etiqueta htmlFor="registro-nombre" texto="Tu nombre">
-            <input
-              id="registro-nombre"
-              type="text"
-              autoComplete="name"
-              required
-              placeholder="Nombre y apellido"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              disabled={ocupado}
-              className={campo}
-            />
-          </Etiqueta>
+          <Campo
+            id="registro-nombre"
+            etiqueta="Nombre y apellido"
+            type="text"
+            autoComplete="name"
+            autoFocus
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            disabled={ocupado}
+          />
         )}
-
-        <Etiqueta htmlFor="auth-correo" texto="Tu correo">
-          <input
-            id="auth-correo"
-            type="email"
-            autoComplete="email"
-            required
-            placeholder="tu@correo.com"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-            disabled={ocupado}
-            className={campo}
-          />
-        </Etiqueta>
-
-        <Etiqueta
-          htmlFor="auth-clave"
-          texto={
-            creando
-              ? "Crea una contraseña (mínimo 8 caracteres)"
-              : "Tu contraseña"
-          }
-        >
-          <CampoClave
-            creando={creando}
-            value={clave}
-            onChange={setClave}
-            disabled={ocupado}
-          />
-        </Etiqueta>
-
+        <Campo
+          id="auth-correo"
+          etiqueta="Correo"
+          type="email"
+          autoComplete="email"
+          autoFocus={!creando}
+          placeholder="tu@correo.com"
+          value={correo}
+          onChange={(e) => setCorreo(e.target.value)}
+          disabled={ocupado}
+        />
+        <CampoClave
+          id="auth-clave"
+          etiqueta="Contraseña"
+          autoComplete={creando ? "new-password" : "current-password"}
+          placeholder={creando ? "Mínimo 8 caracteres" : undefined}
+          value={clave}
+          onChange={(e) => setClave(e.target.value)}
+          disabled={ocupado}
+        />
         {creando && (
-          <label className="flex items-start gap-2.5 text-[15px] text-brand-text-secondary leading-snug cursor-pointer">
-            <input
+          <div className="pt-1">
+            <Casilla
               id="registro-consentimiento"
-              type="checkbox"
-              checked={acepta}
-              onChange={(e) => setAcepta(e.target.checked)}
+              marcada={acepta}
+              onCambio={setAcepta}
               disabled={ocupado}
-              className="mt-0.5 w-5 h-5 shrink-0 accent-brand-accent cursor-pointer"
-            />
-            <span>
+            >
               Acepto los{" "}
               <a
                 href="https://closelabs.co/terminos"
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-brand-accent hover:underline"
+                className="font-semibold text-tinta underline underline-offset-4 decoration-linea-fuerte"
               >
                 Términos
               </a>{" "}
@@ -370,51 +369,31 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-brand-accent hover:underline"
+                className="font-semibold text-tinta underline underline-offset-4 decoration-linea-fuerte"
               >
-                Política de Tratamiento de Datos
-              </a>{" "}
-              de CloseLabs.
-            </span>
-          </label>
+                Política de Datos
+              </a>
+              .
+            </Casilla>
+          </div>
         )}
-
         {error && <Aviso>{error}</Aviso>}
-
-        <Principal ocupado={ocupado} disabled={false}>
-          {creando ? "Crear mi cuenta" : "Entrar"}
-        </Principal>
+        {!creando && (
+          <p className="text-[15px] leading-[22px] text-tinta-2">
+            ¿Es tu primera vez?{" "}
+            <Enlace
+              chico
+              onClick={() => {
+                setModo("crear");
+                setError(null);
+              }}
+            >
+              Crear mi cuenta
+            </Enlace>
+          </p>
+        )}
       </form>
-
-      {!creando && (
-        <button
-          onClick={() => {
-            setModo("recuperar");
-            setError(null);
-          }}
-          className="text-[15px] text-brand-text-secondary hover:text-brand-accent"
-        >
-          Olvidé mi contraseña
-        </button>
-      )}
-
-      {/* Cambiar entre crear y entrar es un botón de verdad, no un enlace pequeño: quien ya tiene
-          cuenta (creada en otro computador) tiene que encontrarlo sin buscar. */}
-      <div className="w-full flex flex-col items-center gap-2 pt-2 border-t border-brand-border/40">
-        <span className="text-[15px] text-brand-text-secondary">
-          {creando ? "¿Ya tienes una cuenta?" : "¿Es tu primera vez?"}
-        </span>
-        <button
-          onClick={() => {
-            setModo(creando ? "entrar" : "crear");
-            setError(null);
-          }}
-          className="w-full px-4 py-3 rounded-xl text-[16px] font-semibold border-2 border-brand-accent text-brand-accent hover:bg-brand-accent-soft transition-colors"
-        >
-          {creando ? "Iniciar sesión" : "Crear mi cuenta"}
-        </button>
-      </div>
-    </Marco>
+    </PlantillaPrimerUso>
   );
 };
 
@@ -611,207 +590,156 @@ const EsperandoConfirmacion: React.FC<{
   // reintento de fondo lo hace entrar al volver a esta ventana.
   const ocupadoAhora = verificando || probando || comprobando;
   return (
-    <Marco>
-      <div className="w-14 h-14 rounded-2xl bg-brand-accent-soft grid place-items-center mb-1">
-        <MailCheck className="w-7 h-7 text-brand-accent" />
-      </div>
-      <h1 className="font-heading text-2xl font-bold">Revisa tu correo</h1>
-      <p className="text-[16px] text-brand-text-secondary leading-relaxed">
-        Te enviamos un código de {LARGO_CODIGO} números a{" "}
-        <strong className="text-brand-text">{correo}</strong>. Escríbelo aquí:
-      </p>
-
+    <PlantillaPrimerUso
+      clave="codigo"
+      etapa="cuenta"
+      atras={onCorregir}
+      titulo="Revisa tu *correo*."
+      apoyo={
+        <>
+          Te enviamos un código de {LARGO_CODIGO} números a{" "}
+          <strong className="text-tinta font-semibold">{correo}</strong>
+        </>
+      }
+      principal={{
+        texto: "Confirmar",
+        form: "form-codigo",
+        disabled: codigo.length < LARGO_CODIGO,
+        ocupado: ocupadoAhora,
+      }}
+      enlace={
+        reenvio === "enviado"
+          ? { texto: "Listo, te lo enviamos otra vez", onClick: () => {}, disabled: true }
+          : {
+              texto:
+                reenvio === "enviando"
+                  ? "Enviando…"
+                  : "No me llegó: enviar otro código",
+              onClick: () => void reenviar(),
+              disabled: reenvio === "enviando",
+            }
+      }
+      escenario={<Ilustracion archivo="correo-codigo" />}
+      notaEscenario="¿No lo ves? Búscalo también en «Correo no deseado»."
+      mensajeAyuda="Hola, no me llega el código para entrar a CloseLabs Voice."
+    >
       <form
-        // Sin la validación del navegador: mostraba "Fill out this field", en inglés, y tapaba
-        // nuestro aviso en español de qué falta (revisión del 2026-11-11).
+        id="form-codigo"
+        // Sin la validación del navegador (decía "Fill out this field", en inglés).
         noValidate
-        className="w-full flex flex-col gap-3"
+        className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           void verificar(codigo);
         }}
       >
-        <input
-          id="codigo-confirmacion"
-          aria-label="Código del correo"
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          autoFocus
-          value={codigo}
-          onChange={(e) => {
-            // Solo números: si lo pega desde el correo con espacios o guiones, se limpian.
-            const limpio = e.target.value
-              .replace(/\D/g, "")
-              .slice(0, LARGO_CODIGO);
+        <CasillasCodigo
+          valor={codigo}
+          largo={LARGO_CODIGO}
+          disabled={verificando}
+          onCambio={(limpio) => {
             setCodigo(limpio);
             setAviso(null);
             // Al completar el último número se comprueba solo: un botón menos que encontrar.
             if (limpio.length === LARGO_CODIGO) void verificar(limpio);
           }}
-          disabled={verificando}
-          placeholder={"•".repeat(LARGO_CODIGO)}
-          className="w-full px-4 py-4 rounded-xl border-2 border-brand-border bg-white text-center font-heading text-[32px] font-bold tracking-[0.4em] focus:outline-none focus:border-brand-accent disabled:opacity-50 select-text"
         />
-
+        {comprobando && !verificando && (
+          <p className="text-[15px] text-tinta-2">Comprobando…</p>
+        )}
         {aviso && <Aviso>{aviso}</Aviso>}
-
-        {ocupadoAhora ? (
-          <div className="w-full py-3 inline-flex items-center justify-center gap-2 text-[16px] font-semibold text-brand-accent">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Comprobando…
-          </div>
-        ) : (
-          <Principal ocupado={false} disabled={false}>
-            Confirmar
-          </Principal>
-        )}
-      </form>
-
-      <div className="w-full flex flex-col items-center gap-2 pt-2 border-t border-brand-border/40 text-[15px] text-brand-text-secondary">
-        <span>¿No te llegó? Búscalo también en «Correo no deseado».</span>
-        {reenvio === "enviado" ? (
-          <span className="font-semibold text-green-700">
-            Listo, te lo enviamos otra vez.
+        <div className="flex flex-col items-start gap-2 text-[15px] text-tinta-2">
+          <span>
+            ¿Tocaste el botón del correo en vez de copiar el código?{" "}
+            <Enlace chico onClick={() => void intentar("manual")} disabled={ocupadoAhora}>
+              Ya lo toqué
+            </Enlace>
           </span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => void reenviar()}
-            disabled={reenvio === "enviando"}
-            className="font-semibold text-brand-accent hover:underline disabled:opacity-50"
-          >
-            {reenvio === "enviando"
-              ? "Enviando…"
-              : "Enviarme el correo otra vez"}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => void intentar("manual")}
-          disabled={ocupadoAhora}
-          className="text-brand-text-secondary hover:text-brand-accent hover:underline"
-        >
-          Ya toqué el botón del correo
-        </button>
-        <button
-          type="button"
-          onClick={onCorregir}
-          className="text-brand-text-secondary hover:text-brand-accent hover:underline"
-        >
-          ¿Escribiste mal tu correo? Corrígelo aquí
-        </button>
-      </div>
-    </Marco>
+          <span>
+            ¿Escribiste mal tu correo?{" "}
+            <Enlace chico onClick={onCorregir}>
+              Corrígelo
+            </Enlace>
+          </span>
+        </div>
+      </form>
+    </PlantillaPrimerUso>
   );
 };
 
 /**
- * ⚠️ El enlace de WhatsApp va en TODAS las pantallas de cuenta, y no es un adorno: la cuenta es
- * obligatoria y no hay forma de dictar sin ella. Un médico que no logra registrarse o entrar no
- * tiene ninguna otra salida — si no ve a quién escribir, cierra la app y no vuelve.
- *
- * ⚠️ Se centra con `m-auto` en el hijo, NO con items-center/justify-center en el padre: con eso, si
- * el contenido no cabe en la ventana (680x570), la parte de ARRIBA queda fuera y no se puede
- * desplazar hasta ella. Pasó en la revisión del 2026-11-11: el formulario abría sin el logo ni el
- * título "Crea tu cuenta". Lo mismo en Bienvenida e InstalarEnAplicaciones.
+ * ⚠️ La ayuda por WhatsApp está en TODAS las pantallas de cuenta ("¿Necesitas ayuda?", arriba a
+ * la derecha de la plantilla), y no es un adorno: la cuenta es obligatoria y no hay forma de dictar
+ * sin ella. Un médico que no logra registrarse o entrar no tiene ninguna otra salida.
  */
-const Marco: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="h-screen overflow-y-auto flex px-8 py-6 select-none">
-    <div className="m-auto w-full max-w-sm flex flex-col items-center text-center gap-4">
-      {children}
-      <button
-        type="button"
-        onClick={() =>
-          void openUrl(
-            supportWhatsappUrl(
-              "Hola, tengo problemas para entrar a CloseLabs Voice.",
-            ),
-          )
-        }
-        className="mt-4 inline-flex items-center gap-1.5 text-[15px] text-brand-text-muted hover:text-[#128C7E] transition-colors"
-      >
-        <MessageCircle className="w-4 h-4" />
-        ¿Problemas para entrar? Escríbenos por WhatsApp
-      </button>
-    </div>
-  </div>
+
+/** Las ilustraciones de «Tinta y voz» (public/ilustraciones). */
+const Ilustracion: React.FC<{
+  archivo: "privacidad" | "correo-codigo" | "voz-a-texto";
+}> = ({ archivo }) => (
+  <img
+    src={`/ilustraciones/${archivo}.svg`}
+    alt=""
+    width={520}
+    height={400}
+    className="max-w-full h-auto"
+    draggable={false}
+  />
 );
 
 /**
- * Etiqueta visible ENCIMA del campo. Solo con el texto gris de adentro, al empezar a escribir ya
- * no se sabe qué era cada casilla — y en un formulario de cinco, el médico se pierde.
+ * Las seis casillas del código (54 × 68, dígito en serif). Por debajo es UN solo campo: así pegar
+ * los seis números desde el correo funciona de una vez, y borrar retrocede como en cualquier texto.
  */
-const Etiqueta: React.FC<{
-  htmlFor: string;
-  texto: string;
-  children: React.ReactNode;
-}> = ({ htmlFor, texto, children }) => (
-  <div className="w-full flex flex-col gap-1.5 text-left">
-    <label
-      htmlFor={htmlFor}
-      className="text-[15px] font-semibold text-brand-text"
-    >
-      {texto}
-    </label>
-    {children}
-  </div>
-);
-
-/** Contraseña con "Mostrar": escribir a ciegas es donde más se equivoca quien teclea despacio. */
-const CampoClave: React.FC<{
-  creando: boolean;
-  value: string;
-  onChange: (v: string) => void;
+const CasillasCodigo: React.FC<{
+  valor: string;
+  largo: number;
   disabled: boolean;
-}> = ({ creando, value, onChange, disabled }) => {
-  const [visible, setVisible] = useState(false);
+  onCambio: (limpio: string) => void;
+}> = ({ valor, largo, disabled, onCambio }) => {
+  const campo = useRef<HTMLInputElement>(null);
+  const [enfocado, setEnfocado] = useState(true);
   return (
-    <div className="relative w-full">
+    <div
+      className="relative flex gap-2.5 cursor-text"
+      onClick={() => campo.current?.focus()}
+    >
       <input
-        id="auth-clave"
-        type={visible ? "text" : "password"}
-        autoComplete={creando ? "new-password" : "current-password"}
-        required
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        ref={campo}
+        id="codigo-confirmacion"
+        aria-label="Código del correo"
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        autoFocus
+        value={valor}
         disabled={disabled}
-        className={`${campo} pr-28`}
+        onFocus={() => setEnfocado(true)}
+        onBlur={() => setEnfocado(false)}
+        onChange={(e) =>
+          // Solo números: si lo pega con espacios o guiones, se limpian.
+          onCambio(e.target.value.replace(/\D/g, "").slice(0, largo))
+        }
+        className="absolute inset-0 opacity-0 select-text"
       />
-      <button
-        type="button"
-        onClick={() => setVisible((v) => !v)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[14px] font-semibold text-brand-text-secondary hover:text-brand-accent"
-      >
-        {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        {visible ? "Ocultar" : "Mostrar"}
-      </button>
+      {Array.from({ length: largo }).map((_, i) => {
+        const activa = enfocado && i === Math.min(valor.length, largo - 1);
+        return (
+          <span
+            key={i}
+            aria-hidden
+            className={`grid place-items-center w-[54px] h-[68px] rounded-[12px] border-[1.5px] bg-papel font-serif text-[34px] font-medium text-tinta transition-[border-color,box-shadow] duration-150 ${
+              activa
+                ? "border-tinta shadow-[0_0_0_3px_var(--foco)]"
+                : "border-linea-fuerte"
+            } ${disabled ? "opacity-60" : ""}`}
+          >
+            {valor[i] ?? ""}
+          </span>
+        );
+      })}
     </div>
   );
 };
-
-const Aviso: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p
-    role="alert"
-    className="text-[15px] text-left text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2 leading-snug"
-  >
-    {children}
-  </p>
-);
-
-const Principal: React.FC<{
-  ocupado: boolean;
-  disabled: boolean;
-  children: React.ReactNode;
-}> = ({ ocupado, disabled, children }) => (
-  <button
-    type="submit"
-    disabled={ocupado || disabled}
-    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-  >
-    {ocupado && <Loader2 className="w-4 h-4 animate-spin" />}
-    {children}
-  </button>
-);
 
 export default AuthGate;

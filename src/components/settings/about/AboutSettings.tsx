@@ -2,47 +2,88 @@
 import React, { useState, useEffect } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { ArrowUpRight } from "lucide-react";
-import Logo from "../../icons/Logo";
+import { useActualizacion } from "@/stores/actualizacionStore";
+import { Titulo } from "../../tinta/Titulo";
+import { BotonSecundario, Enlace } from "../../tinta/Botones";
+import { SettingsGroup } from "../../ui/SettingsGroup";
+import { Renglon } from "../help/HelpSettings";
 
+/**
+ * Acerca de («Tinta y voz», diseno/SISTEMA.md §10): la versión con su estado de actualización,
+ * privacidad, términos y quién la hace. Renglones, sin tarjeta.
+ */
 export const AboutSettings: React.FC = () => {
   const [version, setVersion] = useState("");
+  const { estado, version: nueva, buscar } = useActualizacion();
+  const [buscando, setBuscando] = useState(false);
+  const [alDia, setAlDia] = useState<boolean | null>(null);
 
   useEffect(() => {
     getVersion()
       .then(setVersion)
-      .catch(() => setVersion("0.4.0"));
+      .catch(() => setVersion(""));
   }, []);
 
+  const estadoVersion =
+    estado === "descargando"
+      ? `Descargando la versión ${nueva}…`
+      : estado === "lista" || estado === "instalando"
+        ? `La versión ${nueva} está lista: se instala al reiniciar.`
+        : alDia === false
+          ? "Hay una versión nueva."
+          : "Tienes la última versión.";
+
   return (
-    <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 py-4">
-      <div className="rounded-3xl border border-brand-border bg-white shadow-[0_2px_10px_rgba(26,22,32,0.05)] p-8 flex flex-col items-center text-center gap-5">
-        <Logo width={200} />
+    <div>
+      <Titulo>Acerca de</Titulo>
 
-        <p className="text-brand-text-secondary max-w-md leading-relaxed">
-          CloseLabs Voice convierte tu voz en texto, al instante y en tu idioma.
-          Dictado privado y seguro para que dediques menos tiempo a escribir y más
-          a tus pacientes.
-        </p>
-
-        <div className="flex items-center gap-2 text-sm text-brand-text-muted">
-          <span className="px-2.5 py-1 rounded-full bg-brand-surface border border-brand-border font-heading font-medium tabular-nums">
-            v{version}
-          </span>
-        </div>
-
-        <button
-          onClick={() => openUrl("https://www.closelabs.co")}
-          className="inline-flex items-center gap-1 text-brand-accent font-medium hover:underline"
+      <SettingsGroup title="La aplicación">
+        <Renglon nombre={`CloseLabs Voice ${version}`} frase={estadoVersion}>
+          <BotonSecundario
+            medida="corto"
+            ocupado={buscando}
+            onClick={async () => {
+              setBuscando(true);
+              try {
+                const hay = await buscar();
+                setAlDia(!hay);
+              } finally {
+                setBuscando(false);
+              }
+            }}
+          >
+            Buscar actualizaciones
+          </BotonSecundario>
+        </Renglon>
+        <Renglon
+          nombre="Privacidad"
+          frase="Tus dictados no se almacenan ni se usan para entrenar modelos."
         >
-          Automatiza tu consultorio con CloseLabs
-          <ArrowUpRight className="w-4 h-4" />
-        </button>
-      </div>
+          <Enlace chico onClick={() => void openUrl("https://closelabs.co/privacidad")}>
+            Leer
+          </Enlace>
+        </Renglon>
+        <Renglon nombre="Términos" frase="Las condiciones de uso del servicio.">
+          <Enlace chico onClick={() => void openUrl("https://closelabs.co/terminos")}>
+            Leer
+          </Enlace>
+        </Renglon>
+      </SettingsGroup>
 
-      <p className="text-center text-xs text-brand-text-muted">
-        Hecho por CloseLabs · closelabs.co
-      </p>
+      <SettingsGroup title="Quién la hace">
+        <Renglon
+          nombre="CLOSELABS GROUP LLC"
+          frase="Herramientas para que los médicos escriban menos y atiendan más."
+        >
+          <Enlace chico onClick={() => void openUrl("https://www.closelabs.co")}>
+            closelabs.co
+          </Enlace>
+        </Renglon>
+        <Renglon
+          nombre="Basada en Handy"
+          frase="Proyecto de código abierto de CJ Pais, con licencia MIT."
+        />
+      </SettingsGroup>
     </div>
   );
 };

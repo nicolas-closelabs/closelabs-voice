@@ -29,6 +29,12 @@ pub fn marcar_ventana_principal_enfocada(enfocada: bool) {
     VENTANA_PRINCIPAL_ENFOCADA.store(enfocada, Ordering::Relaxed);
 }
 
+/// `true` si el último dictado se hizo con la ventana de la app al frente (el texto se escribió
+/// directo en la página, sin depender del Cmd+V).
+pub fn ventana_principal_enfocada() -> bool {
+    VENTANA_PRINCIPAL_ENFOCADA.load(Ordering::Relaxed)
+}
+
 /// macOS: `true` si la app tiene permiso de Accesibilidad (necesario para simular Cmd+V).
 #[cfg(target_os = "macos")]
 fn accessibility_trusted() -> bool {

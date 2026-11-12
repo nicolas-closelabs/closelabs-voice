@@ -1,63 +1,40 @@
 /* eslint-disable i18next/no-literal-string */
 import React from "react";
-import { type } from "@tauri-apps/plugin-os";
 import { ShortcutInput } from "../ShortcutInput";
 import { SettingsGroup } from "../../ui/SettingsGroup";
-import { PushToTalk } from "../PushToTalk";
 import { PasteMethodSetting } from "../PasteMethod";
 import { TodoMayusculas } from "../TodoMayusculas";
 import { MicrophoneSelector } from "../MicrophoneSelector";
-import { MuteWhileRecording } from "../MuteWhileRecording";
 import { AudioFeedback } from "../AudioFeedback";
-import { OutputDeviceSelector } from "../OutputDeviceSelector";
-import { VolumeSlider } from "../VolumeSlider";
 import { AutostartToggle } from "../AutostartToggle";
-import { ShowTrayIcon } from "../ShowTrayIcon";
-import { useSettings } from "../../../hooks/useSettings";
+import { Titulo } from "../../tinta/Titulo";
 
 /**
- * Configuración (CloseLabs Voice): una sola pantalla simple para el médico. Junta lo
- * esencial de General + Avanzado en grupos claros y ESCONDE lo técnico (aceleración,
- * VAD, keyboard impl, timeouts, experimental…), que se quedan con sus defaults.
+ * Configuración («Tinta y voz», diseno/SISTEMA.md §10): renglones con su explicación a la vista,
+ * sin jerga ni inglés. Solo lo que un médico cambia de verdad; lo técnico (aceleración, VAD,
+ * teclado, tiempos, volumen, dispositivo de salida, ícono de la bandeja) queda en sus valores.
+ *
+ * "Entrega del texto" (pegar solo / solo copiar) se mantiene aunque el diseño no la dibuja: es la
+ * salida para los sistemas donde el pegado automático no entra (caso gMedic, 2026-10-28).
  */
 export const GeneralSettings: React.FC = () => {
-  const { audioFeedbackEnabled, getSetting } = useSettings();
-  const pushToTalk = getSetting("push_to_talk");
-  const isLinux = type() === "linux";
-
   return (
-    <div className="max-w-3xl w-full mx-auto space-y-6 py-2">
-      <h1 className="font-heading font-bold text-2xl px-1">Configuración</h1>
+    <div>
+      <Titulo>Configuración</Titulo>
 
       <SettingsGroup title="Dictado">
         <ShortcutInput shortcutId="transcribe" grouped={true} />
-        <PushToTalk descriptionMode="tooltip" grouped={true} />
-        {!isLinux && !pushToTalk && (
-          <ShortcutInput shortcutId="cancel" grouped={true} />
-        )}
-        <ShortcutInput shortcutId="reprocess_last" grouped={true} />
+        <MicrophoneSelector descriptionMode="inline" grouped={true} />
       </SettingsGroup>
 
-      <SettingsGroup title="Entrega del texto">
-        <PasteMethodSetting descriptionMode="tooltip" grouped={true} />
-        <TodoMayusculas descriptionMode="tooltip" grouped={true} />
+      <SettingsGroup title="El texto">
+        <TodoMayusculas descriptionMode="inline" grouped={true} />
+        <AudioFeedback descriptionMode="inline" grouped={true} />
+        <PasteMethodSetting descriptionMode="inline" grouped={true} />
       </SettingsGroup>
 
-      <SettingsGroup title="Sonido">
-        <MicrophoneSelector descriptionMode="tooltip" grouped={true} />
-        <MuteWhileRecording descriptionMode="tooltip" grouped={true} />
-        <AudioFeedback descriptionMode="tooltip" grouped={true} />
-        <OutputDeviceSelector
-          descriptionMode="tooltip"
-          grouped={true}
-          disabled={!audioFeedbackEnabled}
-        />
-        <VolumeSlider disabled={!audioFeedbackEnabled} />
-      </SettingsGroup>
-
-      <SettingsGroup title="Aplicación">
-        <AutostartToggle descriptionMode="tooltip" grouped={true} />
-        <ShowTrayIcon descriptionMode="tooltip" grouped={true} />
+      <SettingsGroup title="El computador">
+        <AutostartToggle descriptionMode="inline" grouped={true} />
       </SettingsGroup>
     </div>
   );

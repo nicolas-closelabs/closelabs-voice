@@ -1,12 +1,15 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useState } from "react";
-import { ChevronDown, MessageCircle } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { ReportProblem } from "./ReportProblem";
 import { BRANDING, supportWhatsappUrl } from "../../../branding";
 import { useShortcutKeys } from "../../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../../lib/utils/shortcutLabels";
 import type { OSType } from "../../../lib/utils/keyboard";
+import { Titulo } from "../../tinta/Titulo";
+import { BotonPrincipal, BotonSecundario } from "../../tinta/Botones";
+import { SettingsGroup } from "../../ui/SettingsGroup";
 
 interface QA {
   q: string;
@@ -25,7 +28,7 @@ function buildFaq(os: OSType, atajo: string): QA[] {
   return [
     {
       q: "¿Cuál es el atajo y puedo cambiarlo?",
-      a: `Tu atajo es ${atajo}. Puedes cambiarlo en Configuración → Atajo de Transcripción.`,
+      a: `Tu atajo es ${atajo}. Puedes cambiarlo en Configuración → Atajo para dictar.`,
     },
     {
       q: "No transcribe nada, ¿qué hago?",
@@ -45,89 +48,111 @@ function buildFaq(os: OSType, atajo: string): QA[] {
     },
     {
       q: "¿Es privado? ¿Se sube mi voz?",
-      a: "Sí, es 100% privado y seguro: tus dictados no se almacenan ni se usan para entrenar modelos. Sin conexión, la transcripción ocurre 100% en tu computador.",
+      // ⚠️ Nunca "100 % privado / local": con internet el audio SÍ sale a nuestro servidor (CLAUDE.md).
+      a: "Tus dictados no se almacenan ni se usan para entrenar modelos. Con internet, el audio viaja a nuestro servidor solo para convertirse en texto; sin internet, todo ocurre en tu computador.",
     },
   ];
 }
 
+/** Una pregunta: renglón bajo con flecha; abierta, la respuesta debajo. Una abierta a la vez. */
 const Item: React.FC<{ qa: QA; open: boolean; onClick: () => void }> = ({
   qa,
   open,
   onClick,
 }) => (
-  <div className="rounded-2xl border border-brand-border bg-white overflow-hidden">
+  <li>
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-brand-surface transition-colors"
+      aria-expanded={open}
+      className="w-full min-h-[54px] flex items-center justify-between gap-6 text-left"
     >
-      <span className="font-heading font-medium text-[15px]">{qa.q}</span>
+      <span
+        className={`text-[17px] leading-6 text-tinta ${open ? "font-semibold pt-4" : "font-medium"}`}
+      >
+        {qa.q}
+      </span>
       <ChevronDown
-        className={`w-4 h-4 shrink-0 text-brand-text-muted transition-transform ${
+        className={`w-3.5 h-3.5 shrink-0 text-tinta-2 transition-transform duration-150 ${
           open ? "rotate-180" : ""
         }`}
       />
     </button>
     {open && (
-      <div className="px-5 pb-4 text-sm text-brand-text-secondary leading-relaxed">
+      <p className="max-w-[640px] pb-[18px] pt-1 text-[16px] leading-[26px] text-tinta-2">
         {qa.a}
-      </div>
+      </p>
     )}
-  </div>
+  </li>
 );
 
+/**
+ * Ayuda («Tinta y voz», diseno/SISTEMA.md §10). WhatsApp va PRIMERO: para un médico poco
+ * familiarizado con la tecnología es la red de seguridad más importante.
+ */
 export const HelpSettings: React.FC = () => {
-  const [open, setOpen] = useState<number | null>(0);
+  const [open, setOpen] = useState<number | null>(null);
+  const [reportando, setReportando] = useState(false);
   const { os, text: atajo } = useShortcutKeys();
   const FAQ = buildFaq(os, atajo);
 
   return (
-    <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 py-4">
-      <div>
-        <h1 className="font-heading font-bold text-2xl">Ayuda</h1>
-        <p className="text-brand-text-secondary mt-1">
-          Preguntas frecuentes y soporte.
-        </p>
-      </div>
+    <div>
+      <Titulo>Ayuda</Titulo>
 
-      {/* WhatsApp va PRIMERO: para un médico poco familiarizado con la tecnología es la red de
-          seguridad más importante. Antes era un "Contactar" al final que abría la portada de
-          la web, sin ningún canal de soporte. */}
-      <div className="rounded-2xl border border-brand-border bg-brand-surface p-5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="grid place-items-center w-10 h-10 rounded-full bg-[#25D366]/15 text-[#128C7E]">
-            <MessageCircle className="w-5 h-5" />
-          </span>
-          <div>
-            <div className="font-heading font-semibold text-[15px]">
-              ¿Necesitas ayuda? Escríbenos por WhatsApp
-            </div>
-            <div className="text-sm text-brand-text-secondary">
-              {BRANDING.supportWhatsappDisplay}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => void openUrl(supportWhatsappUrl())}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[15px] font-semibold bg-[#25D366] text-white hover:bg-[#1EBE5A] transition-colors"
+      <SettingsGroup title="Hablar con nosotros">
+        <Renglon
+          nombre="Escríbenos por WhatsApp"
+          frase={`Te responde una persona: ${BRANDING.supportWhatsappDisplay}`}
         >
-          <MessageCircle className="w-4 h-4" />
-          Abrir WhatsApp
-        </button>
-      </div>
+          <BotonPrincipal
+            medida="corto"
+            onClick={() => void openUrl(supportWhatsappUrl())}
+          >
+            Abrir WhatsApp
+          </BotonPrincipal>
+        </Renglon>
+        <Renglon
+          nombre="Reportar un problema"
+          frase="Nos llega un informe de la app, sin el texto de tus dictados."
+        >
+          <BotonSecundario medida="corto" onClick={() => setReportando((v) => !v)}>
+            {reportando ? "Cerrar" : "Reportar"}
+          </BotonSecundario>
+        </Renglon>
+      </SettingsGroup>
+      {reportando && (
+        <div className="mt-4">
+          <ReportProblem />
+        </div>
+      )}
 
-      <div className="flex flex-col gap-2.5">
-        {FAQ.map((qa, i) => (
-          <Item
-            key={i}
-            qa={qa}
-            open={open === i}
-            onClick={() => setOpen(open === i ? null : i)}
-          />
-        ))}
-      </div>
-
-      <ReportProblem />
-
+      <SettingsGroup title="Preguntas frecuentes">
+        <ul className="divide-y divide-linea">
+          {FAQ.map((qa, i) => (
+            <Item
+              key={i}
+              qa={qa}
+              open={open === i}
+              onClick={() => setOpen(open === i ? null : i)}
+            />
+          ))}
+        </ul>
+      </SettingsGroup>
     </div>
   );
 };
+
+/** Renglón del uso diario: nombre y frase a la izquierda, un control a la derecha. */
+export const Renglon: React.FC<{
+  nombre: React.ReactNode;
+  frase?: React.ReactNode;
+  children?: React.ReactNode;
+}> = ({ nombre, frase, children }) => (
+  <div className="min-h-[66px] py-2 flex items-center justify-between gap-6">
+    <div className="min-w-0">
+      <div className="text-[17px] leading-6 font-semibold text-tinta">{nombre}</div>
+      {frase && <div className="text-[15px] leading-[22px] text-tinta-2">{frase}</div>}
+    </div>
+    {children && <div className="shrink-0 flex items-center gap-3.5">{children}</div>}
+  </div>
+);

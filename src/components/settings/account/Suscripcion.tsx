@@ -104,10 +104,11 @@ const ERROR_GENERICO = {
   detalle: "Inténtalo de nuevo en un momento. Si se repite, escríbenos por WhatsApp desde Ayuda.",
 };
 
+// «Tinta y voz»: botón corto (44 de alto); principal lila, secundario de contorno en tinta.
 const BOTON =
-  "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-semibold transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2";
-const BOTON_PRINCIPAL = `${BOTON} bg-brand-accent text-white hover:bg-brand-accent-secondary`;
-const BOTON_SECUNDARIO = `${BOTON} border border-brand-border bg-white hover:border-brand-accent hover:text-brand-accent`;
+  "inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[12px] text-[16px] font-semibold transition-colors duration-150 disabled:opacity-50 focus:outline-none focus-visible:shadow-[0_0_0_3px_var(--foco)] whitespace-nowrap";
+const BOTON_PRINCIPAL = `${BOTON} bg-lila text-white hover:bg-lila-hover active:bg-lila-presion`;
+const BOTON_SECUNDARIO = `${BOTON} border-[1.5px] border-linea-fuerte bg-papel text-tinta hover:bg-lino`;
 
 /**
  * Se abrió una página de Stripe (desde "Mi cuenta" o desde el pop-up de fin de prueba).
@@ -262,30 +263,20 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
       break;
     }
     case "prueba": {
-      const ultimos = dias !== null && dias <= 5;
-      titulo = "Prueba gratuita";
-      detalle = `Te ${dias === 1 ? "queda 1 día" : `quedan ${dias} días`}, hasta el ${fecha(estado.trial_ends_at)}. No necesitas tarjeta hasta entonces.`;
-      // ⚠️ Con más de 5 días de prueba, un enlace discreto y no un botón: en la revisión del
-      // 2026-11-11, recién registrado, lo primero que se veía en "Mi cuenta" era el botón de pagar.
+      // «Tinta y voz» (SISTEMA.md §10): "Prueba gratis · Te quedan N días. Después, US$12 al mes."
+      // Ya no es lo primero de Mi cuenta (va después de "Tus datos"), así que el botón puede ser el
+      // principal corto sin parecer un cobro de entrada (revisión del 2026-11-11, punto 20).
+      titulo = "Prueba gratis";
+      detalle = `Te ${dias === 1 ? "queda 1 día" : `quedan ${dias} días`}. Después, ${PRECIO}. Si te suscribes ahora, el primer cobro es el ${fecha(estado.trial_ends_at)}: no pierdes ningún día de prueba.`;
       acciones = (
-        <div className="flex flex-col items-start gap-1.5">
-          <button
-            onClick={() => void abrir("checkout")}
-            disabled={ocupado !== null}
-            className={
-              ultimos
-                ? BOTON_PRINCIPAL
-                : "inline-flex items-center gap-2 text-[14px] font-semibold text-brand-accent hover:underline disabled:opacity-50"
-            }
-          >
-            {girando("checkout")}
-            {ultimos ? `Suscribirme · ${PRECIO}` : `Suscribirme ahora (${PRECIO})`}
-          </button>
-          <span className="text-xs text-brand-text-muted">
-            Si te suscribes ahora, el primer cobro es el {fecha(estado.trial_ends_at)}: no pierdes
-            ningún día de prueba.
-          </span>
-        </div>
+        <button
+          onClick={() => void abrir("checkout")}
+          disabled={ocupado !== null}
+          className={BOTON_PRINCIPAL}
+        >
+          {girando("checkout")}
+          Suscribirme
+        </button>
       );
       break;
     }
@@ -335,11 +326,20 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
       break;
   }
 
+  // «Tinta y voz»: un renglón (nombre y frase a la izquierda, acciones a la derecha), sin tarjeta.
+  // Los estados que piden atención (cancelada, cobro fallido) llevan la frase en ámbar, sin rojo.
+  const atencion = tono.includes("amber");
   return (
-    <section className={`rounded-2xl border p-5 ${tono}`}>
-      <div className="font-heading font-semibold text-[15px]">{titulo}</div>
-      <p className="text-sm text-brand-text-secondary mt-1 leading-relaxed">{detalle}</p>
-      {acciones && <div className="flex flex-wrap items-center gap-3 mt-4">{acciones}</div>}
+    <section>
+      <div className="flex items-start justify-between gap-6">
+        <div className="min-w-0">
+          <div className="text-[17px] leading-6 font-semibold text-tinta">{titulo}</div>
+          <p className={`text-[15px] leading-[22px] mt-0.5 ${atencion ? "text-aviso" : "text-tinta-2"}`}>
+            {detalle}
+          </p>
+        </div>
+        {acciones && <div className="shrink-0 flex flex-wrap items-center justify-end gap-3">{acciones}</div>}
+      </div>
       {esperando && <AvisoNavegador ocupado={ocupado === "sync"} onYaTermine={yaTermine} />}
     </section>
   );

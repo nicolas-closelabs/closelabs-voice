@@ -6,28 +6,31 @@ interface SettingsGroupProps {
   children: React.ReactNode;
 }
 
+/**
+ * Un grupo de renglones del uso diario («Tinta y voz», diseno/SISTEMA.md §9): encabezado pequeño
+ * en `tinta-3` con una línea debajo, y renglones separados por líneas. Sin tarjetas: "Tarjetas en las
+ * páginas del uso diario" está en la lista "Nunca" del sistema.
+ */
 export const SettingsGroup: React.FC<SettingsGroupProps> = ({
   title,
   description,
   children,
 }) => {
   return (
-    <div className="space-y-2.5">
+    <section className="mt-6 first:mt-[18px]">
       {title && (
-        <div className="px-1">
-          <h2 className="font-heading text-[11px] font-semibold text-brand-text-muted uppercase tracking-wider">
+        <div className="pb-2.5 border-b border-linea">
+          <h2 className="font-sans text-[14px] leading-5 font-semibold text-tinta-3">
             {title}
           </h2>
           {description && (
-            <p className="text-xs text-brand-text-secondary mt-1">
+            <p className="text-[15px] leading-[22px] text-tinta-2 mt-1">
               {description}
             </p>
           )}
         </div>
       )}
-      <div className="bg-white border border-brand-border rounded-2xl overflow-visible shadow-[0_1px_2px_rgba(26,22,32,0.04)]">
-        <div className="divide-y divide-brand-border">{children}</div>
-      </div>
-    </div>
+      <div className="divide-y divide-linea border-b border-linea">{children}</div>
+    </section>
   );
 };

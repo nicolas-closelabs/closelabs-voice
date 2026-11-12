@@ -539,6 +539,32 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
     0
 }
 
+/// Tamaño de la ventana principal y zoom del contenido (diseno/SISTEMA.md §4): 1120 × 680 si cabe
+/// en el área útil de la pantalla (sin el Dock ni la barra de tareas, y dejando ~32 px para la
+/// barra de título); si no, lo que quepa, con el contenido encogido en la misma proporción.
+fn tamano_ventana(app: &tauri::AppHandle) -> (f64, f64, f64) {
+    const ANCHO: f64 = 1120.0;
+    const ALTO: f64 = 680.0;
+    const BARRA_TITULO: f64 = 32.0;
+    let zoom = app
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .map(|m| {
+            let escala = m.scale_factor();
+            let area = m.work_area();
+            let ancho_util = area.size.width as f64 / escala;
+            let alto_util = area.size.height as f64 / escala;
+            (alto_util / (ALTO + BARRA_TITULO))
+                .min(ancho_util / ANCHO)
+                .min(1.0)
+        })
+        .unwrap_or(1.0)
+        .max(0.6);
+    (ANCHO * zoom, ALTO * zoom, zoom)
+}
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(cli_args: CliArgs) {
     // Detect portable mode before anything else
@@ -619,7 +645,9 @@ pub fn run(cli_args: CliArgs) {
             guia_ajustes::mostrar_guia_ajustes,
             guia_ajustes::ocultar_guia_ajustes,
             instalacion_mac::abierta_desde_instalador,
-            instalacion_mac::mover_a_aplicaciones,
+            instalacion_mac::copiar_a_aplicaciones,
+            instalacion_mac::relanzar_instalada,
+            instalacion_mac::recien_instalada,
             practica::abrir_editor_de_prueba,
             auth::account_state,
             auth::account_open_billing,
@@ -654,6 +682,7 @@ pub fn run(cli_args: CliArgs) {
             commands::models::is_model_loading,
             commands::models::rescan_local_models,
             commands::audio::update_microphone_mode,
+            commands::audio::prueba_microfono,
             commands::audio::get_microphone_mode,
             commands::audio::get_windows_microphone_permission_status,
             commands::audio::open_microphone_privacy_settings,
@@ -848,11 +877,16 @@ pub fn run(cli_args: CliArgs) {
 
             // Create main window programmatically so we can set data_directory
             // for portable mode (redirects WebView2 cache to portable Data dir)
+            // Tamaño: diseno/SISTEMA.md §4. 1120 × 680 se siente una aplicación de verdad (antes
+            // 680 × 570, que parecía un diálogo). En pantallas chicas (un portátil de 1366 × 768
+            // con Windows al 125 %) no cabe: se abre más pequeña y el contenido se encoge con zoom,
+            // para que nada quede cortado ni haya que desplazarse en el primer uso.
+            let (ancho, alto, zoom) = tamano_ventana(app.handle());
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
                     .title("CloseLabs Voice")
-                    .inner_size(680.0, 570.0)
-                    .min_inner_size(680.0, 570.0)
+                    .inner_size(ancho, alto)
+                    .min_inner_size((960.0 * zoom).min(ancho), (600.0 * zoom).min(alto))
                     .resizable(true)
                     .maximizable(false)
                     // Sin posición explícita, macOS coloca la ventana desde su origen, que
@@ -865,7 +899,10 @@ pub fn run(cli_args: CliArgs) {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
             }
 
-            win_builder.build()?;
+            let ventana = win_builder.build()?;
+            if zoom < 1.0 {
+                let _ = ventana.set_zoom(zoom);
+            }
 
             let mut settings = get_settings(app.handle());
 

@@ -4,6 +4,8 @@ import { BRANDING } from "../../branding";
 interface LogoProps {
   width?: number | string;
   className?: string;
+  /** Sobre fondo oscuro (la recompensa): el logo blanco. */
+  blanco?: boolean;
 }
 
 /**
@@ -15,7 +17,7 @@ interface LogoProps {
  * Mientras los archivos no existan, cae a un wordmark de texto (sin dibujar el
  * hexágono, para respetar la regla de marca).
  */
-const Logo: React.FC<LogoProps> = ({ width = 140, className = "" }) => {
+const Logo: React.FC<LogoProps> = ({ width = 140, className = "", blanco }) => {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
@@ -28,6 +30,18 @@ const Logo: React.FC<LogoProps> = ({ width = 140, className = "" }) => {
       >
         {BRANDING.company}
       </span>
+    );
+  }
+
+  if (blanco) {
+    return (
+      <img
+        src={BRANDING.logo.fullWhite}
+        alt={BRANDING.appName}
+        width={width}
+        className={`block ${className}`}
+        onError={() => setFailed(true)}
+      />
     );
   }
 

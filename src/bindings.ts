@@ -597,17 +597,32 @@ async abiertaDesdeInstalador() : Promise<boolean> {
     return await TAURI_INVOKE("abierta_desde_instalador");
 },
 /**
- * Copia la app a Aplicaciones, la abre desde ahí, expulsa el disco del instalador y cierra esta.
- * Si ya había una versión en Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que
- * quiere usar.
+ * Paso 1 y 2 de "Instalando": copia la app a Aplicaciones y le quita la cuarentena. Devuelve dónde quedó.
  */
-async moverAAplicaciones() : Promise<Result<null, string>> {
+async copiarAAplicaciones() : Promise<Result<string, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("mover_a_aplicaciones") };
+    return { status: "ok", data: await TAURI_INVOKE("copiar_a_aplicaciones") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Paso 3: abre la copia instalada, expulsa el disco del instalador y cierra esta.
+ */
+async relanzarInstalada(destino: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("relanzar_instalada", { destino }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * `true` si esta es la copia que la del disco acaba de abrir desde Aplicaciones (`--recien-instalada`).
+ */
+async recienInstalada() : Promise<boolean> {
+    return await TAURI_INVOKE("recien_instalada");
 },
 /**
  * Abre una hoja en blanco en el editor de texto del sistema.
@@ -697,6 +712,18 @@ async cancelOperation() : Promise<void> {
  */
 async terminarDictado() : Promise<void> {
     await TAURI_INVOKE("terminar_dictado");
+},
+/**
+ * La prueba del micrófono del primer uso: abre el micrófono sin grabar y manda el volumen
+ * (`mic-level`) a la ventana principal.
+ */
+async pruebaMicrofono(activa: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("prueba_microfono", { activa }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 /**
  * Muestra la ventanita pegada a Ajustes del Sistema. En Windows no hace nada (no hay permiso de

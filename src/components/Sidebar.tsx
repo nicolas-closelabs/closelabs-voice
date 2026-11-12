@@ -1,14 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Home,
-  BookMarked,
-  Settings,
-  Info,
-  LifeBuoy,
-  UserRound,
-} from "lucide-react";
 import Logo from "./icons/Logo";
+import { ActualizacionPie } from "./footer/ActualizacionPie";
 import {
   HomeSettings,
   DictionarySettings,
@@ -20,17 +13,8 @@ import {
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
 
-interface IconProps {
-  width?: number | string;
-  height?: number | string;
-  size?: number | string;
-  className?: string;
-  [key: string]: any;
-}
-
 interface SectionConfig {
   labelKey: string;
-  icon: React.ComponentType<IconProps>;
   component: React.ComponentType;
   enabled: (settings: any) => boolean;
 }
@@ -42,37 +26,31 @@ interface SectionConfig {
 export const SECTIONS_CONFIG = {
   home: {
     labelKey: "sidebar.home",
-    icon: Home,
     component: HomeSettings,
     enabled: () => true,
   },
   dictionary: {
     labelKey: "sidebar.dictionary",
-    icon: BookMarked,
     component: DictionarySettings,
     enabled: () => true,
   },
   account: {
     labelKey: "sidebar.account",
-    icon: UserRound,
     component: AccountSettings,
     enabled: () => true,
   },
   general: {
     labelKey: "sidebar.config",
-    icon: Settings,
     component: GeneralSettings,
     enabled: () => true,
   },
   about: {
     labelKey: "sidebar.about",
-    icon: Info,
     component: AboutSettings,
     enabled: () => true,
   },
   help: {
     labelKey: "sidebar.help",
-    icon: LifeBuoy,
     component: HelpSettings,
     enabled: () => true,
   },
@@ -95,36 +73,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ...config,
   }));
 
+  // «Tinta y voz» (diseno/SISTEMA.md §9): menú de 248 en lino, sin íconos; la sección activa en
+  // papel con una raya lila de 3 px a la izquierda; abajo, el estado ("Lista para dictar").
   return (
-    <div className="flex flex-col w-48 h-full shrink-0 bg-brand-sidebar border-e border-brand-border px-3 pt-5 pb-3">
-      <div className="px-2 pb-5">
-        <Logo width={128} />
+    <div className="flex flex-col w-[248px] h-full shrink-0 bg-lino pt-3.5 px-4 pb-5">
+      <div className="pt-1 pb-[26px] px-2">
+        <Logo width={132} />
       </div>
-      <nav className="flex flex-col gap-1">
+      <nav className="flex flex-col gap-0.5">
         {sections.map((section) => {
-          const Icon = section.icon;
           const isActive = activeSection === section.id;
           return (
             <button
               key={section.id}
               onClick={() => onSectionChange(section.id)}
-              className={`flex gap-2.5 items-center px-3 py-2.5 w-full rounded-xl text-[14px] transition-colors ${
+              className={`relative h-[46px] w-full px-4 rounded-[10px] text-left text-[17px] transition-colors duration-150 ${
                 isActive
-                  ? "bg-brand-accent-soft text-brand-accent font-semibold"
-                  : "text-brand-text-secondary hover:bg-brand-surface hover:text-text font-medium"
+                  ? "bg-papel shadow-1 text-tinta font-semibold"
+                  : "text-tinta-2 font-medium hover:bg-white/60"
               }`}
             >
-              <Icon
-                width={18}
-                height={18}
-                className="shrink-0"
-                strokeWidth={isActive ? 2.4 : 2}
-              />
+              {isActive && (
+                <span className="absolute left-0 top-[11px] bottom-[11px] w-[3px] rounded-[2px] bg-lila" />
+              )}
               <span className="truncate">{t(section.labelKey)}</span>
             </button>
           );
         })}
       </nav>
+      <div className="mt-auto px-4 flex flex-col items-start gap-3">
+        <ActualizacionPie />
+        <EstadoConexion />
+      </div>
     </div>
+  );
+};
+
+/**
+ * El estado al pie del menú: punto verde "Lista para dictar", o ámbar "Sin internet" (sin internet
+ * se sigue dictando con el modo local, sin pulir). Reemplaza al pie de página de antes, que decía
+ * "Sin Modelo - Descarga Requerida" en rojo (revisión del 2026-11-11).
+ */
+const EstadoConexion: React.FC = () => {
+  const [enLinea, setEnLinea] = React.useState(() => navigator.onLine);
+  React.useEffect(() => {
+    const si = () => setEnLinea(true);
+    const no = () => setEnLinea(false);
+    window.addEventListener("online", si);
+    window.addEventListener("offline", no);
+    return () => {
+      window.removeEventListener("online", si);
+      window.removeEventListener("offline", no);
+    };
+  }, []);
+  return (
+    // eslint-disable-next-line i18next/no-literal-string
+    <span className="inline-flex items-center gap-2 text-[15px] leading-[22px] text-tinta-2">
+      <span
+        className={`w-[9px] h-[9px] rounded-full ${enLinea ? "bg-hecho" : "bg-aviso-punto"}`}
+      />
+      {enLinea ? "Lista para dictar" : "Sin internet"}
+    </span>
   );
 };

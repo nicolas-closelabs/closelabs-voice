@@ -1,68 +1,76 @@
 /* eslint-disable i18next/no-literal-string */
-import React from "react";
-import { Loader2, PlayCircle } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useShortcutKeys } from "../../../hooks/useShortcutKeys";
-import { useModelStore } from "../../../stores/modelStore";
 import { useSettings } from "../../../hooks/useSettings";
-import Logo from "../../icons/Logo";
 import { ABRIR_PRIMER_DICTADO } from "../../onboarding/PrimerDictado";
+import { Teclas } from "../../tinta/Teclas";
+import { BotonSecundario, Enlace } from "../../tinta/Botones";
+import { Aviso } from "../../tinta/Campos";
+
+/** Evento para cambiar de sección desde una página (Inicio → Diccionario). Lo escucha App. */
+export const IR_A_SECCION = "clv:ir-a-seccion";
 
 /**
- * Inicio: UNA frase, la única que hay que recordar (plan del primer uso, 2026-11-11).
- *
- * Antes había un lema, una tarjeta de estado, un botón de práctica y tres tarjetas de "Cómo usar":
- * cinco cosas que leer para decir lo mismo. El médico que vuelve a la app solo necesita acordarse
- * de qué teclas presionar; lo demás (el modo sin conexión, la práctica) va abajo, pequeño.
+ * Inicio: UNA frase, la única que hay que recordar (plan del primer uso, 2026-11-11; diseño «Tinta y
+ * voz», diseno/SISTEMA.md §10). Sin historial ni cifras (decisión de Nicolás). Abajo, el dictado de
+ * prueba y el camino al Diccionario, que salió del tutorial.
  */
 export const HomeSettings: React.FC = () => {
-  const { downloadProgress } = useModelStore();
   const { keys } = useShortcutKeys();
   // Con "mantener presionado" se termina soltando, no presionando otra vez.
   const mantener = useSettings().getSetting("push_to_talk") === true;
-  const downloading = Object.values(downloadProgress)[0];
+  const [enLinea, setEnLinea] = useState(() => navigator.onLine);
+
+  useEffect(() => {
+    const si = () => setEnLinea(true);
+    const no = () => setEnLinea(false);
+    window.addEventListener("online", si);
+    window.addEventListener("offline", no);
+    return () => {
+      window.removeEventListener("online", si);
+      window.removeEventListener("offline", no);
+    };
+  }, []);
 
   return (
-    <div className="max-w-2xl w-full mx-auto flex flex-col items-center text-center gap-8 py-10">
-      <Logo width={172} />
+    <div className="min-h-[calc(100vh-88px)] flex flex-col">
+      {!enLinea && (
+        <Aviso>
+          <strong className="font-semibold">Sin internet.</strong> Puedes seguir
+          dictando; el texto sale sin pulir hasta que vuelva la conexión.
+        </Aviso>
+      )}
 
-      <p className="font-heading text-[26px] font-bold leading-snug text-brand-text max-w-xl">
-        Haz clic donde quieras escribir,{" "}
-        {mantener ? "mantén presionado" : "presiona"}{" "}
-        <span className="inline-flex items-center gap-1.5 align-middle">
-          {keys.map((k, i) => (
-            <React.Fragment key={i}>
-              {i > 0 && (
-                <span className="text-brand-text-muted text-[20px]">+</span>
-              )}
-              <kbd className="px-3 py-1 rounded-lg border border-brand-border bg-white font-heading text-[22px] font-semibold shadow-[0_2px_0_rgba(26,22,32,0.08)]">
-                {k}
-              </kbd>
-            </React.Fragment>
-          ))}
-        </span>
-        {mantener
-          ? " mientras hablas, y suelta para terminar."
-          : ", habla, y presiona otra vez para terminar."}
-      </p>
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
+        <p className="max-w-[700px] font-serif font-medium text-[42px] leading-[60px] tracking-[-0.015em] text-tinta">
+          Haz clic donde quieras escribir,{" "}
+          {mantener ? "mantén presionadas" : "presiona"}{" "}
+          <Teclas keys={keys} medida="inicio" />
+          {mantener ? " mientras hablas, y suelta para " : ", habla, y presiona otra vez para "}
+          <em className="italic text-lila">terminar</em>.
+        </p>
 
-      <div className="flex flex-col items-center gap-3">
-        <button
-          type="button"
+        <BotonSecundario
+          medida="corto"
+          className="mt-9"
           onClick={() => window.dispatchEvent(new Event(ABRIR_PRIMER_DICTADO))}
-          className="inline-flex items-center gap-2 text-[16px] font-semibold text-brand-accent hover:underline"
         >
-          <PlayCircle className="w-5 h-5" />
           Hacer un dictado de prueba
-        </button>
-        {downloading && (
-          <p className="inline-flex items-center gap-2 text-[14px] text-brand-text-muted">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Descargando el modo sin internet:{" "}
-            {Math.round(downloading.percentage)}%. Mientras tanto ya puedes
-            dictar.
-          </p>
-        )}
+        </BotonSecundario>
       </div>
+
+      <p className="pb-8 text-center text-[16px] text-tinta-2">
+        ¿Escribió mal una palabra?{" "}
+        <Enlace
+          onClick={() =>
+            window.dispatchEvent(
+              new CustomEvent(IR_A_SECCION, { detail: "dictionary" }),
+            )
+          }
+        >
+          Agrégala al Diccionario
+        </Enlace>
+      </p>
     </div>
   );
 };

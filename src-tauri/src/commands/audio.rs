@@ -310,3 +310,28 @@ pub fn is_recording(app: AppHandle) -> bool {
     let audio_manager = app.state::<Arc<AudioRecordingManager>>();
     audio_manager.is_recording()
 }
+
+/// CloseLabs: la prueba del micrófono del primer uso ("¿Se mueven las barras cuando hablas?").
+/// Abre el micrófono SIN grabar un dictado y manda el volumen a la ventana principal (`mic-level`).
+/// Al apagarla se cierra el micrófono, salvo que esté en modo "siempre abierto" o que haya un
+/// dictado en curso.
+#[tauri::command]
+#[specta::specta]
+pub fn prueba_microfono(app: AppHandle, activa: bool) -> Result<(), String> {
+    use std::sync::atomic::Ordering;
+    let rm = app.state::<Arc<AudioRecordingManager>>();
+    if activa {
+        crate::overlay::PRUEBA_MICROFONO.store(true, Ordering::Relaxed);
+        rm.start_microphone_stream().map_err(|e| {
+            crate::overlay::PRUEBA_MICROFONO.store(false, Ordering::Relaxed);
+            warn!("No se pudo abrir el micrófono para la prueba: {e}");
+            "sin_microfono".to_string()
+        })?;
+    } else {
+        crate::overlay::PRUEBA_MICROFONO.store(false, Ordering::Relaxed);
+        if !get_settings(&app).always_on_microphone && !rm.is_recording() {
+            rm.stop_microphone_stream();
+        }
+    }
+    Ok(())
+}

@@ -1,40 +1,32 @@
 /* eslint-disable i18next/no-literal-string */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import {
-  Check,
-  FileText,
-  Loader2,
-  Mic,
-  MessageCircle,
-} from "lucide-react";
-import { commands } from "@/bindings";
+import { commands, type AudioDevice } from "@/bindings";
+import { useSettings } from "../../hooks/useSettings";
 import { useShortcutKeys } from "../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../lib/utils/shortcutLabels";
-import type { OSType } from "../../lib/utils/keyboard";
-import { supportWhatsappUrl } from "../../branding";
-import type { RecordingErrorEvent } from "../../lib/types/events";
-import Logo from "../icons/Logo";
+import PlantillaPrimerUso, { TarjetaEscenario } from "../tinta/PlantillaPrimerUso";
+import { Teclas } from "../tinta/Teclas";
+import { Aviso } from "../tinta/Campos";
+import { Enlace } from "../tinta/Botones";
 
 /**
- * "Tu primer dictado": el tutorial que se hace dictando, no leyendo.
+ * El tutorial del primer uso: probar el micrófono, probar el atajo y dictar tres veces dentro de
+ * imitaciones de lo que el médico usa (historia clínica, WhatsApp, fórmula). Termina con la
+ * recompensa: cuánto más rápido dictó que lo que escribe.
  *
- * Por qué existe: el público son médicos de 40-50 años o más, poco familiarizados con la
- * tecnología. Antes, al terminar los permisos llegaban a Inicio con tres tarjetas de texto, y
- * la primera vez que dictaban de verdad era en su historia clínica, frente a un paciente. Si algo
- * fallaba —el micrófono, el atajo, el pegado—, fallaba ahí, sin explicación.
+ * Por qué así (revisión del 2026-11-11 y referente Wispr Flow, decisiones de Nicolás):
+ * - Antes la segunda práctica abría TextEdit, que tapaba nuestras instrucciones justo cuando el
+ *   médico las necesitaba. Ahora todo pasa dentro de la app, en tarjetas que se parecen a su trabajo.
+ * - La frase a decir está DENTRO del campo donde cae el texto, con una muletilla y una autocorrección
+ *   a propósito, para que vea en la primera vez que la app las limpia.
+ * - Las etiquetas de lo que arregló ("Corrigió izquierda → derecha") salen SOLO si una comprobación
+ *   exacta sobre el texto final lo confirma (regla del proyecto: en producción, solo comprobaciones
+ *   exactas). Si una no se cumple, esa etiqueta no sale.
  *
- * Aquí dictan una frase de prueba en un cuadro de texto DENTRO de la app. Así aprenden haciendo,
- * y de paso se comprueba el micrófono, el atajo y la transcripción. ⚠️ El pegado NO es el mismo que
- * afuera: dentro de nuestra ventana el texto llega por el evento `dictado-en-la-app` (ver
- * `clipboard.rs`, VENTANA_PRINCIPAL_ENFOCADA), porque el Cmd+V simulado nunca llegaba aquí. Si se
- * traba, la pantalla dice qué hacer, usando los eventos que ya emite el backend.
- *
- * Dos pasos: el dictado de prueba aquí y uno segundo FUERA de la app, en TextEdit o el Bloc de
- * notas (`PasoAfuera`).
- *
- * Se muestra una sola vez, al terminar el registro. Se puede repetir desde Inicio.
+ * Diseño: diseno/SISTEMA.md §7 (pantallas 5 a 10). El texto dictado llega por `dictado-en-la-app`
+ * (ver `insertarDictado`): el campo de práctica lleva `data-dictado-destino`, así cae ahí aunque el
+ * médico no haya hecho clic.
  */
 
 /** Evento para abrir el tutorial desde cualquier pantalla (el botón de Inicio). */
@@ -42,14 +34,9 @@ export const ABRIR_PRIMER_DICTADO = "clv:abrir-primer-dictado";
 
 /**
  * ⚠️ La marca va POR CUENTA, no por computador. Con una sola marca global, quien creaba una
- * segunda cuenta en el mismo equipo (el médico que se equivocó al registrarse, o dos médicos que
- * comparten el computador del consultorio) nunca veía el tutorial. Tampoco se hereda la marca
- * vieja: no hay forma de saber de qué cuenta era, y se la quedaba la primera que preguntara —
- * justo la cuenta nueva que sí necesitaba el tutorial. Quien ya lo hizo lo verá una vez más y
- * puede saltarlo.
+ * segunda cuenta en el mismo equipo nunca veía el tutorial. `v2`: la 0.8.1 intentó heredar la marca
+ * vieja del computador y se la quedó la cuenta equivocada.
  */
-// `v2`: la 0.8.1 intentó heredar la marca vieja del computador y se la quedó la cuenta
-// equivocada. Cambiar el prefijo deja a todos con la marca limpia, una sola vez.
 const clave = (cuenta: string) =>
   `closelabs.primerDictado.v2.${cuenta.trim().toLowerCase()}`;
 
@@ -70,90 +57,419 @@ function marcarHecho(cuenta: string) {
   }
 }
 
-const FRASE = "Paciente de 45 años con dolor abdominal.";
+// ---------------------------------------------------------------------------------------------
+// Las tres prácticas y sus comprobaciones exactas
+// ---------------------------------------------------------------------------------------------
 
-/** Tras presionar una tecla, si en este tiempo no empezó a grabar, se le explica el atajo. */
+/** Minúsculas y sin tildes, para comparar ("Izquierda" y "izquierda" cuentan igual). */
+const normal = (t: string) =>
+  t
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+
+const palabra = (t: string, p: string) =>
+  new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`).test(normal(t));
+
+interface Etiqueta {
+  texto: string;
+  cumple: (final: string) => boolean;
+}
+
+interface Practica {
+  titulo: string;
+  apoyo: string;
+  tituloHecho: string;
+  apoyoHecho: string;
+  frase: string;
+  etiquetas: Etiqueta[];
+  tarjeta: "historia" | "whatsapp" | "formula";
+}
+
+const termina = (t: string) => t.trim().endsWith(".");
+
+const PRACTICAS: Practica[] = [
+  {
+    tarjeta: "historia",
+    titulo: "Dicta el *motivo* de consulta.",
+    apoyo:
+      "Haz clic en el campo y lee la frase tal como está, con el «eh» y la equivocación.",
+    tituloHecho: "Te corregiste al hablar. Quedó *limpio*.",
+    apoyoHecho: "Así puedes dictar siempre: sin cuidarte de hablar perfecto.",
+    frase:
+      "Paciente de 58 años que consulta por, eh, dolor en la rodilla izquierda, no, perdón, en la rodilla derecha, desde hace tres días.",
+    etiquetas: [
+      { texto: "Quitó «eh»", cumple: (f) => !palabra(f, "eh") },
+      {
+        texto: "Corrigió izquierda → derecha",
+        cumple: (f) => !palabra(f, "izquierda") && palabra(f, "derecha"),
+      },
+      { texto: "Puso la puntuación", cumple: termina },
+    ],
+  },
+  {
+    tarjeta: "whatsapp",
+    titulo: "Ahora, respóndele a un *paciente*.",
+    apoyo: "Igual que antes: clic en el campo, las dos teclas y hablas.",
+    tituloHecho: "Lo que retiraste no *llegó*.",
+    apoyoHecho: "El paciente solo lee lo que quisiste decir.",
+    frase:
+      "Hola, don Jaime. Tómela, este, después del almuerzo, no, perdón, después del desayuno, con un vaso de agua.",
+    etiquetas: [
+      { texto: "Quitó «este»", cumple: (f) => !palabra(f, "este") },
+      {
+        texto: "Corrigió almuerzo → desayuno",
+        cumple: (f) => !palabra(f, "almuerzo") && palabra(f, "desayuno"),
+      },
+      { texto: "Puso la puntuación", cumple: termina },
+    ],
+  },
+  {
+    tarjeta: "formula",
+    titulo: "Por último, una *fórmula*.",
+    apoyo: "Aquí te vas a corregir en la dosis.",
+    tituloHecho: "La dosis quedó como la *corregiste*.",
+    apoyoHecho: "Lo que retiras al hablar no llega al texto.",
+    frase:
+      "Losartán de 50 miligramos, una tableta cada 12 horas, no, mentira, cada 24 horas, por 30 días.",
+    etiquetas: [
+      {
+        texto: "Corrigió cada 12 → cada 24 horas",
+        cumple: (f) => !palabra(f, "12") && palabra(f, "24"),
+      },
+      { texto: "Puso la puntuación", cumple: termina },
+    ],
+  },
+];
+
+/** Velocidad promedio al teclado (supuesto escrito en pantalla, SISTEMA.md §7). */
+const PPM_TECLADO = 40;
+/** Tras presionar una tecla, si no empezó a grabar en este tiempo, se explica el atajo. */
 const PISTA_TRAS_INTENTO_MS = 2_000;
-/** Respaldo: si nunca empezó a grabar ni llegó ninguna tecla, se le explica a este tiempo. */
+/** Respaldo: si nunca empezó a grabar ni llegó ninguna tecla. */
 const PISTA_SIN_GRABAR_MS = 60_000;
 /** Si terminó de procesar y el texto no apareció en este tiempo, algo falló al pegar. */
 const PISTA_SIN_TEXTO_MS = 5_000;
 
-type Fase = "esperando" | "grabando" | "procesando" | "listo";
-
-/** "⌥" → "la tecla ⌥ (Option)", "Ctrl" → "la tecla Ctrl", "Espacio" → "la barra espaciadora". */
-function nombreTecla(k: string): string {
-  const mac: Record<string, string> = {
-    "⌥": "⌥ (Option)",
-    "⌘": "⌘ (Command)",
-    "⌃": "⌃ (Control)",
-    "⇧": "⇧ (Shift)",
-  };
-  if (k === "Espacio") return "la barra espaciadora";
-  return `la tecla ${mac[k] ?? k}`;
-}
-
-/** Cómo se presiona un atajo, dicho para alguien que nunca ha usado uno. */
-function comoPresionar(keys: string[]): string {
-  if (keys.length < 2) return `Presiona ${nombreTecla(keys[0] ?? "")}.`;
-  const mods = keys.slice(0, -1).map(nombreTecla);
-  const ultima = nombreTecla(keys[keys.length - 1]);
-  return mods.length === 1
-    ? `Mantén presionada ${mods[0]} y, sin soltarla, toca ${ultima}.`
-    : `Mantén presionadas ${mods.join(" y ")} y, sin soltarlas, toca ${ultima}.`;
-}
-
-/**
- * ⚠️ Hay que exigir letras, no solo "que no esté vacío": en Mac, ⌥ + Espacio escribe un espacio
- * duro en el cuadro si el sistema deja pasar la tecla, y eso contaría como éxito sin haber dictado.
- */
+/** Exige letras, no solo "que no esté vacío": ⌥ + Espacio puede escribir un espacio duro. */
 const tieneDictado = (texto: string) => /\p{L}{2,}/u.test(texto);
 
-const Teclas: React.FC<{ keys: string[]; grande?: boolean }> = ({
-  keys,
-  grande,
-}) => (
-  <span
-    className={`inline-flex items-center align-middle ${grande ? "gap-3" : "gap-1.5"}`}
-  >
-    {keys.map((k, i) => (
-      <React.Fragment key={i}>
-        {i > 0 && (
-          <span className={`text-brand-text-muted ${grande ? "text-2xl" : ""}`}>
-            +
-          </span>
-        )}
-        <kbd
-          className={`rounded-lg border border-brand-border bg-white font-heading font-semibold shadow-[0_2px_0_rgba(26,22,32,0.08)] ${
-            grande ? "px-5 py-3 text-3xl rounded-xl" : "px-2.5 py-1 text-base"
-          }`}
-        >
-          {k}
-        </kbd>
-      </React.Fragment>
-    ))}
-  </span>
-);
+type Paso =
+  | { tipo: "microfono" }
+  | { tipo: "atajo" }
+  | { tipo: "practica"; indice: number }
+  | { tipo: "recompensa" };
+
+// ---------------------------------------------------------------------------------------------
 
 export const PrimerDictado: React.FC<{
   cuenta: string;
   onDone: () => void;
 }> = ({ cuenta, onDone }) => {
-  const { keys, os } = useShortcutKeys();
-  const [texto, setTexto] = useState("");
-  const [fase, setFase] = useState<Fase>("esperando");
-  const [etapa, setEtapa] = useState<"dictar" | "afuera">("dictar");
-  const [pista, setPista] = useState<string | null>(null);
-  const cuadro = useRef<HTMLTextAreaElement>(null);
-  const faseRef = useRef<Fase>("esperando");
-  faseRef.current = fase;
+  const [paso, setPaso] = useState<Paso>({ tipo: "microfono" });
+  // Lo medido en las prácticas (segundos de audio y palabras), para la recompensa.
+  const medido = useRef({ segundos: 0, palabras: 0 });
+
+  useEffect(() => {
+    const quitar = listen<{ segundos: number; palabras: number }>(
+      "dictado-medido",
+      (e) => {
+        medido.current.segundos += e.payload.segundos;
+        medido.current.palabras += e.payload.palabras;
+      },
+    );
+    return () => void quitar.then((f) => f());
+  }, []);
 
   const terminar = () => {
     marcarHecho(cuenta);
     onDone();
   };
 
-  // Éxito: llegó texto de verdad al cuadro.
+  if (paso.tipo === "microfono") {
+    return (
+      <PruebaMicrofono
+        onSi={() => setPaso({ tipo: "atajo" })}
+        onSaltar={terminar}
+      />
+    );
+  }
+  if (paso.tipo === "atajo") {
+    return (
+      <PruebaAtajo
+        atras={() => setPaso({ tipo: "microfono" })}
+        onSi={() => {
+          medido.current = { segundos: 0, palabras: 0 };
+          setPaso({ tipo: "practica", indice: 0 });
+        }}
+      />
+    );
+  }
+  if (paso.tipo === "practica") {
+    return (
+      <PracticaDictado
+        key={paso.indice}
+        indice={paso.indice}
+        atras={() =>
+          setPaso(
+            paso.indice === 0
+              ? { tipo: "atajo" }
+              : { tipo: "practica", indice: paso.indice - 1 },
+          )
+        }
+        onContinuar={() =>
+          setPaso(
+            paso.indice + 1 < PRACTICAS.length
+              ? { tipo: "practica", indice: paso.indice + 1 }
+              : { tipo: "recompensa" },
+          )
+        }
+        // "Saltar la práctica" lleva a Inicio sin pasar por la recompensa.
+        onSaltar={terminar}
+      />
+    );
+  }
+  return (
+    <Recompensa
+      segundos={medido.current.segundos}
+      palabras={medido.current.palabras}
+      onListo={terminar}
+    />
+  );
+};
+
+// ---------------------------------------------------------------------------------------------
+// Pantalla 5: ¿Se mueven las barras cuando hablas?
+// ---------------------------------------------------------------------------------------------
+
+const BARRAS = 30;
+
+const PruebaMicrofono: React.FC<{ onSi: () => void; onSaltar: () => void }> = ({
+  onSi,
+  onSaltar,
+}) => {
+  const [niveles, setNiveles] = useState<number[]>(() => Array(BARRAS).fill(0));
+  const [noSeMueven, setNoSeMueven] = useState(false);
+  const [sinMicrofono, setSinMicrofono] = useState(false);
+  const [micros, setMicros] = useState<AudioDevice[]>([]);
+  const [elegido, setElegido] = useState<string>("");
+
+  const abrir = async () => {
+    setSinMicrofono(false);
+    const r = await commands.pruebaMicrofono(true);
+    if (r.status === "error") setSinMicrofono(true);
+  };
+
+  useEffect(() => {
+    void abrir();
+    const quitar = listen<number[]>("mic-level", (e) => {
+      const v = e.payload;
+      if (!v?.length) return;
+      // Los niveles vienen por bandas de frecuencia; se reparten en 30 barras.
+      setNiveles(
+        Array.from({ length: BARRAS }, (_, i) => {
+          const x = v[Math.floor((i / BARRAS) * v.length)] ?? 0;
+          return Math.max(0, Math.min(1, x));
+        }),
+      );
+    });
+    void commands.getAvailableMicrophones().then((r) => {
+      if (r.status === "ok") setMicros(r.data);
+    });
+    void commands.getSelectedMicrophone().then((r) => {
+      if (r.status === "ok") setElegido(r.data);
+    });
+    return () => {
+      void quitar.then((f) => f());
+      void commands.pruebaMicrofono(false).catch(() => {});
+    };
+  }, []);
+
+  const cambiar = async (nombre: string) => {
+    setElegido(nombre);
+    await commands.pruebaMicrofono(false).catch(() => {});
+    await commands.setSelectedMicrophone(nombre).catch(() => {});
+    await abrir();
+  };
+
+  const nombreMicro =
+    elegido && elegido !== "default" && elegido !== "Default"
+      ? elegido
+      : "El micrófono de tu computador";
+
+  return (
+    <PlantillaPrimerUso
+      clave="microfono"
+      etapa="prueba"
+      titulo="¿Se mueven las barras cuando *hablas*?"
+      apoyo={
+        sinMicrofono
+          ? "No encontramos un micrófono. Conéctalo y vuelve a intentar."
+          : noSeMueven
+            ? "Elige otro micrófono y vuelve a hablar."
+            : "Di cualquier cosa, con tu voz de siempre."
+      }
+      principal={{ texto: "Sí, se mueven", onClick: onSi }}
+      enlace={
+        noSeMueven
+          ? { texto: "Saltar por ahora", onClick: onSaltar }
+          : { texto: "No se mueven", onClick: () => setNoSeMueven(true) }
+      }
+      escenario={
+        <div className="w-[468px] max-w-full bg-papel border border-linea rounded-[16px] shadow-2 overflow-hidden">
+          <div className="h-[150px] flex items-center justify-center gap-1.5">
+            {niveles.map((n, i) => (
+              <span
+                key={i}
+                className="w-2 rounded-[4px] bg-lila transition-[height] duration-75"
+                style={{ height: `${18 + Math.round(n * 110)}px` }}
+              />
+            ))}
+          </div>
+          <div className="border-t border-linea px-5 py-4 flex items-center justify-between gap-4">
+            {noSeMueven && micros.length > 0 ? (
+              <select
+                aria-label="Micrófono"
+                value={elegido}
+                onChange={(e) => void cambiar(e.target.value)}
+                className="flex-1 h-11 px-3.5 rounded-[10px] border-[1.5px] border-linea-fuerte bg-papel text-[16px] text-tinta focus:outline-none focus:border-tinta"
+              >
+                {micros.map((m) => (
+                  <option key={m.name} value={m.name}>
+                    {m.name === "default" || m.name === "Default"
+                      ? "El del computador"
+                      : m.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <>
+                <span className="text-[16px] text-tinta truncate">
+                  {nombreMicro}
+                </span>
+                <Enlace chico onClick={() => setNoSeMueven(true)}>
+                  Cambiar
+                </Enlace>
+              </>
+            )}
+          </div>
+        </div>
+      }
+      mensajeAyuda="Hola, CloseLabs Voice no me escucha el micrófono."
+    />
+  );
+};
+
+// ---------------------------------------------------------------------------------------------
+// Pantalla 6: Presiona las dos teclas. ¿Se encienden?
+// ---------------------------------------------------------------------------------------------
+
+/** ¿Esta tecla (como se muestra: "⌥", "Ctrl", "Espacio") está presionada en este evento? */
+function presionada(etiqueta: string, e: KeyboardEvent): boolean {
+  switch (etiqueta) {
+    case "⌥":
+    case "Alt":
+      return e.altKey;
+    case "⌃":
+    case "Ctrl":
+      return e.ctrlKey;
+    case "⌘":
+    case "Win":
+      return e.metaKey;
+    case "⇧":
+    case "Shift":
+      return e.shiftKey;
+    case "Espacio":
+      return e.code === "Space" && e.type === "keydown";
+    default:
+      return e.type === "keydown" && e.key.toLowerCase() === etiqueta.toLowerCase();
+  }
+}
+
+const PruebaAtajo: React.FC<{ atras: () => void; onSi: () => void }> = ({
+  atras,
+  onSi,
+}) => {
+  const { keys } = useShortcutKeys();
+  const [encendidas, setEncendidas] = useState<boolean[]>([]);
+  const [funciono, setFunciono] = useState(false);
+  const [noSeEncienden, setNoSeEncienden] = useState(false);
+
+  useEffect(() => {
+    const alPresionar = (e: KeyboardEvent) =>
+      setEncendidas(keys.map((k) => presionada(k, e)));
+    const alSoltar = (e: KeyboardEvent) =>
+      setEncendidas(keys.map((k) => (k === "Espacio" ? false : presionada(k, e))));
+    window.addEventListener("keydown", alPresionar);
+    window.addEventListener("keyup", alSoltar);
+    // El atajo de verdad empezó a grabar: funciona. Se cancela esa grabación (no es un dictado).
+    const quitar = listen<string>("show-overlay", (e) => {
+      if (e.payload === "recording" || e.payload === "streaming") {
+        setFunciono(true);
+        setEncendidas(keys.map(() => true));
+        void commands.cancelOperation();
+        setTimeout(() => setEncendidas(keys.map(() => false)), 700);
+      }
+    });
+    return () => {
+      window.removeEventListener("keydown", alPresionar);
+      window.removeEventListener("keyup", alSoltar);
+      void quitar.then((f) => f());
+    };
+  }, [keys]);
+
+  const instruccion =
+    keys.length > 1
+      ? `Primero ${keys.slice(0, -1).join(" + ")} y, sin soltarla, ${keys[keys.length - 1]}.`
+      : `Presiona ${keys[0] ?? ""}.`;
+
+  return (
+    <PlantillaPrimerUso
+      clave="atajo"
+      etapa="prueba"
+      atras={atras}
+      titulo="Presiona las dos teclas. ¿Se *encienden*?"
+      apoyo={
+        noSeEncienden
+          ? `${instruccion} Si sigue sin encenderse, escríbenos.`
+          : "Con ellas empiezas y terminas cada dictado."
+      }
+      principal={{ texto: "Sí, se encienden", onClick: onSi }}
+      enlace={
+        noSeEncienden
+          ? { texto: "Continuar de todos modos", onClick: onSi }
+          : { texto: "No se encienden", onClick: () => setNoSeEncienden(true) }
+      }
+      escenario={<Teclas keys={keys} medida="grande" presionadas={encendidas} />}
+      notaEscenario={funciono ? "Funciona. Así empiezas cada dictado." : instruccion}
+      mensajeAyuda="Hola, el atajo de CloseLabs Voice no me funciona."
+    />
+  );
+};
+
+// ---------------------------------------------------------------------------------------------
+// Pantallas 7 a 9: las prácticas
+// ---------------------------------------------------------------------------------------------
+
+type Fase = "esperando" | "grabando" | "procesando" | "listo";
+
+const PracticaDictado: React.FC<{
+  indice: number;
+  atras: () => void;
+  onContinuar: () => void;
+  onSaltar: () => void;
+}> = ({ indice, atras, onContinuar, onSaltar }) => {
+  const practica = PRACTICAS[indice];
+  const { keys, os } = useShortcutKeys();
+  const mantener = useSettings().getSetting("push_to_talk") === true;
+  const [texto, setTexto] = useState("");
+  const [fase, setFase] = useState<Fase>("esperando");
+  const [pista, setPista] = useState<string | null>(null);
+  const faseRef = useRef<Fase>("esperando");
+  faseRef.current = fase;
+  const campo = useRef<HTMLTextAreaElement>(null);
+
+  // Éxito: llegó texto de verdad al campo.
   useEffect(() => {
     if (fase !== "listo" && tieneDictado(texto)) {
       setFase("listo");
@@ -161,22 +477,16 @@ export const PrimerDictado: React.FC<{
     }
   }, [texto, fase]);
 
-  // Si intentó y no empezó a grabar, explicarle cómo se presiona el atajo.
-  //
-  // ⚠️ La pista sale DESPUÉS de un intento (una tecla presionada sin que empiece la grabación), no
-  // a los 25 s a ciegas: en la revisión del 2026-11-11 el aviso amarillo aparecía mientras el
-  // médico todavía leía la pantalla y parecía un error antes de haber intentado nada. Si las teclas
-  // del atajo llegan a la ventana, la grabación empieza enseguida y la pista no sale; si se
-  // presionó una sola, o una después de la otra, no empieza y a los 2 s se le explica. El tiempo
-  // largo queda solo de respaldo, por si las teclas nunca llegan a la ventana.
+  // "¿No pasa nada?" SOLO tras un intento (una tecla sin que empiece la grabación), nunca a
+  // ciegas mientras el médico todavía lee (revisión del 2026-11-11).
   useEffect(() => {
     if (fase !== "esperando") return;
     const mostrar = () => {
       if (faseRef.current === "esperando") {
         setPista(
           keys.length > 1
-            ? "¿No pasa nada? Las teclas van al mismo tiempo, no una después de la otra. Vuelve a intentarlo."
-            : `¿No pasa nada? ${comoPresionar(keys)}`,
+            ? "¿No pasa nada? Las teclas van al mismo tiempo, no una después de la otra."
+            : `¿No pasa nada? Presiona ${keys[0]}.`,
         );
       }
     };
@@ -194,10 +504,10 @@ export const PrimerDictado: React.FC<{
     };
   }, [fase, keys]);
 
-  // Lo que ya avisa el backend, traducido a instrucciones concretas.
+  // Lo que ya avisa el backend, traducido a qué hacer.
   useEffect(() => {
     let sinTexto: ReturnType<typeof setTimeout> | undefined;
-    const suscripciones = [
+    const subs = [
       listen<string>("show-overlay", (e) => {
         if (faseRef.current === "listo") return;
         if (e.payload === "recording" || e.payload === "streaming") {
@@ -217,422 +527,352 @@ export const PrimerDictado: React.FC<{
           }
         }, PISTA_SIN_TEXTO_MS);
       }),
-      listen<RecordingErrorEvent>("recording-error", () => {
+      listen("recording-error", () => {
         setFase("esperando");
         setPista(
-          "No pudimos usar el micrófono. Revisa que esté conectado y que la app tenga permiso para usarlo, y vuelve a intentarlo.",
+          "No pudimos usar el micrófono. Revisa que esté conectado y vuelve a intentarlo.",
         );
       }),
       listen("transcription-error", () => {
         setFase("esperando");
-        setPista(
-          "No pudimos convertir tu voz en texto. Revisa tu conexión a internet y vuelve a intentarlo.",
-        );
+        setPista("Sin internet no pudimos limpiar el texto. Revisa tu conexión y vuelve a intentarlo.");
       }),
-      listen("paste-needs-manual", () => {
-        setPista(
-          `Tu texto quedó copiado. Haz clic en el cuadro y presiona ${pasteShortcut(os)} para pegarlo.`,
-        );
-      }),
-      listen("paste-error", () => {
-        setPista(
-          `Tu texto quedó copiado. Haz clic en el cuadro y presiona ${pasteShortcut(os)} para pegarlo.`,
-        );
-      }),
+      listen("paste-needs-manual", () =>
+        setPista(`Tu texto quedó copiado. Haz clic en el campo y presiona ${pasteShortcut(os)}.`),
+      ),
+      listen("paste-error", () =>
+        setPista(`Tu texto quedó copiado. Haz clic en el campo y presiona ${pasteShortcut(os)}.`),
+      ),
     ];
     return () => {
       clearTimeout(sinTexto);
-      suscripciones.forEach((p) => void p.then((quitar) => quitar()));
+      subs.forEach((p) => void p.then((f) => f()));
     };
   }, [os]);
 
-  // El cursor tiene que estar en el cuadro para que el texto caiga ahí: se devuelve al volver a
-  // la ventana.
+  // El cursor en el campo al volver a la ventana.
   useEffect(() => {
+    campo.current?.focus();
     const alVolver = () => {
-      if (faseRef.current !== "listo") cuadro.current?.focus();
+      if (faseRef.current !== "listo") campo.current?.focus();
     };
     window.addEventListener("focus", alVolver);
     return () => window.removeEventListener("focus", alVolver);
   }, []);
 
-  // La frase a dictar, en su propia tarjeta. ⚠️ Tiene que seguir a la vista MIENTRAS graba: antes
-  // la instrucción entera se cambiaba por "Te escucho…" en cuanto se presionaba el atajo, y el
-  // médico que no la había memorizado se quedaba sin saber qué decir justo cuando tenía que hablar.
-  const tarjetaFrase = (
-    <div
-      className={`w-full rounded-2xl border-2 px-5 py-4 text-center transition-colors ${
-        fase === "grabando"
-          ? "border-brand-accent bg-brand-accent-soft"
-          : "border-brand-border bg-brand-surface"
-      }`}
-    >
-      <p className="text-[15px] font-semibold text-brand-text-secondary">
-        {fase === "grabando" ? "Ahora di en voz alta:" : "Vas a decir:"}
-      </p>
-      <p className="mt-1 font-heading text-[22px] font-bold leading-snug text-brand-text">
-        «{FRASE}»
-      </p>
-    </div>
+  const listo = fase === "listo";
+  const etiquetas = useMemo(
+    () => (listo ? practica.etiquetas.filter((e) => e.cumple(texto)) : []),
+    [listo, texto, practica],
   );
 
-  // Una sola instrucción a la vez, grande. El público se pierde con listas de pasos: la primera
-  // versión tenía cuatro tarjetas numeradas, avisos y enlaces, y resultó abrumadora.
-  const instruccion =
-    fase === "grabando" ? (
-      <>
-        <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent text-white">
-          <Mic className="w-7 h-7 animate-pulse" />
-        </span>
-        <p className="font-heading text-xl font-bold">Te escucho…</p>
-        {tarjetaFrase}
-        <p className="text-[18px] text-brand-text-secondary">
-          Cuando termines, presiona otra vez
-        </p>
-        <Teclas keys={keys} grande />
-      </>
-    ) : fase === "procesando" ? (
-      <>
-        <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
-        <p className="font-heading text-xl font-bold">Escribiendo…</p>
-      </>
-    ) : fase === "listo" ? (
-      <>
-        <span className="grid place-items-center w-14 h-14 rounded-full bg-green-500 text-white">
-          <Check className="w-8 h-8" strokeWidth={3} />
-        </span>
-        <p className="font-heading text-xl font-bold">¡Listo! Así de fácil</p>
-        <p className="text-[18px] text-brand-text-secondary max-w-md">
-          Ahora vamos a probarlo fuera de la app, como lo harás en tu historia
-          clínica.
-        </p>
-      </>
-    ) : (
-      <>
-        {tarjetaFrase}
-        <p className="text-[18px] text-brand-text-secondary">
-          Para empezar, presiona
-        </p>
-        <Teclas keys={keys} grande />
-        {/* Desde el principio, no solo como pista tras un intento: "⌥ + Espacio" no le dice nada a
-            quien nunca ha usado un atajo de dos teclas. */}
-        {keys.length > 1 && (
-          <p className="text-[16px] text-brand-text-secondary max-w-md">
-            {comoPresionar(keys)}
-          </p>
-        )}
-      </>
-    );
-
-  // Sin paso del diccionario desde 2026-11-11: pedía agregar palabras antes de que la app se
-  // equivocara con alguna y parecía una tarea. Se explica en el video tutorial de la web.
-  if (etapa === "afuera")
-    return <PasoAfuera keys={keys} os={os} onDone={terminar} />;
-
-  return (
-    // min-h-screen (no h-screen) y `shrink-0` en cada bloque: con la ventana en su tamaño
-    // mínimo (680x570) el flex aplastaba el cuadro de texto hasta dejarlo en una raya.
-    <div className="min-h-screen flex justify-center px-8 py-7 select-none">
-      <div className="w-full max-w-xl flex flex-col gap-5">
-        <div className="flex flex-col items-center gap-2 shrink-0">
-          <Logo width={110} />
-          <h1 className="font-heading text-2xl font-bold">Probemos tu voz</h1>
-        </div>
-
-        <div
-          className="flex flex-col items-center text-center gap-3 shrink-0"
-          aria-live="polite"
-        >
-          {instruccion}
-        </div>
-
-        {/* El cuadro donde cae el dictado. `data-dictado-destino`: el texto llega aquí aunque el
-            cursor no esté dentro (ver insertarDictado.ts). */}
-        <textarea
-          ref={cuadro}
-          id="primer-dictado"
-          data-dictado-destino
-          autoFocus
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="Aquí aparecerá lo que digas"
-          rows={2}
-          className={`w-full shrink-0 min-h-[5.5rem] rounded-2xl border-2 bg-white px-4 py-3 text-[17px] leading-relaxed resize-none focus:outline-none transition-colors select-text ${
-            fase === "listo" ? "border-green-500" : "border-brand-border"
-          }`}
-        />
-
-        {pista && (
-          <div
-            role="alert"
-            className="flex flex-col items-center gap-2 text-center text-[16px] leading-relaxed text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3"
-          >
-            {pista}
-            <button
-              type="button"
-              onClick={() =>
-                void openUrl(
-                  supportWhatsappUrl(
-                    "Hola, estoy haciendo mi primer dictado en CloseLabs Voice y necesito ayuda.",
-                  ),
-                )
-              }
-              className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#128C7E] hover:underline"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Pedir ayuda por WhatsApp
-            </button>
-          </div>
-        )}
-
-        {fase === "listo" ? (
-          <div className="flex flex-col items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setEtapa("afuera")}
-              className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
-            >
-              Siguiente
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTexto("");
-                setFase("esperando");
-                cuadro.current?.focus();
-              }}
-              className="text-[15px] text-brand-text-muted hover:underline"
-            >
-              Probar otra vez
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={terminar}
-            className="self-center text-[15px] text-brand-text-muted hover:underline"
-          >
-            Saltar por ahora
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/** Cuánto se espera después de que el dictado salió hacia TextEdit antes de volver a preguntar. */
-const VOLVER_TRAS_DICTADO_MS = 3_500;
-
-/**
- * Segundo paso: dictar FUERA de la app, en TextEdit (Mac) o el Bloc de notas (Windows).
- *
- * Por qué: dentro de nuestra ventana el texto llega por otro camino (ver `PrimerDictado`), así que
- * el primer dictado no prueba lo que de verdad va a usar: el permiso de Accesibilidad, el atajo con
- * otra app al frente y el pegado. Si algo de eso falla, que falle aquí, con ayuda a la vista.
- *
- * La app no puede saber si el texto entró (ver `clipboard.rs`, 2026-10-28): sabe que lo mandó. Por
- * eso, cuando sale el dictado, vuelve al frente y le PREGUNTA al médico si apareció.
- */
-const PasoAfuera: React.FC<{
-  keys: string[];
-  os: OSType;
-  onDone: () => void;
-}> = ({ keys, os, onDone }) => {
-  const editor = os === "macos" ? "TextEdit" : "el Bloc de notas";
-  const [fase, setFase] = useState<
-    "abrir" | "abierto" | "pregunta" | "no-aparecio"
-  >("abrir");
-  const [error, setError] = useState(false);
-  const faseRef = useRef(fase);
-  faseRef.current = fase;
-
-  useEffect(() => {
-    let volver: ReturnType<typeof setTimeout> | undefined;
-    const traerAlFrente = () => void commands.showMainWindowCommand();
-    const suscripciones = [
-      listen("dictado-enviado", () => {
-        if (faseRef.current !== "abierto") return;
-        // Un momento para que el médico vea su texto en el editor antes de preguntarle.
-        clearTimeout(volver);
-        volver = setTimeout(() => {
-          setFase("pregunta");
-          traerAlFrente();
-        }, VOLVER_TRAS_DICTADO_MS);
-      }),
-      // Sin permiso de Accesibilidad (Mac) o si el pegado falló: el texto quedó copiado.
-      listen("paste-needs-manual", () => {
-        if (faseRef.current === "abierto") setFase("no-aparecio");
-      }),
-      listen("paste-error", () => {
-        if (faseRef.current !== "abierto") return;
-        setFase("no-aparecio");
-        traerAlFrente();
-      }),
-    ];
-    return () => {
-      clearTimeout(volver);
-      suscripciones.forEach((p) => void p.then((quitar) => quitar()));
-    };
-  }, []);
-
-  const abrir = async () => {
-    setError(false);
-    const r = await commands.abrirEditorDePrueba();
-    if (r.status === "ok") setFase("abierto");
-    else setError(true);
+  const repetir = () => {
+    setTexto("");
+    setFase("esperando");
+    setPista(null);
+    setTimeout(() => campo.current?.focus(), 0);
   };
 
-  const ayuda = (
-    <button
-      type="button"
-      onClick={() =>
-        void openUrl(
-          supportWhatsappUrl(
-            `Hola, estoy probando CloseLabs Voice en ${editor} y el texto no aparece.`,
-          ),
-        )
-      }
-      className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#128C7E] hover:underline"
-    >
-      <MessageCircle className="w-4 h-4" />
-      Pedir ayuda por WhatsApp
-    </button>
+  const guiaInicio = (
+    <span className="inline-flex flex-wrap items-center gap-1.5 text-[15px] leading-[22px] text-tinta-2">
+      {fase === "grabando" ? (
+        <span className="font-semibold text-lila-hover">Te escucho…</span>
+      ) : (
+        <>
+          {mantener ? "Mantén presionadas" : "Presiona"} <Teclas keys={keys} />
+          {mantener ? " mientras dices:" : " y di:"}
+        </>
+      )}
+    </span>
+  );
+  const guiaFin = (
+    <span className="inline-flex flex-wrap items-center gap-1.5 text-[15px] leading-[22px] text-tinta-2">
+      {mantener ? (
+        "Suelta las teclas para terminar."
+      ) : (
+        <>
+          Presiona <Teclas keys={keys} />
+          {fase === "grabando" ? " para terminar." : " otra vez para terminar."}
+        </>
+      )}
+    </span>
   );
 
-  const boton =
-    "w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors";
+  const campoPractica = (
+    <div
+      className={`relative rounded-[10px] border-[1.5px] border-tinta px-4 py-3.5 text-left ${
+        listo ? "" : "cursor-text"
+      } focus-within:shadow-[0_0_0_3px_var(--foco)]`}
+      onClick={() => campo.current?.focus()}
+    >
+      {!listo && (
+        <div aria-hidden className="flex flex-col">
+          {guiaInicio}
+          <p className="font-serif italic text-[20px] leading-[29px] text-tinta mt-2 mb-2.5">
+            «{practica.frase}»
+          </p>
+          {guiaFin}
+        </div>
+      )}
+      <textarea
+        ref={campo}
+        data-dictado-destino
+        aria-label="Campo de práctica"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        readOnly={listo}
+        rows={listo ? 3 : 1}
+        className={
+          listo
+            ? "w-full resize-none bg-transparent text-[16px] leading-[25px] text-tinta focus:outline-none select-text"
+            : "absolute inset-0 w-full h-full opacity-0 resize-none cursor-text"
+        }
+      />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen flex justify-center px-8 py-7 select-none">
-      <div className="w-full max-w-xl flex flex-col items-center text-center gap-5">
-        <Logo width={110} />
-        <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft text-brand-accent">
-          <FileText className="w-7 h-7" />
-        </span>
-
-        {fase === "abrir" && (
-          <>
-            <h1 className="font-heading text-2xl font-bold">
-              Ahora, fuera de la app
-            </h1>
-            <p className="text-[18px] leading-relaxed text-brand-text-secondary max-w-md">
-              Vamos a abrir {editor}, un programa para escribir. Ahí vas a
-              dictar igual que lo harás en tu historia clínica.
-            </p>
-            <button
-              type="button"
-              onClick={() => void abrir()}
-              className={boton}
-            >
-              Abrir {editor}
-            </button>
-            {error && (
-              <p className="text-[16px] text-amber-900">
-                No pudimos abrir {editor}. Puedes saltar este paso.
-              </p>
-            )}
-          </>
-        )}
-
-        {fase === "abierto" && (
-          <>
-            <h1 className="font-heading text-2xl font-bold">
-              Dicta en {editor}
-            </h1>
-            <ol className="w-full max-w-md flex flex-col gap-3 text-left text-[18px] leading-snug">
-              <li className="flex items-start gap-3">
-                <Num n={1} />
-                <span>Haz clic dentro de la hoja en blanco de {editor}.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Num n={2} />
-                <span>
-                  Presiona <Teclas keys={keys} /> y di cualquier frase.
+    <PlantillaPrimerUso
+      clave={`practica-${indice}-${listo ? "hecha" : "dictar"}`}
+      etapa="practica"
+      atras={atras}
+      titulo={listo ? practica.tituloHecho : practica.titulo}
+      apoyo={listo ? practica.apoyoHecho : practica.apoyo}
+      principal={{ texto: "Continuar", onClick: onContinuar, disabled: !listo }}
+      enlace={
+        listo
+          ? { texto: "Repetir", onClick: repetir }
+          : { texto: "Saltar la práctica", onClick: onSaltar }
+      }
+      escenario={
+        <div className="flex flex-col items-center gap-5">
+          <Tarjeta tipo={practica.tarjeta}>{campoPractica}</Tarjeta>
+          {listo && etiquetas.length > 0 && (
+            <div className="flex flex-nowrap justify-center gap-2">
+              {etiquetas.map((e, i) => (
+                <span
+                  key={e.texto}
+                  className="h-[34px] inline-flex items-center gap-2 rounded-[17px] pl-2.5 pr-3.5 bg-lila-suave text-lila-tinta text-[15px] font-semibold whitespace-nowrap opacity-0 animate-[etiqueta_200ms_cubic-bezier(.2,.8,.2,1)_forwards]"
+                  style={{ animationDelay: `${i * 120}ms` }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      stroke="var(--lila-hover)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {e.texto}
                 </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Num n={3} />
-                <span>
-                  Presiona <Teclas keys={keys} /> otra vez para terminar.
-                </span>
-              </li>
-            </ol>
-            <p className="text-[16px] text-brand-text-muted max-w-md">
-              Cuando el texto aparezca, esta ventana vuelve sola.
-            </p>
-            <button
-              type="button"
-              onClick={() => void abrir()}
-              className="text-[15px] text-brand-text-secondary hover:text-brand-accent hover:underline"
-            >
-              No veo {editor}: abrirlo otra vez
-            </button>
-          </>
-        )}
-
-        {fase === "pregunta" && (
-          <>
-            <h1 className="font-heading text-2xl font-bold">
-              ¿Apareció tu texto en {editor}?
-            </h1>
-            <button type="button" onClick={onDone} className={boton}>
-              Sí, apareció
-            </button>
-            <button
-              type="button"
-              onClick={() => setFase("no-aparecio")}
-              className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold border-2 border-brand-accent text-brand-accent hover:bg-brand-accent-soft transition-colors"
-            >
-              No apareció
-            </button>
-          </>
-        )}
-
-        {fase === "no-aparecio" && (
-          <>
-            <h1 className="font-heading text-2xl font-bold">
-              Tu texto quedó copiado
-            </h1>
-            <p className="text-[18px] leading-relaxed text-brand-text-secondary max-w-md">
-              Haz clic en la hoja de {editor} y presiona{" "}
-              <strong>{pasteShortcut(os)}</strong> para pegarlo. Si te pasa en
-              tu historia clínica, haz lo mismo.
-            </p>
-            <div
-              role="alert"
-              className="w-full flex flex-col items-center gap-2 text-[16px] leading-relaxed text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3"
-            >
-              Si te pasa siempre, escríbenos y lo revisamos contigo.
-              {ayuda}
+              ))}
             </div>
-            <button
-              type="button"
-              onClick={() => setFase("abierto")}
-              className={boton}
-            >
-              Probar otra vez
-            </button>
-          </>
-        )}
-
-        <button
-          type="button"
-          onClick={onDone}
-          className="text-[15px] text-brand-text-muted hover:underline"
-        >
-          {fase === "no-aparecio"
-            ? "Seguir de todos modos"
-            : "Saltar este paso"}
-        </button>
-      </div>
-    </div>
+          )}
+        </div>
+      }
+      mensajeAyuda="Hola, estoy haciendo mi primer dictado en CloseLabs Voice y necesito ayuda."
+    >
+      {pista && <Aviso>{pista}</Aviso>}
+    </PlantillaPrimerUso>
   );
 };
 
-const Num: React.FC<{ n: number }> = ({ n }) => (
-  <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-brand-accent text-white text-[16px] font-semibold font-heading">
-    {n}
-  </span>
+/** Las tres tarjetas del escenario: historia clínica, WhatsApp y fórmula médica. */
+const Tarjeta: React.FC<{
+  tipo: Practica["tarjeta"];
+  children: React.ReactNode;
+}> = ({ tipo, children }) => {
+  const [medico, setMedico] = useState<string>("");
+  useEffect(() => {
+    if (tipo !== "formula") return;
+    void commands.accountState().then((r) => {
+      if (r.status === "ok" && r.data.full_name) setMedico(r.data.full_name);
+    });
+  }, [tipo]);
+
+  if (tipo === "whatsapp") {
+    return (
+      <TarjetaEscenario
+        nombre={
+          <span className="inline-flex items-center gap-2.5">
+            <span className="grid place-items-center w-8 h-8 rounded-full bg-lino-2 text-[13px] font-semibold text-tinta-2">
+              JP
+            </span>
+            Jaime Pardo
+          </span>
+        }
+        contexto="WhatsApp"
+      >
+        <div className="bg-[#EEEAF1] px-4 py-4">
+          <div className="max-w-[330px] bg-papel rounded-[4px_14px_14px_14px] px-3.5 py-2.5 text-[16px] leading-6 text-tinta">
+            Buenas tardes. ¿La pastilla de la presión me la tomo antes o después
+            de comer?
+            <span className="block text-right text-[13px] text-tinta-3 mt-1">
+              3:42 p. m.
+            </span>
+          </div>
+        </div>
+        <div className="px-4 pt-3.5 pb-4">{children}</div>
+      </TarjetaEscenario>
+    );
+  }
+
+  if (tipo === "formula") {
+    const hoy = new Date().toLocaleDateString("es", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return (
+      <TarjetaEscenario nombre={medico || "Tu fórmula"} contexto="Fórmula médica">
+        <div className="p-5 flex flex-col gap-3">
+          <div className="flex items-baseline justify-between pb-2.5 border-b border-linea text-[15px] text-tinta-2">
+            <span>
+              Paciente: <strong className="text-tinta font-semibold">Marta Rojas</strong>
+            </span>
+            <span>{hoy}</span>
+          </div>
+          <span className="font-serif text-[30px] leading-none font-medium text-tinta">
+            Rp.
+          </span>
+          {children}
+        </div>
+      </TarjetaEscenario>
+    );
+  }
+
+  return (
+    <TarjetaEscenario nombre="Historia clínica" contexto="Marta Rojas · 58 años">
+      <div className="p-5 flex flex-col gap-2">
+        <span className="text-[14px] font-semibold text-tinta-2">
+          Motivo de consulta
+        </span>
+        {children}
+        <span className="text-[14px] font-semibold text-tinta-2 mt-3">
+          Examen físico
+        </span>
+        <div className="h-[52px] rounded-[10px] border-[1.5px] border-linea bg-tarjeta-cab" />
+      </div>
+    </TarjetaEscenario>
+  );
+};
+
+// ---------------------------------------------------------------------------------------------
+// Pantalla 10: la recompensa (la única pantalla oscura)
+// ---------------------------------------------------------------------------------------------
+
+const Recompensa: React.FC<{
+  segundos: number;
+  palabras: number;
+  onListo: () => void;
+}> = ({ segundos, palabras, onListo }) => {
+  const { keys } = useShortcutKeys();
+  const ppm = segundos > 3 ? (palabras / segundos) * 60 : 0;
+  const veces = ppm / PPM_TECLADO;
+  const mostrarCifra = veces >= 1.5;
+  // Ahorro: 20 historias de 120 palabras al día (2.400 palabras), redondeado a 5 minutos.
+  const minutos =
+    ppm > 0
+      ? Math.max(0, Math.round((2400 / PPM_TECLADO - 2400 / ppm) / 5) * 5)
+      : 0;
+
+  // La cifra cuenta de 1,0 a N en 800 ms.
+  const [mostrada, setMostrada] = useState(1);
+  useEffect(() => {
+    if (!mostrarCifra) return;
+    const inicio = performance.now();
+    let cuadro = 0;
+    const paso = (t: number) => {
+      const p = Math.min(1, (t - inicio) / 800);
+      const suave = 1 - Math.pow(1 - p, 3);
+      setMostrada(1 + (veces - 1) * suave);
+      if (p < 1) cuadro = requestAnimationFrame(paso);
+    };
+    cuadro = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(cuadro);
+  }, [mostrarCifra, veces]);
+
+  const fmt = (n: number) => n.toFixed(1).replace(".", ",");
+
+  return (
+    <PlantillaPrimerUso
+      clave="recompensa"
+      oscura
+      etapa="todas"
+      titulo={
+        mostrarCifra
+          ? `Dictaste *${Math.round(veces)} veces* más rápido de lo que escribes.`
+          : "Ya sabes *dictar*."
+      }
+      apoyo={
+        mostrarCifra
+          ? "Lo medimos con lo que acabas de dictar."
+          : "Haz clic donde quieras escribir, presiona las dos teclas y habla."
+      }
+      principal={{ texto: "Empezar a usar CloseLabs Voice", onClick: onListo }}
+      escenario={
+        mostrarCifra ? (
+          <div className="flex flex-col items-center gap-5">
+            <div className="font-serif text-[136px] leading-[136px] tracking-[-0.03em] text-white">
+              {fmt(mostrada)}
+              <em className="italic text-lila-claro">×</em>
+            </div>
+            <div className="w-[440px] flex flex-col gap-5">
+              <Comparacion
+                nombre="Tú, dictando"
+                dato={`${Math.round(ppm)} palabras por minuto`}
+                ancho={100}
+                lila
+              />
+              <Comparacion
+                nombre="Escribiendo en el teclado"
+                dato={`${PPM_TECLADO} por minuto, en promedio`}
+                ancho={Math.max(6, (PPM_TECLADO / ppm) * 100)}
+              />
+            </div>
+            {minutos > 0 && (
+              <div className="w-[440px] border-t border-white/16 pt-[18px]">
+                <p className="text-[17px] leading-[26px] text-white">
+                  En 20 historias al día, son unos {minutos} minutos menos frente
+                  al teclado.
+                </p>
+                <p className="text-[14px] leading-5 text-white/60">
+                  Calculado con historias de 120 palabras.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-white/72">
+            <Teclas keys={keys} medida="grande" />
+          </div>
+        )
+      }
+    />
+  );
+};
+
+const Comparacion: React.FC<{
+  nombre: string;
+  dato: string;
+  ancho: number;
+  lila?: boolean;
+}> = ({ nombre, dato, ancho, lila }) => (
+  <div className="flex flex-col gap-2">
+    <div className="flex items-baseline justify-between text-[15px]">
+      <span className="font-semibold text-white">{nombre}</span>
+      <span className="text-white/72">{dato}</span>
+    </div>
+    <div className="h-2.5 rounded-[5px] bg-white/8">
+      <div
+        className={`h-full rounded-[5px] origin-left animate-[crecer_600ms_cubic-bezier(.2,.8,.2,1)_200ms_both] ${
+          lila ? "bg-lila" : "bg-white/30"
+        }`}
+        style={{ width: `${ancho}%` }}
+      />
+    </div>
+  </div>
 );
 
 export default PrimerDictado;

@@ -17,7 +17,6 @@ import "./App.css";
 import AccessibilityPermissions from "./components/AccessibilityPermissions";
 import VersionBlocked from "./components/VersionBlocked";
 import AuthGate from "./components/auth/AuthGate";
-import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
 import InstalarEnAplicaciones from "./components/onboarding/InstalarEnAplicaciones";
 import PrimerDictado, {
@@ -25,6 +24,7 @@ import PrimerDictado, {
   primerDictadoHecho,
 } from "./components/onboarding/PrimerDictado";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
+import { IR_A_SECCION } from "./components/settings/home/HomeSettings";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { useModelStore } from "./stores/modelStore";
@@ -81,12 +81,19 @@ function App() {
   const [primerDictado, setPrimerDictado] = useState(false);
   // Mac: ¿se abrió desde el .dmg sin moverla a Aplicaciones? (ver `instalacion_mac.rs`)
   const [desdeInstalador, setDesdeInstalador] = useState<boolean | null>(null);
+  // Mac: esta es la copia que la del disco acaba de abrir desde Aplicaciones. Abre con el mismo
+  // cuadro de "Instalando" para que el relevo no se vea como un parpadeo (SISTEMA.md §8).
+  const [recienInstalada, setRecienInstalada] = useState(false);
 
   useEffect(() => {
     commands
       .abiertaDesdeInstalador()
       .then(setDesdeInstalador)
       .catch(() => setDesdeInstalador(false));
+    commands
+      .recienInstalada()
+      .then(setRecienInstalada)
+      .catch(() => setRecienInstalada(false));
   }, []);
 
   useEffect(() => {
@@ -595,6 +602,16 @@ function App() {
     return () => window.removeEventListener(ABRIR_PRIMER_DICTADO, abrir);
   }, []);
 
+  // Una página pide ir a otra sección (Inicio → "Agrégala al Diccionario").
+  useEffect(() => {
+    const ir = (e: Event) => {
+      const seccion = (e as CustomEvent<string>).detail;
+      if (seccion in SECTIONS_CONFIG) setCurrentSection(seccion as SidebarSection);
+    };
+    window.addEventListener(IR_A_SECCION, ir);
+    return () => window.removeEventListener(IR_A_SECCION, ir);
+  }, []);
+
   // El bloqueo manda sobre todo lo demás, incluido el onboarding: si esta versión no debe
   // usarse, tampoco debe poder configurarse ni descargar un modelo de 550 MB.
   if (blocked) {
@@ -619,6 +636,14 @@ function App() {
   // se pierde al expulsarlo.
   if (desdeInstalador) {
     return <InstalarEnAplicaciones />;
+  }
+  if (recienInstalada && !signedIn) {
+    return (
+      <InstalarEnAplicaciones
+        recienInstalada
+        onListo={() => setRecienInstalada(false)}
+      />
+    );
   }
 
   // Sin sesión, no se entra. La cuenta es obligatoria: es lo que permite cobrar, limitar los
@@ -682,24 +707,20 @@ function App() {
           },
         }}
       />
-      {/* Main content area that takes remaining space */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* «Tinta y voz»: menú fijo a la izquierda y la página, que se desplaza sola en vertical.
+          Sin pie de página: el estado vive al pie del menú (SISTEMA.md §9). */}
+      <div className="flex-1 flex overflow-hidden bg-papel">
         <Sidebar
           activeSection={currentSection}
           onSectionChange={setCurrentSection}
         />
-        {/* Scrollable content area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
-            <div className="flex flex-col items-center p-4 gap-4">
-              <AccessibilityPermissions />
-              {renderSettingsContent(currentSection)}
-            </div>
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-[880px] pt-10 px-[72px] pb-12 flex flex-col gap-4">
+            <AccessibilityPermissions />
+            {renderSettingsContent(currentSection)}
           </div>
-        </div>
+        </main>
       </div>
-      {/* Fixed footer at bottom */}
-      <Footer />
     </div>
   );
 }

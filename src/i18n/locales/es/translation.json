@@ -203,8 +203,8 @@
         "pressKeys": "Presiona teclas...",
         "bindings": {
           "transcribe": {
-            "name": "Teclas para dictar",
-            "description": "Las teclas que presionas para empezar y terminar un dictado."
+            "name": "Atajo para dictar",
+            "description": "Las teclas con las que empiezas y terminas."
           },
           "cancel": {
             "name": "Teclas para cancelar",
@@ -241,13 +241,13 @@
       "title": "Sonido",
       "microphone": {
         "title": "Micrófono",
-        "description": "El micrófono que usa la app para escucharte.",
+        "description": "El que usa la app para oírte.",
         "placeholder": "Seleccionar micrófono...",
         "loading": "Cargando..."
       },
       "audioFeedback": {
-        "label": "Sonido al empezar y terminar",
-        "description": "Suena un tono cuando empieza y cuando termina la grabación."
+        "label": "Sonido al empezar y al terminar",
+        "description": "Un tono corto te confirma que te está oyendo."
       },
       "outputDevice": {
         "title": "Dónde se escucha",
@@ -295,7 +295,7 @@
       },
       "autostart": {
         "label": "Abrir al encender el computador",
-        "description": "CloseLabs Voice se abre sola al encender el computador, lista para dictar."
+        "description": "Así el atajo siempre está listo."
       },
       "showTrayIcon": {
         "label": "Mostrar el ícono pequeño",

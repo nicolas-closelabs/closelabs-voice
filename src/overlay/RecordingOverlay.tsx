@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -14,7 +15,13 @@ import i18n, { syncLanguageFromSettings } from "@/i18n";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 import { shortcutKeys } from "@/lib/utils/shortcutLabels";
 
-type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
+type OverlayState =
+  | "recording"
+  | "streaming"
+  | "transcribing"
+  | "processing"
+  // «Tinta y voz»: "¿No apareció? Quedó copiado…" (ver `mostrar_aviso_pegado` en overlay.rs).
+  | "pegado";
 
 /**
  * Aviso "Presiona ⌥ + Espacio para terminar" en la píldora, en vez del lema, durante los primeros
@@ -39,9 +46,9 @@ function enLosPrimerosDias(): boolean {
   }
 }
 
-// Number of reactive bars in the waveform (the simple, smoothed style shared by
-// every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
-const WAVE_BARS = 9;
+// Barras de la onda. Los niveles llegan en 16 bandas; «Tinta y voz» pide 22 barras (SISTEMA.md §9),
+// así que se reparten las 16 en 22.
+const WAVE_BARS = 22;
 
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
@@ -145,7 +152,12 @@ const RecordingOverlay: React.FC = () => {
           return prev * 0.7 + target * 0.3;
         });
         smoothedLevelsRef.current = smoothed;
-        setLevels(smoothed.slice(0, WAVE_BARS));
+        setLevels(
+          Array.from(
+            { length: WAVE_BARS },
+            (_, i) => smoothed[Math.floor((i / WAVE_BARS) * smoothed.length)] ?? 0,
+          ),
+        );
       });
 
       const unlistenStream = await events.streamTextEvent.listen((event) => {
@@ -332,36 +344,90 @@ const RecordingOverlay: React.FC = () => {
     );
   }
 
-  // ---- Minimal overlay: exactly one row at a time — waveform (recording), or a
-  // spinner + label (transcribing / processing). Never both. The pill animates its
-  // width between them; the cancel button is in both rows so it stays put.
+  // ---- «Tinta y voz» (diseno/SISTEMA.md §9): la píldora mínima ----
+  // Una cápsula oscura que solo existe mientras se graba o se escribe, o para un mensaje. Grabando:
+  // ✕ (cancela) · la onda · ✓ (termina). Escribiendo: "Escribiendo" y tres puntos. Sin logo ni lema
+  // (revisión del 2026-11-11: lo más grande era el logo, no que estaba grabando ni cómo terminar).
   const working = state === "transcribing" || state === "processing";
-  const workLabel =
-    state === "processing"
-      ? t("overlay.processing")
-      : t("overlay.transcribing");
+  const esMac = /Mac/i.test(navigator.userAgent);
+
+  let pildora: React.ReactNode;
+  if (state === "pegado") {
+    pildora = (
+      <div className="tv-pill tv-msg">
+        ¿No apareció? Quedó copiado: pega con{" "}
+        <kbd className="tv-kbd">{esMac ? "⌘" : "Ctrl"}</kbd> +{" "}
+        <kbd className="tv-kbd">V</kbd>
+      </div>
+    );
+  } else if (working) {
+    pildora = (
+      <div className="tv-pill tv-msg">
+        Escribiendo
+        <span className="tv-dots" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+      </div>
+    );
+  } else {
+    pildora = (
+      <div className="tv-pill">
+        <button
+          className="tv-x sx"
+          aria-label="Cancelar el dictado"
+          onClick={() => commands.cancelOperation()}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M4.5 4.5 L11.5 11.5 M11.5 4.5 L4.5 11.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+        <div className="tv-wave" aria-hidden="true">
+          {levels.map((v, i) => (
+            <i
+              key={i}
+              style={{
+                height: `${Math.max(4, Math.min(26, 4 + Math.pow(v, 0.7) * 22))}px`,
+              }}
+            />
+          ))}
+        </div>
+        <button
+          className="tv-ok sx"
+          aria-label="Terminar el dictado"
+          onClick={() => commands.terminarDictado()}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M3.5 8.5 L6.6 11.4 L12.5 4.8"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
       dir={direction}
-      className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
+      className={`tv-stage ov-fade ${isVisible ? "show" : ""}`}
+      onPointerDown={onCardPointerDown}
     >
-      {/* CloseLabs Voice: card branded (logo + barras lila + tagline) */}
-      <div
-        onPointerDown={onCardPointerDown}
-        className={`scard cbrand ${working && isVisible ? "cworking" : ""}`}
-      >
-        <div className="ovlogo">
-          <img src="/brand/closelabs-white.png" alt="CloseLabs Voice" />
-        </div>
-        {working ? workingRow(workLabel, true) : listeningRow(false, true)}
-        {aviso && !working ? (
-          <div className="ovtag ovaviso">{aviso}</div>
-        ) : (
-          // eslint-disable-next-line i18next/no-literal-string
-          <div className="ovtag">Automatiza tu consultorio · closelabs.co</div>
-        )}
-      </div>
+      {aviso && state === "recording" && (
+        <div className="tv-pista">{aviso}</div>
+      )}
+      {pildora}
     </div>
   );
 };

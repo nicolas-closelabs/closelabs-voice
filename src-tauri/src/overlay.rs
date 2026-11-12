@@ -43,8 +43,11 @@ tauri_panel! {
 // La card mide 240px de ancho y ~112px de alto (stack vertical); la ventana debe
 // caber la card con un poco de holgura. La card está anclada al borde inferior por
 // CSS, así que crece hacia arriba desde el OVERLAY_BOTTOM_OFFSET.
-const OVERLAY_WIDTH: f64 = 264.0;
-const OVERLAY_HEIGHT: f64 = 146.0;
+// «Tinta y voz» (diseno/SISTEMA.md §9): la píldora es una cápsula de 44 de alto, y encima, solo los
+// primeros días, la pista "Presiona ⌥ + Espacio para terminar". El ancho deja caber el mensaje más
+// largo ("¿No apareció? Quedó copiado: pega con ⌘ + V"). Antes 264 × 146, con el logo y el lema.
+const OVERLAY_WIDTH: f64 = 420.0;
+const OVERLAY_HEIGHT: f64 = 96.0;
 
 // Actual is 394x118, just a little extra
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;
@@ -247,7 +250,21 @@ fn calculate_overlay_position(
     let x = monitor_x + (monitor_width - width) / 2.0;
     let y = match settings.overlay_position {
         OverlayPosition::Top => monitor_y + OVERLAY_TOP_OFFSET,
-        OverlayPosition::Bottom => monitor_y + monitor_height - height - OVERLAY_BOTTOM_OFFSET,
+        // «Tinta y voz»: 12 px por encima del área útil, nunca sobre el Dock ni la barra de tareas
+        // (revisión del 2026-11-11: la píldora tapaba el Dock). Si el área útil no es creíble
+        // (pasa en Mac con monitores en posiciones negativas), el margen fijo de antes.
+        OverlayPosition::Bottom => {
+            let area = monitor.work_area();
+            let abajo_util = (area.position.y as f64 + area.size.height as f64) / scale;
+            let fijo = monitor_y + monitor_height - height - OVERLAY_BOTTOM_OFFSET;
+            if abajo_util > monitor_y + monitor_height / 2.0
+                && abajo_util <= monitor_y + monitor_height + 1.0
+            {
+                abajo_util - height - 12.0
+            } else {
+                fijo
+            }
+        }
         // CloseLabs Voice: centrado vertical en la pantalla.
         OverlayPosition::Center => monitor_y + (monitor_height - height) / 2.0,
     };
@@ -371,7 +388,59 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     }
 }
 
+/// Sube cada vez que la píldora cambia de estado: el aviso "¿No apareció?" solo se esconde a sí mismo
+/// si nadie la usó mientras tanto (si empezó otro dictado, no lo tapa).
+static OVERLAY_TURNO: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// "¿No apareció? Quedó copiado: pega con ⌘ + V", 5 s después de cada dictado y durante 5 s, solo
+/// los primeros 7 días desde el primer dictado en este computador (diseno/SISTEMA.md §9, aprobado
+/// por Nicolás el 2026-11-12). La app no sabe si el texto entró en el campo (ver la nota del
+/// 2026-10-28 en CLAUDE.md); esto le recuerda al médico que no lo perdió.
+///
+/// No sale si el dictado fue dentro de nuestra propia ventana (ahí se escribe directo) ni si
+/// empezó otro dictado en esos 5 s.
+pub fn mostrar_aviso_pegado(app_handle: &AppHandle) {
+    const DIAS: u64 = 7;
+    if crate::clipboard::ventana_principal_enfocada() {
+        return;
+    }
+    let ahora = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let Ok(dir) = crate::portable::app_data_dir(app_handle) else {
+        return;
+    };
+    let marca = dir.join("primer-dictado");
+    let primero = std::fs::read_to_string(&marca)
+        .ok()
+        .and_then(|t| t.trim().parse::<u64>().ok())
+        .unwrap_or_else(|| {
+            let _ = std::fs::write(&marca, ahora.to_string());
+            ahora
+        });
+    if ahora.saturating_sub(primero) > DIAS * 86_400 {
+        return;
+    }
+
+    let app = app_handle.clone();
+    let turno = OVERLAY_TURNO.load(Ordering::SeqCst);
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        if OVERLAY_TURNO.load(Ordering::SeqCst) != turno {
+            return; // ya empezó otro dictado
+        }
+        show_overlay_state(&app, "pegado");
+        let mio = OVERLAY_TURNO.load(Ordering::SeqCst);
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        if OVERLAY_TURNO.load(Ordering::SeqCst) == mio {
+            hide_recording_overlay(&app);
+        }
+    });
+}
+
 fn show_overlay_state(app_handle: &AppHandle, state: &str) {
+    OVERLAY_TURNO.fetch_add(1, Ordering::SeqCst);
     // Whether the overlay shows at all is governed by overlay_style; position
     // only chooses Top vs Bottom placement.
     let settings = settings::get_settings(app_handle);
@@ -492,7 +561,14 @@ pub fn update_overlay_enabled_cache(enabled: bool) {
     OVERLAY_ENABLED.store(enabled, Ordering::Relaxed);
 }
 
+/// CloseLabs: `true` mientras el primer uso muestra la prueba del micrófono ("¿Se mueven las barras
+/// cuando hablas?"). Entonces los niveles también van a la ventana principal (`prueba_microfono`).
+pub static PRUEBA_MICROFONO: AtomicBool = AtomicBool::new(false);
+
 pub fn emit_levels(app_handle: &AppHandle, levels: &[f32]) {
+    if PRUEBA_MICROFONO.load(Ordering::Relaxed) {
+        let _ = app_handle.emit_to("main", "mic-level", levels);
+    }
     // Skip emission when the overlay is disabled. The recording_overlay
     // window is created at boot regardless of overlay_style, so without this
     // guard a hidden overlay's WebKit subprocess still

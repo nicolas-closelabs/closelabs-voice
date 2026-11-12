@@ -435,3 +435,139 @@
 .scard.cbrand .stimer {
   color: color-mix(in srgb, #f5edff 55%, transparent);
 }
+
+
+/* ======================================================================
+   «Tinta y voz» — la píldora mínima (diseno/SISTEMA.md §9)
+   Cápsula `noche` de 44 de alto, anclada al borde de abajo de la ventana
+   (la ventana va 12 px por encima del Dock o de la barra de tareas).
+   ====================================================================== */
+.tv-stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 2px;
+  font-family: "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+.tv-pill {
+  height: 44px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 7px;
+  border-radius: 22px;
+  background: #18141d;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: #fff;
+}
+.tv-msg {
+  padding: 0 18px;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tv-x,
+.tv-ok {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+}
+.tv-x {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.tv-x:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.tv-ok {
+  background: #fff;
+  color: #18141d;
+}
+.tv-x svg,
+.tv-ok svg {
+  width: 13px;
+  height: 13px;
+}
+.tv-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 26px;
+}
+.tv-wave i {
+  width: 3px;
+  border-radius: 2px;
+  background: #c79bff;
+  transition: height 60ms linear;
+}
+.tv-dots {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+.tv-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #c79bff;
+  animation: tv-punto 900ms linear infinite;
+}
+.tv-dots i:nth-child(2) {
+  animation-delay: 300ms;
+}
+.tv-dots i:nth-child(3) {
+  animation-delay: 600ms;
+}
+@keyframes tv-punto {
+  0% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 0.65;
+  }
+  66% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.tv-pista {
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #18141d;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.tv-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font: inherit;
+  font-size: 14px;
+}

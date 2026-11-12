@@ -842,6 +842,7 @@ impl ShortcutAction for TranscribeAction {
                                             // TextEdit) para volver al tutorial y preguntar si
                                             // el texto apareció: la app no puede saberlo sola.
                                             let _ = ah_clone.emit("dictado-enviado", ());
+                                            crate::overlay::mostrar_aviso_pegado(&ah_clone);
                                         }
                                         Err(e) => {
                                             error!("Failed to paste transcription: {}", e);

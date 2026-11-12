@@ -305,6 +305,10 @@
     url = "https://registry.npmjs.org/@fontsource-variable/inter/-/inter-5.2.8.tgz";
     hash = "sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==";
   };
+  "@fontsource-variable/newsreader@5.3.0" = fetchurl {
+    url = "https://registry.npmjs.org/@fontsource-variable/newsreader/-/newsreader-5.3.0.tgz";
+    hash = "sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw==";
+  };
   "@fontsource-variable/plus-jakarta-sans@5.2.8" = fetchurl {
     url = "https://registry.npmjs.org/@fontsource-variable/plus-jakarta-sans/-/plus-jakarta-sans-5.2.8.tgz";
     hash = "sha512-iQecBizIdZxezODNHzOn4SvvRMrZL/S8k4MEXGDynCmUrImVW0VmX+tIAMqnADwH4haXlHSXqMgU6+kcfBQJdw==";

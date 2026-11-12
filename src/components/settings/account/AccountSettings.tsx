@@ -1,9 +1,14 @@
 /* eslint-disable i18next/no-literal-string */
-import React, { useCallback, useEffect, useState } from "react";
-import { Laptop, Monitor, LogOut, Loader2, Trash2 } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { listen } from "@tauri-apps/api/event";
-import { commands, type EstadoCuenta } from "@/bindings";
+import { commands, type EstadoCuenta, type Equipo } from "@/bindings";
+import { Titulo, Apoyo } from "../../tinta/Titulo";
+import { BotonPrincipal, BotonSecundario, Enlace } from "../../tinta/Botones";
+import { Aviso, CLASE_CAMPO } from "../../tinta/Campos";
+import { SettingsGroup } from "../../ui/SettingsGroup";
+import { Renglon } from "../help/HelpSettings";
 import { Suscripcion } from "./Suscripcion";
 import { ZonaPeligrosa } from "./ZonaPeligrosa";
 
@@ -36,10 +41,10 @@ export const AccountSettings: React.FC = () => {
     const r = await commands.authUnlinkDevice(id);
     setSoltando(null);
     if (r.status === "ok") {
-      toast.success(`Se soltó ${etiqueta}`);
+      toast.success(`Se quitó ${etiqueta}`);
       void recargar();
     } else {
-      toast.error("No se pudo soltar el equipo", {
+      toast.error("No se pudo quitar el computador", {
         description: "Revisa tu conexión e inténtalo de nuevo.",
       });
     }
@@ -52,146 +57,219 @@ export const AccountSettings: React.FC = () => {
 
   if (cargando) {
     return (
-      <div className="max-w-2xl w-full mx-auto py-16 flex justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-brand-text-muted" />
+      <div className="py-16 flex justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-tinta-3" />
       </div>
     );
   }
 
   if (!estado?.signed_in) {
     return (
-      <div className="max-w-2xl w-full mx-auto flex flex-col gap-4 py-4">
-        <h1 className="font-heading font-bold text-2xl">Mi cuenta</h1>
-        <p className="text-brand-text-secondary">
-          No has iniciado sesión.
-        </p>
+      <div>
+        <Titulo>Mi cuenta</Titulo>
+        <Apoyo className="mt-2">No has iniciado sesión.</Apoyo>
       </div>
     );
   }
+
+  const cerrarSesion = (
+    <SettingsGroup title="Sesión">
+      <Renglon nombre="Cerrar sesión" frase="Solo en este computador.">
+        <BotonSecundario medida="corto" onClick={() => void salir()}>
+          Cerrar sesión
+        </BotonSecundario>
+      </Renglon>
+    </SettingsGroup>
+  );
 
   // Sesión válida pero sin poder hablar con el servidor. Se dice claro y sin alarmar: el médico
   // sigue dentro, solo que ahora no sabemos el estado exacto de su suscripción.
   if (estado.offline) {
     return (
-      <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 py-4">
-        <div>
-          <h1 className="font-heading font-bold text-2xl">Mi cuenta</h1>
-          <p className="text-brand-text-secondary mt-1">{estado.email}</p>
-        </div>
-        <section className="rounded-2xl border border-brand-border bg-brand-surface p-5">
-          <div className="font-heading font-semibold text-[15px]">
-            Sin conexión con el servidor
-          </div>
-          <p className="text-sm text-brand-text-secondary mt-1 leading-relaxed">
-            Tu sesión sigue abierta y puedes dictar sin conexión. Cuando vuelva el
-            internet verás aquí tu suscripción y tus equipos.
-          </p>
+      <div>
+        <Titulo>Mi cuenta</Titulo>
+        <Apoyo className="mt-2">{estado.email}</Apoyo>
+        <Aviso className="mt-6">
+          <strong className="font-semibold">Sin conexión con el servidor.</strong>{" "}
+          Tu sesión sigue abierta y puedes dictar. Cuando vuelva el internet verás
+          aquí tu suscripción y tus computadores.{" "}
           <button
+            className="font-semibold underline underline-offset-4"
             onClick={() => {
               setCargando(true);
               void recargar();
             }}
-            className="mt-3 text-sm font-semibold text-brand-accent hover:underline"
           >
             Reintentar
           </button>
-        </section>
-        <button
-          onClick={() => void salir()}
-          className="self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-text-secondary border border-brand-border hover:border-red-300 hover:text-red-600 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Cerrar sesión en este equipo
-        </button>
+        </Aviso>
+        {cerrarSesion}
       </div>
     );
   }
 
-  const libres = estado.max_devices - estado.devices.length;
+  return (
+    <div>
+      <Titulo>Mi cuenta</Titulo>
+
+      <SettingsGroup title="Tus datos">
+        <Renglon nombre={estado.full_name || "Tu nombre"} frase={estado.email ?? ""}>
+          <Enlace
+            chico
+            onClick={async () => {
+              if (!estado.email) return;
+              const r = await commands.authSendRecovery(estado.email);
+              if (r.status === "ok")
+                toast.success("Te enviamos un correo para cambiar la contraseña");
+              else toast.error("No se pudo enviar el correo. Revisa tu conexión.");
+            }}
+          >
+            Cambiar contraseña
+          </Enlace>
+        </Renglon>
+      </SettingsGroup>
+
+      <SettingsGroup title="Suscripción">
+        <div className="py-3">
+          <Suscripcion estado={estado} onEstado={setEstado} />
+        </div>
+      </SettingsGroup>
+
+      <SettingsGroup
+        title={`Computadores · ${estado.devices.length} de ${estado.max_devices}`}
+      >
+        {estado.devices.map((d) => (
+          <Computador
+            key={d.id}
+            equipo={d}
+            soltando={soltando === d.id}
+            onSoltar={() =>
+              void soltar(d.id, nombreDe(d) || "el computador")
+            }
+            onRenombrado={() => void recargar()}
+          />
+        ))}
+      </SettingsGroup>
+
+      {cerrarSesion}
+
+      <div className="mt-10">
+        <ZonaPeligrosa estado={estado} />
+      </div>
+    </div>
+  );
+};
+
+/** Lo que se muestra de un computador: el nombre que le puso el médico, o el de red limpio. */
+function nombreDe(d: Equipo): string {
+  return d.nombre?.trim() || nombreLegible(d.label);
+}
+
+/**
+ * Un computador de la cuenta, con el lapicito para renombrarlo (decisión de Nicolás, 2026-11-12:
+ * por defecto el nombre de red limpio, y un lápiz para cambiarlo). Enter guarda, Esc cancela; vacío
+ * vuelve al nombre de red.
+ */
+const Computador: React.FC<{
+  equipo: Equipo;
+  soltando: boolean;
+  onSoltar: () => void;
+  onRenombrado: () => void;
+}> = ({ equipo, soltando, onSoltar, onRenombrado }) => {
+  const [editando, setEditando] = useState(false);
+  const [valor, setValor] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const campo = useRef<HTMLInputElement>(null);
+
+  const empezar = () => {
+    setValor(nombreDe(equipo));
+    setEditando(true);
+    setTimeout(() => campo.current?.select(), 0);
+  };
+
+  const guardar = async () => {
+    setGuardando(true);
+    const r = await commands.authRenameDevice(equipo.id, valor.trim().slice(0, 40));
+    setGuardando(false);
+    if (r.status === "ok") {
+      setEditando(false);
+      onRenombrado();
+    } else {
+      toast.error("No se pudo cambiar el nombre", {
+        description: "Revisa tu conexión e inténtalo de nuevo.",
+      });
+    }
+  };
+
+  const sistema = equipo.platform === "windows" ? "Windows" : "Mac";
+  const frase = equipo.is_this_device
+    ? `Este computador · ${sistema}`
+    : `${sistema}${equipo.last_seen_at ? ` · Último dictado: ${new Date(equipo.last_seen_at).toLocaleDateString("es", { day: "numeric", month: "long" })}` : ""}`;
+
+  if (editando) {
+    return (
+      <form
+        noValidate
+        className="min-h-[66px] py-2 flex items-center gap-2.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void guardar();
+        }}
+      >
+        <input
+          ref={campo}
+          aria-label="Nombre del computador"
+          value={valor}
+          maxLength={40}
+          onChange={(e) => setValor(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setEditando(false);
+          }}
+          className={`${CLASE_CAMPO} !h-[46px] w-[340px]`}
+          disabled={guardando}
+        />
+        <BotonPrincipal type="submit" medida="corto" ocupado={guardando}>
+          Guardar
+        </BotonPrincipal>
+        <Enlace chico onClick={() => setEditando(false)}>
+          Cancelar
+        </Enlace>
+      </form>
+    );
+  }
 
   return (
-    <div className="max-w-2xl w-full mx-auto flex flex-col gap-6 py-4">
-      <div>
-        <h1 className="font-heading font-bold text-2xl">Mi cuenta</h1>
-        <p className="text-brand-text-secondary mt-1">
-          {estado.full_name ? `${estado.full_name} · ` : ""}
-          {estado.email}
-        </p>
-      </div>
-
-      <Suscripcion estado={estado} onEstado={setEstado} />
-
-      <section className="flex flex-col gap-2.5">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-heading font-semibold text-[15px]">Tus equipos</h2>
-          <span className="text-sm text-brand-text-muted">
-            {estado.devices.length} de {estado.max_devices}
-            {libres > 0 && ` · ${libres} libre${libres === 1 ? "" : "s"}`}
-          </span>
-        </div>
-
-        <p className="text-sm text-brand-text-secondary leading-relaxed">
-          Puedes usar CloseLabs Voice en {estado.max_devices} computadores. Si
-          reinstalas en el mismo, no gasta un puesto.
-        </p>
-
-        <div className="flex flex-col gap-2 mt-1">
-          {estado.devices.map((d) => {
-            const Icono = d.platform === "windows" ? Monitor : Laptop;
-            return (
-              <div
-                key={d.id}
-                className="flex items-center gap-3 rounded-2xl border border-brand-border bg-white px-4 py-3"
-              >
-                <span className="grid place-items-center w-9 h-9 shrink-0 rounded-full bg-brand-accent-soft text-brand-accent">
-                  <Icono className="w-4 h-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-heading font-medium text-[15px] truncate">
-                    {d.is_this_device
-                      ? "Este computador"
-                      : nombreLegible(d.label) || "Otro computador"}
-                  </div>
-                  <div className="text-xs text-brand-text-muted">
-                    {d.platform === "windows" ? "Windows" : "Mac"}
-                    {d.is_this_device && nombreLegible(d.label)
-                      ? ` · ${nombreLegible(d.label)}`
-                      : ""}
-                    {d.app_version ? ` · versión ${d.app_version}` : ""}
-                  </div>
-                </div>
-                {/* El equipo actual no se puede soltar desde aquí: dejaría al médico sin dictar
-                    en el computador que está usando, y sin forma obvia de deshacerlo. */}
-                {!d.is_this_device && (
-                  <button
-                    onClick={() => void soltar(d.id, nombreLegible(d.label) || "el equipo")}
-                    disabled={soltando === d.id}
-                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-brand-text-secondary hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                  >
-                    {soltando === d.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-3.5 h-3.5" />
-                    )}
-                    Soltar
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <button
-        onClick={() => void salir()}
-        className="self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-text-secondary border border-brand-border hover:border-red-300 hover:text-red-600 transition-colors"
-      >
-        <LogOut className="w-4 h-4" />
-        Cerrar sesión en este equipo
-      </button>
-
-      <ZonaPeligrosa estado={estado} />
-    </div>
+    <Renglon
+      nombre={
+        <span className="inline-flex items-center gap-1.5">
+          {nombreDe(equipo) || "Computador sin nombre"}
+          <button
+            type="button"
+            aria-label="Cambiar el nombre"
+            onClick={empezar}
+            className="grid place-items-center w-[30px] h-[30px] rounded-[8px] border-[1.5px] border-linea-fuerte hover:bg-lino transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"
+                stroke="var(--tinta)"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </span>
+      }
+      frase={`${frase}${equipo.app_version ? ` · versión ${equipo.app_version}` : ""}`}
+    >
+      {/* El equipo actual no se puede soltar desde aquí: dejaría al médico sin dictar en el
+          computador que está usando, y sin forma obvia de deshacerlo. */}
+      {!equipo.is_this_device && (
+        <Enlace chico onClick={onSoltar} disabled={soltando}>
+          {soltando ? "Quitando…" : "Quitar"}
+        </Enlace>
+      )}
+    </Renglon>
   );
 };
 
@@ -201,10 +279,10 @@ export const AccountSettings: React.FC = () => {
  * reconoce cuál es "este" equipo (`is_this_device` en `auth.rs`).
  */
 function nombreLegible(label: string | null | undefined): string {
-  return (label ?? "")
-    .replace(/\.local$/i, "")
-    .replace(/[-_]+/g, " ")
-    .trim();
+  const sin = (label ?? "").replace(/\.(local|lan)$/i, "").trim();
+  // Los nombres de Windows todo en mayúsculas ("CONSULTORIO-PC") se dejan como están.
+  if (sin && sin === sin.toUpperCase()) return sin;
+  return sin.replace(/[-_]+/g, " ").trim();
 }
 
 export default AccountSettings;

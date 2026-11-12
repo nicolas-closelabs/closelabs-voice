@@ -3,8 +3,10 @@ import ReactDOM from "react-dom/client";
 import { platform } from "@tauri-apps/plugin-os";
 import App from "./App";
 
-// CloseLabs brand fonts (empaquetadas local, sin CDN → funciona offline)
-import "@fontsource-variable/inter";
+// Fuentes de «Tinta y voz» (empaquetadas, sin CDN → funciona offline). Newsreader con su eje
+// óptico y su cursiva; Inter ya no se usa (diseno/SISTEMA.md §5).
+import "@fontsource-variable/newsreader/opsz.css";
+import "@fontsource-variable/newsreader/opsz-italic.css";
 import "@fontsource-variable/plus-jakarta-sans";
 
 // Set platform before render so CSS can scope per-platform (e.g. scrollbar styles)

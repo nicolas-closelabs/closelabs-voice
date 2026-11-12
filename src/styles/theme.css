@@ -1,38 +1,76 @@
-/* CloseLabs Voice — Brand tokens (v0.3b: blanco limpio + acentos lila)
-   Producto blanco/minimalista para médicos. El lila (#A439FF) es SOLO acento
-   (activos, botones, detalles), nunca fondo. Se fuerza light mode. */
+/* CloseLabs Voice — «Tinta y voz» (2026-11-12). Especificación: diseno/SISTEMA.md.
+   Papel blanco, tinta casi negra, un escenario de lino con un tinte lila apenas visible, títulos en
+   serif con una palabra en cursiva, y el lila (#A439FF) en dosis fijas: botón principal, la palabra
+   en cursiva, la voz/lo que pasa ahora, lo que la app corrigió, la marca del menú activo y el tinte.
+   Nunca en bordes, íconos, interruptores, enlaces ni botones secundarios (ver §3 del sistema).
+   Se fuerza light mode. */
 
 :root {
-  /* ---- Tokens que consume el UI heredado de Handy (mapeados a la marca) ---- */
-  --color-text: #1a1620; /* Texto primario */
-  --color-background: #ffffff; /* Fondo blanco limpio */
-  --color-background-ui: #a439ff; /* Acento primario (botones/activos) */
-  --color-logo-primary: #a439ff; /* Acento del logo/isotipo */
-  --color-logo-stroke: #1a1620;
-  --color-text-stroke: #ffffff;
-  --color-mid-gray: #6f677e; /* Texto secundario / bordes suaves */
+  /* ---- «Tinta y voz»: neutros ---- */
+  --tinta: #18141d;
+  --tinta-2: #55505e;
+  --tinta-3: #6e6877;
+  --papel: #ffffff;
+  --lino: #f5f1f8;
+  --lino-2: #ece7f0;
+  --linea: #e6e2ea;
+  --linea-fuerte: #cfcad4;
+  --tarjeta-cab: #fbfafc;
 
-  /* ---- Paleta CloseLabs (blanco + lila) ---- */
-  --brand-accent: #a439ff;
-  --brand-accent-secondary: #8b2ff3;
-  --brand-accent-soft: rgba(164, 57, 255, 0.1); /* fondo de estados activos/hover */
+  /* ---- Lila ---- */
+  --lila: #a439ff;
+  --lila-hover: #8b2ff3;
+  --lila-presion: #7a1fd1;
+  --lila-suave: #f3e8ff;
+  --lila-tinta: #5e1aa6;
+  --lila-claro: #c79bff;
+  --foco: rgba(164, 57, 255, 0.28);
+
+  /* ---- Oscuros ---- */
+  --noche: #18141d;
+  --noche-2: #221b29;
+
+  /* ---- Estados ---- */
+  --hecho: #1f7a4d;
+  --aviso: #6b4500;
+  --aviso-fondo: #fff3d6;
+  --aviso-punto: #c98a00;
+  --error: #b3261e;
+  --error-borde: #e3b8b4;
+
+  /* ---- Tokens que consume el UI heredado de Handy (mapeados al sistema nuevo) ---- */
+  --color-text: var(--tinta);
+  --color-background: var(--papel);
+  --color-background-ui: var(--lila);
+  --color-logo-primary: var(--lila);
+  --color-logo-stroke: var(--tinta);
+  --color-text-stroke: #ffffff;
+  --color-mid-gray: var(--tinta-2);
+
+  /* ---- Nombres de la marca anterior, apuntando al sistema nuevo: las pantallas que todavía los
+     usan se ven con los colores nuevos sin tocarlas una por una. ---- */
+  --brand-accent: var(--lila);
+  --brand-accent-secondary: var(--lila-hover);
+  --brand-accent-soft: var(--lila-suave);
   --brand-accent-tint: rgba(164, 57, 255, 0.06);
 
-  --brand-surface: #f7f6f9; /* superficie de tarjetas muy suave */
-  --brand-surface-2: #f1eff4;
-  --brand-sidebar: #fbfafc; /* fondo del sidebar (casi blanco) */
+  --brand-surface: var(--lino);
+  --brand-surface-2: var(--lino-2);
+  --brand-sidebar: var(--lino);
 
-  --brand-text-primary: #1a1620;
-  --brand-text-secondary: #6f677e;
-  --brand-text-muted: #9a94a6;
+  --brand-text-primary: var(--tinta);
+  --brand-text-secondary: var(--tinta-2);
+  --brand-text-muted: var(--tinta-3);
 
-  --brand-border: rgba(26, 22, 32, 0.08); /* bordes muy sutiles */
-  --brand-border-strong: rgba(26, 22, 32, 0.14);
+  --brand-border: var(--linea);
+  --brand-border-strong: var(--linea-fuerte);
 
-  /* ---- Tipografía (marca) ---- */
-  --font-heading: "Inter Variable", "Inter", system-ui, sans-serif;
+  /* ---- Tipografía: Newsreader (títulos) + Plus Jakarta Sans (todo lo demás). Inter sale. ---- */
+  --font-serif: "Newsreader Variable", Georgia, serif;
+  --font-heading:
+    "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
   --font-body:
-    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, sans-serif;
+    "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
 }
 
 /* CloseLabs Voice: se FUERZA light mode (el producto es blanco siempre, no sigue

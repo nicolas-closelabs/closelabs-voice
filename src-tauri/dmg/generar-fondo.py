@@ -1,4 +1,12 @@
-"""Fondo de la ventana del .dmg: "Haz doble clic aquí para instalar", con el ícono solo en el centro.
+"""⚠️ YA NO SE USA (2026-11-12). El fondo actual es el de «Tinta y voz», dibujado por diseño en
+`diseno/ilustraciones/dmg-fondo.svg` y exportado con `python3 diseno/herramientas/gen.py --png`.
+Para regenerar `fondo.tiff`:
+    cd src-tauri/dmg && cp ../../diseno/ilustraciones/dmg-fondo.png fondo.png \
+      && cp ../../diseno/ilustraciones/dmg-fondo@2x.png fondo@2x.png \
+      && tiffutil -cathidpicheck fondo.png fondo@2x.png -out fondo.tiff && rm fondo*.png
+Se deja este script como referencia del fondo anterior.
+
+Fondo de la ventana del .dmg: "Haz doble clic aquí para instalar", con el ícono solo en el centro.
 
 Desde 2026-11-11 (decisión de Nicolás) el .dmg NO trae la carpeta Aplicaciones: arrastrar era el
 gesto que más costaba, y la carpeta decía "Applications" en inglés. El doble clic abre la app, que se

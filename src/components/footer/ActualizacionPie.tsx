@@ -11,8 +11,8 @@ export const ActualizacionPie: React.FC = () => {
 
   if (estado === "descargando") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-brand-text-muted">
-        <Loader2 className="w-3 h-3 animate-spin" />
+      <span className="inline-flex items-center gap-1.5 text-[14px] text-tinta-3">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
         Descargando la versión {version}…
       </span>
     );
@@ -29,10 +29,10 @@ export const ActualizacionPie: React.FC = () => {
           }),
         )
       }
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-accent-soft text-brand-accent font-semibold hover:bg-brand-accent hover:text-white transition-colors disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-tinta underline underline-offset-4 decoration-linea-fuerte hover:decoration-tinta disabled:opacity-60"
     >
       {estado === "instalando" ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-      {estado === "instalando" ? "Instalando…" : `Versión ${version} lista · Reiniciar`}
+      {estado === "instalando" ? "Instalando…" : `Versión ${version} lista: reiniciar`}
     </button>
   );
 };

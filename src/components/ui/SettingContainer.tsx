@@ -119,76 +119,29 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
     );
   }
 
-  // Horizontal layout (default)
-  const horizontalContainerClasses = grouped
-    ? "flex items-center justify-between min-h-12 px-4 p-2"
-    : "flex items-center justify-between min-h-12 px-4 p-2 rounded-lg border border-mid-gray/20";
-
-  if (descriptionMode === "tooltip") {
-    return (
-      <div className={horizontalContainerClasses}>
-        <div className="max-w-2/3">
-          <div className="flex items-center gap-2">
-            <h3
-              className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}
-            >
-              {title}
-            </h3>
-            <div
-              ref={tooltipRef}
-              className="relative"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              onClick={toggleTooltip}
-            >
-              <svg
-                className="w-4 h-4 text-mid-gray cursor-help hover:text-logo-primary transition-colors duration-200 select-none"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-label="Más información"
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    toggleTooltip();
-                  }
-                }}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {showTooltip && (
-                <Tooltip targetRef={tooltipRef} position={tooltipPosition}>
-                  <p className="text-sm text-center leading-relaxed">
-                    {description}
-                  </p>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="relative">{children}</div>
-      </div>
-    );
-  }
-
+  // Horizontal layout (default). «Tinta y voz»: la explicación va SIEMPRE debajo del nombre, a la
+  // vista (antes, en un ícono "i" con un globo: un médico no la encontraba). Renglón de 66 de alto
+  // mínimo, nombre 17/600 y frase 15 en `tinta-2`; el control pegado a la derecha.
+  void descriptionMode;
+  void tooltipRef;
+  void showTooltip;
+  void toggleTooltip;
+  void tooltipPosition;
   return (
-    <div className={horizontalContainerClasses}>
-      <div className="max-w-2/3">
-        <h3 className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}>
+    <div
+      className={`flex items-center justify-between gap-6 min-h-[66px] py-2 ${
+        grouped ? "" : "border-b border-linea"
+      }`}
+    >
+      <div className={`min-w-0 ${disabled ? "opacity-50" : ""}`}>
+        <h3 className="font-sans text-[17px] leading-6 font-semibold text-tinta">
           {title}
         </h3>
-        <p className={`text-sm ${disabled ? "opacity-50" : ""}`}>
-          {description}
-        </p>
+        {description && (
+          <p className="text-[15px] leading-[22px] text-tinta-2">{description}</p>
+        )}
       </div>
-      <div className="relative">{children}</div>
+      <div className="relative shrink-0 flex items-center gap-3.5">{children}</div>
     </div>
   );
 };
