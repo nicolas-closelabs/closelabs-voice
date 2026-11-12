@@ -20,6 +20,9 @@ enum Command {
     Cancel {
         recording_was_active: bool,
     },
+    /// El ✓ de la píldora: termina la grabación en curso, igual que presionar otra vez el atajo
+    /// (o soltarlo en "mantener presionado"). Si no está grabando, no hace nada.
+    Terminar,
     ProcessingFinished,
 }
 
@@ -101,6 +104,14 @@ impl TranscriptionCoordinator {
                                 stage = Stage::Idle;
                             }
                         }
+                        Command::Terminar => {
+                            if let Stage::Recording(id) = &stage {
+                                let id = id.clone();
+                                stop(&app, &mut stage, &id, "");
+                            } else {
+                                debug!("Terminar ignorado: no hay grabación en curso");
+                            }
+                        }
                         Command::ProcessingFinished => {
                             stage = Stage::Idle;
                         }
@@ -147,6 +158,13 @@ impl TranscriptionCoordinator {
             })
             .is_err()
         {
+            warn!("Transcription coordinator channel closed");
+        }
+    }
+
+    /// Termina la grabación en curso (el ✓ de la píldora).
+    pub fn terminar(&self) {
+        if self.tx.send(Command::Terminar).is_err() {
             warn!("Transcription coordinator channel closed");
         }
     }

@@ -11,6 +11,7 @@ mod commands;
 mod groq_transcribe;
 mod helpers;
 mod input;
+mod guia_ajustes;
 mod instalacion_mac;
 mod practica;
 mod last_recording;
@@ -615,6 +616,8 @@ pub fn run(cli_args: CliArgs) {
             auth::auth_send_recovery,
             auth::auth_resend_confirmation,
             auth::auth_verify_code,
+            guia_ajustes::mostrar_guia_ajustes,
+            guia_ajustes::ocultar_guia_ajustes,
             instalacion_mac::abierta_desde_instalador,
             instalacion_mac::mover_a_aplicaciones,
             practica::abrir_editor_de_prueba,
@@ -623,8 +626,10 @@ pub fn run(cli_args: CliArgs) {
             auth::account_billing_refresh,
             auth::account_delete,
             auth::auth_unlink_device,
+            auth::auth_rename_device,
             problem_report::send_problem_report,
             commands::cancel_operation,
+            commands::terminar_dictado,
             commands::is_portable,
             commands::get_app_dir_path,
             commands::get_app_settings,

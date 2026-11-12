@@ -220,6 +220,8 @@ fn anon_key(app: &AppHandle) -> String {
 pub struct Equipo {
     pub id: String,
     pub label: Option<String>,
+    /// El nombre que el médico le puso en Mi cuenta. `None` = mostrar el `label` limpio.
+    pub nombre: Option<String>,
     pub platform: Option<String>,
     pub app_version: Option<String>,
     pub last_seen_at: Option<String>,
@@ -316,6 +318,9 @@ struct SuscripcionResp {
 struct EquipoResp {
     id: String,
     label: Option<String>,
+    // `default`: el servidor viejo (antes de la migración 20261112000001) no lo manda.
+    #[serde(default)]
+    nombre: Option<String>,
     platform: Option<String>,
     app_version: Option<String>,
     last_seen_at: Option<String>,
@@ -357,6 +362,7 @@ impl RespuestaCuenta {
                         && d.platform.as_deref() == Some(esta_plataforma),
                     id: d.id,
                     label: d.label,
+                    nombre: d.nombre,
                     platform: d.platform,
                     app_version: d.app_version,
                     last_seen_at: d.last_seen_at,
@@ -745,6 +751,38 @@ pub async fn auth_unlink_device(app: AppHandle, device_id: String) -> Result<(),
         .header("apikey", anon_key(&app))
         .bearer_auth(&acceso)
         .json(&serde_json::json!({ "action": "unlink", "device_id": device_id }))
+        .send()
+        .await
+        .map_err(|_| "sin_conexion".to_string())?;
+
+    if !res.status().is_success() {
+        return Err(format!("http_{}", res.status().as_u16()));
+    }
+    Ok(())
+}
+
+/// Le pone nombre a un equipo de la cuenta ("Portátil del consultorio"). Vacío = volver al nombre de
+/// red. Solo cambia lo que se muestra: con `label` la app sigue reconociendo cuál es este equipo.
+#[tauri::command]
+#[specta::specta]
+pub async fn auth_rename_device(
+    app: AppHandle,
+    device_id: String,
+    nombre: String,
+) -> Result<(), String> {
+    let acceso = token_valido(&app)
+        .await
+        .ok_or_else(|| "sin_sesion".to_string())?;
+    let url = format!(
+        "{}/account",
+        get_settings(&app).proxy_base_url.trim_end_matches('/')
+    );
+
+    let res = cliente()?
+        .post(&url)
+        .header("apikey", anon_key(&app))
+        .bearer_auth(&acceso)
+        .json(&serde_json::json!({ "action": "rename", "device_id": device_id, "nombre": nombre }))
         .send()
         .await
         .map_err(|_| "sin_conexion".to_string())?;

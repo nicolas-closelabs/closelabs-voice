@@ -23,6 +23,8 @@ export default defineConfig(async () => ({
       input: {
         main: resolve(__dirname, "index.html"),
         overlay: resolve(__dirname, "src/overlay/index.html"),
+        // La ventanita que se pega a Ajustes del Sistema (guia_ajustes.rs).
+        guiaAjustes: resolve(__dirname, "src/guia-ajustes/index.html"),
       },
     },
   },

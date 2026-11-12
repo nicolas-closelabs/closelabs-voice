@@ -156,6 +156,10 @@ transcribe-cpp = { version = "0.1.1", default-features = false, features = [
 transcribe-cpp = { version = "0.1.1", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# Para ubicar la ventana de Ajustes del Sistema y pegarle la guía del permiso (guia_ajustes.rs).
+# Mismas versiones que ya traen otras dependencias (no suman peso).
+core-graphics = "0.24"
+core-foundation = "0.10"
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
 transcribe-cpp = { version = "0.1.1", default-features = false, features = ["metal"] }
 

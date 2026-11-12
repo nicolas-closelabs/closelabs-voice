@@ -668,6 +668,14 @@ async authUnlinkDevice(deviceId: string) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async authRenameDevice(deviceId: string, nombre: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("auth_rename_device", { deviceId, nombre }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Manda el reporte y devuelve su identificador, que se le muestra al médico.
  * 
@@ -683,6 +691,30 @@ async sendProblemReport(description: string) : Promise<Result<string, string>> {
 },
 async cancelOperation() : Promise<void> {
     await TAURI_INVOKE("cancel_operation");
+},
+/**
+ * El ✓ de la píldora: termina el dictado en curso y lo manda, como presionar otra vez el atajo.
+ */
+async terminarDictado() : Promise<void> {
+    await TAURI_INVOKE("terminar_dictado");
+},
+/**
+ * Muestra la ventanita pegada a Ajustes del Sistema. En Windows no hace nada (no hay permiso de
+ * Accesibilidad que dar).
+ */
+async mostrarGuiaAjustes() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("mostrar_guia_ajustes") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Esconde la ventanita (el permiso ya se dio, o el médico salió del paso).
+ */
+async ocultarGuiaAjustes() : Promise<void> {
+    await TAURI_INVOKE("ocultar_guia_ajustes");
 },
 async isPortable() : Promise<boolean> {
     return await TAURI_INVOKE("is_portable");
@@ -1129,7 +1161,11 @@ export type EngineType =
  * the file, so this one variant covers the whole transcribe-cpp family.
  */
 "TranscribeCpp" | "Parakeet" | "Moonshine" | "MoonshineStreaming" | "SenseVoice" | "GigaAM" | "Canary" | "Cohere"
-export type Equipo = { id: string; label: string | null; platform: string | null; app_version: string | null; last_seen_at: string | null; 
+export type Equipo = { id: string; label: string | null; 
+/**
+ * El nombre que el médico le puso en Mi cuenta. `None` = mostrar el `label` limpio.
+ */
+nombre: string | null; platform: string | null; app_version: string | null; last_seen_at: string | null; 
 /**
  * `true` si es ESTE computador. La interfaz lo marca para que nadie se suelte a sí mismo
  * por error creyendo que libera otro.

@@ -42,6 +42,8 @@ interface Suscripcion {
 interface Equipo {
   id: string;
   label: string | null;
+  /** Lo que el médico le puso en Mi cuenta (migración 20261112000001). Nulo = el label limpio. */
+  nombre: string | null;
   platform: string | null;
   app_version: string | null;
   last_seen_at: string | null;
@@ -79,7 +81,7 @@ async function estado(userId: string): Promise<Response> {
     ),
     select<Equipo>(
       "devices",
-      `select=id,label,platform,app_version,last_seen_at,linked_at&user_id=eq.${userId}&revoked=eq.false&order=linked_at.asc`,
+      `select=id,label,nombre,platform,app_version,last_seen_at,linked_at&user_id=eq.${userId}&revoked=eq.false&order=linked_at.asc`,
     ),
   ]);
 
@@ -148,6 +150,7 @@ Deno.serve(async (req) => {
     device_token?: unknown;
     device_id?: unknown;
     label?: unknown;
+    nombre?: unknown;
     confirm_email?: unknown;
   };
   try {
@@ -193,6 +196,27 @@ Deno.serve(async (req) => {
       return json({ ok }, ok ? 200 : 404);
     } catch (e) {
       console.error("no se pudo soltar el equipo:", (e as Error).message);
+      return fail("provider_error", 500);
+    }
+  }
+
+  // ---- Ponerle nombre a un computador ----
+  // Vacío = volver al nombre de red. La base comprueba que el equipo sea de quien lo renombra.
+  if (body.action === "rename") {
+    if (typeof body.device_id !== "string" || typeof body.nombre !== "string") {
+      return fail("bad_request", 400);
+    }
+    const nombre = body.nombre.trim().replace(/\s+/g, " ").slice(0, 40);
+    try {
+      const filas = await rpcRows<{ rename_device: boolean }>("rename_device", {
+        p_device_id: body.device_id,
+        p_user_id: userId,
+        p_nombre: nombre,
+      });
+      const ok = filas.length > 0;
+      return json({ ok }, ok ? 200 : 404);
+    } catch (e) {
+      console.error("no se pudo renombrar el equipo:", (e as Error).message);
       return fail("provider_error", 500);
     }
   }

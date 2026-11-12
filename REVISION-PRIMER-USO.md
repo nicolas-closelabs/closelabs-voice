@@ -211,3 +211,26 @@ nos vemos muy AI". Esto es lo observado; qué aplicar se decide con él.
   (una animación propia y simple, no una grabación de pantalla), adaptado a lo nuestro.
 - **Prioridad:** el diseño visual. "Tiene que ser muy limpio; todavía lo veo muy AI". Es parte
   fundamental de la adopción.
+
+## Prueba de la 0.9.4 (fase 1), 2026-11-11
+
+- **Punto 17 resuelto:** al abrir, el modelo sin internet ya descargado se seleccionó y cargó
+  ("Successfully loaded transcription model"); ya no hay "Failed to load model".
+- **Punto 1, a medias:** la app reinstalada sí aparece al frente. Registro: arranque desde el disco
+  02:51:55, copia 02:51:59, reapertura 02:52:01 (6 s). Nicolás midió 15-20 s en total, contando
+  la verificación del .dmg por macOS y el aviso. Su comentario: la ventana "Instalando…" dura 3-4 s,
+  "crea más ruido de lo que muestra, parece un bug". Fable la rediseña: misma ventana que la
+  bienvenida, estados con un tiempo mínimo y transición continua.
+
+## Segunda ronda de diseño: decisiones de Nicolás (2026-11-11)
+
+- La dirección de Fable "Tinta y voz" le gustó mucho, pero se parece demasiado a Wispr: pide un
+  twist propio sin perder lo pulcro y premium.
+- SÍ: Newsreader + Plus Jakarta Sans, ventana 1120×680 (mínimo 960×600), cifra de ahorro, 4 etapas
+  en Mac y 3 en Windows, interruptores en tinta, tercera práctica (fórmula), etiquetas solo con
+  comprobación exacta, .dmg exportable.
+- NO: píldora en reposo (solo aparece al grabar).
+- Frases de práctica con una autocorrección médica de lateralidad (por ejemplo, hombro izquierdo →
+  derecho), al estilo de Wispr.
+- Obligatorio: rediseñar también Diccionario, Mi cuenta, Ayuda, Acerca de y los estados de error.
+- No aplicar nada en la app hasta el OK de Nicolás sobre la segunda maqueta.

@@ -727,6 +727,10 @@ impl ShortcutAction for TranscribeAction {
                     // Solo en RAM, para el atajo "reprocesar último dictado". Va antes de
                     // transcribir porque `tm.transcribe` consume los samples.
                     crate::last_recording::set(&samples);
+                    // Para la recompensa del tutorial ("dictaste N veces más rápido"): se mide
+                    // aquí porque `tm.transcribe` consume los samples.
+                    let segundos_audio = samples.len() as f32
+                        / crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE as f32;
 
                     // CloseLabs Voice: NO se guarda el audio (.wav) ni el historial —
                     // privacidad del paciente + no gastar memoria. Solo se transcribe y se
@@ -804,6 +808,15 @@ impl ShortcutAction for TranscribeAction {
                                 change_tray_icon(&ah, TrayIconState::Idle);
                             } else {
                                 crate::last_transcript::set(&processed.final_text);
+                                // Solo números (nunca el texto): segundos de audio y palabras.
+                                // Lo usa la pantalla de recompensa del primer uso.
+                                let _ = ah.emit(
+                                    "dictado-medido",
+                                    serde_json::json!({
+                                        "segundos": segundos_audio,
+                                        "palabras": processed.final_text.split_whitespace().count(),
+                                    }),
+                                );
                                 let ah_clone = ah.clone();
                                 let paste_time = Instant::now();
                                 let final_text = processed.final_text;

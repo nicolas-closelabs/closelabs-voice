@@ -14,6 +14,15 @@ pub fn cancel_operation(app: AppHandle) {
     cancel_current_operation(&app);
 }
 
+/// El ✓ de la píldora: termina el dictado en curso y lo manda, como presionar otra vez el atajo.
+#[tauri::command]
+#[specta::specta]
+pub fn terminar_dictado(app: AppHandle) {
+    if let Some(c) = app.try_state::<crate::TranscriptionCoordinator>() {
+        c.terminar();
+    }
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn is_portable() -> bool {
