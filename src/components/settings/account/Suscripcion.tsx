@@ -265,15 +265,21 @@ export const Suscripcion: React.FC<Props> = ({ estado, onEstado }) => {
       const ultimos = dias !== null && dias <= 5;
       titulo = "Prueba gratuita";
       detalle = `Te ${dias === 1 ? "queda 1 día" : `quedan ${dias} días`}, hasta el ${fecha(estado.trial_ends_at)}. No necesitas tarjeta hasta entonces.`;
+      // ⚠️ Con más de 5 días de prueba, un enlace discreto y no un botón: en la revisión del
+      // 2026-11-11, recién registrado, lo primero que se veía en "Mi cuenta" era el botón de pagar.
       acciones = (
         <div className="flex flex-col items-start gap-1.5">
           <button
             onClick={() => void abrir("checkout")}
             disabled={ocupado !== null}
-            className={ultimos ? BOTON_PRINCIPAL : BOTON_SECUNDARIO}
+            className={
+              ultimos
+                ? BOTON_PRINCIPAL
+                : "inline-flex items-center gap-2 text-[14px] font-semibold text-brand-accent hover:underline disabled:opacity-50"
+            }
           >
             {girando("checkout")}
-            Suscribirme · {PRECIO}
+            {ultimos ? `Suscribirme · ${PRECIO}` : `Suscribirme ahora (${PRECIO})`}
           </button>
           <span className="text-xs text-brand-text-muted">
             Si te suscribes ahora, el primer cobro es el {fecha(estado.trial_ends_at)}: no pierdes

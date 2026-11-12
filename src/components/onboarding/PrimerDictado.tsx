@@ -3,16 +3,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import {
-  BookOpen,
   Check,
   FileText,
   Loader2,
   Mic,
   MessageCircle,
-  X,
 } from "lucide-react";
 import { commands } from "@/bindings";
-import { useSettings } from "../../hooks/useSettings";
 import { useShortcutKeys } from "../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../lib/utils/shortcutLabels";
 import type { OSType } from "../../lib/utils/keyboard";
@@ -34,8 +31,8 @@ import Logo from "../icons/Logo";
  * `clipboard.rs`, VENTANA_PRINCIPAL_ENFOCADA), porque el Cmd+V simulado nunca llegaba aquí. Si se
  * traba, la pantalla dice qué hacer, usando los eventos que ya emite el backend.
  *
- * Tres pasos: el dictado de prueba aquí, uno segundo FUERA de la app, en TextEdit o el Bloc de notas
- * (`PasoAfuera`), y el diccionario (`PasoDiccionario`).
+ * Dos pasos: el dictado de prueba aquí y uno segundo FUERA de la app, en TextEdit o el Bloc de
+ * notas (`PasoAfuera`).
  *
  * Se muestra una sola vez, al terminar el registro. Se puede repetir desde Inicio.
  */
@@ -75,8 +72,10 @@ function marcarHecho(cuenta: string) {
 
 const FRASE = "Paciente de 45 años con dolor abdominal.";
 
-/** Si en este tiempo no empezó a grabar, se le explica cómo presionar el atajo. */
-const PISTA_SIN_GRABAR_MS = 25_000;
+/** Tras presionar una tecla, si en este tiempo no empezó a grabar, se le explica el atajo. */
+const PISTA_TRAS_INTENTO_MS = 2_000;
+/** Respaldo: si nunca empezó a grabar ni llegó ninguna tecla, se le explica a este tiempo. */
+const PISTA_SIN_GRABAR_MS = 60_000;
 /** Si terminó de procesar y el texto no apareció en este tiempo, algo falló al pegar. */
 const PISTA_SIN_TEXTO_MS = 5_000;
 
@@ -143,9 +142,7 @@ export const PrimerDictado: React.FC<{
   const { keys, os } = useShortcutKeys();
   const [texto, setTexto] = useState("");
   const [fase, setFase] = useState<Fase>("esperando");
-  const [etapa, setEtapa] = useState<"dictar" | "afuera" | "diccionario">(
-    "dictar",
-  );
+  const [etapa, setEtapa] = useState<"dictar" | "afuera">("dictar");
   const [pista, setPista] = useState<string | null>(null);
   const cuadro = useRef<HTMLTextAreaElement>(null);
   const faseRef = useRef<Fase>("esperando");
@@ -164,10 +161,17 @@ export const PrimerDictado: React.FC<{
     }
   }, [texto, fase]);
 
-  // Si no ha empezado a grabar, explicarle cómo se presiona el atajo.
+  // Si intentó y no empezó a grabar, explicarle cómo se presiona el atajo.
+  //
+  // ⚠️ La pista sale DESPUÉS de un intento (una tecla presionada sin que empiece la grabación), no
+  // a los 25 s a ciegas: en la revisión del 2026-11-11 el aviso amarillo aparecía mientras el
+  // médico todavía leía la pantalla y parecía un error antes de haber intentado nada. Si las teclas
+  // del atajo llegan a la ventana, la grabación empieza enseguida y la pista no sale; si se
+  // presionó una sola, o una después de la otra, no empieza y a los 2 s se le explica. El tiempo
+  // largo queda solo de respaldo, por si las teclas nunca llegan a la ventana.
   useEffect(() => {
     if (fase !== "esperando") return;
-    const t = setTimeout(() => {
+    const mostrar = () => {
       if (faseRef.current === "esperando") {
         setPista(
           keys.length > 1
@@ -175,8 +179,19 @@ export const PrimerDictado: React.FC<{
             : `¿No pasa nada? ${comoPresionar(keys)}`,
         );
       }
-    }, PISTA_SIN_GRABAR_MS);
-    return () => clearTimeout(t);
+    };
+    let trasIntento: ReturnType<typeof setTimeout> | undefined;
+    const alPresionar = () => {
+      clearTimeout(trasIntento);
+      trasIntento = setTimeout(mostrar, PISTA_TRAS_INTENTO_MS);
+    };
+    window.addEventListener("keydown", alPresionar);
+    const respaldo = setTimeout(mostrar, PISTA_SIN_GRABAR_MS);
+    return () => {
+      window.removeEventListener("keydown", alPresionar);
+      clearTimeout(trasIntento);
+      clearTimeout(respaldo);
+    };
   }, [fase, keys]);
 
   // Lo que ya avisa el backend, traducido a instrucciones concretas.
@@ -299,7 +314,7 @@ export const PrimerDictado: React.FC<{
           Para empezar, presiona
         </p>
         <Teclas keys={keys} grande />
-        {/* Desde el principio, no solo como pista a los 25 s: "⌥ + Espacio" no le dice nada a
+        {/* Desde el principio, no solo como pista tras un intento: "⌥ + Espacio" no le dice nada a
             quien nunca ha usado un atajo de dos teclas. */}
         {keys.length > 1 && (
           <p className="text-[16px] text-brand-text-secondary max-w-md">
@@ -309,11 +324,10 @@ export const PrimerDictado: React.FC<{
       </>
     );
 
-  if (etapa === "diccionario") return <PasoDiccionario onDone={terminar} />;
+  // Sin paso del diccionario desde 2026-11-11: pedía agregar palabras antes de que la app se
+  // equivocara con alguna y parecía una tarea. Se explica en el video tutorial de la web.
   if (etapa === "afuera")
-    return (
-      <PasoAfuera keys={keys} os={os} onDone={() => setEtapa("diccionario")} />
-    );
+    return <PasoAfuera keys={keys} os={os} onDone={terminar} />;
 
   return (
     // min-h-screen (no h-screen) y `shrink-0` en cada bloque: con la ventana en su tamaño
@@ -620,123 +634,5 @@ const Num: React.FC<{ n: number }> = ({ n }) => (
     {n}
   </span>
 );
-
-/**
- * Tercer paso: el diccionario. Es lo que más mejora la calidad para un médico (nombres de
- * medicamentos, de colegas, de su clínica) y antes no aparecía en ningún lado: había que
- * descubrir la sección por cuenta propia. Aquí agrega su primera palabra en el mismo momento en
- * que acaba de ver funcionar el dictado. Usa el mismo ajuste que la sección Diccionario
- * (`custom_words`) y las mismas reglas que `CustomWords.tsx`.
- */
-const PasoDiccionario: React.FC<{ onDone: () => void }> = ({ onDone }) => {
-  const { getSetting, updateSetting } = useSettings();
-  const palabras = getSetting("custom_words") || [];
-  const [nueva, setNueva] = useState("");
-  const [aviso, setAviso] = useState<string | null>(null);
-
-  const agregar = () => {
-    const limpia = nueva.trim().replace(/[<>"'&]/g, "");
-    if (!limpia) return;
-    if (limpia.split(/\s+/).length > 3 || limpia.length > 50) {
-      setAviso(
-        "Escribe una palabra o un nombre corto, de máximo tres palabras.",
-      );
-      return;
-    }
-    if (palabras.includes(limpia)) {
-      setAviso(`«${limpia}» ya está en tu diccionario.`);
-      return;
-    }
-    updateSetting("custom_words", [...palabras, limpia]);
-    setNueva("");
-    setAviso(null);
-  };
-
-  return (
-    <div className="min-h-screen flex justify-center px-8 py-7 select-none">
-      <div className="w-full max-w-xl flex flex-col gap-5">
-        <div className="flex flex-col items-center text-center gap-2 shrink-0">
-          <Logo width={110} />
-          <span className="grid place-items-center w-14 h-14 mt-1 rounded-full bg-brand-accent-soft text-brand-accent">
-            <BookOpen className="w-7 h-7" />
-          </span>
-          <h1 className="font-heading text-2xl font-bold">
-            Enséñale tus palabras
-          </h1>
-          <p className="text-[17px] leading-relaxed text-brand-text-secondary max-w-md">
-            Si escribe mal un medicamento, un nombre o una palabra que usas
-            mucho, agrégala aquí y la escribirá bien siempre.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 shrink-0">
-          <div className="flex gap-2">
-            <input
-              id="primer-dictado-palabra"
-              type="text"
-              autoFocus
-              value={nueva}
-              onChange={(e) => setNueva(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  agregar();
-                }
-              }}
-              placeholder="Ej.: Losartán"
-              className="flex-1 min-w-0 rounded-xl border-2 border-brand-border bg-white px-4 py-3 text-[17px] focus:outline-none focus:border-brand-accent select-text"
-            />
-            <button
-              type="button"
-              onClick={agregar}
-              disabled={!nueva.trim()}
-              className="px-5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary disabled:opacity-40 transition-colors"
-            >
-              Agregar
-            </button>
-          </div>
-          {aviso && <p className="text-[15px] text-amber-900">{aviso}</p>}
-          {palabras.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {palabras.map((p) => (
-                <span
-                  key={p}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-surface border border-brand-border pl-3 pr-2 py-1 text-[16px]"
-                >
-                  {p}
-                  <button
-                    type="button"
-                    aria-label={`Quitar ${p}`}
-                    onClick={() =>
-                      updateSetting(
-                        "custom_words",
-                        palabras.filter((x) => x !== p),
-                      )
-                    }
-                    className="text-brand-text-muted hover:text-brand-text"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-          <p className="text-[15px] text-brand-text-muted">
-            Puedes agregar más cuando quieras en <strong>Diccionario</strong>,
-            en el menú de la izquierda.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onDone}
-          className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
-        >
-          Empezar a usar CloseLabs Voice
-        </button>
-      </div>
-    </div>
-  );
-};
 
 export default PrimerDictado;

@@ -136,12 +136,20 @@ fn mover(app: &AppHandle) -> Result<(), String> {
     // se cerraría; y el disco no se puede expulsar mientras algo corre desde él. Primero se expulsa
     // (cierra también la ventana del instalador) y después se abre la copia instalada. Las rutas van
     // como argumentos (`$0`, `$@`) y no pegadas al comando: así un nombre con espacios no rompe nada.
+    //
+    // ⚠️ El `open` se repite a los 3 y a los 7 segundos, y no sobra: desde macOS 14 una app que abre
+    // un proceso en segundo plano (este `sh`, huérfano tras `app.exit`) arranca SIN pasar al frente.
+    // En la revisión del 2026-11-11 la app reinstalada quedó escondida detrás del Finder y el médico
+    // pasó ~20 s sin ver nada. Un `open` sobre la app ya abierta sí la trae al frente (y dispara
+    // `RunEvent::Reopen`, que muestra la ventana) sin pedir ningún permiso; dos, por si un
+    // computador lento todavía no la terminó de abrir a los 3 s. AppleScript `activate` también
+    // serviría, pero puede pedir el permiso de Automatización.
     let discos = discos_del_instalador(&nombre);
     Command::new("/bin/sh")
         .arg("-c")
         .arg(
             "sleep 1; for d in \"$@\"; do /usr/bin/hdiutil detach \"$d\" -quiet || true; done; \
-             /usr/bin/open \"$0\"",
+             /usr/bin/open \"$0\"; sleep 3; /usr/bin/open \"$0\"; sleep 4; /usr/bin/open \"$0\"",
         )
         .arg(&destino)
         .args(&discos)

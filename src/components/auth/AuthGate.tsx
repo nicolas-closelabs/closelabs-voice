@@ -229,6 +229,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
           Escribe tu correo y te enviamos un enlace para elegir una nueva.
         </p>
         <form
+          noValidate
           className="w-full flex flex-col gap-3"
           onSubmit={(e) => {
             e.preventDefault();
@@ -275,6 +276,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
       </p>
 
       <form
+        // Sin la validación del navegador: mostraba "Fill out this field", en inglés, y tapaba
+        // nuestro aviso en español de qué falta (revisión del 2026-11-11).
+        noValidate
         className="w-full flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
@@ -618,6 +622,9 @@ const EsperandoConfirmacion: React.FC<{
       </p>
 
       <form
+        // Sin la validación del navegador: mostraba "Fill out this field", en inglés, y tapaba
+        // nuestro aviso en español de qué falta (revisión del 2026-11-11).
+        noValidate
         className="w-full flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
@@ -703,10 +710,15 @@ const EsperandoConfirmacion: React.FC<{
  * ⚠️ El enlace de WhatsApp va en TODAS las pantallas de cuenta, y no es un adorno: la cuenta es
  * obligatoria y no hay forma de dictar sin ella. Un médico que no logra registrarse o entrar no
  * tiene ninguna otra salida — si no ve a quién escribir, cierra la app y no vuelve.
+ *
+ * ⚠️ Se centra con `m-auto` en el hijo, NO con items-center/justify-center en el padre: con eso, si
+ * el contenido no cabe en la ventana (680x570), la parte de ARRIBA queda fuera y no se puede
+ * desplazar hasta ella. Pasó en la revisión del 2026-11-11: el formulario abría sin el logo ni el
+ * título "Crea tu cuenta". Lo mismo en Bienvenida e InstalarEnAplicaciones.
  */
 const Marco: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="h-screen overflow-y-auto flex items-center justify-center px-8 py-10 select-none">
-    <div className="w-full max-w-sm flex flex-col items-center text-center gap-4">
+  <div className="h-screen overflow-y-auto flex px-8 py-6 select-none">
+    <div className="m-auto w-full max-w-sm flex flex-col items-center text-center gap-4">
       {children}
       <button
         type="button"

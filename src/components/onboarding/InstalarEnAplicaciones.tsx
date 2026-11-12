@@ -38,8 +38,8 @@ export const InstalarEnAplicaciones: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-screen overflow-y-auto flex items-center justify-center px-8 py-10 select-none">
-      <div className="w-full max-w-md flex flex-col items-center text-center gap-5">
+    <div className="h-screen overflow-y-auto flex px-8 py-8 select-none">
+      <div className="m-auto w-full max-w-md flex flex-col items-center text-center gap-5">
         <Logo width={150} />
 
         {!fallo ? (

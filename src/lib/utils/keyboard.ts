@@ -1,3 +1,4 @@
+import { shortcutKeys } from "./shortcutLabels";
 /**
  * Keyboard utility functions for handling keyboard events
  */
@@ -194,12 +195,15 @@ const formatKeyPart = (part: string): string => {
  * Formats raw hotkey strings like "option_left+shift+space" into
  * human-readable form like "Left Option + Shift + Space"
  */
+//
+// CloseLabs: pasa por `shortcutKeys`, igual que Inicio y el tutorial. Antes Configuración decía
+// "Option + Space", en inglés y con otro nombre que el resto de la app ("⌥ + Espacio").
 export const formatKeyCombination = (
   combination: string,
-  _osType: OSType,
+  osType: OSType,
 ): string => {
   if (!combination) return "";
-  return combination.split("+").map(formatKeyPart).join(" + ");
+  return shortcutKeys(combination, osType).join(" + ");
 };
 
 /**

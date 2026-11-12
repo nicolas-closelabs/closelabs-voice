@@ -4,7 +4,6 @@ import {
   Home,
   BookMarked,
   Settings,
-  GraduationCap,
   Info,
   LifeBuoy,
   UserRound,
@@ -14,7 +13,6 @@ import {
   HomeSettings,
   DictionarySettings,
   GeneralSettings,
-  InstructionsSettings,
   AboutSettings,
   HelpSettings,
   AccountSettings,
@@ -39,6 +37,8 @@ interface SectionConfig {
 
 // CloseLabs Voice: menú tipo Aztec, limpio y para no-técnicos.
 // La clave `general` = pantalla "Configuración" (App usa `general` como fallback).
+// Sin "Instrucciones" desde 2026-11-11: su carrusel de 6 pasos repetía la frase de Inicio y el
+// dictado de prueba (que se abre desde Inicio). Siete secciones eran demasiadas.
 export const SECTIONS_CONFIG = {
   home: {
     labelKey: "sidebar.home",
@@ -50,12 +50,6 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.dictionary",
     icon: BookMarked,
     component: DictionarySettings,
-    enabled: () => true,
-  },
-  instructions: {
-    labelKey: "sidebar.instructions",
-    icon: GraduationCap,
-    component: InstructionsSettings,
     enabled: () => true,
   },
   account: {

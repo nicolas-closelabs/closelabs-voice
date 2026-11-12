@@ -147,14 +147,14 @@
     "extracting": "Extrayendo {{modelName}}...",
     "extractingMultiple": "Extrayendo {{count}} modelos...",
     "extractingGeneric": "Extrayendo...",
-    "downloading": "Descargando {{percentage}}%",
+    "downloading": "Modo sin internet: {{percentage}}%",
     "downloadingMultiple": "Descargando {{count}} modelos...",
     "modelReady": "Modelo Listo",
     "loading": "Cargando {{modelName}}...",
     "loadingGeneric": "Cargando...",
     "modelError": "Error del Modelo",
     "modelUnloaded": "Modelo Descargado",
-    "noModelDownloadRequired": "Sin Modelo - Descarga Requerida",
+    "noModelDownloadRequired": "Listo para dictar",
     "deleteModel": "Eliminar {{modelName}}",
     "downloadSpeed": "{{speed}} MB/s",
     "capabilities": {
@@ -203,19 +203,19 @@
         "pressKeys": "Presiona teclas...",
         "bindings": {
           "transcribe": {
-            "name": "Atajo de Transcripción",
-            "description": "El atajo de teclado para grabar y transcribir tu voz."
+            "name": "Teclas para dictar",
+            "description": "Las teclas que presionas para empezar y terminar un dictado."
           },
           "cancel": {
-            "name": "Atajo de Cancelar",
-            "description": "El atajo de teclado para cancelar la grabación actual."
+            "name": "Teclas para cancelar",
+            "description": "Descartan el dictado que estás grabando, sin escribir nada."
           },
           "transcribe_with_post_process": {
             "name": "Tecla de Post Procesamiento",
             "description": "Opcional: Una tecla de acceso rápido dedicada que siempre aplica post procesamiento con IA a tu transcripción."
           },
           "reprocess_last": {
-            "name": "Atajo de Reprocesar",
+            "name": "Repetir el último dictado",
             "description": "Vuelve a transcribir el último dictado sin tener que repetirlo. Útil si se cayó el internet o si acabas de agregar un término al diccionario."
           }
         },
@@ -233,31 +233,31 @@
         "auto": "Auto"
       },
       "pushToTalk": {
-        "label": "Presionar para Hablar",
-        "description": "Mantén presionado para grabar, suelta para detener"
+        "label": "Mantener presionado para dictar",
+        "description": "Dictas mientras mantienes las teclas presionadas y terminas al soltarlas."
       }
     },
     "sound": {
       "title": "Sonido",
       "microphone": {
         "title": "Micrófono",
-        "description": "Selecciona tu dispositivo de micrófono preferido",
+        "description": "El micrófono que usa la app para escucharte.",
         "placeholder": "Seleccionar micrófono...",
         "loading": "Cargando..."
       },
       "audioFeedback": {
-        "label": "Retroalimentación de Audio",
-        "description": "Reproducir sonido cuando la grabación inicia y se detiene"
+        "label": "Sonido al empezar y terminar",
+        "description": "Suena un tono cuando empieza y cuando termina la grabación."
       },
       "outputDevice": {
-        "title": "Dispositivo de Salida",
-        "description": "Selecciona tu dispositivo de salida de audio preferido para los sonidos de retroalimentación",
+        "title": "Dónde se escucha",
+        "description": "Por dónde suenan esos tonos: parlantes o audífonos.",
         "placeholder": "Seleccionar dispositivo de salida...",
         "loading": "Cargando..."
       },
       "volume": {
         "title": "Volumen",
-        "description": "Ajusta el volumen de los sonidos de retroalimentación de audio"
+        "description": "El volumen de esos tonos."
       }
     },
     "advanced": {
@@ -294,12 +294,12 @@
         "description": "Lanzar en la bandeja del sistema sin abrir la ventana."
       },
       "autostart": {
-        "label": "Iniciar al Arranque",
-        "description": "Iniciar CloseLabs Voice automáticamente cuando inicies sesión en tu computadora."
+        "label": "Abrir al encender el computador",
+        "description": "CloseLabs Voice se abre sola al encender el computador, lista para dictar."
       },
       "showTrayIcon": {
-        "label": "Mostrar Icono de Bandeja",
-        "description": "Mostrar el icono de CloseLabs Voice en la bandeja del sistema."
+        "label": "Mostrar el ícono pequeño",
+        "description": "El ícono de CloseLabs Voice en la barra de arriba (Mac) o junto al reloj (Windows)."
       },
       "overlay": {
         "style": {
@@ -522,8 +522,8 @@
         "description": "Habilitar refinamiento de texto impulsado por IA después de la transcripción"
       },
       "muteWhileRecording": {
-        "label": "Silenciar Durante la Grabación",
-        "description": "Silenciar el audio del sistema durante la grabación"
+        "label": "Silenciar el computador al dictar",
+        "description": "Apaga la música o los videos mientras grabas, para que no se mezclen con tu voz."
       },
       "appendTrailingSpace": {
         "label": "Agregar Espacio Final",

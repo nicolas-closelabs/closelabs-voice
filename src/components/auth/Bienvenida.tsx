@@ -22,8 +22,8 @@ export const Bienvenida: React.FC<{
 }> = ({ onEmpezar, onYaTengoCuenta }) => {
   const [hayVideo, setHayVideo] = useState(false);
   return (
-    <div className="h-screen overflow-y-auto flex items-center justify-center px-8 py-8 select-none">
-      <div className="w-full max-w-md flex flex-col items-center text-center gap-5">
+    <div className="h-screen overflow-y-auto flex px-8 py-6 select-none">
+      <div className="m-auto w-full max-w-md flex flex-col items-center text-center gap-5">
         <Logo width={150} />
         <h1 className="font-heading text-[26px] font-bold leading-tight">
           Escribe tus historias clínicas hablando

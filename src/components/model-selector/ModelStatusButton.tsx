@@ -37,8 +37,9 @@ const ModelStatusButton: React.FC<ModelStatusButtonProps> = ({
         return "bg-red-400";
       case "unloaded":
         return "bg-mid-gray/60";
+      // Sin el modelo local igual se dicta (por internet): no es una falla, no va en rojo.
       case "none":
-        return "bg-red-400";
+        return "bg-mid-gray/60";
       default:
         return "bg-mid-gray/60";
     }

@@ -20,7 +20,9 @@ import React, { useState } from "react";
  */
 
 const PASOS = [
-  "Se abrió Ajustes del Sistema en Privacidad y seguridad › Accesibilidad.",
+  // En futuro: esto se lee ANTES de tocar el botón que abre Ajustes (antes decía "Se abrió" y el
+  // médico buscaba una ventana que todavía no existía).
+  "Al tocar el botón, se abre Ajustes del Sistema en Privacidad y seguridad › Accesibilidad.",
   "Busca CloseLabs Voice en la lista.",
   "Toca el interruptor para encenderlo.",
 ];

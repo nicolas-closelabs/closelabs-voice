@@ -148,15 +148,15 @@ export const AccountSettings: React.FC = () => {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="font-heading font-medium text-[15px] truncate">
-                    {d.label || "Equipo sin nombre"}
-                    {d.is_this_device && (
-                      <span className="ml-2 text-xs font-semibold text-brand-accent">
-                        Este
-                      </span>
-                    )}
+                    {d.is_this_device
+                      ? "Este computador"
+                      : nombreLegible(d.label) || "Otro computador"}
                   </div>
                   <div className="text-xs text-brand-text-muted">
                     {d.platform === "windows" ? "Windows" : "Mac"}
+                    {d.is_this_device && nombreLegible(d.label)
+                      ? ` · ${nombreLegible(d.label)}`
+                      : ""}
                     {d.app_version ? ` · versión ${d.app_version}` : ""}
                   </div>
                 </div>
@@ -164,7 +164,7 @@ export const AccountSettings: React.FC = () => {
                     en el computador que está usando, y sin forma obvia de deshacerlo. */}
                 {!d.is_this_device && (
                   <button
-                    onClick={() => void soltar(d.id, d.label || "el equipo")}
+                    onClick={() => void soltar(d.id, nombreLegible(d.label) || "el equipo")}
                     disabled={soltando === d.id}
                     className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-brand-text-secondary hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                   >
@@ -194,5 +194,17 @@ export const AccountSettings: React.FC = () => {
     </div>
   );
 };
+
+/**
+ * El nombre que guarda el equipo es el de red ("Nicolass-MacBook-Air-2.local"): se ve técnico y
+ * con letras de más. Solo para mostrarlo se limpia; el guardado no se toca porque con él se
+ * reconoce cuál es "este" equipo (`is_this_device` en `auth.rs`).
+ */
+function nombreLegible(label: string | null | undefined): string {
+  return (label ?? "")
+    .replace(/\.local$/i, "")
+    .replace(/[-_]+/g, " ")
+    .trim();
+}
 
 export default AccountSettings;

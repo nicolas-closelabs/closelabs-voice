@@ -29,7 +29,7 @@ export const GeneralSettings: React.FC = () => {
     <div className="max-w-3xl w-full mx-auto space-y-6 py-2">
       <h1 className="font-heading font-bold text-2xl px-1">Configuración</h1>
 
-      <SettingsGroup title="General">
+      <SettingsGroup title="Dictado">
         <ShortcutInput shortcutId="transcribe" grouped={true} />
         <PushToTalk descriptionMode="tooltip" grouped={true} />
         {!isLinux && !pushToTalk && (

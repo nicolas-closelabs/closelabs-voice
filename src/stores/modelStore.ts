@@ -436,9 +436,18 @@ export const useModelStore = create<ModelsStore>()(
     // ⚠️ Ya NO arranca al abrir la app: lo llama App cuando el médico terminó cuenta, permisos y
     // tutorial. Antes empezaba en la pantalla de registro, y sus ~550 MB competían con el primer
     // dictado en el internet de la clínica — justo el dictado que decide si la app "es lenta".
+    //
+    // ⚠️ Si el archivo YA estaba descargado (reinstalación, o una cuenta nueva en un equipo usado:
+    // el modelo vive en el caché, fuera de los datos de la app), no hay descarga que termine y nadie
+    // lo seleccionaba: el pie decía "Sin Modelo - Descarga Requerida" con punto rojo y cada dictado
+    // dejaba "Failed to load model" en el log (revisión del 2026-11-11). Por eso aquí se selecciona.
     descargarRespaldo: () => {
       const st = get();
       const target = st.models.find((m) => m.is_recommended) ?? st.models[0];
+      if (target?.is_downloaded && st.currentModel !== target.id) {
+        void st.selectModel(target.id);
+        return;
+      }
       if (
         target &&
         !target.is_downloaded &&
