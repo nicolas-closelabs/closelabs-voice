@@ -1,0 +1,22 @@
+{
+  "id": "practica-2-whatsapp",
+  "descripcion": "Práctica 2 del primer uso: autocorrección de la comida",
+  "origen": "inventado (frases del tutorial, diseno/SISTEMA.md §7)",
+  "texto": "Hola, don Jaime. Tómela, este, después del almuerzo, no, perdón, después del desayuno, con un vaso de agua.",
+  "comprobaciones": [
+    {
+      "tipo": "no_contiene",
+      "valor": "almuerzo"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "desayuno"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "formato_basico"
+    }
+  ]
+}

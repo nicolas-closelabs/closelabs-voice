@@ -1,0 +1,22 @@
+{
+  "id": "practica-1-rodilla",
+  "descripcion": "Práctica 1 del primer uso: autocorrección de lateralidad",
+  "origen": "inventado (frases del tutorial, diseno/SISTEMA.md §7)",
+  "texto": "Paciente de 58 años que consulta por, eh, dolor en la rodilla izquierda, no, perdón, en la rodilla derecha, desde hace tres días.",
+  "comprobaciones": [
+    {
+      "tipo": "no_contiene",
+      "valor": "izquierda"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "derecha"
+    },
+    {
+      "tipo": "sin_muletillas"
+    },
+    {
+      "tipo": "formato_basico"
+    }
+  ]
+}

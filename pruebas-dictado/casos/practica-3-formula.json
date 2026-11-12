@@ -1,0 +1,25 @@
+{
+  "id": "practica-3-formula",
+  "descripcion": "Práctica 3 del primer uso: autocorrección de la dosis",
+  "origen": "inventado (frases del tutorial, diseno/SISTEMA.md §7)",
+  "texto": "Losartán de 50 miligramos, una tableta cada 12 horas, no, mentira, cada 24 horas, por 30 días.",
+  "comprobaciones": [
+    {
+      "tipo": "no_contiene",
+      "valor": "12"
+    },
+    {
+      "tipo": "contiene",
+      "valor": "24"
+    },
+    {
+      "tipo": "conserva",
+      "valores": [
+        "Losartán"
+      ]
+    },
+    {
+      "tipo": "formato_basico"
+    }
+  ]
+}
