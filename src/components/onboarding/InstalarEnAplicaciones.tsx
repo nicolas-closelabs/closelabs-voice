@@ -1,70 +1,72 @@
 /* eslint-disable i18next/no-literal-string */
-import React, { useState } from "react";
-import { Loader2, FolderDown } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Loader2, MessageCircle } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { commands } from "@/bindings";
+import { supportWhatsappUrl } from "../../branding";
 import Logo from "../icons/Logo";
 
 /**
- * Se abrió la app desde el instalador (.dmg) sin moverla a Aplicaciones. Ver `instalacion_mac.rs`
- * para el porqué: parece funcionar, pero al expulsar el disco o reiniciar, "se borra".
+ * La app se abrió desde el instalador (.dmg). Ver `instalacion_mac.rs` para el porqué.
  *
- * Va ANTES que la cuenta y los permisos: lo que se haga aquí quedaría amarrado a una copia que va
- * a desaparecer. Un solo botón; si la copia falla, el paso a paso para hacerlo a mano.
+ * Desde 2026-11-11 el .dmg dice "Haz doble clic aquí para instalar" y no trae la carpeta
+ * Aplicaciones: el doble clic ES la instalación. Por eso aquí no hay botón: en cuanto se abre, la
+ * app se copia sola a Aplicaciones, expulsa el instalador y se vuelve a abrir desde ahí. El médico
+ * solo ve "Instalando…" un par de segundos.
+ *
+ * Va ANTES que la cuenta y los permisos: lo que se haga en esta copia se perdería al expulsar el disco.
+ * Si la copia falla, se explica cómo hacerlo a mano y se ofrece ayuda por WhatsApp.
  */
 export const InstalarEnAplicaciones: React.FC = () => {
-  const [ocupado, setOcupado] = useState(false);
   const [fallo, setFallo] = useState(false);
+  const empezo = useRef(false);
 
   const instalar = async () => {
-    setOcupado(true);
+    setFallo(false);
     const r = await commands.moverAAplicaciones();
     // Si salió bien, esta ventana se cierra y la app se abre sola desde Aplicaciones.
-    if (r.status === "error") {
-      setOcupado(false);
-      setFallo(true);
-    }
+    if (r.status === "error") setFallo(true);
   };
+
+  useEffect(() => {
+    // Una sola vez aunque React monte dos veces en desarrollo.
+    if (empezo.current) return;
+    empezo.current = true;
+    // Un respiro para que el médico alcance a leer qué está pasando.
+    const t = setTimeout(() => void instalar(), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div className="h-screen overflow-y-auto flex items-center justify-center px-8 py-10 select-none">
       <div className="w-full max-w-md flex flex-col items-center text-center gap-5">
         <Logo width={150} />
-        <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft">
-          <FolderDown className="w-7 h-7 text-brand-accent" />
-        </span>
-        <h1 className="font-heading text-2xl font-bold">
-          Falta un paso para instalarla
-        </h1>
 
         {!fallo ? (
           <>
+            <Loader2 className="w-10 h-10 animate-spin text-brand-accent" />
+            <h1 className="font-heading text-2xl font-bold">
+              Instalando CloseLabs Voice…
+            </h1>
             <p className="text-[17px] leading-relaxed text-brand-text-secondary">
-              Abriste CloseLabs Voice desde el instalador. Si la dejas así,
-              desaparece cuando apagues el computador.
-            </p>
-            <button
-              type="button"
-              onClick={() => void instalar()}
-              disabled={ocupado}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors disabled:opacity-60"
-            >
-              {ocupado && <Loader2 className="w-5 h-5 animate-spin" />}
-              {ocupado ? "Instalando…" : "Instalar en Aplicaciones"}
-            </button>
-            <p className="text-[15px] text-brand-text-muted">
-              La app se cerrará y se volverá a abrir sola en unos segundos.
+              No toques nada. En unos segundos la app se abre sola, ya
+              instalada.
             </p>
           </>
         ) : (
           <>
+            <h1 className="font-heading text-2xl font-bold">
+              No pudimos instalarla sola
+            </h1>
             <p className="text-[17px] leading-relaxed text-brand-text-secondary">
-              No pudimos hacerlo automáticamente. Hazlo así:
+              Escríbenos y te ayudamos en un momento, o hazlo así:
             </p>
             <ol className="w-full flex flex-col gap-2 text-left text-[16px] leading-snug">
               {[
                 "Cierra esta ventana.",
-                "En la ventana del instalador, arrastra el ícono de CloseLabs Voice sobre la carpeta Aplicaciones.",
-                "Abre CloseLabs Voice desde la carpeta Aplicaciones.",
+                "Abre el Finder y, en la columna de la izquierda, haz clic en Aplicaciones.",
+                "Arrastra el ícono de CloseLabs Voice de la ventana del instalador a esa ventana de Aplicaciones.",
+                "Abre CloseLabs Voice desde Aplicaciones.",
               ].map((paso, i) => (
                 <li key={i} className="flex items-start gap-2.5">
                   <span className="grid place-items-center w-6 h-6 shrink-0 rounded-full bg-brand-accent text-white text-[13px] font-semibold font-heading">
@@ -74,6 +76,27 @@ export const InstalarEnAplicaciones: React.FC = () => {
                 </li>
               ))}
             </ol>
+            <button
+              type="button"
+              onClick={() =>
+                void openUrl(
+                  supportWhatsappUrl(
+                    "Hola, no logro instalar CloseLabs Voice en mi Mac.",
+                  ),
+                )
+              }
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-[#128C7E] text-white hover:opacity-90 transition-opacity"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Pedir ayuda por WhatsApp
+            </button>
+            <button
+              type="button"
+              onClick={() => void instalar()}
+              className="text-[15px] text-brand-text-secondary hover:text-brand-accent hover:underline"
+            >
+              Intentar otra vez
+            </button>
           </>
         )}
       </div>

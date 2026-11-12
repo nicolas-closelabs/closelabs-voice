@@ -24,6 +24,17 @@
 > y una sola cosa girando a la vez al esperar la confirmación. Tutorial: la frase sigue a la vista
 > mientras graba. ⚠️ Nada de esto se ha probado en una compilación: primero una corrida manual.
 
+> **2026-11-11 — PRIMER USO, SEGUNDA TANDA (sin publicar).** Sin celular en el registro (el perfil
+> guarda ''). .dmg de "doble clic aquí": solo el ícono (el CI borra el enlace a Applications, paso
+> "Leave only the app in the .dmg"); al abrirla desde el disco la app se copia sola a /Applications
+> (o ~/Applications sin permiso de administrador), quita la cuarentena, expulsa el disco y se reabre.
+> Bienvenida con video (`public/guias/bienvenida.mp4`) antes del formulario, solo si nadie entró
+> antes en ese equipo. Tutorial: segundo dictado en TextEdit / Bloc de notas (`practica.rs`; el
+> backend emite `dictado-enviado` y el tutorial PREGUNTA si apareció). Inicio de una sola frase.
+> Píldora: "Presiona X para terminar" en vez del lema los primeros 7 días. Rescate a las 24 h
+> (migración 20261111000001 + `recordatorios`): ⚠️ NO desplegar antes de publicar la versión: el
+> correo a quien no confirmó habla de la pantalla del código, que la 0.9.3 no tiene.
+
 > **2026-11-10 — LA APP DE MAC SALE FIRMADA Y NOTARIZADA.** Developer ID Application de
 > **CLOSELABS GROUP, LLC (4AZF9399UY)** — Apple lo emitió CON coma; la comprobación del CI exige ese
 > texto exacto con el Team ID. Vence el 2027-12-10 (respaldo: Llavero del Mac de Nicolás; la

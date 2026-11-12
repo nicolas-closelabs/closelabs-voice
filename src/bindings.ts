@@ -496,9 +496,9 @@ async getBlockState() : Promise<BlockState | null> {
 /**
  * Crea la cuenta. No inicia sesión: falta confirmar el correo.
  */
-async authSignUp(email: string, password: string, fullName: string, phoneCountry: string, phone: string) : Promise<Result<null, string>> {
+async authSignUp(email: string, password: string, fullName: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("auth_sign_up", { email, password, fullName, phoneCountry, phone }) };
+    return { status: "ok", data: await TAURI_INVOKE("auth_sign_up", { email, password, fullName }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -597,12 +597,24 @@ async abiertaDesdeInstalador() : Promise<boolean> {
     return await TAURI_INVOKE("abierta_desde_instalador");
 },
 /**
- * Copia la app a /Applications, la abre desde ahí y cierra esta. Si ya había una versión en
- * Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que quiere usar.
+ * Copia la app a Aplicaciones, la abre desde ahí, expulsa el disco del instalador y cierra esta.
+ * Si ya había una versión en Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que
+ * quiere usar.
  */
 async moverAAplicaciones() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("mover_a_aplicaciones") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Abre una hoja en blanco en el editor de texto del sistema.
+ */
+async abrirEditorDePrueba() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("abrir_editor_de_prueba") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };

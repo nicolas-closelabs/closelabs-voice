@@ -12,6 +12,7 @@ mod groq_transcribe;
 mod helpers;
 mod input;
 mod instalacion_mac;
+mod practica;
 mod last_recording;
 mod last_transcript;
 mod llm_client;
@@ -616,6 +617,7 @@ pub fn run(cli_args: CliArgs) {
             auth::auth_verify_code,
             instalacion_mac::abierta_desde_instalador,
             instalacion_mac::mover_a_aplicaciones,
+            practica::abrir_editor_de_prueba,
             auth::account_state,
             auth::account_open_billing,
             auth::account_billing_refresh,

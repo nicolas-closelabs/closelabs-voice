@@ -170,7 +170,11 @@ async fn codigo_de_error(res: reqwest::Response) -> String {
     let (code, msg) = match cuerpo {
         Some(e) => (
             e.error_code.clone(),
-            if e.msg.is_empty() { e.error_description } else { e.msg },
+            if e.msg.is_empty() {
+                e.error_description
+            } else {
+                e.msg
+            },
         ),
         None => (String::new(), String::new()),
     };
@@ -336,7 +340,10 @@ impl RespuestaCuenta {
             status: sub.as_ref().map(|s| s.status.clone()),
             trial_ends_at: sub.as_ref().and_then(|s| s.trial_ends_at.clone()),
             current_period_end: sub.as_ref().and_then(|s| s.current_period_end.clone()),
-            cancel_at_period_end: sub.as_ref().map(|s| s.cancel_at_period_end).unwrap_or(false),
+            cancel_at_period_end: sub
+                .as_ref()
+                .map(|s| s.cancel_at_period_end)
+                .unwrap_or(false),
             has_billing: sub.as_ref().map(|s| s.has_billing).unwrap_or(false),
             canal: sub.as_ref().and_then(|s| s.canal.clone()),
             dictados: self.usage.as_ref().map(|u| u.dictados),
@@ -376,7 +383,10 @@ async fn token_valido(app: &AppHandle) -> Option<String> {
     }
 
     debug!("El token de acceso caducó; renovando");
-    let url = format!("{}/auth/v1/token?grant_type=refresh_token", base_supabase(app));
+    let url = format!(
+        "{}/auth/v1/token?grant_type=refresh_token",
+        base_supabase(app)
+    );
     let res = cliente()
         .ok()?
         .post(&url)
@@ -421,8 +431,6 @@ pub async fn auth_sign_up(
     email: String,
     password: String,
     full_name: String,
-    phone_country: String,
-    phone: String,
 ) -> Result<(), String> {
     let url = format!("{}/auth/v1/signup", base_supabase(&app));
     let res = cliente()?
@@ -433,8 +441,8 @@ pub async fn auth_sign_up(
             "password": password,
             "data": {
                 "full_name": full_name.trim(),
-                "phone_country": phone_country.trim(),
-                "phone": phone.trim(),
+                // Sin celular desde 2026-11-11 (decisión de Nicolás): el alta del perfil
+                // (`on_auth_user_created`) ya guarda '' cuando no viene, y el CHECK lo acepta.
                 // El consentimiento se registra CON FECHA en el perfil. Ante la SIC hay que poder
                 // demostrar cuándo se aceptó y qué versión de la política.
                 "accepted_terms": "true",
@@ -523,10 +531,15 @@ async fn intentar_vincular(app: &AppHandle) -> Result<(), String> {
     let token_dispositivo = crate::proxy::ensure_device_token(app)
         .await
         .ok_or_else(|| "sin_token_de_dispositivo".to_string())?;
-    let acceso = token_valido(app).await.ok_or_else(|| "sin_sesion".to_string())?;
+    let acceso = token_valido(app)
+        .await
+        .ok_or_else(|| "sin_sesion".to_string())?;
 
     let etiqueta = gethostname::gethostname().to_string_lossy().to_string();
-    let url = format!("{}/account", get_settings(app).proxy_base_url.trim_end_matches('/'));
+    let url = format!(
+        "{}/account",
+        get_settings(app).proxy_base_url.trim_end_matches('/')
+    );
 
     let res = cliente()?
         .post(&url)
@@ -587,7 +600,10 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
         return Ok(EstadoCuenta::sin_conexion(sesion.email));
     };
 
-    let url = format!("{}/account", get_settings(&app).proxy_base_url.trim_end_matches('/'));
+    let url = format!(
+        "{}/account",
+        get_settings(&app).proxy_base_url.trim_end_matches('/')
+    );
     let res = cliente()?
         .get(&url)
         .header("apikey", anon_key(&app))
@@ -625,7 +641,8 @@ pub async fn account_state(app: AppHandle) -> Result<EstadoCuenta, String> {
 /// (un error nuestro, o alguien en medio), no se abre: un botón de "pagar" que lleva a una página
 /// cualquiera es exactamente lo que no puede pasar.
 fn es_pagina_de_stripe(url: &str) -> bool {
-    url.starts_with("https://checkout.stripe.com/") || url.starts_with("https://billing.stripe.com/")
+    url.starts_with("https://checkout.stripe.com/")
+        || url.starts_with("https://billing.stripe.com/")
 }
 
 /// Llama a una acción de cobro de `account`. Errores: `sin_conexion`, `sin_sesion`, `sin_pago`
@@ -633,8 +650,13 @@ fn es_pagina_de_stripe(url: &str) -> bool {
 /// `canal_socio` (le cobra un socio como gMedic, no nosotros),
 /// `cobro_no_disponible` (Stripe sin configurar del lado del servidor) o `servidor`.
 async fn accion_de_cobro(app: &AppHandle, accion: &str) -> Result<serde_json::Value, String> {
-    let acceso = token_valido(app).await.ok_or_else(|| "sin_sesion".to_string())?;
-    let url = format!("{}/account", get_settings(app).proxy_base_url.trim_end_matches('/'));
+    let acceso = token_valido(app)
+        .await
+        .ok_or_else(|| "sin_sesion".to_string())?;
+    let url = format!(
+        "{}/account",
+        get_settings(app).proxy_base_url.trim_end_matches('/')
+    );
     let res = cliente()?
         .post(&url)
         .header("apikey", anon_key(app))
@@ -673,12 +695,10 @@ pub async fn account_open_billing(app: AppHandle, action: String) -> Result<(), 
         return Err("servidor".to_string());
     }
     use tauri_plugin_opener::OpenerExt;
-    app.opener()
-        .open_url(url, None::<&str>)
-        .map_err(|e| {
-            error!("No se pudo abrir el navegador: {e}");
-            "sin_navegador".to_string()
-        })?;
+    app.opener().open_url(url, None::<&str>).map_err(|e| {
+        error!("No se pudo abrir el navegador: {e}");
+        "sin_navegador".to_string()
+    })?;
     info!("Página de cobro abierta en el navegador ({action})");
     Ok(())
 }
@@ -687,11 +707,16 @@ pub async fn account_open_billing(app: AppHandle, action: String) -> Result<(), 
 /// Devuelve el estado completo, ya al día.
 #[tauri::command]
 #[specta::specta]
-pub async fn account_billing_refresh(app: AppHandle, action: String) -> Result<EstadoCuenta, String> {
+pub async fn account_billing_refresh(
+    app: AppHandle,
+    action: String,
+) -> Result<EstadoCuenta, String> {
     if action != "resume" && action != "sync" {
         return Err("servidor".to_string());
     }
-    let email = leer_sesion(&app).map(|s| s.email).ok_or_else(|| "sin_sesion".to_string())?;
+    let email = leer_sesion(&app)
+        .map(|s| s.email)
+        .ok_or_else(|| "sin_sesion".to_string())?;
     let r = accion_de_cobro(&app, &action).await?;
     let cuenta: RespuestaCuenta = serde_json::from_value(r).map_err(|_| "servidor".to_string())?;
     Ok(cuenta.en_estado(email))
@@ -707,8 +732,13 @@ pub fn hay_sesion(app: &AppHandle) -> bool {
 #[tauri::command]
 #[specta::specta]
 pub async fn auth_unlink_device(app: AppHandle, device_id: String) -> Result<(), String> {
-    let acceso = token_valido(&app).await.ok_or_else(|| "sin_sesion".to_string())?;
-    let url = format!("{}/account", get_settings(&app).proxy_base_url.trim_end_matches('/'));
+    let acceso = token_valido(&app)
+        .await
+        .ok_or_else(|| "sin_sesion".to_string())?;
+    let url = format!(
+        "{}/account",
+        get_settings(&app).proxy_base_url.trim_end_matches('/')
+    );
 
     let res = cliente()?
         .post(&url)
@@ -842,8 +872,13 @@ pub async fn auth_sign_out(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 #[specta::specta]
 pub async fn account_delete(app: AppHandle, confirm_email: String) -> Result<(), String> {
-    let acceso = token_valido(&app).await.ok_or_else(|| "sin_sesion".to_string())?;
-    let url = format!("{}/account", get_settings(&app).proxy_base_url.trim_end_matches('/'));
+    let acceso = token_valido(&app)
+        .await
+        .ok_or_else(|| "sin_sesion".to_string())?;
+    let url = format!(
+        "{}/account",
+        get_settings(&app).proxy_base_url.trim_end_matches('/')
+    );
     let res = cliente()?
         .post(&url)
         .header("apikey", anon_key(&app))

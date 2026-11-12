@@ -48,9 +48,9 @@
       "entitlements": "Entitlements.plist",
       "dmg": {
         "background": "dmg/fondo.tiff",
-        "windowSize": { "width": 660, "height": 400 },
-        "appPosition": { "x": 170, "y": 215 },
-        "applicationFolderPosition": { "x": 490, "y": 215 }
+        "windowSize": { "width": 560, "height": 400 },
+        "appPosition": { "x": 280, "y": 215 },
+        "applicationFolderPosition": { "x": 900, "y": 215 }
       }
     },
     "linux": {

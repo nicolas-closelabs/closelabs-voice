@@ -33,5 +33,17 @@ ok(!c.html.includes("<img"), "el nombre no puede colar HTML");
 c = correoRecordatorio("quedan", { ...datos, nombre: null }, AHORA);
 ok(c.html.includes("Hola:"), "sin nombre: 'Hola:'");
 
+// Rescate a las 24 h
+c = correoRecordatorio("rescate", { ...datos, dictados: 0, minutos: 0, confirmado: true }, AHORA);
+ok(c.asunto === "¿Te ayudamos con tu primer dictado?", "rescate confirmado: asunto", c.asunto);
+ok(c.html.includes("Hola, Ana:") && c.html.includes("Ctrl + Espacio") && c.html.includes("Option + Espacio"), "rescate: cómo dictar en Windows y Mac");
+ok(c.html.includes("wa.me/573102991182?text="), "rescate: botón de WhatsApp con el mensaje");
+ok(!c.html.includes("US$") && !c.html.includes("Suscribirme"), "rescate: sin precios ni suscripción");
+c = correoRecordatorio("rescate", { ...datos, dictados: 0, minutos: 0, confirmado: false }, AHORA);
+ok(c.asunto === "Te falta un paso para usar CloseLabs Voice", "rescate sin confirmar: asunto", c.asunto);
+ok(c.html.includes("código de 6 números") && c.html.includes("Enviarme el correo otra vez"), "rescate sin confirmar: cómo terminar");
+c = correoRecordatorio("rescate", { ...datos, nombre: "<b>x</b>", confirmado: true }, AHORA);
+ok(!c.html.includes("<b>x"), "rescate: el nombre no cuela HTML");
+
 console.log(`\n${pasan} comprobaciones bien, ${fallos} mal`);
 if (fallos) process.exit(1);

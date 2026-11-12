@@ -248,6 +248,28 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: bun tauri bundle --target universal-apple-darwin --bundles app,dmg --ci
 
+      # El .dmg es de "doble clic aquí" (2026-11-11): solo el ícono de la app sobre el fondo. Tauri
+      # siempre mete el enlace a la carpeta Applications y no tiene opción para quitarlo, así que se
+      # borra aquí: se pasa el .dmg a escribible, se monta, se quita el enlace y se vuelve a comprimir.
+      # La disposición del Finder (.DS_Store, fondo) no se toca. Va ANTES de firmar el .dmg: firmarlo
+      # y después cambiarlo invalidaría la firma. El .app de adentro no cambia (su firma sigue).
+      - name: Leave only the app in the .dmg
+        run: |
+          set -euo pipefail
+          for DMG in src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg; do
+            RW="$RUNNER_TEMP/escribible.dmg"
+            rm -f "$RW"
+            hdiutil convert "$DMG" -format UDRW -o "$RW"
+            MNT="$(hdiutil attach "$RW" -nobrowse -noverify -noautoopen | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+            [ -d "$MNT" ] || { echo "::error::no se pudo montar $DMG"; exit 1; }
+            rm -f "$MNT/Applications"
+            ls -la "$MNT"
+            hdiutil detach "$MNT"
+            rm -f "$DMG"
+            hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -o "$DMG"
+            rm -f "$RW"
+          done
+
       # Tauri notariza el .app, pero el .dmg que se descarga es otro archivo. Se firma y se notariza
       # también, para que la primera revisión de Gatekeeper (al abrir lo descargado, que es el .dmg)
       # no dependa de que macOS mire adentro.
@@ -315,6 +337,16 @@ jobs:
                 || fail "Gatekeeper rechaza $(basename "$DMG")"
             done
           fi
+
+          echo "== .dmg de doble clic: solo la app, sin la carpeta Applications =="
+          for DMG in "$BUNDLE"/dmg/*.dmg; do
+            MNT="$(hdiutil attach "$DMG" -readonly -nobrowse -noverify -noautoopen | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)"
+            ls -la "$MNT"
+            [ -d "$MNT/CloseLabs Voice.app" ] || fail "el .dmg no trae la app"
+            [ ! -e "$MNT/Applications" ] || fail "el .dmg todavía trae la carpeta Applications"
+            [ -e "$MNT/.background" ] || fail "el .dmg perdió el fondo"
+            hdiutil detach "$MNT"
+          done
 
           echo "== Arranque (versión ARM) =="
           arch -arm64 "$BIN" --list-devices

@@ -1,4 +1,5 @@
-// CloseLabs Voice — manda los correos de fin de la prueba. NO decide nada: la lista la arma
+// CloseLabs Voice — manda los correos de fin de la prueba y el rescate a las 24 h (quien se registró
+// y no ha dictado nunca, migración 20261111000001). NO decide nada: la lista la arma
 // `recordatorios_pendientes()` en la base (migración 20261007000005), y se puede revisar con un
 // `select` sin mandarle correo a nadie.
 //
@@ -22,6 +23,7 @@ interface Pendiente {
   trial_ends_at: string;
   dictados: number;
   minutos: number;
+  confirmado: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -53,6 +55,7 @@ Deno.serve(async (req) => {
       fin: m.trial_ends_at,
       dictados: Number(m.dictados),
       minutos: Number(m.minutos),
+      confirmado: m.confirmado,
     });
     try {
       const res = await fetchWithTimeout("https://api.resend.com/emails", {

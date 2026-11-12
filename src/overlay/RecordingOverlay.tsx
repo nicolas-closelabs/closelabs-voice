@@ -12,8 +12,32 @@ import type {
 } from "@/bindings";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import { getLanguageDirection } from "@/lib/utils/rtl";
+import { shortcutKeys } from "@/lib/utils/shortcutLabels";
 
 type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
+
+/**
+ * Aviso "Presiona ⌥ + Espacio para terminar" en la píldora, en vez del lema, durante los primeros
+ * días (plan del primer uso, 2026-11-11). Lo que más se olvida al principio no es cómo empezar (lo
+ * acaba de hacer) sino cómo terminar: el médico habla, espera, y la píldora sigue escuchando.
+ * Se cuenta desde el primer dictado en este computador (la ventana de la píldora comparte el
+ * almacenamiento con la principal).
+ */
+const DIAS_CON_AVISO = 7;
+const MARCA_PRIMER_DICTADO = "closelabs.pildora.primerDictado";
+
+function enLosPrimerosDias(): boolean {
+  try {
+    const guardado = Number(localStorage.getItem(MARCA_PRIMER_DICTADO));
+    if (!guardado) {
+      localStorage.setItem(MARCA_PRIMER_DICTADO, String(Date.now()));
+      return true;
+    }
+    return Date.now() - guardado < DIAS_CON_AVISO * 86_400_000;
+  } catch {
+    return false;
+  }
+}
 
 // Number of reactive bars in the waveform (the simple, smoothed style shared by
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
@@ -43,6 +67,9 @@ const RecordingOverlay: React.FC = () => {
   // while overflowing, so the resting first line stays crisp flush under the pill.
   const [overflowing, setOverflowing] = useState(false);
 
+  /** El aviso de cómo terminar, o `null` si ya pasaron los primeros días. */
+  const [aviso, setAviso] = useState<string | null>(null);
+
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
   // Live-text scroll-back: the text region "sticks" to the newest line while the
   // user is at the bottom; if they scroll up to read history, auto-follow pauses
@@ -61,12 +88,37 @@ const RecordingOverlay: React.FC = () => {
           const settings = await commands.getAppSettings();
           if (settings.status === "ok") {
             const p = settings.data.overlay_position;
-            setPosition(p === "top" ? "top" : p === "bottom" ? "bottom" : "center");
+            setPosition(
+              p === "top" ? "top" : p === "bottom" ? "bottom" : "center",
+            );
           }
         } catch {
           // Keep the previous/default placement if settings can't be read.
         }
         const overlayState = event.payload as OverlayState;
+        if (overlayState === "recording") {
+          let texto: string | null = null;
+          if (enLosPrimerosDias()) {
+            try {
+              const r = await commands.getAppSettings();
+              if (r.status === "ok") {
+                const os = /Mac/i.test(navigator.userAgent)
+                  ? "macos"
+                  : "windows";
+                const atajo = shortcutKeys(
+                  r.data.bindings?.transcribe?.current_binding,
+                  os,
+                ).join(" + ");
+                texto = r.data.push_to_talk
+                  ? `Suelta ${atajo} para terminar`
+                  : `Presiona ${atajo} para terminar`;
+              }
+            } catch {
+              // Sin ajustes, el lema de siempre.
+            }
+          }
+          setAviso(texto);
+        }
         setState(overlayState);
         if (overlayState === "recording" || overlayState === "streaming") {
           setStreamText({ committed: "", tentative: "" });
@@ -303,8 +355,12 @@ const RecordingOverlay: React.FC = () => {
           <img src="/brand/closelabs-white.png" alt="CloseLabs Voice" />
         </div>
         {working ? workingRow(workLabel, true) : listeningRow(false, true)}
-        {/* eslint-disable-next-line i18next/no-literal-string */}
-        <div className="ovtag">Automatiza tu consultorio · closelabs.co</div>
+        {aviso && !working ? (
+          <div className="ovtag ovaviso">{aviso}</div>
+        ) : (
+          // eslint-disable-next-line i18next/no-literal-string
+          <div className="ovtag">Automatiza tu consultorio · closelabs.co</div>
+        )}
       </div>
     </div>
   );

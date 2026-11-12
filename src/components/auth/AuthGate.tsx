@@ -12,6 +12,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { commands } from "@/bindings";
 import { supportWhatsappUrl } from "../../branding";
 import Logo from "../icons/Logo";
+import Bienvenida from "./Bienvenida";
 
 interface AuthGateProps {
   /** Se llama cuando el médico entra. El contenedor recarga el estado de la cuenta. */
@@ -24,18 +25,6 @@ type Modo =
   | "recuperar"
   | "revisa-correo"
   | "correo-enviado";
-
-/** Indicativos de los países donde están los médicos. El primero es el caso mayoritario. */
-const PAISES = [
-  { code: "+57", pais: "Colombia" },
-  { code: "+52", pais: "México" },
-  { code: "+51", pais: "Perú" },
-  { code: "+56", pais: "Chile" },
-  { code: "+593", pais: "Ecuador" },
-  { code: "+54", pais: "Argentina" },
-  { code: "+507", pais: "Panamá" },
-  { code: "+1", pais: "EE. UU." },
-];
 
 /**
  * Traduce el vocabulario cerrado del backend a algo que un médico entienda.
@@ -91,15 +80,12 @@ function queFalta(f: {
   creando: boolean;
   nombre: string;
   correo: string;
-  telefono: string;
   clave: string;
   acepta: boolean;
 }): string | null {
   if (f.creando && !f.nombre.trim()) return "Escribe tu nombre y apellido.";
   if (!/^\S+@\S+\.\S+$/.test(f.correo.trim()))
     return "Revisa tu correo: debe verse así, nombre@correo.com.";
-  if (f.creando && f.telefono.length < 7)
-    return "Escribe tu número de celular completo.";
   if (!f.clave) return "Escribe tu contraseña.";
   if (f.creando && f.clave.length < 8)
     return `La contraseña necesita al menos 8 caracteres (llevas ${f.clave.length}).`;
@@ -108,21 +94,18 @@ function queFalta(f: {
   return null;
 }
 
-/** Lo más largo que puede medir un celular en los países donde estamos, con holgura. */
-const MAX_TELEFONO = 12;
-
 export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   const [modo, setModo] = useState<Modo>(() =>
     yaEntroAqui() ? "entrar" : "crear",
   );
+  // La bienvenida con video, solo si nadie ha entrado antes en este computador (ver Bienvenida.tsx).
+  const [bienvenida, setBienvenida] = useState(() => !yaEntroAqui());
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [correo, setCorreo] = useState("");
   const [clave, setClave] = useState("");
   const [nombre, setNombre] = useState("");
-  const [indicativo, setIndicativo] = useState("+57");
-  const [telefono, setTelefono] = useState("");
   const [acepta, setAcepta] = useState(false);
 
   const entro = () => {
@@ -145,13 +128,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
   const crear = async () => {
     setOcupado(true);
     setError(null);
-    const r = await commands.authSignUp(
-      correo,
-      clave,
-      nombre,
-      indicativo,
-      telefono,
-    );
+    // Sin celular (decisión de Nicolás, 2026-11-11): un campo menos donde trabarse, y el soporte
+    // va por WhatsApp desde el número del médico, no desde uno que le pedimos.
+    const r = await commands.authSignUp(correo, clave, nombre);
     setOcupado(false);
     if (r.status === "ok") setModo("revisa-correo");
     else setError(explicar(r.error));
@@ -167,6 +146,21 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
     if (r.status === "ok") setModo("correo-enviado");
     else setError(explicar(r.error));
   };
+
+  if (bienvenida) {
+    return (
+      <Bienvenida
+        onEmpezar={() => {
+          setModo("crear");
+          setBienvenida(false);
+        }}
+        onYaTengoCuenta={() => {
+          setModo("entrar");
+          setBienvenida(false);
+        }}
+      />
+    );
+  }
 
   // -------------------------------------------------------------------------------------------
   // Pantallas de "ya hicimos lo nuestro, revisa tu correo"
@@ -284,13 +278,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
         className="w-full flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          // El botón nunca queda gris sin explicación: antes, si faltaba un dígito del celular o la
-          // casilla, el botón no respondía y el médico no sabía por qué. Ahora dice qué falta.
+          // El botón nunca queda gris sin explicación: antes, si faltaba algo o la casilla, el botón no respondía y el médico no sabía por qué. Ahora dice qué falta.
           const falta = queFalta({
             creando,
             nombre,
             correo,
-            telefono,
             clave,
             acepta,
           });
@@ -330,48 +322,6 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
             className={campo}
           />
         </Etiqueta>
-
-        {creando && (
-          <Etiqueta htmlFor="registro-telefono" texto="Tu celular">
-            <div className="flex gap-2">
-              <select
-                id="registro-indicativo"
-                value={indicativo}
-                onChange={(e) => setIndicativo(e.target.value)}
-                disabled={ocupado}
-                className={`${base} w-24 shrink-0`}
-                aria-label="Indicativo del país"
-              >
-                {PAISES.map((p) => (
-                  // Solo el indicativo: el nombre del país hacía el selector tan ancho que el
-                  // número se quedaba sin sitio y no se veía lo que se estaba escribiendo.
-                  <option key={p.code} value={p.code} title={p.pais}>
-                    {p.code}
-                  </option>
-                ))}
-              </select>
-              <input
-                id="registro-telefono"
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                required
-                maxLength={MAX_TELEFONO}
-                placeholder="Número de celular"
-                value={telefono}
-                // Solo dígitos y con tope. Sin esto se coló un número repetido de 19 cifras: el
-                // campo estaba tan estrecho que no se veía el error al escribirlo.
-                onChange={(e) =>
-                  setTelefono(
-                    e.target.value.replace(/\D/g, "").slice(0, MAX_TELEFONO),
-                  )
-                }
-                disabled={ocupado}
-                className={`${base} flex-1 min-w-0`}
-              />
-            </div>
-          </Etiqueta>
-        )}
 
         <Etiqueta
           htmlFor="auth-clave"

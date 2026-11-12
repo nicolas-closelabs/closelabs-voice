@@ -1,15 +1,17 @@
 //! ¿La app se abrió desde el instalador (.dmg) sin pasar por Aplicaciones?
 //!
-//! Por qué existe: en Mac, instalar es arrastrar el ícono a la carpeta Aplicaciones, y mucha gente
-//! (sobre todo quien no usa Mac a diario) hace doble clic en el ícono DENTRO del .dmg. Todo parece
-//! funcionar: se crea la cuenta, se dan los permisos, se dicta. Pero la app está corriendo desde el
-//! disco del instalador: al expulsarlo o reiniciar, desaparece; el permiso de Accesibilidad quedó
-//! dado a esa copia, y el arranque automático apunta a un disco que ya no existe. El médico vuelve
-//! al día siguiente y "la app se borró".
+//! Por qué existe: en Mac, instalar suele ser arrastrar el ícono a la carpeta Aplicaciones, y es el
+//! gesto que más le cuesta a nuestro público. Desde 2026-11-11 (decisión de Nicolás) el .dmg ya no
+//! trae la carpeta Aplicaciones: solo el ícono y "Haz doble clic aquí para instalar". Al abrirla
+//! desde el disco, la app se copia sola a Aplicaciones, le quita la cuarentena, expulsa el disco del
+//! instalador y se vuelve a abrir desde ahí. El médico hace UN doble clic y ya.
 //!
-//! La pantalla `InstalarEnAplicaciones` lo detecta al abrir y ofrece un botón que copia la app a
-//! /Applications y la vuelve a abrir desde ahí. Si la copia falla (un usuario sin permiso de
-//! administrador, por ejemplo), la pantalla explica cómo arrastrarla a mano.
+//! Sin esto, la app correría desde el disco del instalador: todo parece funcionar, pero al expulsarlo
+//! o reiniciar desaparece, el permiso de Accesibilidad queda dado a esa copia y el arranque
+//! automático apunta a un disco que ya no existe.
+//!
+//! Si /Applications no se puede escribir (un usuario sin permiso de administrador), se instala en la
+//! carpeta Aplicaciones del propio usuario (~/Applications), que macOS también reconoce.
 
 #[cfg(target_os = "macos")]
 use std::path::PathBuf;
@@ -40,12 +42,66 @@ pub fn abierta_desde_instalador() -> bool {
     false
 }
 
-/// Copia la app a /Applications, la abre desde ahí y cierra esta. Si ya había una versión en
-/// Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que quiere usar.
+/// Copia la app a Aplicaciones, la abre desde ahí, expulsa el disco del instalador y cierra esta.
+/// Si ya había una versión en Aplicaciones, se reemplaza: la que el médico acaba de bajar es la que
+/// quiere usar.
 #[tauri::command]
 #[specta::specta]
 pub fn mover_a_aplicaciones(app: AppHandle) -> Result<(), String> {
     mover(&app)
+}
+
+/// Copia `origen` dentro de `carpeta`, reemplazando la versión anterior si la hay.
+#[cfg(target_os = "macos")]
+fn copiar_en(origen: &std::path::Path, carpeta: &std::path::Path) -> Result<PathBuf, String> {
+    use log::warn;
+    use std::process::Command;
+
+    let nombre = origen.file_name().ok_or("sin_paquete")?;
+    let destino = carpeta.join(nombre);
+    if !carpeta.exists() {
+        std::fs::create_dir_all(carpeta).map_err(|_| "sin_permiso".to_string())?;
+    }
+    if destino.exists() {
+        std::fs::remove_dir_all(&destino).map_err(|e| {
+            warn!(
+                "No se pudo quitar la versión anterior de {}: {e}",
+                carpeta.display()
+            );
+            "sin_permiso".to_string()
+        })?;
+    }
+    // `ditto` copia el paquete tal cual (firma, enlaces y atributos incluidos); `cp -R` no.
+    let copia = Command::new("/usr/bin/ditto")
+        .arg(origen)
+        .arg(&destino)
+        .status()
+        .map_err(|e| {
+            warn!("No se pudo ejecutar ditto: {e}");
+            "copia".to_string()
+        })?;
+    if !copia.success() {
+        warn!("ditto terminó con {copia} copiando a {}", carpeta.display());
+        let _ = std::fs::remove_dir_all(&destino);
+        return Err("copia".to_string());
+    }
+    Ok(destino)
+}
+
+/// Los discos montados que tienen esta app: el del instalador. Se buscan por contenido y no por la
+/// ruta de esta copia porque, si macOS la abrió "trasladada" (App Translocation), la ruta es una
+/// carpeta temporal que no dice de qué disco salió.
+#[cfg(target_os = "macos")]
+fn discos_del_instalador(nombre: &std::ffi::OsStr) -> Vec<PathBuf> {
+    std::fs::read_dir("/Volumes")
+        .map(|entradas| {
+            entradas
+                .flatten()
+                .map(|e| e.path())
+                .filter(|v| v.join(nombre).exists())
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 #[cfg(target_os = "macos")]
@@ -54,37 +110,41 @@ fn mover(app: &AppHandle) -> Result<(), String> {
     use std::process::Command;
 
     let origen = paquete_actual().ok_or("sin_paquete")?;
-    let nombre = origen.file_name().ok_or("sin_paquete")?;
-    let destino = PathBuf::from("/Applications").join(nombre);
+    let nombre = origen.file_name().ok_or("sin_paquete")?.to_owned();
 
-    if destino.exists() {
-        std::fs::remove_dir_all(&destino).map_err(|e| {
-            warn!("No se pudo quitar la versión anterior de Aplicaciones: {e}");
-            "sin_permiso".to_string()
-        })?;
-    }
-    // `ditto` copia el paquete tal cual (firma, enlaces y atributos incluidos); `cp -R` no.
-    let copia = Command::new("/usr/bin/ditto")
-        .arg(&origen)
+    let destino = match copiar_en(&origen, std::path::Path::new("/Applications")) {
+        Ok(d) => d,
+        Err(e) => {
+            // Sin permiso de administrador: la carpeta Aplicaciones del usuario.
+            let casa = std::env::var_os("HOME").ok_or(e.clone())?;
+            warn!("No se pudo instalar en /Applications ({e}); se prueba ~/Applications");
+            copiar_en(&origen, &PathBuf::from(casa).join("Applications"))?
+        }
+    };
+
+    // La copia hereda la marca de "descargado de internet" del .dmg. La app está notarizada, así que
+    // abriría igual, pero macOS volvería a preguntar "¿Seguro que quieres abrirla?": una segunda
+    // pregunta igual a la que el médico ya contestó. Si no se puede quitar, no pasa nada grave.
+    let _ = Command::new("/usr/bin/xattr")
+        .args(["-dr", "com.apple.quarantine"])
         .arg(&destino)
-        .status()
-        .map_err(|e| {
-            warn!("No se pudo ejecutar ditto: {e}");
-            "copia".to_string()
-        })?;
-    if !copia.success() {
-        warn!("ditto terminó con {copia}");
-        return Err("copia".to_string());
-    }
-    info!("App copiada a Aplicaciones; se abre desde ahí");
+        .status();
+    info!("App copiada a {}; se abre desde ahí", destino.display());
 
-    // ⚠️ Se abre la copia UN SEGUNDO DESPUÉS de que esta termine: si arrancara mientras esta
-    // sigue viva, el plugin de instancia única le pasaría el turno a esta y la nueva se cerraría.
-    // La ruta va como `$0` y no pegada al comando: así un nombre con espacios no rompe nada.
+    // ⚠️ Todo esto ocurre UN SEGUNDO DESPUÉS de que esta copia termine: si la nueva arrancara
+    // mientras esta sigue viva, el plugin de instancia única le pasaría el turno a esta y la nueva
+    // se cerraría; y el disco no se puede expulsar mientras algo corre desde él. Primero se expulsa
+    // (cierra también la ventana del instalador) y después se abre la copia instalada. Las rutas van
+    // como argumentos (`$0`, `$@`) y no pegadas al comando: así un nombre con espacios no rompe nada.
+    let discos = discos_del_instalador(&nombre);
     Command::new("/bin/sh")
         .arg("-c")
-        .arg("sleep 1; /usr/bin/open \"$0\"")
+        .arg(
+            "sleep 1; for d in \"$@\"; do /usr/bin/hdiutil detach \"$d\" -quiet || true; done; \
+             /usr/bin/open \"$0\"",
+        )
         .arg(&destino)
+        .args(&discos)
         .spawn()
         .map_err(|e| {
             warn!("No se pudo programar la apertura desde Aplicaciones: {e}");

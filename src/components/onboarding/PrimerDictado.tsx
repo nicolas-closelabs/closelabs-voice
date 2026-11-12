@@ -2,10 +2,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { BookOpen, Check, Loader2, Mic, MessageCircle, X } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  FileText,
+  Loader2,
+  Mic,
+  MessageCircle,
+  X,
+} from "lucide-react";
+import { commands } from "@/bindings";
 import { useSettings } from "../../hooks/useSettings";
 import { useShortcutKeys } from "../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../lib/utils/shortcutLabels";
+import type { OSType } from "../../lib/utils/keyboard";
 import { supportWhatsappUrl } from "../../branding";
 import type { RecordingErrorEvent } from "../../lib/types/events";
 import Logo from "../icons/Logo";
@@ -24,7 +34,8 @@ import Logo from "../icons/Logo";
  * `clipboard.rs`, VENTANA_PRINCIPAL_ENFOCADA), porque el Cmd+V simulado nunca llegaba aquí. Si se
  * traba, la pantalla dice qué hacer, usando los eventos que ya emite el backend.
  *
- * Dos pasos: el dictado de prueba y luego el diccionario (`PasoDiccionario`).
+ * Tres pasos: el dictado de prueba aquí, uno segundo FUERA de la app, en TextEdit o el Bloc de notas
+ * (`PasoAfuera`), y el diccionario (`PasoDiccionario`).
  *
  * Se muestra una sola vez, al terminar el registro. Se puede repetir desde Inicio.
  */
@@ -132,7 +143,9 @@ export const PrimerDictado: React.FC<{
   const { keys, os } = useShortcutKeys();
   const [texto, setTexto] = useState("");
   const [fase, setFase] = useState<Fase>("esperando");
-  const [etapa, setEtapa] = useState<"dictar" | "diccionario">("dictar");
+  const [etapa, setEtapa] = useState<"dictar" | "afuera" | "diccionario">(
+    "dictar",
+  );
   const [pista, setPista] = useState<string | null>(null);
   const cuadro = useRef<HTMLTextAreaElement>(null);
   const faseRef = useRef<Fase>("esperando");
@@ -275,8 +288,8 @@ export const PrimerDictado: React.FC<{
         </span>
         <p className="font-heading text-xl font-bold">¡Listo! Así de fácil</p>
         <p className="text-[18px] text-brand-text-secondary max-w-md">
-          Hazlo igual en tu historia clínica o donde escribas: haz clic ahí y
-          presiona <Teclas keys={keys} />
+          Ahora vamos a probarlo fuera de la app, como lo harás en tu historia
+          clínica.
         </p>
       </>
     ) : (
@@ -297,6 +310,10 @@ export const PrimerDictado: React.FC<{
     );
 
   if (etapa === "diccionario") return <PasoDiccionario onDone={terminar} />;
+  if (etapa === "afuera")
+    return (
+      <PasoAfuera keys={keys} os={os} onDone={() => setEtapa("diccionario")} />
+    );
 
   return (
     // min-h-screen (no h-screen) y `shrink-0` en cada bloque: con la ventana en su tamaño
@@ -358,7 +375,7 @@ export const PrimerDictado: React.FC<{
           <div className="flex flex-col items-center gap-3">
             <button
               type="button"
-              onClick={() => setEtapa("diccionario")}
+              onClick={() => setEtapa("afuera")}
               className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors"
             >
               Siguiente
@@ -389,8 +406,223 @@ export const PrimerDictado: React.FC<{
   );
 };
 
+/** Cuánto se espera después de que el dictado salió hacia TextEdit antes de volver a preguntar. */
+const VOLVER_TRAS_DICTADO_MS = 3_500;
+
 /**
- * Segundo paso: el diccionario. Es lo que más mejora la calidad para un médico (nombres de
+ * Segundo paso: dictar FUERA de la app, en TextEdit (Mac) o el Bloc de notas (Windows).
+ *
+ * Por qué: dentro de nuestra ventana el texto llega por otro camino (ver `PrimerDictado`), así que
+ * el primer dictado no prueba lo que de verdad va a usar: el permiso de Accesibilidad, el atajo con
+ * otra app al frente y el pegado. Si algo de eso falla, que falle aquí, con ayuda a la vista.
+ *
+ * La app no puede saber si el texto entró (ver `clipboard.rs`, 2026-10-28): sabe que lo mandó. Por
+ * eso, cuando sale el dictado, vuelve al frente y le PREGUNTA al médico si apareció.
+ */
+const PasoAfuera: React.FC<{
+  keys: string[];
+  os: OSType;
+  onDone: () => void;
+}> = ({ keys, os, onDone }) => {
+  const editor = os === "macos" ? "TextEdit" : "el Bloc de notas";
+  const [fase, setFase] = useState<
+    "abrir" | "abierto" | "pregunta" | "no-aparecio"
+  >("abrir");
+  const [error, setError] = useState(false);
+  const faseRef = useRef(fase);
+  faseRef.current = fase;
+
+  useEffect(() => {
+    let volver: ReturnType<typeof setTimeout> | undefined;
+    const traerAlFrente = () => void commands.showMainWindowCommand();
+    const suscripciones = [
+      listen("dictado-enviado", () => {
+        if (faseRef.current !== "abierto") return;
+        // Un momento para que el médico vea su texto en el editor antes de preguntarle.
+        clearTimeout(volver);
+        volver = setTimeout(() => {
+          setFase("pregunta");
+          traerAlFrente();
+        }, VOLVER_TRAS_DICTADO_MS);
+      }),
+      // Sin permiso de Accesibilidad (Mac) o si el pegado falló: el texto quedó copiado.
+      listen("paste-needs-manual", () => {
+        if (faseRef.current === "abierto") setFase("no-aparecio");
+      }),
+      listen("paste-error", () => {
+        if (faseRef.current !== "abierto") return;
+        setFase("no-aparecio");
+        traerAlFrente();
+      }),
+    ];
+    return () => {
+      clearTimeout(volver);
+      suscripciones.forEach((p) => void p.then((quitar) => quitar()));
+    };
+  }, []);
+
+  const abrir = async () => {
+    setError(false);
+    const r = await commands.abrirEditorDePrueba();
+    if (r.status === "ok") setFase("abierto");
+    else setError(true);
+  };
+
+  const ayuda = (
+    <button
+      type="button"
+      onClick={() =>
+        void openUrl(
+          supportWhatsappUrl(
+            `Hola, estoy probando CloseLabs Voice en ${editor} y el texto no aparece.`,
+          ),
+        )
+      }
+      className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#128C7E] hover:underline"
+    >
+      <MessageCircle className="w-4 h-4" />
+      Pedir ayuda por WhatsApp
+    </button>
+  );
+
+  const boton =
+    "w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors";
+
+  return (
+    <div className="min-h-screen flex justify-center px-8 py-7 select-none">
+      <div className="w-full max-w-xl flex flex-col items-center text-center gap-5">
+        <Logo width={110} />
+        <span className="grid place-items-center w-14 h-14 rounded-full bg-brand-accent-soft text-brand-accent">
+          <FileText className="w-7 h-7" />
+        </span>
+
+        {fase === "abrir" && (
+          <>
+            <h1 className="font-heading text-2xl font-bold">
+              Ahora, fuera de la app
+            </h1>
+            <p className="text-[18px] leading-relaxed text-brand-text-secondary max-w-md">
+              Vamos a abrir {editor}, un programa para escribir. Ahí vas a
+              dictar igual que lo harás en tu historia clínica.
+            </p>
+            <button
+              type="button"
+              onClick={() => void abrir()}
+              className={boton}
+            >
+              Abrir {editor}
+            </button>
+            {error && (
+              <p className="text-[16px] text-amber-900">
+                No pudimos abrir {editor}. Puedes saltar este paso.
+              </p>
+            )}
+          </>
+        )}
+
+        {fase === "abierto" && (
+          <>
+            <h1 className="font-heading text-2xl font-bold">
+              Dicta en {editor}
+            </h1>
+            <ol className="w-full max-w-md flex flex-col gap-3 text-left text-[18px] leading-snug">
+              <li className="flex items-start gap-3">
+                <Num n={1} />
+                <span>Haz clic dentro de la hoja en blanco de {editor}.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Num n={2} />
+                <span>
+                  Presiona <Teclas keys={keys} /> y di cualquier frase.
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Num n={3} />
+                <span>
+                  Presiona <Teclas keys={keys} /> otra vez para terminar.
+                </span>
+              </li>
+            </ol>
+            <p className="text-[16px] text-brand-text-muted max-w-md">
+              Cuando el texto aparezca, esta ventana vuelve sola.
+            </p>
+            <button
+              type="button"
+              onClick={() => void abrir()}
+              className="text-[15px] text-brand-text-secondary hover:text-brand-accent hover:underline"
+            >
+              No veo {editor}: abrirlo otra vez
+            </button>
+          </>
+        )}
+
+        {fase === "pregunta" && (
+          <>
+            <h1 className="font-heading text-2xl font-bold">
+              ¿Apareció tu texto en {editor}?
+            </h1>
+            <button type="button" onClick={onDone} className={boton}>
+              Sí, apareció
+            </button>
+            <button
+              type="button"
+              onClick={() => setFase("no-aparecio")}
+              className="w-full shrink-0 px-4 py-3.5 rounded-xl text-[17px] font-semibold border-2 border-brand-accent text-brand-accent hover:bg-brand-accent-soft transition-colors"
+            >
+              No apareció
+            </button>
+          </>
+        )}
+
+        {fase === "no-aparecio" && (
+          <>
+            <h1 className="font-heading text-2xl font-bold">
+              Tu texto quedó copiado
+            </h1>
+            <p className="text-[18px] leading-relaxed text-brand-text-secondary max-w-md">
+              Haz clic en la hoja de {editor} y presiona{" "}
+              <strong>{pasteShortcut(os)}</strong> para pegarlo. Si te pasa en
+              tu historia clínica, haz lo mismo.
+            </p>
+            <div
+              role="alert"
+              className="w-full flex flex-col items-center gap-2 text-[16px] leading-relaxed text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3"
+            >
+              Si te pasa siempre, escríbenos y lo revisamos contigo.
+              {ayuda}
+            </div>
+            <button
+              type="button"
+              onClick={() => setFase("abierto")}
+              className={boton}
+            >
+              Probar otra vez
+            </button>
+          </>
+        )}
+
+        <button
+          type="button"
+          onClick={onDone}
+          className="text-[15px] text-brand-text-muted hover:underline"
+        >
+          {fase === "no-aparecio"
+            ? "Seguir de todos modos"
+            : "Saltar este paso"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const Num: React.FC<{ n: number }> = ({ n }) => (
+  <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-brand-accent text-white text-[16px] font-semibold font-heading">
+    {n}
+  </span>
+);
+
+/**
+ * Tercer paso: el diccionario. Es lo que más mejora la calidad para un médico (nombres de
  * medicamentos, de colegas, de su clínica) y antes no aparecía en ningún lado: había que
  * descubrir la sección por cuenta propia. Aquí agrega su primera palabra en el mismo momento en
  * que acaba de ver funcionar el dictado. Usa el mismo ajuste que la sección Diccionario

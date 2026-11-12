@@ -819,11 +819,17 @@ impl ShortcutAction for TranscribeAction {
                                     match utils::paste(final_text, ah_clone.clone()) {
                                         // "Enviado", no "pegado": aquí solo se sabe que se
                                         // mandó el atajo, no si el texto entró en el campo.
-                                        Ok(()) => info!(
-                                            "Dictado enviado: {} ms desde que se paró la grabación (pegar: {} ms)",
-                                            stop_time.elapsed().as_millis(),
-                                            paste_time.elapsed().as_millis()
-                                        ),
+                                        Ok(()) => {
+                                            info!(
+                                                "Dictado enviado: {} ms desde que se paró la grabación (pegar: {} ms)",
+                                                stop_time.elapsed().as_millis(),
+                                                paste_time.elapsed().as_millis()
+                                            );
+                                            // Lo escucha el segundo dictado de práctica (en
+                                            // TextEdit) para volver al tutorial y preguntar si
+                                            // el texto apareció: la app no puede saberlo sola.
+                                            let _ = ah_clone.emit("dictado-enviado", ());
+                                        }
                                         Err(e) => {
                                             error!("Failed to paste transcription: {}", e);
                                             let _ = ah_clone.emit("paste-error", ());
