@@ -1,0 +1,32 @@
+{
+  "etiqueta": "practicas-practica-1-rodilla",
+  "fecha": "2026-11-12T17:35:01.925Z",
+  "casos": {
+    "practica-1-rodilla": {
+      "comprobaciones": {
+        "no_contiene:izquierda": "10/10",
+        "contiene:derecha": "10/10",
+        "sin_muletillas": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 1329,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 4,
+    "de": 4,
+    "medianaMs": 1329,
+    "p90Ms": 3713,
+    "peorMs": 3713,
+    "fallosContenido": 0,
+    "respuestasMedidas": 10,
+    "proveedor": null,
+    "deRespaldo": 0
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "etiqueta": "practicas-practica-2-whatsapp",
+  "fecha": "2026-11-12T17:35:17.606Z",
+  "casos": {
+    "practica-2-whatsapp": {
+      "comprobaciones": {
+        "no_contiene:almuerzo": "10/10",
+        "contiene:desayuno": "10/10",
+        "sin_muletillas": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 1036,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 4,
+    "de": 4,
+    "medianaMs": 1036,
+    "p90Ms": 1221,
+    "peorMs": 1221,
+    "fallosContenido": 0,
+    "respuestasMedidas": 10,
+    "proveedor": null,
+    "deRespaldo": 0
+  }
+}

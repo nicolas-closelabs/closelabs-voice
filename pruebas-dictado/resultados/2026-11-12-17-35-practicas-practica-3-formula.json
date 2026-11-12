@@ -1,0 +1,32 @@
+{
+  "etiqueta": "practicas-practica-3-formula",
+  "fecha": "2026-11-12T17:35:27.648Z",
+  "casos": {
+    "practica-3-formula": {
+      "comprobaciones": {
+        "no_contiene:12": "10/10",
+        "contiene:24": "10/10",
+        "conserva": "10/10",
+        "formato_basico": "10/10"
+      },
+      "medianaMs": 1339,
+      "errores": 0,
+      "deRespaldo": 0,
+      "servidoPor": {
+        "openai-luna": 10
+      },
+      "fallidas": []
+    }
+  },
+  "total": {
+    "ok": 4,
+    "de": 4,
+    "medianaMs": 1339,
+    "p90Ms": 1954,
+    "peorMs": 1954,
+    "fallosContenido": 0,
+    "respuestasMedidas": 10,
+    "proveedor": null,
+    "deRespaldo": 0
+  }
+}
