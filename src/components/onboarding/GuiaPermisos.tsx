@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * La guía VIVA de la pantalla de Permisos (maqueta aprobada por Nicolás el 2026-11-12:
@@ -101,14 +101,60 @@ const Cursor: React.FC<{ x: number; y: number; clic: boolean }> = ({ x, y, clic 
   </svg>
 );
 
-const Cuadro: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div
-    className="relative w-[470px] max-w-full h-[300px] bg-papel border border-linea rounded-[16px] overflow-hidden shadow-[0_0_0_2px_var(--lila-suave)]"
-    aria-hidden
-  >
-    {children}
-  </div>
+const Cuadro = React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(
+  ({ children }, ref) => (
+    <div
+      ref={ref}
+      className="relative w-[470px] max-w-full h-[300px] bg-papel border border-linea rounded-[16px] overflow-hidden shadow-[0_0_0_2px_var(--lila-suave)]"
+      aria-hidden
+    >
+      {children}
+    </div>
+  ),
 );
+Cuadro.displayName = "Cuadro";
+
+/**
+ * Dónde poner el cursor: el centro (o el punto `fx`, `fy` en fracciones) del elemento objetivo, medido
+ * DE VERDAD dentro del cuadro. Antes eran coordenadas fijas y en la app real el cursor caía sobre el
+ * interruptor de Google Chrome, no el de CloseLabs Voice (Nicolás, 2026-11-13: "el mouse está como
+ * descalibrado"). Sin objetivo, la esquina de abajo a la derecha. La punta de la flecha está en
+ * (4, 2) del dibujo de 22 px: se resta para que sea la punta la que toque.
+ */
+type Objetivo = { ref: React.RefObject<HTMLElement | null>; fx?: number; fy?: number } | null;
+function usePunteria(
+  cuadroRef: React.RefObject<HTMLDivElement | null>,
+  objetivo: Objetivo,
+  clave: unknown,
+) {
+  const [pos, setPos] = useState({ x: 400, y: 250 });
+  useLayoutEffect(() => {
+    const medir = () => {
+      const c = cuadroRef.current;
+      if (!c) return;
+      const rc = c.getBoundingClientRect();
+      const el = objetivo?.ref.current;
+      if (!el) {
+        setPos({ x: rc.width - 70, y: rc.height - 50 });
+        return;
+      }
+      const r = el.getBoundingClientRect();
+      setPos({
+        x: r.left - rc.left + r.width * (objetivo?.fx ?? 0.5) - 4,
+        y: r.top - rc.top + r.height * (objetivo?.fy ?? 0.5) - 2,
+      });
+    };
+    medir();
+    // Una segunda medida cuando terminan las transiciones (la ventanita aparece con opacidad).
+    const id = setTimeout(medir, 380);
+    window.addEventListener("resize", medir);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener("resize", medir);
+    };
+  }, [clave]);
+  return pos;
+}
 
 // --------------------------------------------------------------------------------------------
 // Mac: Ajustes del Sistema › Accesibilidad
@@ -121,8 +167,13 @@ const CUADROS_MAC = [
   { b: "Pon tu huella o tu contraseña", s: "Es la de tu Mac, no la de CloseLabs." },
 ];
 
-const InterruptorMac: React.FC<{ on: boolean; marcado?: boolean }> = ({ on, marcado }) => (
+const InterruptorMac: React.FC<{
+  on: boolean;
+  marcado?: boolean;
+  refObj?: React.Ref<HTMLSpanElement>;
+}> = ({ on, marcado, refObj }) => (
   <span
+    ref={refObj}
     className={`w-[30px] h-[18px] rounded-full relative motion-safe:transition-colors ${
       on ? "bg-[#3478F6]" : "bg-[#E1DFE5]"
     } ${marcado ? "ring-[3px] ring-lila ring-offset-1" : ""}`}
@@ -139,12 +190,17 @@ export const GuiaPermisosMac: React.FC<{ momento: Momento }> = ({ momento }) => 
   const cuadro = useCuadro(CUADROS_MAC.length, momento);
   const clic = useClic(cuadro);
   const encendido = cuadro === 3 || (cuadro === 2 && clic);
-  const cursor = [
-    { x: 400, y: 250 },
-    { x: 260, y: 120 },
-    { x: 412, y: 104 },
-    { x: 300, y: 196 },
-  ][cuadro];
+  const cuadroRef = useRef<HTMLDivElement>(null);
+  const filaRef = useRef<HTMLDivElement>(null);
+  const interruptorRef = useRef<HTMLSpanElement>(null);
+  const huellaRef = useRef<HTMLDivElement>(null);
+  const objetivos: Objetivo[] = [
+    null,
+    { ref: filaRef, fx: 0.45 },
+    { ref: interruptorRef },
+    { ref: huellaRef, fy: 0.86 },
+  ];
+  const cursor = usePunteria(cuadroRef, objetivos[cuadro], cuadro);
   const filas: [string, boolean, boolean][] = [
     ["Google Chrome", true, false],
     ["CloseLabs Voice", encendido, true],
@@ -154,7 +210,7 @@ export const GuiaPermisosMac: React.FC<{ momento: Momento }> = ({ momento }) => 
   return (
     <div className="flex flex-col items-center gap-[18px]">
       <Estado momento={momento} esperandoEn="Ajustes" />
-      <Cuadro>
+      <Cuadro ref={cuadroRef}>
         <div
           className={`absolute left-[26px] top-[22px] w-[418px] h-[256px] rounded-[11px] bg-[#F6F5F8] border border-[#DCD9E0] shadow-2 flex overflow-hidden font-[system-ui] motion-safe:transition-opacity ${
             cuadro === 0 && !clic ? "opacity-0" : "opacity-100"
@@ -178,6 +234,7 @@ export const GuiaPermisosMac: React.FC<{ momento: Momento }> = ({ momento }) => 
               {filas.map(([nombre, on, nuestra]) => (
                 <div
                   key={nombre}
+                  ref={nuestra ? filaRef : undefined}
                   className={`h-[34px] px-[11px] flex items-center gap-[9px] border-b last:border-b-0 border-[#EEECF1] ${
                     nuestra && cuadro >= 1 ? "shadow-[inset_0_0_0_2px_var(--lila)] rounded-[6px]" : ""
                   }`}
@@ -192,7 +249,7 @@ export const GuiaPermisosMac: React.FC<{ momento: Momento }> = ({ momento }) => 
                     <span className="w-[18px] h-[18px] rounded-[5px] bg-[#E3E1E7]" />
                   )}
                   <span className="flex-1 text-[12px] text-[#1d1d1f]">{nombre}</span>
-                  <InterruptorMac on={on} />
+                  <InterruptorMac on={on} refObj={nuestra ? interruptorRef : undefined} />
                 </div>
               ))}
             </div>
@@ -211,7 +268,7 @@ export const GuiaPermisosMac: React.FC<{ momento: Momento }> = ({ momento }) => 
           </div>
         )}
         {cuadro === 3 && (
-          <div className="absolute left-[110px] top-16 w-[250px] p-4 rounded-[12px] bg-[#FBFBFD] border border-[#DCD9E0] shadow-[0_14px_34px_rgba(24,20,29,.22)] text-center font-[system-ui] z-[5]">
+          <div ref={huellaRef} className="absolute left-[110px] top-16 w-[250px] p-4 rounded-[12px] bg-[#FBFBFD] border border-[#DCD9E0] shadow-[0_14px_34px_rgba(24,20,29,.22)] text-center font-[system-ui] z-[5]">
             <div className="w-10 h-10 mx-auto mb-2 rounded-full border-2 border-[#F0506E] grid place-items-center">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0506E" strokeWidth="1.8" strokeLinecap="round">
                 <path d="M7 11a5 5 0 0 1 10 0v2M9.5 11a2.5 2.5 0 0 1 5 0v4M12 11v6M7 15v-1M17 16v-1" />
@@ -242,12 +299,16 @@ const CUADROS_WIN = [
   { b: "Vuelve aquí", s: "No hay que reiniciar nada: la app lo nota sola." },
 ];
 
-const InterruptorWin: React.FC<{ on: boolean }> = ({ on }) => (
+const InterruptorWin: React.FC<{ on: boolean; refObj?: React.Ref<HTMLSpanElement> }> = ({
+  on,
+  refObj,
+}) => (
   <>
     <span className="w-[58px] shrink-0 text-right text-[10px] text-[#444]">
       {on ? "Activado" : "Desactivado"}
     </span>
     <span
+      ref={refObj}
       className={`relative shrink-0 w-[34px] h-[17px] rounded-full border-[1.5px] motion-safe:transition-colors ${
         on ? "bg-[#0067C0] border-[#0067C0]" : "border-[#5F5F5F]"
       }`}
@@ -266,17 +327,16 @@ export const GuiaPermisosWindows: React.FC<{ momento: Momento }> = ({ momento })
   const clic = useClic(cuadro);
   const primero = cuadro >= 2 || (cuadro === 1 && clic);
   const segundo = cuadro === 3 || (cuadro === 2 && clic);
-  const cursor = [
-    { x: 400, y: 250 },
-    { x: 420, y: 72 },
-    { x: 420, y: 178 },
-    { x: 470, y: 300 },
-  ][cuadro];
+  const cuadroRef = useRef<HTMLDivElement>(null);
+  const primeroRef = useRef<HTMLSpanElement>(null);
+  const segundoRef = useRef<HTMLSpanElement>(null);
+  const objetivos: Objetivo[] = [null, { ref: primeroRef }, { ref: segundoRef }, null];
+  const cursor = usePunteria(cuadroRef, objetivos[cuadro], cuadro);
   const segoe = { fontFamily: '"Segoe UI", system-ui, sans-serif' };
   return (
     <div className="flex flex-col items-center gap-[18px]">
       <Estado momento={momento} esperandoEn="la Configuración" />
-      <Cuadro>
+      <Cuadro ref={cuadroRef}>
         <div
           className={`absolute left-5 top-[18px] w-[430px] h-[264px] rounded-[8px] bg-[#F3F3F3] border border-[#D6D6D6] shadow-2 flex overflow-hidden motion-safe:transition-opacity ${
             cuadro === 0 && !clic ? "opacity-0" : "opacity-100"
@@ -308,7 +368,7 @@ export const GuiaPermisosWindows: React.FC<{ momento: Momento }> = ({ momento })
                   Cualquiera que use este dispositivo puede elegir…
                 </small>
               </div>
-              <InterruptorWin on={primero} />
+              <InterruptorWin on={primero} refObj={primeroRef} />
             </div>
             <div className="bg-white border border-[#E5E5E5] rounded-md px-3 py-2.5 flex items-center gap-2.5 mb-1.5">
               <div className="flex-1 text-[11px] leading-[14px] text-[#9A9A9A]">
@@ -323,7 +383,7 @@ export const GuiaPermisosWindows: React.FC<{ momento: Momento }> = ({ momento })
               <div className="flex-1 text-[11px] leading-[14px] text-[#1b1b1b]">
                 Permitir que las aplicaciones de escritorio accedan al micrófono
               </div>
-              <InterruptorWin on={segundo} />
+              <InterruptorWin on={segundo} refObj={segundoRef} />
             </div>
           </div>
         </div>
