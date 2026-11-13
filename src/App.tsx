@@ -25,7 +25,6 @@ import PrimerDictado, {
 } from "./components/onboarding/PrimerDictado";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { IR_A_SECCION } from "./components/settings/home/HomeSettings";
-import { VideoComoFunciona } from "./components/VideoComoFunciona";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { useModelStore } from "./stores/modelStore";
@@ -82,19 +81,12 @@ function App() {
   const [primerDictado, setPrimerDictado] = useState(false);
   // Mac: ¿se abrió desde el .dmg sin moverla a Aplicaciones? (ver `instalacion_mac.rs`)
   const [desdeInstalador, setDesdeInstalador] = useState<boolean | null>(null);
-  // Mac: esta es la copia que la del disco acaba de abrir desde Aplicaciones. Abre con el mismo
-  // cuadro de "Instalando" para que el relevo no se vea como un parpadeo (SISTEMA.md §8).
-  const [recienInstalada, setRecienInstalada] = useState(false);
 
   useEffect(() => {
     commands
       .abiertaDesdeInstalador()
       .then(setDesdeInstalador)
       .catch(() => setDesdeInstalador(false));
-    commands
-      .recienInstalada()
-      .then(setRecienInstalada)
-      .catch(() => setRecienInstalada(false));
   }, []);
 
   useEffect(() => {
@@ -635,16 +627,10 @@ function App() {
 
   // Antes que la cuenta y los permisos: todo lo que se haga en una copia que corre desde el .dmg
   // se pierde al expulsarlo.
+  // Desde 2026-11-13 la ventana no se muestra mientras instala (la copia del disco corre oculta) y
+  // la copia recién instalada abre directo en la bienvenida, sin el cuadro "Instalando".
   if (desdeInstalador) {
     return <InstalarEnAplicaciones />;
-  }
-  if (recienInstalada && !signedIn) {
-    return (
-      <InstalarEnAplicaciones
-        recienInstalada
-        onListo={() => setRecienInstalada(false)}
-      />
-    );
   }
 
   // Sin sesión, no se entra. La cuenta es obligatoria: es lo que permite cobrar, limitar los
@@ -681,7 +667,6 @@ function App() {
       dir={direction}
       className="h-screen flex flex-col select-none cursor-default"
     >
-      <VideoComoFunciona />
       <FinDePruebaModal
         motivo={finDePrueba}
         onCerrar={cerrarFinDePrueba}

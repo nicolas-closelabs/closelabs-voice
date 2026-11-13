@@ -11,6 +11,10 @@ import { Renglon } from "../help/HelpSettings";
 /**
  * Acerca de («Tinta y voz», diseno/SISTEMA.md §10): la versión con su estado de actualización,
  * privacidad, términos y quién la hace. Renglones, sin tarjeta.
+ *
+ * Sin el renglón "Basada en Handy" (Nicolás, 2026-11-13). La licencia MIT de Handy pide conservar su
+ * aviso en las copias del software: va dentro de la app, en `resources/licencias/Handy-MIT.txt`, y en
+ * el LICENSE del repositorio. No quitar ese archivo.
  */
 export const AboutSettings: React.FC = () => {
   const [version, setVersion] = useState("");
@@ -79,10 +83,6 @@ export const AboutSettings: React.FC = () => {
             closelabs.co
           </Enlace>
         </Renglon>
-        <Renglon
-          nombre="Basada en Handy"
-          frase="Proyecto de código abierto de CJ Pais, con licencia MIT."
-        />
       </SettingsGroup>
     </div>
   );

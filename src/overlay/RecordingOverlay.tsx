@@ -344,15 +344,15 @@ const RecordingOverlay: React.FC = () => {
 
   // ---- «Tinta y voz» (diseno/SISTEMA.md §9): la píldora mínima ----
   // Una cápsula oscura que solo existe mientras se graba o se escribe, o para un mensaje. Grabando:
-  // ✕ (cancela) · la onda · ✓ (termina). Escribiendo: "Escribiendo" y tres puntos. Sin logo ni lema
+  // ✕ (cancela) · la onda · ✓ (termina). Escribiendo: SOLO tres puntos (Nicolás, 2026-11-13: "que
+  // desaparezca «Escribiendo»"). Sin logo ni lema
   // (revisión del 2026-11-11: lo más grande era el logo, no que estaba grabando ni cómo terminar).
   const working = state === "transcribing" || state === "processing";
 
   let pildora: React.ReactNode;
   if (working) {
     pildora = (
-      <div className="tv-pill tv-msg">
-        Escribiendo
+      <div className="tv-pill tv-msg" role="status" aria-label="Escribiendo">
         <span className="tv-dots" aria-hidden="true">
           <i />
           <i />

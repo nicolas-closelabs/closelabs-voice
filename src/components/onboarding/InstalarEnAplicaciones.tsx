@@ -10,17 +10,14 @@ import { IlustracionVoz } from "../auth/Bienvenida";
 /**
  * "Instalando" (Mac). Ver `instalacion_mac.rs` para el porqué del .dmg de doble clic.
  *
- * Diseño (diseno/SISTEMA.md §8): la MISMA plantilla, tamaño y dibujo que la bienvenida, con tres
- * pasos que se ven al menos 1,2 s cada uno. En la revisión del 2026-11-11 la ventana "Instalando…"
- * duraba 3-4 s y Nicolás la vio como un parpadeo ("parece un bug"); ahora se ve qué está pasando.
+ * Desde 2026-11-13 esto corre SIN VENTANA: la copia que se abre desde el disco del instalador no
+ * muestra la ventana (`lib.rs`), copia la app a Aplicaciones, quita la cuarentena y relanza la de
+ * Aplicaciones, que abre directo en la bienvenida. Antes se veía un cuadro "Instalando" que aparecía
+ * y se iba, y Nicolás lo vio como un bug ("esa ventana está sobrando").
  *
- * Dos usos:
- * - La copia que corre desde el disco (`recienInstalada = false`): copia, quita la cuarentena y
- *   relanza la de Aplicaciones con `--recien-instalada`.
- * - La copia recién abierta desde Aplicaciones (`recienInstalada = true`): muestra el mismo cuadro con
- *   los pasos 1 y 2 hechos y el 3 en curso, lo cierra y sigue a la bienvenida (`onListo`).
+ * La ventana solo aparece si algo sale mal (no se pudo copiar o relanzar) o si tarda más de 8 s: ahí
+ * el médico necesita saber qué pasa.
  */
-const MINIMO_POR_PASO_MS = 1200;
 const LENTO_MS = 8000;
 
 const NOMBRES = [
@@ -29,14 +26,11 @@ const NOMBRES = [
   "Abriendo CloseLabs Voice",
 ];
 
-const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const mostrarVentana = () => void commands.showMainWindowCommand().catch(() => {});
 
-export const InstalarEnAplicaciones: React.FC<{
-  recienInstalada?: boolean;
-  onListo?: () => void;
-}> = ({ recienInstalada = false, onListo }) => {
-  // Cuántos pasos están hechos (0 a 3).
-  const [hechos, setHechos] = useState(recienInstalada ? 2 : 0);
+export const InstalarEnAplicaciones: React.FC = () => {
+  // Cuántos pasos están hechos (0 a 3). Solo se ven si la ventana llega a mostrarse.
+  const [hechos, setHechos] = useState(0);
   const [fallo, setFallo] = useState(false);
   const [lento, setLento] = useState(false);
   const empezo = useRef(false);
@@ -45,39 +39,32 @@ export const InstalarEnAplicaciones: React.FC<{
     setFallo(false);
     setLento(false);
     setHechos(0);
-    const alarma = setTimeout(() => setLento(true), LENTO_MS);
-    const inicio = Date.now();
+    const alarma = setTimeout(() => {
+      setLento(true);
+      mostrarVentana();
+    }, LENTO_MS);
     const r = await commands.copiarAAplicaciones();
-    clearTimeout(alarma);
     if (r.status === "error") {
+      clearTimeout(alarma);
       setFallo(true);
+      mostrarVentana();
       return;
     }
-    await esperar(Math.max(0, MINIMO_POR_PASO_MS - (Date.now() - inicio)));
-    setHechos(1);
-    await esperar(MINIMO_POR_PASO_MS);
     setHechos(2);
-    await esperar(MINIMO_POR_PASO_MS);
-    // Si sale bien, esta ventana se cierra y la de Aplicaciones abre con el mismo cuadro.
+    // Si sale bien, esta copia se cierra y la de Aplicaciones abre en la bienvenida.
     const r2 = await commands.relanzarInstalada(r.data);
-    if (r2.status === "error") setFallo(true);
+    clearTimeout(alarma);
+    if (r2.status === "error") {
+      setFallo(true);
+      mostrarVentana();
+    }
   };
 
   useEffect(() => {
     // Una sola vez aunque React monte dos veces en desarrollo.
     if (empezo.current) return;
     empezo.current = true;
-    if (recienInstalada) {
-      // La copia nueva: el mismo cuadro 800 ms, el paso 3 hecho 400 ms, y a la bienvenida.
-      void (async () => {
-        await esperar(800);
-        setHechos(3);
-        await esperar(400);
-        onListo?.();
-      })();
-    } else {
-      void instalar();
-    }
+    void instalar();
   }, []);
 
   const estado = (i: number): EstadoPaso =>

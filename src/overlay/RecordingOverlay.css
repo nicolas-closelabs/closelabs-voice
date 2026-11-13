@@ -451,10 +451,9 @@
   justify-content: flex-end;
   gap: 8px;
   padding-bottom: 2px;
-  /* Newsreader en todo lo que la píldora ESCRIBE (Nicolás, 2026-11-12: la sans aquí "no me gusta
-     cómo se ve"). Los símbolos que Newsreader no tiene (⌥) caen a la del sistema. */
-  font-family: "Newsreader Variable", Georgia, serif;
-  font-optical-sizing: auto;
+  /* Plus Jakarta Sans, un punto más chica que antes (Nicolás, 2026-11-13: probó Newsreader y prefirió
+     volver a esta, "un poco más pequeña"). */
+  font-family: "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   user-select: none;
   cursor: default;
@@ -475,8 +474,8 @@
 .tv-msg {
   padding: 0 18px;
   gap: 6px;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
 }
 .tv-x,
@@ -521,12 +520,11 @@
 }
 .tv-dots {
   display: inline-flex;
-  gap: 4px;
-  margin-left: 4px;
+  gap: 5px;
 }
 .tv-dots i {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #c79bff;
   animation: tv-punto 900ms linear infinite;
@@ -557,7 +555,7 @@
   background: #18141d;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
 }

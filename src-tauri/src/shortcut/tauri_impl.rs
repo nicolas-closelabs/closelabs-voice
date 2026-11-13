@@ -154,6 +154,38 @@ pub fn unregister_shortcut(app: &AppHandle, binding: ShortcutBinding) -> Result<
     Ok(())
 }
 
+// CloseLabs (2026-11-13): Escape (cancelar) se registra al empezar a grabar y se suelta al terminar,
+// cada cosa en una tarea aparte. Con dos dictados seguidos las tareas se cruzaban: "registrar" corría
+// antes que el "soltar" del dictado anterior y fallaba ("Shortcut 'escape' is already in use"), y
+// después el "soltar" viejo dejaba ese segundo dictado sin Escape. Ahora se guarda lo que se QUIERE
+// (registrado o no) y cada tarea, una a la vez, lleva la realidad a ese estado: el orden ya no importa.
+#[cfg(not(target_os = "linux"))]
+static CANCEL_QUIERE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+#[cfg(not(target_os = "linux"))]
+static CANCEL_TURNO: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+#[cfg(not(target_os = "linux"))]
+fn reconciliar_cancel(app: &AppHandle) {
+    use std::sync::atomic::Ordering;
+    let _turno = CANCEL_TURNO.lock().unwrap_or_else(|e| e.into_inner());
+    let Some(binding) = get_settings(app).bindings.get("cancel").cloned() else {
+        return;
+    };
+    let Ok(atajo) = binding.current_binding.parse::<Shortcut>() else {
+        return;
+    };
+    let quiere = CANCEL_QUIERE.load(Ordering::SeqCst);
+    let esta = app.global_shortcut().is_registered(atajo);
+    if quiere && !esta {
+        if let Err(e) = register_shortcut(app, binding) {
+            error!("Failed to register cancel shortcut: {}", e);
+        }
+    } else if !quiere && esta {
+        // Puede fallar si ya estaba suelto; no importa.
+        let _ = unregister_shortcut(app, binding);
+    }
+}
+
 /// Register the cancel shortcut (called when recording starts)
 pub fn register_cancel_shortcut(app: &AppHandle) {
     // Cancel shortcut is disabled on Linux due to instability with dynamic shortcut registration
@@ -165,13 +197,10 @@ pub fn register_cancel_shortcut(app: &AppHandle) {
 
     #[cfg(not(target_os = "linux"))]
     {
+        CANCEL_QUIERE.store(true, std::sync::atomic::Ordering::SeqCst);
         let app_clone = app.clone();
         tauri::async_runtime::spawn(async move {
-            if let Some(cancel_binding) = get_settings(&app_clone).bindings.get("cancel").cloned() {
-                if let Err(e) = register_shortcut(&app_clone, cancel_binding) {
-                    error!("Failed to register cancel shortcut: {}", e);
-                }
-            }
+            reconciliar_cancel(&app_clone);
         });
     }
 }
@@ -187,12 +216,10 @@ pub fn unregister_cancel_shortcut(app: &AppHandle) {
 
     #[cfg(not(target_os = "linux"))]
     {
+        CANCEL_QUIERE.store(false, std::sync::atomic::Ordering::SeqCst);
         let app_clone = app.clone();
         tauri::async_runtime::spawn(async move {
-            if let Some(cancel_binding) = get_settings(&app_clone).bindings.get("cancel").cloned() {
-                // We ignore errors here as it might already be unregistered
-                let _ = unregister_shortcut(&app_clone, cancel_binding);
-            }
+            reconciliar_cancel(&app_clone);
         });
     }
 }

@@ -216,7 +216,7 @@ export const PlantillaPrimerUso: React.FC<{
           </section>
 
           <section
-            className={`min-w-0 flex flex-col items-center justify-center gap-5 px-8 ${
+            className={`min-w-0 overflow-hidden flex flex-col items-center justify-center gap-5 px-8 ${
               oscura ? "bg-noche-2" : "bg-lino"
             }`}
           >

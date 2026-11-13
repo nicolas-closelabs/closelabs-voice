@@ -652,7 +652,9 @@ const PracticaDictado: React.FC<{
         <div className="flex flex-col items-center gap-5">
           <Tarjeta tipo={practica.tarjeta}>{campoPractica}</Tarjeta>
           {listo && etiquetas.length > 0 && (
-            <div className="flex flex-nowrap justify-center gap-2">
+            // Pueden partirse en dos renglones: en una sola línea, tres etiquetas se salían de la ventana
+            // y aparecía una barra para desplazarse de lado (Nicolás, 2026-11-13).
+            <div className="flex flex-wrap justify-center gap-2 max-w-[468px]">
               {etiquetas.map((e, i) => (
                 <span
                   key={e.texto}

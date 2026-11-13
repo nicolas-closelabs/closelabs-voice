@@ -648,13 +648,10 @@ const EsperandoConfirmacion: React.FC<{
           <p className="text-[15px] text-tinta-2">Comprobando…</p>
         )}
         {aviso && <Aviso>{aviso}</Aviso>}
+        {/* "¿Tocaste el botón del correo…? Ya lo toqué" se quitó (Nicolás, 2026-11-13: sobra). Si el
+            médico confirma con el botón del correo, la pantalla lo nota sola: reintenta con reloj y
+            cada vez que la ventana vuelve al frente (`intentar("reloj" | "foco")`). */}
         <div className="flex flex-col items-start gap-2 text-[15px] text-tinta-2">
-          <span>
-            ¿Tocaste el botón del correo en vez de copiar el código?{" "}
-            <Enlace chico onClick={() => void intentar("manual")} disabled={ocupadoAhora}>
-              Ya lo toqué
-            </Enlace>
-          </span>
           <span>
             ¿Escribiste mal tu correo?{" "}
             <Enlace chico onClick={onCorregir}>

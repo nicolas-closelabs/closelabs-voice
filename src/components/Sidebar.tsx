@@ -10,6 +10,7 @@ import {
   HelpSettings,
   AccountSettings,
 } from "./settings";
+import { ComoFunciona } from "./settings/como-funciona/ComoFunciona";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
 
@@ -27,6 +28,12 @@ export const SECTIONS_CONFIG = {
   home: {
     labelKey: "sidebar.home",
     component: HomeSettings,
+    enabled: () => true,
+  },
+  // Sección propia del video "Así se dicta" (Nicolás, 2026-11-13).
+  howto: {
+    labelKey: "sidebar.howTo",
+    component: ComoFunciona,
     enabled: () => true,
   },
   dictionary: {

@@ -9,7 +9,7 @@ import { pasteShortcut } from "../../../lib/utils/shortcutLabels";
 import type { OSType } from "../../../lib/utils/keyboard";
 import { Titulo } from "../../tinta/Titulo";
 import { BotonPrincipal, BotonSecundario } from "../../tinta/Botones";
-import { ABRIR_VIDEO_TUTORIAL } from "../../VideoComoFunciona";
+import { IR_A_SECCION } from "../home/HomeSettings";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 
 interface QA {
@@ -107,7 +107,9 @@ export const HelpSettings: React.FC = () => {
         >
           <BotonSecundario
             medida="corto"
-            onClick={() => window.dispatchEvent(new Event(ABRIR_VIDEO_TUTORIAL))}
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent(IR_A_SECCION, { detail: "howto" }))
+            }
           >
             Ver el video
           </BotonSecundario>

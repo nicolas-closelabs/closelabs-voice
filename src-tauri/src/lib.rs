@@ -961,7 +961,12 @@ pub fn run(cli_args: CliArgs) {
             // If start_hidden but tray is disabled, we must show the window
             // anyway. Without a tray icon, the dock is the only way back in.
             let tray_available = settings.show_tray_icon && !cli_args.no_tray;
-            if should_force_show || !should_hide || !tray_available {
+            // Mac, abierta desde el disco del instalador: NO se muestra ninguna ventana. La interfaz
+            // copia la app a Aplicaciones y la relanza sin que se vea nada (Nicolás, 2026-11-13: la
+            // ventana "Instalando" que aparecía y se iba "parece un bug, sobra"). Solo se muestra si
+            // algo falla o tarda (ver `InstalarEnAplicaciones`).
+            let desde_instalador = instalacion_mac::abierta_desde_instalador();
+            if !desde_instalador && (should_force_show || !should_hide || !tray_available) {
                 show_main_window(&app_handle);
             }
 
