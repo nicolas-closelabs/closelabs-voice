@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prácticas guiadas · maqueta</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Plus+Jakarta+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  /* Maqueta: prácticas del primer uso, guiadas paso a paso (Nicolás, 2026-11-13: "difícil de entender
+     qué tengo que hacer… algo mucho más guiado, con menos ruido visual"). UNA instrucción a la vez a
+     la izquierda; cuatro cuadros con el avance; la frase solo aparece cuando toca hablar; a la derecha,
+     solo el programa donde cae el texto. */
+  :root { --tinta:#18141d; --tinta-2:#55505e; --tinta-3:#6e6877; --papel:#fff; --lino:#f5f1f8; --linea:#e6e2ea;
+    --linea-fuerte:#cfcad4; --lila:#a439ff; --lila-suave:#f3e8ff; --lila-presion:#7a1fd1; --hecho:#1f7a4d; --noche:#18141d;
+    --serif:"Newsreader", Georgia, serif; --sans:"Plus Jakarta Sans", system-ui, sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#e9e5ee; font-family:var(--sans); color:var(--tinta); padding:36px 0 60px; }
+  .intro { width:1120px; margin:0 auto 10px; }
+  .intro h1 { font:500 34px/1.2 var(--serif); margin:0 0 6px; }
+  .intro p { margin:0; font-size:17px; line-height:26px; color:var(--tinta-2); max-width:880px; }
+  .rotulo { width:1120px; margin:30px auto 10px; display:flex; gap:12px; align-items:baseline; }
+  .rotulo b { font:700 13px/1 var(--sans); letter-spacing:.08em; color:var(--lila); }
+  .rotulo span { font:500 22px/1 var(--serif); }
+  .rotulo em { font:italic 400 17px/1 var(--serif); color:var(--tinta-2); }
+
+  .ventana { width:1120px; height:620px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;
+    box-shadow:0 1px 2px rgba(24,20,29,.06), 0 18px 44px rgba(24,20,29,.14); }
+  .barra { height:60px; flex:none; display:flex; align-items:center; padding:0 32px; border-bottom:1px solid var(--linea); }
+  .marca { font-weight:700; font-size:17px; width:180px; }
+  .etapas { display:flex; gap:22px; margin:0 auto; }
+  .etapa { width:104px; font:500 14px/1 var(--sans); color:var(--tinta-3); padding-bottom:8px; border-bottom:3px solid var(--linea); }
+  .etapa.hecha { color:var(--tinta); border-color:var(--tinta); } .etapa.aqui { color:var(--tinta); border-color:var(--lila); }
+  .ayuda { width:180px; text-align:right; font-size:15px; font-weight:600; text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--linea-fuerte); }
+  .cuerpo { flex:1; display:grid; grid-template-columns:500px 1fr; min-height:0; }
+  .col { padding:30px 52px 30px 60px; display:flex; flex-direction:column; }
+  .practica { font-size:14px; font-weight:600; color:var(--tinta-3); letter-spacing:.02em; }
+
+  /* Los cuatro cuadros */
+  .cuadros { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px; }
+  .cu { height:64px; border-radius:12px; border:1.5px solid var(--linea); display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px;
+    font-size:13px; font-weight:600; color:var(--tinta-3); background:#fff; }
+  .cu .n { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; border:1.5px solid var(--linea-fuerte); }
+  .cu.hecho { background:#fff; color:var(--tinta); border-color:var(--linea); }
+  .cu.hecho .n { background:var(--hecho); border-color:var(--hecho); color:#fff; }
+  .cu.aqui { background:var(--lila); border-color:var(--lila); color:#fff; box-shadow:0 6px 16px rgba(164,57,255,.28); }
+  .cu.aqui .n { border-color:#fff; background:#fff; color:var(--lila); }
+
+  /* La instrucción de ahora (una sola) */
+  .ahora { margin-top:34px; }
+  .ahora h2 { margin:0; font:500 40px/46px var(--serif); letter-spacing:-.02em; }
+  .ahora h2 em { color:var(--lila); font-style:italic; }
+  .ahora p { margin:12px 0 0; font-size:17px; line-height:26px; color:var(--tinta-2); }
+  .teclas { display:flex; align-items:center; gap:14px; margin-top:24px; }
+  .tecla { min-width:76px; height:76px; padding:0 22px; border-radius:16px; background:#fff; border:2px solid var(--linea-fuerte); border-bottom-width:6px;
+    display:grid; place-items:center; font:600 28px/1 var(--sans); }
+  .tecla.lila { background:var(--lila); border-color:var(--lila-presion); color:#fff; }
+  .mas { font-size:26px; color:var(--tinta-3); }
+  .lee { margin-top:22px; padding:20px 22px; border-radius:16px; background:var(--lila-suave); font:italic 400 25px/36px var(--serif); color:var(--tinta); }
+  .lee small { display:block; font:600 13px/1 var(--sans); font-style:normal; color:var(--lila-presion); margin-bottom:10px; letter-spacing:.04em; }
+  .onda { display:flex; align-items:center; gap:4px; height:30px; margin-top:16px; }
+  .onda i { width:4px; border-radius:2px; background:var(--lila); }
+  .pie { margin-top:auto; display:flex; justify-content:space-between; align-items:center; }
+  .saltar { font-size:15px; color:var(--tinta-2); text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--linea-fuerte); }
+  .boton { height:52px; padding:0 30px; border-radius:12px; background:var(--lila); color:#fff; display:flex; align-items:center; font-weight:600; font-size:17px; }
+
+  /* El escenario: solo el programa donde cae el texto */
+  .escena { background:var(--lino); display:flex; align-items:center; justify-content:center; position:relative; }
+  .hc { width:500px; background:#fff; border:1px solid var(--linea); border-radius:16px; overflow:hidden; box-shadow:0 1px 2px rgba(24,20,29,.05),0 10px 28px rgba(24,20,29,.08); }
+  .hc .cab { height:50px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; background:#faf8fb; border-bottom:1px solid var(--linea); font-size:15px; font-weight:600; }
+  .hc .cab span { font-weight:400; color:var(--tinta-3); font-size:14px; }
+  .hc .cu2 { padding:18px 20px 22px; }
+  .hc label { display:block; font-size:14px; font-weight:600; color:var(--tinta-2); margin:0 0 8px; }
+  .campo { height:132px; border:1.5px solid var(--linea-fuerte); border-radius:12px; padding:14px 16px; font-size:17px; line-height:26px; position:relative; }
+  .campo.llamado { border-color:var(--lila); box-shadow:0 0 0 6px var(--lila-suave); animation:llama 1.6s ease-in-out infinite; }
+  .campo.foco { border-color:var(--lila); }
+  .campo .caret { display:inline-block; width:2px; height:22px; background:var(--tinta); vertical-align:-4px; }
+  .campo .aqui-clic { position:absolute; right:18px; bottom:14px; font-size:13px; font-weight:600; color:var(--lila-presion); background:var(--lila-suave); padding:5px 10px; border-radius:14px; }
+  .otro { height:50px; border:1.5px solid var(--linea); border-radius:12px; margin-top:6px; }
+  .etqs { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .etq { height:32px; padding:0 13px; border-radius:16px; background:var(--lila-suave); color:var(--lila-presion); font-size:14px; font-weight:600; display:flex; align-items:center; gap:6px; }
+  .pildora { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); height:40px; display:flex; align-items:center; gap:10px; padding:0 6px; border-radius:20px; background:var(--noche); }
+  .pildora .b { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; }
+  .pildora .ondita { display:flex; gap:3px; align-items:center; }
+  .pildora .ondita i { width:3px; border-radius:2px; background:#c79bff; }
+  .pildora.puntos { padding:0 18px; gap:6px; } .pildora.puntos i { width:6px; height:6px; border-radius:50%; background:#c79bff; }
+  @keyframes llama { 50% { box-shadow:0 0 0 10px var(--lila-suave); } }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Prácticas: una cosa a la vez</h1>
+    <p>Hoy se lee la izquierda, después un bloque de texto en la derecha, y solo entonces se entiende qué hacer. Propuesta: <b>una sola instrucción grande a la izquierda</b> que cambia sola en cada paso, <b>cuatro cuadros</b> que muestran dónde vas, y <b>la frase solo aparece cuando toca hablar</b>. La derecha queda limpia: el programa donde cae el texto, con un anillo lila donde hay que hacer clic. Abajo, la historia clínica paso a paso; WhatsApp y la fórmula (o Gmail) siguen el mismo molde.</p>
+  </div>
+  <div id="momentos"></div>
+
+<script>
+const PASOS = ["Clic", "Presiona", "Habla", "Presiona"];
+const FRASE = "Paciente de 58 años que consulta por, eh, dolor en la rodilla izquierda, no, perdón, en la rodilla derecha, desde hace tres días.";
+const LIMPIO = "Paciente de 58 años que consulta por dolor en la rodilla derecha desde hace 3 días.";
+const ondita = (n, alto) => Array.from({ length: n }, (_, i) => `<i style="height:${(alto * (0.35 + 0.65 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * 0.6)))).toFixed(0)}px"></i>`).join("");
+const X = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
+const OK = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#18141d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const VISTO = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+const MOMENTOS = [
+  { r: "Haz clic en el campo", paso: 0,
+    izq: `<h2>Haz clic en <em>Motivo de consulta</em>.</h2><p>Ahí va a caer lo que dictes.</p>`,
+    campo: "llamado", dentro: `<span class="aqui-clic">Clic aquí</span>` },
+  { r: "Presiona las dos teclas", paso: 1,
+    izq: `<h2>Presiona <em>las dos teclas</em>.</h2><div class="teclas"><div class="tecla lila">⌥</div><span class="mas">+</span><div class="tecla lila">Espacio</div></div><p>Primero ⌥ y, sin soltarla, Espacio.</p>`,
+    campo: "foco", dentro: `<span class="caret"></span>` },
+  { r: "Lee la frase en voz alta", paso: 2,
+    izq: `<h2>Ahora, <em>léela</em> en voz alta.</h2><div class="lee"><small>CON EL «EH» Y LA EQUIVOCACIÓN</small>«${FRASE}»</div><div class="onda">${ondita(26, 28)}</div>`,
+    campo: "foco", dentro: `<span class="caret"></span>`, pildora: "grabando" },
+  { r: "Presiona otra vez para terminar", paso: 3,
+    izq: `<h2>Listo. Presiona <em>otra vez</em>.</h2><div class="teclas"><div class="tecla lila">⌥</div><span class="mas">+</span><div class="tecla lila">Espacio</div></div><p>Así termina cada dictado.</p>`,
+    campo: "foco", dentro: `<span class="caret"></span>`, pildora: "grabando" },
+  { r: "Así quedó", paso: 4,
+    izq: `<h2>Así de <em>limpio</em> quedó.</h2><p>Sin el «eh», y con «derecha», que fue lo que quisiste decir.</p>`,
+    campo: "", dentro: LIMPIO, etqs: ["Quitó el «eh»", "Cambió «izquierda» por «derecha»"], boton: true },
+];
+
+function ventana(m) {
+  const cuadros = PASOS.map((p, i) => {
+    const c = i < m.paso ? "hecho" : i === m.paso ? "aqui" : "";
+    return `<div class="cu ${c}"><span class="n">${i < m.paso ? VISTO : i + 1}</span>${p}</div>`;
+  }).join("");
+  const pild = m.pildora === "grabando"
+    ? `<div class="pildora"><span class="b" style="background:rgba(255,255,255,.14)">${X}</span><span class="ondita">${ondita(18, 22)}</span><span class="b" style="background:#fff">${OK}</span></div>` : "";
+  return `<div class="ventana">
+    <div class="barra"><div class="marca">CloseLabs</div><div class="etapas"><div class="etapa hecha">Cuenta</div><div class="etapa hecha">Permisos</div><div class="etapa hecha">Prueba</div><div class="etapa aqui">Práctica</div></div><div class="ayuda">¿Necesitas ayuda?</div></div>
+    <div class="cuerpo">
+      <div class="col">
+        <div class="practica">PRÁCTICA 1 DE 3 · HISTORIA CLÍNICA</div>
+        <div class="cuadros">${cuadros}</div>
+        <div class="ahora">${m.izq}</div>
+        <div class="pie"><span class="saltar">Saltar la práctica</span>${m.boton ? `<span class="boton">Continuar</span>` : ""}</div>
+      </div>
+      <div class="escena">
+        <div class="hc"><div class="cab">Historia clínica <span>Marta Rojas · 58 años</span></div>
+          <div class="cu2"><label>Motivo de consulta</label><div class="campo ${m.campo}">${m.dentro}</div>
+          ${m.etqs ? `<div class="etqs">${m.etqs.map(e => `<span class="etq">✓ ${e}</span>`).join("")}</div>` : ""}
+          <label style="margin-top:16px">Examen físico</label><div class="otro"></div></div></div>
+        ${pild}
+      </div>
+    </div></div>`;
+}
+document.getElementById("momentos").innerHTML = MOMENTOS.map((m, i) =>
+  `<div class="rotulo"><b>${i + 1}</b><span>${m.r}</span></div>${ventana(m)}`).join("");
+</script>
+</body>
+</html>
