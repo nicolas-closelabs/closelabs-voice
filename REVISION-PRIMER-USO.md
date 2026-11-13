@@ -234,3 +234,15 @@ nos vemos muy AI". Esto es lo observado; qué aplicar se decide con él.
   derecho), al estilo de Wispr.
 - Obligatorio: rediseñar también Diccionario, Mi cuenta, Ayuda, Acerca de y los estados de error.
 - No aplicar nada en la app hasta el OK de Nicolás sobre la segunda maqueta.
+
+## 2026-11-12 — "can't be opened" en el Mac de un médico (M2) con la 0.9.4
+
+- El instalador está sano (firmado y notarizado, macOS 10.15+, arranca en un M4).
+- Causa reproducida: la versión anterior (0.9.3) seguía corriendo en segundo plano (arranque al
+  encender el computador). Mientras corre, macOS NO lanza la nueva (le pasa el turno a la vieja) y el
+  Finder dice "The application can't be opened", aunque la vieja ya se haya borrado de Aplicaciones:
+  borrar el .app no cierra el proceso.
+- Arreglo para el médico: reiniciar el Mac (o Monitor de Actividad → CloseLabs Voice → Salir) y abrir
+  la nueva desde Aplicaciones.
+- La web de descarga (Mac) ya lo avisa. La actualización automática no tiene este problema (cierra y
+  relanza la app); solo pasa al reinstalar a mano con la vieja abierta.
