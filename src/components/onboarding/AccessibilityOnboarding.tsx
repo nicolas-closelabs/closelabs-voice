@@ -14,6 +14,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import PlantillaPrimerUso from "../tinta/PlantillaPrimerUso";
 import { ListaPasos, type EstadoPaso } from "../tinta/Pasos";
 import { IlustracionVoz } from "../auth/Bienvenida";
+import { GuiaPermisosMac, GuiaPermisosWindows } from "./GuiaPermisos";
 
 interface AccessibilityOnboardingProps {
   onComplete: () => void;
@@ -345,6 +346,26 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
               : "Abrir Ajustes del Sistema",
           onClick: () => void handleGrantAccessibility(),
         };
+  if (principal && isWindows && permissions.microphone === "waiting") {
+    principal.texto = "Abrir la configuración de Windows otra vez";
+  }
+
+  // La guía viva de la derecha (maqueta aprobada el 2026-11-12, diseno/maquetas/permisos.html):
+  // en Mac, para Accesibilidad (el micrófono lo pide macOS con su propio aviso); en Windows, para el
+  // micrófono, que solo se ve aquí si Windows lo tiene bloqueado.
+  const guiaMac = isMacOS && micListo && !accListo;
+  const guiaWindows = isWindows && !micListo;
+  const escenario = guiaMac ? (
+    <GuiaPermisosMac
+      momento={permissions.accessibility === "waiting" ? "esperando" : "antes"}
+    />
+  ) : guiaWindows ? (
+    <GuiaPermisosWindows
+      momento={permissions.microphone === "waiting" ? "esperando" : "antes"}
+    />
+  ) : (
+    <IlustracionVoz />
+  );
 
   return (
     <PlantillaPrimerUso
@@ -354,97 +375,14 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
       apoyo={
         isMacOS
           ? "macOS te los pide una sola vez."
-          : "Windows te lo pide una sola vez."
+          : "Windows tiene el micrófono apagado. Se enciende una sola vez."
       }
       principal={principal}
-      escenario={isMacOS && micListo && !accListo ? <MiniAjustes /> : <IlustracionVoz />}
-      notaEscenario={
-        isMacOS && micListo && !accListo
-          ? "Se abre Ajustes del Sistema y te señalamos dónde tocar."
-          : undefined
-      }
+      escenario={escenario}
       mensajeAyuda="Hola, no logro dar los permisos de CloseLabs Voice."
     >
-      <ListaPasos pasos={pasos} />
+      <ListaPasos pasos={pasos} conectarActual={guiaMac || guiaWindows} />
     </PlantillaPrimerUso>
-  );
-};
-
-/**
- * Adelanto de lo que va a ver: Ajustes del Sistema en Accesibilidad, con CloseLabs Voice apagado, y
- * nuestra ventanita pegada debajo. Dibujado con la interfaz del sistema, no con nuestro estilo, para
- * que lo reconozca al verlo de verdad.
- */
-const MiniAjustes: React.FC = () => {
-  const filas: [string, boolean, boolean][] = [
-    ["Google Chrome", true, false],
-    ["CloseLabs Voice", false, true],
-    ["Microsoft Word", true, false],
-    ["Zoom", false, false],
-  ];
-  return (
-    <div className="flex flex-col items-center" aria-hidden>
-      <div className="w-[436px] h-[250px] rounded-[12px] bg-[#F6F5F8] shadow-2 border border-linea overflow-hidden flex">
-        <div className="w-[120px] bg-[#ECEAF0] p-4 flex flex-col gap-2.5">
-          {[70, 54, 82, 64, 76, 50].map((w, i) => (
-            <span key={i} className="h-2 rounded bg-[#D6D3DC]" style={{ width: w }} />
-          ))}
-        </div>
-        <div className="flex-1 p-4 font-[system-ui] text-left">
-          <div className="text-[13px] font-semibold text-[#1d1d1f]">Accesibilidad</div>
-          <div className="text-[10px] text-[#6e6e73] mb-3">
-            Permite que estas apps controlen tu computador.
-          </div>
-          <div className="rounded-[8px] bg-white border border-[#E3E1E7] overflow-hidden">
-            {filas.map(([nombre, on, nuestra]) => (
-              <div
-                key={nombre}
-                className="h-[34px] px-3 flex items-center gap-2.5 border-b last:border-b-0 border-[#EEECF1]"
-              >
-                {nuestra ? (
-                  <img
-                    src="/brand/closelabs-isotype-black.png"
-                    alt=""
-                    className="w-[18px] h-[18px] object-contain"
-                  />
-                ) : (
-                  <span className="w-[18px] h-[18px] rounded-[5px] bg-[#E3E1E7]" />
-                )}
-                <span className="flex-1 text-[12px] text-[#1d1d1f]">{nombre}</span>
-                <span
-                  className={`w-[30px] h-[18px] rounded-full relative ${
-                    on ? "bg-[#3478F6]" : "bg-[#E1DFE5]"
-                  } ${nuestra ? "ring-[3px] ring-lila ring-offset-1" : ""}`}
-                >
-                  <span
-                    className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow ${
-                      on ? "left-[14px]" : "left-[2px]"
-                    }`}
-                  />
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="-mt-2 w-[380px] rounded-[14px] bg-noche border border-white/18 shadow-flota px-4 py-3 flex items-center gap-3">
-        <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-lila">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 19V5M12 5l-6 6M12 5l6 6"
-              stroke="#fff"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-        <span className="flex-1 text-[13px] leading-[18px] text-white text-left">
-          Busca <strong>CloseLabs Voice</strong> en la lista de arriba y enciende
-          su interruptor.
-        </span>
-      </div>
-    </div>
   );
 };
 

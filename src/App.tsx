@@ -25,6 +25,7 @@ import PrimerDictado, {
 } from "./components/onboarding/PrimerDictado";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { IR_A_SECCION } from "./components/settings/home/HomeSettings";
+import { VideoComoFunciona } from "./components/VideoComoFunciona";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { useModelStore } from "./stores/modelStore";
@@ -680,6 +681,7 @@ function App() {
       dir={direction}
       className="h-screen flex flex-col select-none cursor-default"
     >
+      <VideoComoFunciona />
       <FinDePruebaModal
         motivo={finDePrueba}
         onCerrar={cerrarFinDePrueba}

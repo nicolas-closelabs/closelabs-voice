@@ -6,6 +6,7 @@ import { ABRIR_PRIMER_DICTADO } from "../../onboarding/PrimerDictado";
 import { Teclas } from "../../tinta/Teclas";
 import { BotonSecundario, Enlace } from "../../tinta/Botones";
 import { Aviso } from "../../tinta/Campos";
+import { ABRIR_VIDEO_TUTORIAL } from "../../VideoComoFunciona";
 
 /** Evento para cambiar de sección desde una página (Inicio → Diccionario). Lo escucha App. */
 export const IR_A_SECCION = "clv:ir-a-seccion";
@@ -57,6 +58,12 @@ export const HomeSettings: React.FC = () => {
         >
           Hacer un dictado de prueba
         </BotonSecundario>
+        <Enlace
+          className="mt-4"
+          onClick={() => window.dispatchEvent(new Event(ABRIR_VIDEO_TUTORIAL))}
+        >
+          Ver cómo funciona (40 s)
+        </Enlace>
       </div>
 
       <p className="pb-8 text-center text-[16px] text-tinta-2">

@@ -48,16 +48,28 @@ export interface Paso {
   estado: EstadoPaso;
 }
 
-export const ListaPasos: React.FC<{ pasos: Paso[]; compacta?: boolean }> = ({
-  pasos,
-  compacta,
-}) => (
+/**
+ * `conectarActual`: el paso de ahora se ata al escenario de la derecha (fondo lila suave, "Mira cómo →"
+ * y una línea lila hasta el borde de la columna), para que el médico mire la guía viva de Permisos.
+ */
+export const ListaPasos: React.FC<{
+  pasos: Paso[];
+  compacta?: boolean;
+  conectarActual?: boolean;
+}> = ({ pasos, compacta, conectarActual }) => (
   <ul className="border-t border-linea">
-    {pasos.map((p) => (
+    {pasos.map((p) => {
+      const conectado =
+        conectarActual && (p.estado === "ahora" || p.estado === "en-curso");
+      return (
       <li
         key={p.nombre}
-        className={`flex items-center gap-4 border-b border-linea ${
+        className={`relative flex items-center gap-4 border-b border-linea ${
           compacta ? "py-3.5" : "py-[18px]"
+        } ${
+          conectado
+            ? "bg-gradient-to-r from-transparent to-lila-suave after:content-[''] after:absolute after:top-1/2 after:left-full after:h-[2px] after:w-10 min-[1120px]:after:w-14 after:bg-lila"
+            : ""
         }`}
       >
         <Marca estado={p.estado} />
@@ -81,8 +93,14 @@ export const ListaPasos: React.FC<{ pasos: Paso[]; compacta?: boolean }> = ({
         {p.estado === "hecho" && (
           <span className="text-[15px] font-semibold text-hecho">Listo</span>
         )}
+        {conectado && (
+          <span className="mr-3.5 shrink-0 text-[14px] font-semibold text-lila whitespace-nowrap">
+            Mira cómo →
+          </span>
+        )}
       </li>
-    ))}
+      );
+    })}
   </ul>
 );
 

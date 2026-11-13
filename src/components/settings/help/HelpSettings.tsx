@@ -9,6 +9,7 @@ import { pasteShortcut } from "../../../lib/utils/shortcutLabels";
 import type { OSType } from "../../../lib/utils/keyboard";
 import { Titulo } from "../../tinta/Titulo";
 import { BotonPrincipal, BotonSecundario } from "../../tinta/Botones";
+import { ABRIR_VIDEO_TUTORIAL } from "../../VideoComoFunciona";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 
 interface QA {
@@ -100,6 +101,17 @@ export const HelpSettings: React.FC = () => {
       <Titulo>Ayuda</Titulo>
 
       <SettingsGroup title="Hablar con nosotros">
+        <Renglon
+          nombre="Ver cómo funciona"
+          frase="Un video de 40 segundos: cómo dictar y cómo usar el Diccionario."
+        >
+          <BotonSecundario
+            medida="corto"
+            onClick={() => window.dispatchEvent(new Event(ABRIR_VIDEO_TUTORIAL))}
+          >
+            Ver el video
+          </BotonSecundario>
+        </Renglon>
         <Renglon
           nombre="Escríbenos por WhatsApp"
           frase={`Te responde una persona: ${BRANDING.supportWhatsappDisplay}`}

@@ -222,6 +222,12 @@ h6 {
     transform: scaleX(1);
   }
 }
+/* El punto de "Te estamos esperando…" en la guía de Permisos (GuiaPermisos.tsx). */
+@keyframes late {
+  50% {
+    opacity: 0.25;
+  }
+}
 @keyframes etiqueta {
   from {
     opacity: 0;
