@@ -6,8 +6,8 @@
 <path d="M370 235 L478 235" stroke="#18141D" stroke-width="3"/>
 <path d="M352 150 L364 136 M362 162 L380 154 M340 142 L344 124" stroke="#18141D" stroke-width="2.5"/>
 <text x="280" y="76" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="34" font-weight="500" fill="#18141D" letter-spacing="-0.4">Haz <tspan font-style="italic" fill="#A439FF">doble clic</tspan> en el ícono</text>
-<text x="280" y="330" text-anchor="middle" font-family="'Plus Jakarta Sans', Helvetica, sans-serif" font-size="15" fill="#55505E">Se instala sola en unos segundos.</text>
+<text x="280" y="330" text-anchor="middle" font-family="'Schibsted Grotesk', Helvetica, sans-serif" font-size="15" fill="#55505E">Se instala sola en unos segundos.</text>
 <path d="M150 348 L410 348" stroke="#CFCAD4" stroke-width="1"/>
-<text x="280" y="368" text-anchor="middle" font-family="'Plus Jakarta Sans', Helvetica, sans-serif" font-size="13" fill="#55505E"><tspan font-weight="600" fill="#18141D">¿Ya tenías CloseLabs Voice?</tspan> Ciérrala antes: clic en su ícono,</text>
-<text x="280" y="386" text-anchor="middle" font-family="'Plus Jakarta Sans', Helvetica, sans-serif" font-size="13" fill="#55505E">arriba a la derecha, y luego <tspan font-weight="600" fill="#18141D">Salir</tspan>. O reinicia tu Mac.</text>
+<text x="280" y="368" text-anchor="middle" font-family="'Schibsted Grotesk', Helvetica, sans-serif" font-size="13" fill="#55505E"><tspan font-weight="600" fill="#18141D">¿Ya tenías CloseLabs Voice?</tspan> Ciérrala antes: clic en su ícono,</text>
+<text x="280" y="386" text-anchor="middle" font-family="'Schibsted Grotesk', Helvetica, sans-serif" font-size="13" fill="#55505E">arriba a la derecha, y luego <tspan font-weight="600" fill="#18141D">Salir</tspan>. O reinicia tu Mac.</text>
 </svg>

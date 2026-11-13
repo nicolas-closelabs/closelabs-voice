@@ -12,7 +12,7 @@ CSS = r"""
   --noche:#18141D; --noche-2:#221B29;
   --ok:#1F7A4D; --aviso:#6B4500; --aviso-fondo:#FFF3D6; --aviso-punto:#C98A00; --error:#B3261E;
   --serif:"Newsreader", Georgia, "Times New Roman", serif;
-  --sans:"Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --sans:"Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
   --sombra-1:0 1px 2px rgba(24,20,29,.06);
   --sombra-2:0 1px 2px rgba(24,20,29,.05), 0 10px 28px rgba(24,20,29,.08);
   --sombra-flota:0 8px 24px rgba(0,0,0,.28);
@@ -646,7 +646,7 @@ P.append(marco("Panel de descarga en la web", "1120 × 600. La misma plantilla d
 HTML = ('<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><title>CloseLabs Voice · Maquetas</title>\n'
         '<meta name="viewport" content="width=1240">\n'
         '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-        '<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Plus+Jakarta+Sans:wght@400..700&display=swap" rel="stylesheet">\n'
+        '<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Schibsted+Grotesk:wght@400..700&display=swap" rel="stylesheet">\n'
         '<style>' + CSS + '</style></head>\n<body><div class="pagina">\n' + "\n".join(P) + '\n</div></body></html>\n')
 open(os.path.join(RAIZ, "maquetas", "index.html"), "w").write(HTML)
 print("ok", len(HTML))
