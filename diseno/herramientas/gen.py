@@ -73,12 +73,8 @@ def il_dmg():
     c.append('<path d="M352 150 L364 136 M362 162 L380 154 M340 142 L344 124" stroke="%s" stroke-width="2.5"/>'%TINTA)
     c.append('<text x="280" y="76" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="34" font-weight="500" fill="%s" letter-spacing="-0.4">Haz <tspan font-style="italic" fill="%s">doble clic</tspan> en el ícono</text>'%(TINTA,LILA))
     c.append('<text x="280" y="330" text-anchor="middle" font-family="\'Plus Jakarta Sans\', Helvetica, sans-serif" font-size="15" fill="#55505E">Se instala sola en unos segundos.</text>')
-    # Si la versión anterior sigue abierta (el botón rojo solo esconde la ventana), macOS no deja abrir
-    # la nueva y dice "can't be opened" (REVISION-PRIMER-USO.md, 2026-11-12). Mismo texto que la web.
-    c.append('<path d="M150 348 L410 348" stroke="%s" stroke-width="1"/>'%LINEA)
-    nota='font-family="\'Plus Jakarta Sans\', Helvetica, sans-serif" font-size="13" fill="#55505E"'
-    c.append('<text x="280" y="368" text-anchor="middle" %s><tspan font-weight="600" fill="%s">¿Ya tenías CloseLabs Voice?</tspan> Ciérrala antes: clic en su ícono,</text>'%(nota,TINTA))
-    c.append('<text x="280" y="386" text-anchor="middle" %s>arriba a la derecha, y luego <tspan font-weight="600" fill="%s">Salir</tspan>. O reinicia tu Mac.</text>'%(nota,TINTA))
+    # (2026-11-13) Se quitó el aviso "¿Ya tenías CloseLabs Voice? Ciérrala antes…": Nicolás lo vio como
+    # ruido, y además quedaba cortado abajo (la ventana del .dmg sale más baja que el fondo).
     return svg(560,400,"\n".join(c))
 
 ILS={"voz-a-texto.svg":il_voz(),"privacidad.svg":il_priv(),"correo-codigo.svg":il_correo(),"dmg-fondo.svg":il_dmg()}
