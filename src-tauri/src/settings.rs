@@ -193,9 +193,15 @@ pub enum KeyboardImplementation {
 
 impl Default for KeyboardImplementation {
     fn default() -> Self {
-        #[cfg(target_os = "linux")]
+        // CloseLabs (2026-11-12): en Mac, el atajo va por Tauri (`RegisterEventHotKey` de Carbon),
+        // NO por handy-keys (CGEventTap). Cuando otra app enciende la "entrada segura" de macOS
+        // —Chrome lo hace con un campo de contraseña y a veces la deja puesta en segundo plano—,
+        // macOS deja de mandarle teclas a todo CGEventTap: ⌥+Espacio no hacía nada y el primer uso
+        // quedaba trabado. Medido en el Mac de Nicolás con la entrada segura encendida: Carbon
+        // recibió 7 de 7 pulsaciones; handy-keys, 0. Ver `atajo_mac_carbon` y REVISION-PRIMER-USO.md.
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         return KeyboardImplementation::Tauri;
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         return KeyboardImplementation::HandyKeys;
     }
 }
@@ -475,6 +481,10 @@ pub struct AppSettings {
     pub lazy_stream_close: bool,
     #[serde(default)]
     pub keyboard_implementation: KeyboardImplementation,
+    /// Marca de la migración única que pasa el atajo de Mac a Carbon (ver `KeyboardImplementation`).
+    /// Solo importa si la clave existe en el archivo: si falta, es una instalación anterior.
+    #[serde(default)]
+    pub atajo_mac_carbon: bool,
     #[serde(default = "default_show_tray_icon")]
     pub show_tray_icon: bool,
     #[serde(default = "default_paste_delay_ms")]
@@ -1034,6 +1044,7 @@ pub fn get_default_settings() -> AppSettings {
         experimental_enabled: false,
         lazy_stream_close: false,
         keyboard_implementation: KeyboardImplementation::default(),
+        atajo_mac_carbon: true,
         show_tray_icon: default_show_tray_icon(),
         paste_delay_ms: default_paste_delay_ms(),
         typing_tool: default_typing_tool(),
@@ -1178,6 +1189,18 @@ fn apply_settings_migrations(
             // es quedarse sin ninguno.
             None => log::error!("El catálogo está vacío; no se puede corregir el modelo"),
         }
+    }
+
+    // Una sola vez: en Mac, las instalaciones anteriores pasan el atajo a Carbon (ver
+    // `KeyboardImplementation`). Si después alguien lo cambia a mano, la marca ya existe y se respeta.
+    if settings_value.get("atajo_mac_carbon").is_none() {
+        #[cfg(target_os = "macos")]
+        if settings.keyboard_implementation != KeyboardImplementation::Tauri {
+            log::info!("Atajo de Mac: de handy-keys a Carbon (la entrada segura de otra app lo bloqueaba)");
+            settings.keyboard_implementation = KeyboardImplementation::Tauri;
+        }
+        settings.atajo_mac_carbon = true;
+        updated = true;
     }
 
     // One-time onboarding migration: users with an explicit selected model have

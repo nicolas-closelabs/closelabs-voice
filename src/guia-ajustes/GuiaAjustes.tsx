@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string */
 import React from "react";
-import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/schibsted-grotesk";
 
 /**
  * La ventanita pegada debajo de Ajustes del Sistema (ver `guia_ajustes.rs`): una sola instrucción
@@ -14,7 +14,7 @@ const GuiaAjustes: React.FC = () => (
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontFamily: '"Plus Jakarta Sans Variable", system-ui, sans-serif',
+      fontFamily: '"Schibsted Grotesk Variable", system-ui, sans-serif',
       userSelect: "none",
       cursor: "default",
     }}

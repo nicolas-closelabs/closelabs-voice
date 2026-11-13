@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tipografías</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Plus+Jakarta+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+  :root { --tinta:#18141d; --tinta-2:#55505e; --tinta-3:#6e6877; --papel:#fff; --lino:#f5f1f8; --linea:#e6e2ea;
+    --linea-fuerte:#cfcad4; --lila:#a439ff; --serif:"Newsreader", Georgia, serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#ece8f0; padding:40px; font-family:var(--serif); color:var(--tinta); }
+  h1.pag { font:500 34px/1.2 var(--serif); margin:0 0 6px; letter-spacing:-.01em; }
+  p.pag { font:400 17px/1.5 "Plus Jakarta Sans"; color:var(--tinta-2); margin:0 0 32px; max-width:900px; }
+  .fila { display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-bottom:28px; }
+  .opcion { font-family:var(--sans); background:var(--papel); border-radius:18px; overflow:hidden; box-shadow:0 1px 2px rgba(24,20,29,.05),0 10px 28px rgba(24,20,29,.08); }
+  .rotulo { display:flex; align-items:baseline; gap:12px; padding:16px 22px; border-bottom:1px solid var(--linea); background:#faf8fb; }
+  .rotulo b { font:600 15px/1 "Plus Jakarta Sans"; letter-spacing:.02em; text-transform:uppercase; color:var(--tinta-3); }
+  .rotulo span { font:500 22px/1 var(--serif); }
+  .rotulo em { margin-left:auto; font:italic 400 16px/1 var(--serif); color:var(--tinta-2); }
+  .app { display:grid; grid-template-columns: 170px 1fr; height:340px; }
+  .menu { background:var(--lino); padding:22px 0 0 18px; }
+  .menu .logo { font-weight:600; font-size:16px; margin-bottom:22px; display:flex; gap:7px; align-items:center; }
+  .menu .logo i { width:16px; height:16px; border:3px solid var(--tinta); border-radius:4px; transform:rotate(30deg); }
+  .menu div.it { font-size:15px; color:var(--tinta-2); padding:8px 10px; margin-right:14px; border-radius:9px; }
+  .menu div.it.on { background:#fff; color:var(--tinta); font-weight:600; box-shadow:inset 3px 0 0 var(--lila); }
+  .inicio { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 26px; }
+  .frase { font:500 26px/38px var(--serif); letter-spacing:-.015em; max-width:430px; }
+  .frase em { color:var(--lila); font-style:italic; }
+  .kbd { font-family:var(--sans); display:inline-flex; align-items:center; justify-content:center; height:30px; padding:0 9px; border:1.5px solid var(--linea-fuerte);
+    border-bottom-width:3px; border-radius:8px; font-size:14px; font-weight:600; vertical-align:3px; background:#fff; }
+  .bsec { margin-top:22px; height:42px; padding:0 18px; border:1.5px solid var(--linea-fuerte); border-radius:11px; background:#fff;
+    font-size:16px; font-weight:600; color:var(--tinta); display:inline-flex; align-items:center; }
+  .pie { margin-top:26px; font-size:14px; color:var(--tinta-2); }
+  .pie u { color:var(--tinta); font-weight:600; text-underline-offset:4px; text-decoration-color:var(--linea-fuerte); }
+  .primer { border-top:1px solid var(--linea); display:grid; grid-template-columns:1fr 1fr; }
+  .col { padding:24px 26px; }
+  .col h3 { font:500 28px/34px var(--serif); margin:0; letter-spacing:-.015em; }
+  .col h3 em { color:var(--lila); font-style:italic; }
+  .col p { font-size:16px; line-height:24px; color:var(--tinta-2); margin:8px 0 16px; }
+  .col label { display:block; font-size:14px; font-weight:600; margin-bottom:6px; }
+  .campo { height:44px; border:1.5px solid var(--linea-fuerte); border-radius:11px; display:flex; align-items:center; padding:0 13px;
+    font-size:16px; color:var(--tinta); margin-bottom:14px; }
+  .bpri { height:46px; border-radius:12px; background:var(--tinta); color:#fff; font-size:16px; font-weight:600; display:flex;
+    align-items:center; justify-content:center; }
+  .escena { background:var(--lino); padding:24px; display:flex; flex-direction:column; justify-content:center; gap:10px; }
+  .paso { display:flex; gap:12px; align-items:center; background:#fff; border:1px solid var(--linea); border-radius:12px; padding:12px 14px; font-size:15px; }
+  .paso .n { width:24px; height:24px; border-radius:50%; background:var(--tinta); color:#fff; font-size:13px; font-weight:600; display:grid; place-items:center; }
+  .paso.off .n { background:#fff; color:var(--tinta-3); border:1.5px solid var(--linea-fuerte); }
+  .paso small { display:block; color:var(--tinta-2); font-size:13px; margin-top:2px; }
+  .especimen { padding:18px 22px 6px; font-size:30px; line-height:40px; font-weight:600; letter-spacing:-.01em; color:var(--tinta); }
+  .especimen span { color:var(--tinta-3); font-weight:400; }
+  .opcion.d .menu div.it, .opcion.d .bsec, .opcion.d .bpri, .opcion.d .especimen, .opcion.d .paso div, .opcion.d .menu .logo { font-family:var(--serif); }
+  .opcion.d .bsec, .opcion.d .bpri { font-size:18px; font-weight:500; }
+  .opcion.d .menu div.it { font-size:17px; }
+  .opcion.d .especimen { font-weight:500; }
+  .muestra { padding:16px 22px 20px; border-top:1px solid var(--linea); font-size:15px; line-height:23px; color:var(--tinta-2); }
+  .muestra strong { color:var(--tinta); }
+</style>
+</head>
+<body>
+  <h1 class="pag">¿Con qué letra van los botones, el menú y los textos?</h1>
+  <p class="pag">Los títulos y las frases siguen en Newsreader (la de «Haz clic donde quieras escribir»). Cambia solo la letra de todo lo demás: botones, menú, campos, explicaciones. Las cinco muestras son la misma pantalla; arriba de cada una, los botones en grande.</p>
+
+  <div class="fila">
+    <section class="opcion" style="--sans:'Plus Jakarta Sans'">
+      <div class="rotulo"><b>Hoy</b><span>Plus Jakarta Sans</span><em>redondita</em></div>
+      <!--CUERPO-->
+    </section>
+    <section class="opcion" style="--sans:'Schibsted Grotesk'">
+      <div class="rotulo"><b>A</b><span>Schibsted Grotesk</span><em>de periódico, firme</em></div>
+      <!--CUERPO-->
+    </section>
+  </div>
+  <div class="fila">
+    <section class="opcion" style="--sans:'Instrument Sans'">
+      <div class="rotulo"><b>B</b><span>Instrument Sans</span><em>limpia y afilada</em></div>
+      <!--CUERPO-->
+    </section>
+    <section class="opcion" style="--sans:'Bricolage Grotesque'">
+      <div class="rotulo"><b>C</b><span>Bricolage Grotesque</span><em>con más carácter</em></div>
+      <!--CUERPO-->
+    </section>
+  </div>
+
+  <div class="fila">
+    <section class="opcion d" style="--sans:'Schibsted Grotesk'">
+      <div class="rotulo"><b>D</b><span>Newsreader + Schibsted</span><em>botones y menú en la serif</em></div>
+      <!--CUERPO-->
+    </section>
+  </div>
+<template id="cuerpo">
+  <div class="especimen">Hacer un dictado de prueba <span>· Continuar · Mi cuenta</span></div>
+  <div class="app">
+    <nav class="menu">
+      <div class="logo"><i></i>CloseLabs</div>
+      <div class="it on">Inicio</div><div class="it">Diccionario</div><div class="it">Mi cuenta</div><div class="it">Configuración</div><div class="it">Ayuda</div>
+    </nav>
+    <div class="inicio">
+      <div class="frase">Haz clic donde quieras escribir, presiona <span class="kbd">⌥</span> + <span class="kbd">Espacio</span>, habla, y presiona otra vez para <em>terminar</em>.</div>
+      <span class="bsec">Hacer un dictado de prueba</span>
+      <div class="pie">¿Escribió mal una palabra? <u>Agrégala al Diccionario</u></div>
+    </div>
+  </div>
+  <div class="primer">
+    <div class="col">
+      <h3>Crea tu <em>cuenta</em></h3>
+      <p>Con tu correo. Te mandamos un código de 6 números para confirmarlo.</p>
+      <label>Correo</label>
+      <div class="campo">dra.rojas@clinica.co</div>
+      <div class="bpri">Continuar</div>
+    </div>
+    <div class="escena">
+      <div class="paso"><span class="n">1</span><div>Micrófono<small>Listo</small></div></div>
+      <div class="paso off"><span class="n">2</span><div>Accesibilidad<small>Para escribir donde tengas el cursor</small></div></div>
+    </div>
+  </div>
+  <div class="muestra"><strong>Prueba gratis · Te quedan 12 días.</strong> Después, US$12 al mes. Tus dictados no se almacenan ni se usan para entrenar modelos. 0123456789</div>
+</template>
+<script>
+  const t = document.getElementById('cuerpo').innerHTML;
+  document.querySelectorAll('.opcion').forEach(s => s.innerHTML = s.innerHTML.replace('<!--CUERPO-->', t));
+</script>
+</body>
+</html>

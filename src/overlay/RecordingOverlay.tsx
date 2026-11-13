@@ -19,9 +19,7 @@ type OverlayState =
   | "recording"
   | "streaming"
   | "transcribing"
-  | "processing"
-  // «Tinta y voz»: "¿No apareció? Quedó copiado…" (ver `mostrar_aviso_pegado` en overlay.rs).
-  | "pegado";
+  | "processing";
 
 /**
  * Aviso "Presiona ⌥ + Espacio para terminar" en la píldora, en vez del lema, durante los primeros
@@ -349,18 +347,9 @@ const RecordingOverlay: React.FC = () => {
   // ✕ (cancela) · la onda · ✓ (termina). Escribiendo: "Escribiendo" y tres puntos. Sin logo ni lema
   // (revisión del 2026-11-11: lo más grande era el logo, no que estaba grabando ni cómo terminar).
   const working = state === "transcribing" || state === "processing";
-  const esMac = /Mac/i.test(navigator.userAgent);
 
   let pildora: React.ReactNode;
-  if (state === "pegado") {
-    pildora = (
-      <div className="tv-pill tv-msg">
-        ¿No apareció? Quedó copiado: pega con{" "}
-        <kbd className="tv-kbd">{esMac ? "⌘" : "Ctrl"}</kbd> +{" "}
-        <kbd className="tv-kbd">V</kbd>
-      </div>
-    );
-  } else if (working) {
+  if (working) {
     pildora = (
       <div className="tv-pill tv-msg">
         Escribiendo

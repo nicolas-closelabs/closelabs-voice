@@ -309,9 +309,9 @@
     url = "https://registry.npmjs.org/@fontsource-variable/newsreader/-/newsreader-5.3.0.tgz";
     hash = "sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw==";
   };
-  "@fontsource-variable/plus-jakarta-sans@5.2.8" = fetchurl {
-    url = "https://registry.npmjs.org/@fontsource-variable/plus-jakarta-sans/-/plus-jakarta-sans-5.2.8.tgz";
-    hash = "sha512-iQecBizIdZxezODNHzOn4SvvRMrZL/S8k4MEXGDynCmUrImVW0VmX+tIAMqnADwH4haXlHSXqMgU6+kcfBQJdw==";
+  "@fontsource-variable/schibsted-grotesk@5.3.0" = fetchurl {
+    url = "https://registry.npmjs.org/@fontsource-variable/schibsted-grotesk/-/schibsted-grotesk-5.3.0.tgz";
+    hash = "sha512-ndS6H/KICWANchlHF3q4UdZD+xrZ3Ji0rUobIuXlgvDUzDfqZDsVuXPXZb636nJZMHE9zZ9Fmwgqazm8hMB50Q==";
   };
   "@humanfs/core@0.19.1" = fetchurl {
     url = "https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz";

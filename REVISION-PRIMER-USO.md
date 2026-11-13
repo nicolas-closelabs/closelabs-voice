@@ -256,3 +256,21 @@ nos vemos muy AI". Esto es lo observado; qué aplicar se decide con él.
   NO da el error. Sin probar: qué pasa si el médico toca Cancelar.
 - El fondo del .dmg ahora también lo avisa, debajo del ícono, con el mismo texto que la web
   ("¿Ya tenías CloseLabs Voice? Ciérrala antes…"). Sale en la próxima compilación.
+
+## 2026-11-12 — Recorrido en el Mac de Nicolás: "ningún test funcionó"
+
+- **Atajo (causa comprobada):** Chrome tenía encendida la "entrada segura" de macOS
+  (`ioreg … kCGSSessionSecureInputPID` = Chrome) y la vuelve a encender al abrirse con sus pestañas.
+  Con ella encendida macOS no le manda teclas a ningún CGEventTap: handy-keys (el método de la app en
+  Mac) no recibió ni una pulsación, aunque su tap existía y estaba activo (`CGGetEventTapList`).
+  Prueba controlada con sus pulsaciones reales y la entrada segura encendida: `RegisterEventHotKey`
+  (Carbon, el método de Tauri) recibió 7 de 7; handy-keys, 0. Con Chrome cerrado, handy-keys dictó.
+  **Arreglo:** en Mac el atajo va por Tauri/Carbon (default nuevo + migración única
+  `atajo_mac_carbon` para las instalaciones anteriores). Windows sigue con handy-keys.
+- **Barras del micrófono:** sí se movían, pero casi nada: cada barra era una banda de frecuencia y la
+  voz solo movía unas pocas a la izquierda. Ahora cada barra es el volumen de un instante (corre de
+  derecha a izquierda), con piso de ruido.
+- **Feedback:** zona de "Eliminar la cuenta" con fondo rojo suave; se quitó el aviso "¿No apareció?
+  Quedó copiado"; letra nueva (Newsreader en títulos, botones y menú + Schibsted Grotesk).
+  Pendiente: video tutorial y que la guía de la derecha en Permisos se sienta parte del paso
+  (maqueta antes de aplicar).

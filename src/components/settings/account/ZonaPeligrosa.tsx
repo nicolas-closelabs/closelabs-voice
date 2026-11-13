@@ -46,15 +46,16 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
   };
 
   return (
-    // «Tinta y voz»: el último grupo de Mi cuenta, al que se llega desplazándose. Sin caja roja:
-    // solo el botón de peligro (texto y borde en rojo apagado) y la doble confirmación.
-    <section>
-      <div className="pb-2.5 border-b border-linea">
-        <h2 className="text-[14px] leading-5 font-semibold text-tinta-3">Eliminar la cuenta</h2>
+    // «Tinta y voz»: el último grupo de Mi cuenta, al que se llega desplazándose. Va en un recuadro
+    // de fondo rojo suave para que se note que es peligroso (Nicolás, 2026-11-12), con el botón de
+    // peligro (texto y borde en rojo apagado) y la doble confirmación.
+    <section className="rounded-[16px] bg-error-fondo border border-error-borde px-6 pt-4 pb-5">
+      <div className="pb-2.5 border-b border-error-borde">
+        <h2 className="text-[14px] leading-5 font-semibold text-error">Eliminar la cuenta</h2>
       </div>
 
       {!abierta ? (
-        <div className="min-h-[66px] py-2 flex items-center justify-between gap-6 border-b border-linea">
+        <div className="min-h-[66px] pt-3 flex items-center justify-between gap-6">
           <div>
             <div className="text-[17px] leading-6 font-semibold text-tinta">Eliminar mi cuenta</div>
             <p className="text-[15px] leading-[22px] text-tinta-2">
@@ -63,7 +64,7 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
           </div>
           <button
             onClick={() => setAbierta(true)}
-            className="shrink-0 h-11 px-5 rounded-[12px] text-[16px] font-semibold text-error border-[1.5px] border-error-borde bg-papel hover:bg-lino transition-colors"
+            className="shrink-0 h-11 px-5 rounded-[12px] font-serif text-[18px] font-medium text-error border-[1.5px] border-error-borde bg-papel hover:bg-error-fondo transition-colors"
           >
             Eliminar mi cuenta
           </button>
@@ -78,13 +79,13 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
             <li>Tu diccionario en este computador.</li>
           </ul>
           {s === "socio" && (
-            <p className="rounded-[12px] bg-lino px-4 py-3">
+            <p className="rounded-[12px] bg-papel px-4 py-3">
               Esto <strong>no cancela tu suscripción con {nombreSocio(estado.canal)}</strong>: para
               dejar de pagar, comunícate con {nombreSocio(estado.canal)}.
             </p>
           )}
           {pagando && (
-            <p className="rounded-[12px] bg-lino px-4 py-3">
+            <p className="rounded-[12px] bg-papel px-4 py-3">
               Si solo quieres dejar de pagar, mejor <strong>cancela tu suscripción</strong> (arriba):
               sigues dictando hasta el fin de tu período y tu cuenta te espera si vuelves.
             </p>
@@ -105,7 +106,7 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
             <button
               onClick={() => void eliminar()}
               disabled={!coincide || borrando}
-              className="inline-flex items-center gap-2 h-11 px-5 rounded-[12px] text-[16px] font-semibold bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-[12px] font-serif text-[18px] font-medium bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {borrando && <Loader2 className="w-4 h-4 animate-spin" />}
               Eliminar mi cuenta para siempre

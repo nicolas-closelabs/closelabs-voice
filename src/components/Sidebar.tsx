@@ -87,10 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={section.id}
               onClick={() => onSectionChange(section.id)}
-              className={`relative h-[46px] w-full px-4 rounded-[10px] text-left text-[17px] transition-colors duration-150 ${
+              className={`relative h-[46px] w-full px-4 rounded-[10px] text-left font-serif text-[19px] transition-colors duration-150 ${
                 isActive
-                  ? "bg-papel shadow-1 text-tinta font-semibold"
-                  : "text-tinta-2 font-medium hover:bg-white/60"
+                  ? "bg-papel shadow-1 text-tinta font-medium"
+                  : "text-tinta-2 font-normal hover:bg-white/60"
               }`}
             >
               {isActive && (

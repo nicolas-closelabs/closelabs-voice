@@ -134,7 +134,7 @@ export const ReportProblem: React.FC = () => {
         <button
           onClick={enviar}
           disabled={enviando || texto.trim().length < 5}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-brand-accent text-white hover:bg-brand-accent-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          className="h-11 px-5 rounded-[12px] font-serif text-[18px] font-medium bg-lila text-white hover:bg-lila-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
         >
           {enviando && <Loader2 className="w-4 h-4 animate-spin" />}
           {enviando ? "Enviando…" : "Enviar reporte"}

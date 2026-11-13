@@ -19,8 +19,10 @@ serif con una palabra en cursiva y **el lila como color de CloseLabs, en dosis f
 
 1. **El lila tiene dosis** (regla completa en §3). Se siente la marca; no vuelve el "lila por todas
    partes".
-2. **Dos voces.** Newsreader (serif) en títulos, con UNA palabra en cursiva y en lila. Plus Jakarta
-   Sans en todo lo demás. La cursiva serif en tinta, dentro de un campo, es "lo que se dice en voz
+2. **Dos voces.** Newsreader (serif) en títulos, con UNA palabra en cursiva y en lila, y también en
+   BOTONES y MENÚ (500, dos puntos más grande que la sans). Schibsted Grotesk en todo lo demás
+   (campos, explicaciones, textos chicos, enlaces). Decidido por Nicolás el 2026-11-12 (opción D de
+   `maquetas/tipografias.html`): Plus Jakarta Sans salió por "muy redondita, muy AI". La cursiva serif en tinta, dentro de un campo, es "lo que se dice en voz
    alta"; la sans recta es "lo que queda escrito".
 3. **Una plantilla.** Barra superior, columna de texto a la izquierda, escenario a la derecha, botón
    abajo a la izquierda. El logo mide siempre 132 px. La ventana no cambia de tamaño ni de lugar.
@@ -102,7 +104,7 @@ Contraste: blanco sobre `#A439FF` da 4,56:1 (pasa AA). Lila como TEXTO pequeño 
 
   /* Tipografía */
   --font-serif: "Newsreader Variable", Georgia, serif;
-  --font-sans: "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Schibsted Grotesk Variable", "Segoe UI", system-ui, sans-serif;
 
   /* Radios */
   --radius-tecla: 9px;  --radius-chico: 10px;  --radius-campo: 12px;  --radius-boton: 12px;
@@ -116,8 +118,8 @@ Contraste: blanco sobre `#A439FF` da 4,56:1 (pasa AA). Lila como TEXTO pequeño 
 ```
 
 **Fuentes** (empaquetadas, sin CDN): `@fontsource-variable/newsreader` (importar `opsz.css` y
-`opsz-italic.css`; licencia OFL) y `@fontsource-variable/plus-jakarta-sans` (ya instalada). Inter
-deja de usarse en la app. `font-optical-sizing: auto`.
+`opsz-italic.css`; licencia OFL) y `@fontsource-variable/schibsted-grotesk` (OFL). Inter y Plus
+Jakarta Sans dejan de usarse en la app. `font-optical-sizing: auto`.
 
 ### Escala tipográfica (única)
 
@@ -396,9 +398,8 @@ Cápsula `noche`, alto 44, radio 22, borde 1 px blanco al 18 %, `shadow-flota`, 
 - *Pista (primeros 7 días desde el primer dictado):* cápsula aparte 8 px encima, radio 10, relleno
   `6px 12px`, 14/500: "Presiona ⌥ + Espacio para terminar".
 - *Mensajes:* mismo estilo que Procesando. "No encuentro un micrófono. Conéctalo y vuelve a
-  intentar." con un punto ámbar `#F2C14E` de 9 px delante; dura 6 s. "¿No apareció? Quedó copiado:
-  pega con ⌘ + V" (Windows: Ctrl + V): aparece **5 s después de cada dictado, durante los primeros 7
-  días**, dura 5 s y se va al empezar otro dictado.
+  intentar." con un punto ámbar `#F2C14E` de 9 px delante; dura 6 s. (El aviso "¿No apareció? Quedó
+  copiado" de los primeros 7 días se QUITÓ el 2026-11-12: a Nicolás le pareció invasivo y cansón.)
 - Ventana del overlay: 300 × 100 (520 × 100 para los mensajes), centrada en horizontal, con la
   cápsula a 12 px por encima del área de trabajo (nunca sobre el Dock ni la barra de tareas).
 - Sin logo, sin lema.

@@ -262,16 +262,20 @@ const PruebaMicrofono: React.FC<{ onSi: () => void; onSaltar: () => void }> = ({
 
   useEffect(() => {
     void abrir();
+    // Los niveles llegan por bandas de frecuencia (400-4000 Hz). Repartirlas en las barras dejaba
+    // casi todo quieto: la voz cae en las bandas bajas y solo se movían unas pocas a la izquierda,
+    // unos píxeles (Nicolás, 2026-11-12: "no se mueven"). Ahora cada barra es el VOLUMEN de un
+    // instante: entra por la derecha y corre a la izquierda, así todas responden al hablar.
+    let volumen = 0;
     const quitar = listen<number[]>("mic-level", (e) => {
       const v = e.payload;
       if (!v?.length) return;
-      // Los niveles vienen por bandas de frecuencia; se reparten en 30 barras.
-      setNiveles(
-        Array.from({ length: BARRAS }, (_, i) => {
-          const x = v[Math.floor((i / BARRAS) * v.length)] ?? 0;
-          return Math.max(0, Math.min(1, x));
-        }),
-      );
+      const pico = Math.max(...v);
+      // Por debajo de esto es ruido de fondo: la barra se queda en reposo.
+      const crudo = pico < 0.04 ? 0 : Math.min(1, Math.pow(pico, 0.6) * 1.3);
+      // Sube rápido y baja despacio, como un vúmetro.
+      volumen = crudo > volumen ? crudo : volumen * 0.75 + crudo * 0.25;
+      setNiveles((antes) => [...antes.slice(1), volumen]);
     });
     void commands.getAvailableMicrophones().then((r) => {
       if (r.status === "ok") setMicros(r.data);
@@ -322,7 +326,7 @@ const PruebaMicrofono: React.FC<{ onSi: () => void; onSaltar: () => void }> = ({
               <span
                 key={i}
                 className="w-2 rounded-[4px] bg-lila transition-[height] duration-75"
-                style={{ height: `${18 + Math.round(n * 110)}px` }}
+                style={{ height: `${8 + Math.round(n * 120)}px` }}
               />
             ))}
           </div>

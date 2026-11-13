@@ -37,6 +37,7 @@
   --aviso-punto: #c98a00;
   --error: #b3261e;
   --error-borde: #e3b8b4;
+  --error-fondo: #fcf0ef; /* la zona de "Eliminar la cuenta" (pedido de Nicolás, 2026-11-12) */
 
   /* ---- Tokens que consume el UI heredado de Handy (mapeados al sistema nuevo) ---- */
   --color-text: var(--tinta);
@@ -65,12 +66,14 @@
   --brand-border: var(--linea);
   --brand-border-strong: var(--linea-fuerte);
 
-  /* ---- Tipografía: Newsreader (títulos) + Plus Jakarta Sans (todo lo demás). Inter sale. ---- */
+  /* ---- Tipografía (Nicolás, 2026-11-12, opción D de diseno/maquetas/tipografias.html):
+     Newsreader en títulos, frases, BOTONES y MENÚ; Schibsted Grotesk en todo lo demás (campos,
+     explicaciones, textos chicos). Plus Jakarta Sans sale: "muy redondita, muy AI". ---- */
   --font-serif: "Newsreader Variable", Georgia, serif;
   --font-heading:
-    "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
+    "Schibsted Grotesk Variable", "Segoe UI", system-ui, sans-serif;
   --font-body:
-    "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
+    "Schibsted Grotesk Variable", "Segoe UI", system-ui, sans-serif;
 }
 
 /* CloseLabs Voice: se FUERZA light mode (el producto es blanco siempre, no sigue

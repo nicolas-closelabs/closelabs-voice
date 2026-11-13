@@ -388,59 +388,7 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     }
 }
 
-/// Sube cada vez que la píldora cambia de estado: el aviso "¿No apareció?" solo se esconde a sí mismo
-/// si nadie la usó mientras tanto (si empezó otro dictado, no lo tapa).
-static OVERLAY_TURNO: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-
-/// "¿No apareció? Quedó copiado: pega con ⌘ + V", 5 s después de cada dictado y durante 5 s, solo
-/// los primeros 7 días desde el primer dictado en este computador (diseno/SISTEMA.md §9, aprobado
-/// por Nicolás el 2026-11-12). La app no sabe si el texto entró en el campo (ver la nota del
-/// 2026-10-28 en CLAUDE.md); esto le recuerda al médico que no lo perdió.
-///
-/// No sale si el dictado fue dentro de nuestra propia ventana (ahí se escribe directo) ni si
-/// empezó otro dictado en esos 5 s.
-pub fn mostrar_aviso_pegado(app_handle: &AppHandle) {
-    const DIAS: u64 = 7;
-    if crate::clipboard::ventana_principal_enfocada() {
-        return;
-    }
-    let ahora = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-    let Ok(dir) = crate::portable::app_data_dir(app_handle) else {
-        return;
-    };
-    let marca = dir.join("primer-dictado");
-    let primero = std::fs::read_to_string(&marca)
-        .ok()
-        .and_then(|t| t.trim().parse::<u64>().ok())
-        .unwrap_or_else(|| {
-            let _ = std::fs::write(&marca, ahora.to_string());
-            ahora
-        });
-    if ahora.saturating_sub(primero) > DIAS * 86_400 {
-        return;
-    }
-
-    let app = app_handle.clone();
-    let turno = OVERLAY_TURNO.load(Ordering::SeqCst);
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_secs(5));
-        if OVERLAY_TURNO.load(Ordering::SeqCst) != turno {
-            return; // ya empezó otro dictado
-        }
-        show_overlay_state(&app, "pegado");
-        let mio = OVERLAY_TURNO.load(Ordering::SeqCst);
-        std::thread::sleep(std::time::Duration::from_secs(5));
-        if OVERLAY_TURNO.load(Ordering::SeqCst) == mio {
-            hide_recording_overlay(&app);
-        }
-    });
-}
-
 fn show_overlay_state(app_handle: &AppHandle, state: &str) {
-    OVERLAY_TURNO.fetch_add(1, Ordering::SeqCst);
     // Whether the overlay shows at all is governed by overlay_style; position
     // only chooses Top vs Bottom placement.
     let settings = settings::get_settings(app_handle);
