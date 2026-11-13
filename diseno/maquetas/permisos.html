@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Permisos · maqueta</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Plus+Jakarta+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  /* Maqueta de la pantalla de Permisos (Mac) con la guía de la derecha integrada al paso.
+     Pedido de Nicolás (2026-11-12): "la parte derecha es como una foto, no se le para bolas".
+     Mismo lenguaje que el tutorial de la página de descarga: dibujo + leyenda + rayitas de avance. */
+  :root { --tinta:#18141d; --tinta-2:#55505e; --tinta-3:#6e6877; --papel:#fff; --lino:#f5f1f8; --linea:#e6e2ea;
+    --linea-fuerte:#cfcad4; --lila:#a439ff; --lila-suave:#f3e8ff; --hecho:#1f7a4d; --noche:#18141d;
+    --serif:"Newsreader", Georgia, serif; --sans:"Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#e9e5ee; font-family:var(--sans); color:var(--tinta); padding:40px 0 60px; }
+  .intro { width:1120px; margin:0 auto 26px; }
+  .intro h1 { font:500 34px/1.2 var(--serif); margin:0 0 6px; letter-spacing:-.01em; }
+  .intro p { margin:0; font-size:17px; line-height:26px; color:var(--tinta-2); max-width:820px; }
+  .rotulo { width:1120px; margin:34px auto 10px; display:flex; gap:12px; align-items:baseline; }
+  .rotulo b { font:600 13px/1 var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--lila); }
+  .rotulo span { font:500 22px/1 var(--serif); }
+  .rotulo em { font:italic 400 17px/1 var(--serif); color:var(--tinta-2); }
+
+  /* ---------- La ventana de la app (1120 × 680) ---------- */
+  .ventana { width:1120px; height:680px; margin:0 auto; background:var(--papel); border-radius:12px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(24,20,29,.06), 0 18px 44px rgba(24,20,29,.14); display:flex; flex-direction:column; }
+  .titulo-mac { height:28px; flex:none; background:#f1eef4; border-bottom:1px solid var(--linea); display:flex; align-items:center; gap:8px; padding:0 12px; }
+  .titulo-mac i { width:12px; height:12px; border-radius:50%; background:#d9d5de; }
+  .titulo-mac i:nth-child(1){background:#ff5f57} .titulo-mac i:nth-child(2){background:#febc2e} .titulo-mac i:nth-child(3){background:#d9d5de}
+  .barra { height:64px; flex:none; display:flex; align-items:center; padding:0 32px; gap:40px; border-bottom:1px solid var(--linea); }
+  .marca { display:flex; align-items:center; gap:8px; font-weight:700; font-size:17px; }
+  .marca svg { width:20px; height:20px; }
+  .etapas { display:flex; gap:22px; margin-left:auto; margin-right:auto; }
+  .etapa { width:104px; font:500 14px/1 var(--sans); color:var(--tinta-3); padding-bottom:8px; border-bottom:3px solid var(--linea); }
+  .etapa.hecha { color:var(--tinta); border-color:var(--tinta); }
+  .etapa.aqui { color:var(--tinta); border-color:var(--lila); font-weight:500; }
+  .ayuda { font-size:15px; font-weight:600; text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--linea-fuerte); }
+  .cuerpo { flex:1; display:grid; grid-template-columns:500px 1fr; min-height:0; }
+  .col { padding:44px 52px 34px 60px; display:flex; flex-direction:column; }
+  .col h2 { font:500 46px/52px var(--serif); margin:0; letter-spacing:-.02em; }
+  .col h2 em { color:var(--lila); font-style:italic; }
+  .col .apoyo { margin:12px 0 0; font-size:18px; line-height:28px; color:var(--tinta-2); }
+  .pasos { list-style:none; margin:28px 0 0; padding:0; border-top:1px solid var(--linea); }
+  .pasos li { display:flex; gap:16px; align-items:center; min-height:76px; border-bottom:1px solid var(--linea); position:relative; }
+  .pasos li .n { width:28px; height:28px; flex:none; border-radius:50%; display:grid; place-items:center; }
+  .pasos li .n.ok { background:var(--hecho); }
+  .pasos li .n.ahora { border:2px solid var(--lila); }
+  .pasos li .n.gira { border:2px solid var(--lila); border-right-color:transparent; animation:gira .9s linear infinite; }
+  .pasos li .nom { font:600 17px/24px var(--sans); }
+  .pasos li .fr { font-size:15px; line-height:22px; color:var(--tinta-2); }
+  .pasos li .listo { margin-left:auto; font-size:15px; font-weight:600; color:var(--hecho); }
+  /* El paso de ahora se conecta con el escenario: una línea lila que sale hacia la derecha. */
+  .pasos li.activo { background:linear-gradient(90deg, transparent, var(--lila-suave) 60%); }
+  .pasos li.activo::after { content:""; position:absolute; right:-52px; top:50%; width:52px; height:2px; background:var(--lila); }
+  .pasos li.activo .ver { margin-left:auto; margin-right:14px; font-size:14px; font-weight:600; color:var(--lila); white-space:nowrap; }
+  .boton { margin-top:auto; height:56px; border-radius:12px; background:var(--lila); color:#fff; display:flex; align-items:center;
+    justify-content:center; font:600 17px/1 var(--sans); }
+  .boton.sec { background:#fff; color:var(--tinta); border:1.5px solid var(--linea-fuerte); }
+  .bajo { margin-top:12px; text-align:center; font-size:15px; color:var(--tinta-2); }
+
+  /* ---------- El escenario: tutorial vivo ---------- */
+  .escena { background:var(--lino); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 34px; gap:18px; }
+  .escena.conectada .cuadro { box-shadow:0 0 0 2px var(--lila-suave); }
+  .estado { display:inline-flex; align-items:center; gap:10px; height:34px; padding:0 14px; border-radius:17px; background:#fff;
+    border:1px solid var(--linea); font-size:14px; font-weight:600; color:var(--tinta-2); }
+  .estado i { width:9px; height:9px; border-radius:50%; background:var(--lila); animation:late 1.2s ease-in-out infinite; }
+  .estado.quieto i { animation:none; background:var(--linea-fuerte); }
+  .cuadro { width:470px; height:300px; position:relative; background:#fff; border:1px solid var(--linea); border-radius:16px; overflow:hidden; }
+  .leyenda { text-align:center; min-height:62px; max-width:430px; }
+  .leyenda b { display:block; font:500 22px/28px var(--serif); }
+  .leyenda span { display:block; margin-top:4px; font-size:15px; line-height:22px; color:var(--tinta-2); }
+  .avance { display:flex; gap:8px; }
+  .avance i { width:28px; height:4px; border-radius:2px; background:var(--linea-fuerte); }
+  .avance i.hecho { background:var(--tinta); }
+  .avance i.aqui { background:var(--lila); }
+
+  /* Ajustes del Sistema en miniatura (con la cara del sistema, para que lo reconozca) */
+  .ajustes { position:absolute; left:26px; top:22px; width:418px; height:256px; border-radius:11px; background:#f6f5f8;
+    border:1px solid #dcd9e0; box-shadow:0 8px 24px rgba(24,20,29,.12); display:flex; overflow:hidden; font-family:-apple-system, system-ui, sans-serif;
+    transition:opacity .35s, transform .35s; }
+  .ajustes .lado { width:104px; background:#eceaf0; padding:30px 12px; display:flex; flex-direction:column; gap:9px; }
+  .ajustes .lado span { height:7px; border-radius:4px; background:#d6d3dc; }
+  .ajustes .lado span.sel { background:#3478f6; opacity:.85; }
+  .ajustes .der { flex:1; padding:16px 14px; }
+  .ajustes h4 { margin:0; font-size:13px; color:#1d1d1f; }
+  .ajustes p { margin:2px 0 10px; font-size:10px; color:#6e6e73; }
+  .lista { background:#fff; border:1px solid #e3e1e7; border-radius:8px; overflow:hidden; }
+  .fila { height:34px; padding:0 11px; display:flex; align-items:center; gap:9px; border-bottom:1px solid #eeecf1; font-size:12px; color:#1d1d1f; }
+  .fila:last-child { border-bottom:0; }
+  .fila .ic { width:18px; height:18px; border-radius:5px; background:#e3e1e7; }
+  .fila .ic.cl { background:#fff; border:1px solid #e3e1e7; display:grid; place-items:center; }
+  .fila .ic.cl svg { width:12px; height:12px; }
+  .fila .nm { flex:1; }
+  .sw { width:30px; height:18px; border-radius:9px; background:#e1dfe5; position:relative; transition:background .25s; }
+  .sw::after { content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff;
+    box-shadow:0 1px 2px rgba(0,0,0,.2); transition:left .25s; }
+  .sw.on { background:#3478f6; } .sw.on::after { left:14px; }
+  .fila.nuestra { position:relative; }
+  .fila.nuestra.marcada { box-shadow:inset 0 0 0 2px var(--lila); border-radius:6px; }
+  .cursor { position:absolute; width:22px; height:22px; transition:left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1), transform .15s; z-index:5; }
+  .cursor.clic { transform:scale(.82); }
+  .huella { position:absolute; left:110px; top:64px; width:250px; padding:16px; border-radius:12px; background:#fbfbfd; border:1px solid #dcd9e0;
+    box-shadow:0 14px 34px rgba(24,20,29,.22); text-align:center; font-family:-apple-system, system-ui, sans-serif; opacity:0; transform:translateY(8px);
+    transition:opacity .3s, transform .3s; z-index:4; }
+  .huella.ve { opacity:1; transform:none; }
+  .huella .dedo { width:40px; height:40px; margin:0 auto 8px; border-radius:50%; border:2px solid #f0506e; display:grid; place-items:center; }
+  .huella b { display:block; font-size:12px; color:#1d1d1f; }
+  .huella small { display:block; margin-top:3px; font-size:10px; color:#6e6e73; }
+  .huella .cl { margin-top:10px; height:20px; border-radius:6px; background:#e9e7ec; }
+  .guia { position:absolute; left:46px; top:236px; width:378px; height:44px; border-radius:12px; background:var(--noche); color:#fff; display:flex;
+    align-items:center; gap:10px; padding:0 12px; font-size:12px; line-height:16px; box-shadow:0 8px 24px rgba(0,0,0,.28); opacity:0; transition:opacity .35s; }
+  .guia.ve { opacity:1; }
+  .guia .fl { width:24px; height:24px; flex:none; border-radius:50%; background:var(--lila); display:grid; place-items:center; }
+  .vuelve { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:#fff;
+    opacity:0; transition:opacity .35s; }
+  .vuelve.ve { opacity:1; }
+  .vuelve .ok { width:64px; height:64px; border-radius:50%; background:var(--hecho); display:grid; place-items:center; }
+  .vuelve b { font:500 24px/1.2 var(--serif); }
+  .vuelve span { font-size:14px; color:var(--tinta-2); }
+
+  @keyframes gira { to { transform:rotate(360deg); } }
+  @keyframes late { 50% { opacity:.25; } }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Permisos: la guía de la derecha, <em style="color:var(--lila);font-style:italic">viva</em></h1>
+    <p>Hoy la derecha es un dibujo quieto. Propuesta: un tutorial corto que avanza solo (como el de la página de descarga), atado al paso de la izquierda por una línea lila, y que dice en vivo en qué va: <b>esperando</b> mientras estás en Ajustes y <b>listo</b> cuando lo encendiste. Son tres momentos de la misma pantalla.</p>
+  </div>
+
+  <div class="rotulo"><b>1</b><span>Antes de abrir Ajustes</span><em>el tutorial muestra lo que vas a hacer</em></div>
+  <div class="ventana" data-momento="antes"></div>
+
+  <div class="rotulo"><b>2</b><span>Mientras estás en Ajustes</span><em>dice que te está esperando y sigue mostrando el gesto</em></div>
+  <div class="ventana" data-momento="esperando"></div>
+
+  <div class="rotulo"><b>3</b><span>Listo</span><em>se confirma solo y sigue a la prueba</em></div>
+  <div class="ventana" data-momento="listo"></div>
+
+<template id="t-ventana">
+  <div class="titulo-mac"><i></i><i></i><i></i></div>
+  <div class="barra">
+    <div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#18141d" stroke-width="3"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M9 7.5 15 16.5"/></svg>CloseLabs</div>
+    <div class="etapas"><div class="etapa hecha">Cuenta</div><div class="etapa aqui">Permisos</div><div class="etapa">Prueba</div><div class="etapa">Práctica</div></div>
+    <div class="ayuda">¿Necesitas ayuda?</div>
+  </div>
+  <div class="cuerpo">
+    <div class="col">
+      <h2>Dos permisos y <em>listo</em>.</h2>
+      <p class="apoyo">macOS te los pide una sola vez.</p>
+      <ul class="pasos">
+        <li><span class="n ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <div><div class="nom">Micrófono</div><div class="fr">Para oír lo que dictas.</div></div><span class="listo">Listo</span></li>
+        <li class="paso-acc"><span class="n"></span>
+          <div><div class="nom">Accesibilidad</div><div class="fr">Para escribir el texto donde tengas el cursor.</div></div><span class="extra"></span></li>
+      </ul>
+      <div class="boton"></div>
+      <div class="bajo"></div>
+    </div>
+    <div class="escena">
+      <div class="estado"><i></i><span></span></div>
+      <div class="cuadro">
+        <div class="ajustes">
+          <div class="lado"><span style="width:62px"></span><span style="width:48px"></span><span class="sel" style="width:72px"></span><span style="width:56px"></span><span style="width:66px"></span><span style="width:44px"></span></div>
+          <div class="der">
+            <h4>Accesibilidad</h4>
+            <p>Permite que estas apps controlen tu computador.</p>
+            <div class="lista">
+              <div class="fila"><span class="ic"></span><span class="nm">Google Chrome</span><span class="sw on"></span></div>
+              <div class="fila nuestra"><span class="ic cl"><svg viewBox="0 0 24 24" fill="none" stroke="#18141d" stroke-width="3.2"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M9 7.5 15 16.5"/></svg></span><span class="nm">CloseLabs Voice</span><span class="sw"></span></div>
+              <div class="fila"><span class="ic"></span><span class="nm">Microsoft Word</span><span class="sw on"></span></div>
+              <div class="fila"><span class="ic"></span><span class="nm">Zoom</span><span class="sw"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="guia"><span class="fl"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M12 5l-6 6M12 5l6 6"/></svg></span><span>Busca <b>CloseLabs Voice</b> arriba y enciende su interruptor.</span></div>
+        <div class="huella"><div class="dedo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0506e" stroke-width="1.8" stroke-linecap="round"><path d="M7 11a5 5 0 0 1 10 0v2M9.5 11a2.5 2.5 0 0 1 5 0v4M12 11v6M7 15v-1M17 16v-1"/></svg></div><b>Ajustes del Sistema quiere hacer cambios</b><small>Usa Touch ID o escribe tu contraseña del Mac.</small><div class="cl"></div></div>
+        <svg class="cursor" viewBox="0 0 24 24" style="left:400px;top:250px"><path d="M4 2l15 9-6.5 1.5L9 19z" fill="#fff" stroke="#18141d" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <div class="vuelve"><span class="ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Listo. Vuelve aquí.</b><span>CloseLabs Voice sigue sola.</span></div>
+      </div>
+      <div class="leyenda"><b></b><span></span></div>
+      <div class="avance"><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+</template>
+
+<script>
+const CUADROS = [
+  { b:"Se abre Ajustes del Sistema", s:"Ya en la sección Accesibilidad. Nosotros te la abrimos." },
+  { b:"Busca CloseLabs Voice", s:"Está en la lista. La ventanita negra de abajo te la señala." },
+  { b:"Enciende su interruptor", s:"Un clic. Se pone azul." },
+  { b:"Pon tu huella o tu contraseña", s:"Es la de tu Mac, no la de CloseLabs." },
+];
+
+function montar(v) {
+  v.innerHTML = document.getElementById('t-ventana').innerHTML;
+  const m = v.dataset.momento;
+  const q = s => v.querySelector(s);
+  const paso = q('.paso-acc'), n = paso.querySelector('.n'), extra = paso.querySelector('.extra');
+  const boton = q('.boton'), bajo = q('.bajo'), estado = q('.estado'), escena = q('.escena');
+  if (m === 'listo') {
+    n.className = 'n ok'; n.innerHTML = q('.pasos li .n.ok').innerHTML;
+    extra.className = 'listo'; extra.textContent = 'Listo';
+    boton.textContent = 'Seguir'; bajo.textContent = 'Sigue sola en 2 segundos.';
+    estado.classList.add('quieto'); estado.querySelector('i').style.background = 'var(--hecho)';
+    estado.querySelector('span').textContent = 'Accesibilidad encendida';
+    q('.vuelve').classList.add('ve'); q('.leyenda b').textContent = 'Los dos permisos, listos';
+    q('.leyenda span').textContent = 'Ahora probamos tu micrófono.';
+    q('.avance').querySelectorAll('i').forEach(i => i.className = 'hecho');
+    q('.cursor').style.display = 'none';
+    return;
+  }
+  paso.classList.add('activo'); escena.classList.add('conectada');
+  extra.className = 'ver'; extra.textContent = 'Mira cómo →';
+  if (m === 'antes') {
+    n.className = 'n ahora';
+    boton.textContent = 'Abrir Ajustes del Sistema';
+    bajo.textContent = 'Toma unos 20 segundos.';
+    estado.classList.add('quieto'); estado.querySelector('span').textContent = 'Así se hace';
+  } else {
+    n.className = 'n gira';
+    boton.className = 'boton sec'; boton.textContent = 'Abrir Ajustes del Sistema otra vez';
+    bajo.textContent = '¿Cerraste Ajustes sin querer? Usa el botón.';
+    estado.querySelector('span').textContent = 'Te estamos esperando en Ajustes…';
+  }
+  animar(v, m === 'esperando' ? 1 : 0);
+}
+
+function animar(v, inicio) {
+  const q = s => v.querySelector(s);
+  const aj = q('.ajustes'), guia = q('.guia'), huella = q('.huella'), cur = q('.cursor'), sw = q('.fila.nuestra .sw'), fila = q('.fila.nuestra');
+  const rayas = [...q('.avance').children];
+  let k = inicio;
+  function pon(i) {
+    const c = CUADROS[i];
+    q('.leyenda b').textContent = c.b; q('.leyenda span').textContent = c.s;
+    rayas.forEach((r, j) => r.className = j < i ? 'hecho' : j === i ? 'aqui' : '');
+    aj.style.opacity = 1; aj.style.transform = 'none';
+    guia.classList.toggle('ve', i >= 1 && i <= 2);
+    fila.classList.toggle('marcada', i >= 1);
+    huella.classList.toggle('ve', i === 3);
+    sw.classList.toggle('on', i >= 2 && i !== 0 && false);
+    cur.classList.remove('clic');
+    if (i === 0) { sw.classList.remove('on'); aj.style.opacity = 0; aj.style.transform = 'translateY(10px) scale(.98)'; cur.style.left = '400px'; cur.style.top = '250px';
+      setTimeout(() => { aj.style.opacity = 1; aj.style.transform = 'none'; }, 350); }
+    if (i === 1) { sw.classList.remove('on'); cur.style.left = '260px'; cur.style.top = '120px'; }
+    if (i === 2) { cur.style.left = '412px'; cur.style.top = '104px';
+      setTimeout(() => { cur.classList.add('clic'); sw.classList.add('on'); }, 950); setTimeout(() => cur.classList.remove('clic'), 1150); }
+    if (i === 3) { sw.classList.add('on'); cur.style.left = '300px'; cur.style.top = '196px'; }
+  }
+  pon(k);
+  setInterval(() => { k = (k + 1) % CUADROS.length; if (v.dataset.momento === 'esperando' && k === 0) k = 1; pon(k); }, 2800);
+}
+document.querySelectorAll('.ventana').forEach(montar);
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cómo se dicta · video</title>
+<!--
+  Video tutorial "Así se dicta" (pedido de Nicolás, 2026-11-12). Animación DETERMINISTA: todo sale de
+  `pintar(t)` (t en segundos), así cada cuadro se puede fotografiar igual. Se graba con
+  `node diseno/herramientas/grabar-video.mjs` (Chrome sin ventana + ffmpeg). `?so=win` = Windows.
+  Estilo «Tinta y voz» (diseno/SISTEMA.md): Newsreader + Plus Jakarta Sans, lila con dosis.
+-->
+<style>
+  @font-face { font-family:"Newsreader"; font-style:normal; font-weight:200 800;
+    src:url("../../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal.woff2") format("woff2"); }
+  @font-face { font-family:"Newsreader"; font-style:italic; font-weight:200 800;
+    src:url("../../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-opsz-italic.woff2") format("woff2"); }
+  @font-face { font-family:"Jakarta"; font-style:normal; font-weight:200 800;
+    src:url("../../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2") format("woff2"); }
+  :root { --tinta:#18141d; --tinta-2:#55505e; --tinta-3:#6e6877; --papel:#fff; --lino:#f5f1f8; --linea:#e6e2ea; --linea-fuerte:#cfcad4;
+    --lila:#a439ff; --lila-suave:#f3e8ff; --lila-presion:#7a1fd1; --hecho:#1f7a4d; --noche:#18141d;
+    --serif:"Newsreader", Georgia, serif; --sans:"Jakarta", system-ui, sans-serif; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; width:1280px; height:800px; overflow:hidden; background:var(--lino); font-family:var(--sans); color:var(--tinta); }
+  .capa { position:absolute; inset:0; }
+  .serif { font-family:var(--serif); font-optical-sizing:auto; }
+
+  /* Rótulo de cada paso (arriba) */
+  #paso { position:absolute; left:0; right:0; top:46px; text-align:center; }
+  #paso .num { display:inline-grid; place-items:center; width:38px; height:38px; border-radius:50%; background:var(--tinta); color:#fff;
+    font:600 18px/1 var(--sans); vertical-align:middle; margin-right:14px; }
+  #paso .txt { font:500 40px/1.2 var(--serif); letter-spacing:-.015em; vertical-align:middle; }
+  #paso .txt em { color:var(--lila); font-style:italic; }
+
+  /* La historia clínica (un programa cualquiera, sin marca) */
+  #hc { position:absolute; left:190px; top:150px; width:900px; height:470px; background:#fff; border-radius:14px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(24,20,29,.06), 0 18px 44px rgba(24,20,29,.14); }
+  #hc .tb { height:40px; background:#f1eef4; border-bottom:1px solid var(--linea); display:flex; align-items:center; gap:8px; padding:0 14px; }
+  #hc .tb i { width:12px; height:12px; border-radius:50%; background:#d9d5de; }
+  #hc .tb span { margin-left:14px; font-size:14px; color:var(--tinta-3); font-weight:600; }
+  #hc .cab { padding:22px 34px 0; display:flex; justify-content:space-between; align-items:baseline; }
+  #hc .cab b { font-size:22px; }
+  #hc .cab span { font-size:16px; color:var(--tinta-3); }
+  #hc label { display:block; margin:20px 34px 8px; font-size:15px; font-weight:600; color:var(--tinta-2); }
+  #campo { margin:0 34px; height:150px; border:1.5px solid var(--linea-fuerte); border-radius:12px; padding:16px 18px; font-size:22px; line-height:32px;
+    color:var(--tinta); position:relative; }
+  #campo.foco { border-color:var(--lila); box-shadow:0 0 0 4px var(--lila-suave); }
+  #caret { display:inline-block; width:2px; height:26px; background:var(--tinta); vertical-align:-5px; margin-left:1px; }
+  #hc .otro { margin:0 34px; height:58px; border:1.5px solid var(--linea); border-radius:12px; }
+
+  /* Etiquetas de lo que arregló */
+  .etq { position:absolute; height:34px; padding:0 14px; border-radius:17px; background:var(--lila-suave); color:var(--lila-presion);
+    font:600 15px/34px var(--sans); white-space:nowrap; }
+
+  /* Cursor */
+  #cursor { position:absolute; width:30px; height:30px; z-index:20; }
+
+  /* Teclas grandes */
+  #teclas { position:absolute; left:0; right:0; top:330px; display:flex; justify-content:center; align-items:center; gap:22px; z-index:15; }
+  .tecla { min-width:118px; height:118px; padding:0 30px; border-radius:22px; background:#fff; border:2px solid var(--linea-fuerte); border-bottom-width:7px;
+    display:grid; place-items:center; font:600 42px/1 var(--sans); color:var(--tinta); box-shadow:0 10px 30px rgba(24,20,29,.12); }
+  .tecla.on { background:var(--lila); border-color:var(--lila-presion); color:#fff; border-bottom-width:3px; transform:translateY(4px); }
+  .mas { font:500 40px/1 var(--sans); color:var(--tinta-3); }
+
+  /* La píldora */
+  #pildora { position:absolute; left:50%; top:676px; height:56px; transform:translateX(-50%); display:flex; align-items:center; gap:14px; padding:0 9px;
+    border-radius:28px; background:var(--noche); box-shadow:0 8px 24px rgba(0,0,0,.28); z-index:12; }
+  #pildora .b { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; }
+  #pildora .x { background:rgba(255,255,255,.14); }
+  #pildora .ok { background:#fff; }
+  #onda { display:flex; align-items:center; gap:4px; height:36px; }
+  #onda i { width:4px; border-radius:2px; background:#c79bff; }
+  #escribiendo { color:#fff; font:500 20px/1 var(--serif); padding:0 18px; }
+
+  /* Lo que dice el médico (subtítulo hablado) */
+  #voz { position:absolute; left:160px; right:160px; top:520px; text-align:center; font:italic 400 31px/42px var(--serif); color:var(--tinta); z-index:14; }
+  #voz .apagada { color:#c9c3d0; }
+  #voz .tachada { color:var(--lila); }
+
+  /* Diccionario */
+  #dicc { position:absolute; left:240px; top:160px; width:800px; height:440px; background:#fff; border-radius:14px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(24,20,29,.06), 0 18px 44px rgba(24,20,29,.14); display:grid; grid-template-columns:200px 1fr; }
+  #dicc .menu { background:var(--lino); padding:26px 0 0 18px; }
+  #dicc .menu div { font:500 17px/1 var(--sans); color:var(--tinta-2); padding:12px 14px; margin-right:16px; border-radius:10px; }
+  #dicc .menu div.on { background:#fff; color:var(--tinta); font-weight:500; box-shadow:inset 3px 0 0 var(--lila); }
+  #dicc .der { padding:34px 40px; }
+  #dicc h3 { margin:0; font:500 38px/1.1 var(--serif); letter-spacing:-.015em; }
+  #dicc p { margin:8px 0 22px; font-size:17px; color:var(--tinta-2); }
+  #dicc .fila { display:flex; gap:12px; }
+  #dicc .in { flex:1; height:52px; border:1.5px solid var(--linea-fuerte); border-radius:12px; padding:0 16px; display:flex; align-items:center; font-size:19px; }
+  #dicc .in.foco { border-color:var(--tinta); }
+  #dicc .bt { height:52px; padding:0 26px; border-radius:12px; background:var(--lila); color:#fff; display:grid; place-items:center; font:600 17px/1 var(--sans); }
+  #dicc ul { list-style:none; margin:24px 0 0; padding:0; border-top:1px solid var(--linea); }
+  #dicc li { height:52px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--linea); font-size:19px; font-weight:500; }
+  #dicc li span { font-size:15px; font-weight:600; text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--linea-fuerte); }
+
+  /* Portada y cierre */
+  #portada, #cierre { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  #portada h1, #cierre h2 { margin:0; font:500 92px/1.05 var(--serif); letter-spacing:-.025em; }
+  #portada h1 em, #cierre h2 em { color:var(--lila); font-style:italic; }
+  #portada p { margin:22px 0 0; font-size:24px; color:var(--tinta-2); }
+  #cierre h2 { font-size:60px; line-height:1.15; max-width:980px; }
+  #cierre img { height:54px; margin-top:48px; }
+  .onda-grande { position:absolute; left:0; right:0; top:560px; height:120px; }
+</style>
+</head>
+<body>
+<div id="escena" class="capa"></div>
+<script>
+const WIN = new URLSearchParams(location.search).get("so") === "win";
+const MOD = WIN ? "Ctrl" : "⌥";
+const DURACION = 40;
+
+// ---- utilidades de tiempo (todo es función de t: el mismo t siempre da el mismo cuadro) ----
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const tramo = (t, a, b) => cl((t - a) / (b - a));
+const suave = (x) => x * x * (3 - 2 * x);
+const sale = (x) => 1 - Math.pow(1 - x, 3);
+const entre = (t, a, b, dur = 0.45) => suave(tramo(t, a, a + dur)) * (1 - suave(tramo(t, b - dur, b)));
+const lerp = (a, b, x) => a + (b - a) * x;
+function ruta(t, puntos) { // [[t, x, y], ...] → posición
+  if (t <= puntos[0][0]) return puntos[0].slice(1);
+  for (let i = 1; i < puntos.length; i++) {
+    const [t1, x1, y1] = puntos[i], [t0, x0, y0] = puntos[i - 1];
+    if (t <= t1) { const k = sale(tramo(t, t0, t1)); return [lerp(x0, x1, k), lerp(y0, y1, k)]; }
+  }
+  return puntos[puntos.length - 1].slice(1);
+}
+function ruido(i, t) { return 0.5 + 0.5 * Math.sin(i * 1.7 + t * 9.3) * Math.sin(i * 0.6 + t * 5.1 + 1.3); }
+
+const DICHO = [
+  ["Paciente de 58 años que consulta por, ", ""], ["eh, ", "apagada"], ["dolor en la rodilla ", ""],
+  ["izquierda, no, perdón, ", "tachada"], ["derecha, desde hace tres días.", ""],
+];
+const DICHO_TOTAL = DICHO.map(d => d[0]).join("");
+const LIMPIO = "Paciente de 58 años que consulta por dolor en la rodilla derecha desde hace 3 días.";
+
+// Línea de tiempo (s)
+const T = {
+  portada: [0, 3.6],
+  hc: [3.2, 27.6],
+  p1: [4.0, 8.6],    // clic en el campo
+  p2: [8.6, 12.0],   // presiona
+  p3: [12.0, 19.6],  // habla
+  p4: [19.6, 22.4],  // presiona otra vez
+  p5: [22.4, 27.6],  // listo
+  dicc: [27.6, 35.4],
+  cierre: [35.4, 40],
+};
+
+const iconoMarca = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#18141d" stroke-width="2.4" stroke-linejoin="round"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/></svg>`;
+const x = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
+const ok = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#18141d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const flecha = `<svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.5L9 19z" fill="#fff" stroke="#18141d" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+
+function pasoHTML(n, txt) { return `<div id="paso"><span class="num">${n}</span><span class="txt">${txt}</span></div>`; }
+
+function pintar(t) {
+  let h = "";
+
+  // ---------- Portada ----------
+  const aP = entre(t, -1, T.portada[1]);
+  if (aP > 0) {
+    h += `<div id="portada" style="opacity:${aP};transform:translateY(${(1 - suave(tramo(t, 0, .7))) * 14}px)">
+      <h1>Así se <em>dicta</em>.</h1><p>Cuatro pasos. Funciona en cualquier programa.</p></div>`;
+  }
+
+  // ---------- Historia clínica ----------
+  const aH = entre(t, T.hc[0], T.hc[1]);
+  if (aH > 0) {
+    // rótulo del paso
+    let paso = "";
+    const pasos = [
+      [T.p1, 1, "Haz clic donde quieras <em>escribir</em>."],
+      [T.p2, 2, `Presiona ${MOD} + Espacio.`],
+      [T.p3, 3, "Habla <em>normal</em>, como siempre."],
+      [T.p4, 4, `Presiona ${MOD} + Espacio otra vez.`],
+      [T.p5, "✓", "Queda escrito y <em>limpio</em>."],
+    ];
+    for (const [[a, b], n, txt] of pasos) {
+      const al = entre(t, a, b, 0.35);
+      if (al > 0) paso = `<div style="opacity:${al};transform:translateY(${(1 - al) * 8}px)">${pasoHTML(n, txt)}</div>`;
+    }
+    h += paso;
+
+    const enfocado = t > 6.2;
+    // texto del campo
+    let texto = "";
+    const tTipeo = tramo(t, 22.6, 24.4);
+    if (t > 22.6) texto = LIMPIO.slice(0, Math.round(LIMPIO.length * tTipeo));
+    const caret = enfocado && (Math.floor(t * 2) % 2 === 0 || (t > 22.6 && t < 24.6)) ? `<span id="caret"></span>` : "";
+    const atenuar = (t > T.p2[0] && t < T.p4[1]) ? 0.35 : 1; // mientras graba, la atención va a teclas y voz
+    h += `<div id="hc" style="opacity:${aH};transform:translateY(${(1 - aH) * 18}px) scale(${lerp(.98, 1, aH)})">
+      <div class="tb"><i></i><i></i><i></i><span>Historia clínica</span></div>
+      <div style="opacity:${atenuar}">
+        <div class="cab"><b>Marta Rojas</b><span>58 años · Consulta externa</span></div>
+        <label>Motivo de consulta</label>
+        <div id="campo" class="${enfocado ? "foco" : ""}">${texto}${caret}</div>
+        <label>Examen físico</label>
+        <div class="otro"></div>
+      </div>
+    </div>`;
+
+    // etiquetas de lo que arregló (exactas: lo dicho vs lo escrito)
+    const e1 = entre(t, 24.6, 27.4, .35), e2 = entre(t, 25.0, 27.4, .35);
+    if (e1 > 0) h += `<div class="etq" style="left:244px;top:394px;opacity:${e1}">Quitó el «eh»</div>`;
+    if (e2 > 0) h += `<div class="etq" style="left:394px;top:394px;opacity:${e2}">Cambió «izquierda» por «derecha»</div>`;
+
+    // cursor: entra, va al campo, clic
+    const [cx, cy] = ruta(t, [[4.0, 1040, 720], [5.8, 560, 372], [6.6, 560, 372], [7.6, 1150, 760]]);
+    const clic = t > 6.0 && t < 6.25;
+    if (t > 4 && t < 7.6) h += `<div id="cursor" style="left:${cx}px;top:${cy}px;transform:scale(${clic ? .82 : 1})">${flecha}</div>`;
+
+    // teclas
+    const aT = Math.max(entre(t, T.p2[0], T.p3[0] + .2, .35), entre(t, T.p4[0], T.p4[1] - .2, .35));
+    if (aT > 0) {
+      const abajo = (t > 9.6 && t < 10.3) || (t > 20.4 && t < 21.1);
+      h += `<div id="teclas" style="opacity:${aT}"><div class="tecla ${abajo ? "on" : ""}">${MOD}</div><span class="mas">+</span><div class="tecla ${abajo ? "on" : ""}">Espacio</div></div>`;
+    }
+
+    // píldora: aparece al presionar, onda mientras habla, "Escribiendo…" al terminar
+    const grabando = t > 9.9 && t < 20.7;
+    const escribiendo = t >= 20.7 && t < 22.7;
+    if (grabando || escribiendo) {
+      const ap = grabando ? suave(tramo(t, 9.9, 10.3)) : 1;
+      let dentro;
+      if (grabando) {
+        const hablando = t > T.p3[0] && t < 19.2;
+        const barras = Array.from({ length: 22 }, (_, i) => {
+          const v = hablando ? 6 + ruido(i, t) * 28 : 5 + ruido(i, t) * 3;
+          return `<i style="height:${v.toFixed(1)}px"></i>`;
+        }).join("");
+        dentro = `<span class="b x">${x}</span><span id="onda">${barras}</span><span class="b ok">${ok}</span>`;
+      } else {
+        const puntos = ".".repeat(1 + (Math.floor(t * 3) % 3));
+        dentro = `<span id="escribiendo">Escribiendo${puntos}</span>`;
+      }
+      h += `<div id="pildora" style="opacity:${ap};transform:translateX(-50%) translateY(${(1 - ap) * 10}px)">${dentro}</div>`;
+    }
+
+    // lo que dice el médico, palabra por palabra
+    if (t > T.p3[0] && t < 20.6) {
+      const k = tramo(t, 12.4, 18.8);
+      let restantes = Math.round(DICHO_TOTAL.length * k);
+      let voz = "";
+      for (const [frag, clase] of DICHO) {
+        const parte = frag.slice(0, Math.max(0, restantes));
+        restantes -= frag.length;
+        if (parte) voz += clase ? `<span class="${clase}">${parte}</span>` : parte;
+      }
+      const av = entre(t, T.p3[0], 20.6, .35);
+      h += `<div id="voz" style="opacity:${av}">«${voz}»</div>`;
+    }
+  }
+
+  // ---------- Diccionario ----------
+  const aD = entre(t, T.dicc[0], T.dicc[1]);
+  if (aD > 0) {
+    h += `<div style="opacity:${aD}">${pasoHTML("+", "¿Escribió mal un <em>nombre</em>?")}</div>`;
+    const palabra = "Dra. Quintero";
+    const escrito = palabra.slice(0, Math.round(palabra.length * tramo(t, 30.0, 31.4)));
+    const agregada = t > 32.2;
+    const presionado = t > 31.9 && t < 32.2;
+    const lista = (agregada ? `<li style="opacity:${suave(tramo(t, 32.2, 32.6))}">Dra. Quintero<span>Quitar</span></li>` : "")
+      + `<li>Atorvastatina<span>Quitar</span></li><li>HbA1c<span>Quitar</span></li>`;
+    h += `<div id="dicc" style="opacity:${aD};transform:translateY(${(1 - aD) * 18}px)">
+      <div class="menu"><div>Inicio</div><div class="on">Diccionario</div><div>Mi cuenta</div><div>Ayuda</div></div>
+      <div class="der">
+        <h3>Diccionario</h3>
+        <p>Nombres, medicamentos o siglas que la app debe escribir siempre igual.</p>
+        <div class="fila"><div class="in ${t > 29.6 ? "foco" : ""}">${agregada ? "" : escrito}${t > 29.6 && !agregada ? '<span id="caret" style="height:22px"></span>' : ""}</div>
+          <div class="bt" style="transform:scale(${presionado ? .96 : 1})">Agregar</div></div>
+        <ul>${lista}</ul>
+      </div></div>`;
+    const [cx, cy] = ruta(t, [[28.4, 1100, 760], [29.4, 640, 362], [31.5, 640, 362], [31.9, 960, 362], [33.4, 960, 362], [34.6, 1200, 780]]);
+    if (t > 28.4 && t < 34.6) h += `<div id="cursor" style="left:${cx}px;top:${cy}px;transform:scale(${(t > 29.35 && t < 29.6) || presionado ? .82 : 1})">${flecha}</div>`;
+    const nota = entre(t, 32.6, T.dicc[1], .35);
+    if (nota > 0) h += `<div class="etq" style="left:50%;transform:translateX(-50%);top:640px;opacity:${nota};font-size:18px;height:42px;line-height:42px;padding:0 20px;border-radius:21px">Una vez. Desde ahí, siempre bien escrito.</div>`;
+  }
+
+  // ---------- Cierre ----------
+  const aC = suave(tramo(t, T.cierre[0], T.cierre[0] + .6));
+  if (aC > 0) {
+    h += `<div id="cierre" style="opacity:${aC}">
+      <h2>Haz clic, presiona ${MOD} + Espacio, habla, y presiona otra vez para <em>terminar</em>.</h2>
+      <img src="../../public/brand/closelabs-black.png" alt="CloseLabs"></div>`;
+  }
+
+  document.getElementById("escena").innerHTML = h;
+}
+
+window.pintar = pintar;
+window.DURACION = DURACION;
+// Vista previa en el navegador: corre sola en tiempo real (la grabación llama a pintar(t) cuadro a cuadro).
+if (!new URLSearchParams(location.search).has("grabar")) {
+  const t0 = performance.now();
+  (function bucle() { pintar(((performance.now() - t0) / 1000) % DURACION); requestAnimationFrame(bucle); })();
+} else {
+  pintar(0);
+}
+</script>
+</body>
+</html>
