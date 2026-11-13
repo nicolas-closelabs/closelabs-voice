@@ -72,7 +72,13 @@ def il_dmg():
         c.append('<path d="M370 %d L%d %d" stroke="%s" stroke-width="3"/>'%(y,x2,y,TINTA))
     c.append('<path d="M352 150 L364 136 M362 162 L380 154 M340 142 L344 124" stroke="%s" stroke-width="2.5"/>'%TINTA)
     c.append('<text x="280" y="76" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="34" font-weight="500" fill="%s" letter-spacing="-0.4">Haz <tspan font-style="italic" fill="%s">doble clic</tspan> en el ícono</text>'%(TINTA,LILA))
-    c.append('<text x="280" y="352" text-anchor="middle" font-family="\'Plus Jakarta Sans\', Helvetica, sans-serif" font-size="15" fill="#55505E">Se instala sola en unos segundos.</text>')
+    c.append('<text x="280" y="330" text-anchor="middle" font-family="\'Plus Jakarta Sans\', Helvetica, sans-serif" font-size="15" fill="#55505E">Se instala sola en unos segundos.</text>')
+    # Si la versión anterior sigue abierta (el botón rojo solo esconde la ventana), macOS no deja abrir
+    # la nueva y dice "can't be opened" (REVISION-PRIMER-USO.md, 2026-11-12). Mismo texto que la web.
+    c.append('<path d="M150 348 L410 348" stroke="%s" stroke-width="1"/>'%LINEA)
+    nota='font-family="\'Plus Jakarta Sans\', Helvetica, sans-serif" font-size="13" fill="#55505E"'
+    c.append('<text x="280" y="368" text-anchor="middle" %s><tspan font-weight="600" fill="%s">¿Ya tenías CloseLabs Voice?</tspan> Ciérrala antes: clic en su ícono,</text>'%(nota,TINTA))
+    c.append('<text x="280" y="386" text-anchor="middle" %s>arriba a la derecha, y luego <tspan font-weight="600" fill="%s">Salir</tspan>. O reinicia tu Mac.</text>'%(nota,TINTA))
     return svg(560,400,"\n".join(c))
 
 ILS={"voz-a-texto.svg":il_voz(),"privacidad.svg":il_priv(),"correo-codigo.svg":il_correo(),"dmg-fondo.svg":il_dmg()}
@@ -85,7 +91,7 @@ if "--png" in sys.argv:
     chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     tmp=tempfile.mkdtemp()
     html=os.path.join(tmp,"dmg.html")
-    open(html,"w").write('<!doctype html><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&family=Plus+Jakarta+Sans:wght@400&display=swap" rel="stylesheet"><style>html,body{margin:0;overflow:hidden}svg{display:block}</style>'+ILS["dmg-fondo.svg"])
+    open(html,"w").write('<!doctype html><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet"><style>html,body{margin:0;overflow:hidden}svg{display:block}</style>'+ILS["dmg-fondo.svg"])
     for esc,nombre in ((1,"dmg-fondo.png"),(2,"dmg-fondo@2x.png")):
         subprocess.run([chrome,"--headless=new","--disable-gpu","--hide-scrollbars","--user-data-dir="+os.path.join(tmp,"perfil"),
                         "--window-size=560,400","--force-device-scale-factor=%d"%esc,"--virtual-time-budget=6000",

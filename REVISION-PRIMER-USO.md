@@ -246,3 +246,13 @@ nos vemos muy AI". Esto es lo observado; qué aplicar se decide con él.
   la nueva desde Aplicaciones.
 - La web de descarga (Mac) ya lo avisa. La actualización automática no tiene este problema (cierra y
   relanza la app); solo pasa al reinstalar a mano con la vieja abierta.
+- Segunda revisión (Nicolás: "la cerramos antes de borrarla"). En la app, el botón rojo NO cierra:
+  esconde la ventana y la app sigue en la barra de menú y el Dock (`CloseRequested` → `hide`). Solo
+  cierra Salir (ícono de arriba) o Cmd+Q. Repetido en el Mac de Nicolás: con la 0.9.3 cerrada de
+  verdad, borrada y la nueva abierta desde el instalador, se instala bien (dos veces, también con tres
+  doble clics seguidos). El error solo sale con la vieja aún abierta.
+- La primera vez, macOS muestra su aviso "app descargada de internet, ¿abrirla?" y la app espera
+  hasta que alguien toque Abrir (35 s en la prueba). Un segundo doble clic con el aviso en pantalla
+  NO da el error. Sin probar: qué pasa si el médico toca Cancelar.
+- El fondo del .dmg ahora también lo avisa, debajo del ícono, con el mismo texto que la web
+  ("¿Ya tenías CloseLabs Voice? Ciérrala antes…"). Sale en la próxima compilación.
