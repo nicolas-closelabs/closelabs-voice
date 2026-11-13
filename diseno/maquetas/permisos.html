@@ -252,7 +252,145 @@ function animar(v, inicio) {
   pon(k);
   setInterval(() => { k = (k + 1) % CUADROS.length; if (v.dataset.momento === 'esperando' && k === 0) k = 1; pon(k); }, 2800);
 }
-document.querySelectorAll('.ventana').forEach(montar);
+document.querySelectorAll('.ventana:not(.win)').forEach(montar);
+</script>
+
+<!-- ======================= WINDOWS ======================= -->
+<style>
+  .seccion { width:1120px; margin:70px auto 0; padding-top:30px; border-top:2px solid var(--linea-fuerte); }
+  .seccion h1 { font:500 34px/1.2 var(--serif); margin:0 0 6px; letter-spacing:-.01em; }
+  .seccion p { margin:0; font-size:17px; line-height:26px; color:var(--tinta-2); max-width:860px; }
+  .titulo-win { height:32px; flex:none; background:#fff; border-bottom:1px solid var(--linea); display:flex; align-items:center; padding-left:12px;
+    font:400 12px/1 "Segoe UI", system-ui, sans-serif; color:#444; }
+  .titulo-win .ctl { margin-left:auto; display:flex; height:100%; }
+  .titulo-win .ctl span { width:46px; display:grid; place-items:center; font-size:13px; color:#333; }
+  /* Configuración de Windows 11 en miniatura */
+  .conf { position:absolute; left:20px; top:18px; width:430px; height:264px; border-radius:8px; background:#f3f3f3; border:1px solid #d6d6d6;
+    box-shadow:0 8px 24px rgba(24,20,29,.14); display:flex; overflow:hidden; font-family:"Segoe UI", system-ui, sans-serif; transition:opacity .35s, transform .35s; }
+  .conf .nav { width:112px; padding:30px 10px; display:flex; flex-direction:column; gap:10px; }
+  .conf .nav span { height:7px; border-radius:4px; background:#d9d9d9; }
+  .conf .nav span.sel { background:#0067c0; opacity:.8; }
+  .conf .pag { flex:1; padding:16px 14px 0 4px; }
+  .conf .ruta { font-size:15px; font-weight:600; color:#1b1b1b; margin-bottom:10px; }
+  .conf .ruta small { font-weight:400; color:#666; }
+  .tarj { background:#fff; border:1px solid #e5e5e5; border-radius:6px; padding:10px 12px; display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .tarj .tx { flex:1; font-size:11px; line-height:14px; color:#1b1b1b; }
+  .tarj .tx small { display:block; color:#666; font-size:9.5px; }
+  .tarj.gris .tx { color:#9a9a9a; }
+  .tarj.marcada { box-shadow:0 0 0 2px var(--lila); }
+  .tw { width:34px; height:17px; border-radius:9px; border:1.5px solid #5f5f5f; position:relative; flex:none; transition:background .25s, border-color .25s; }
+  .tw::after { content:""; position:absolute; top:2.5px; left:3px; width:9px; height:9px; border-radius:50%; background:#5f5f5f; transition:left .25s, background .25s; }
+  .tw.on { background:#0067c0; border-color:#0067c0; } .tw.on::after { left:19px; background:#fff; }
+  .tw-et { font-size:10px; color:#444; width:58px; flex:none; text-align:right; }
+</style>
+
+<div class="seccion">
+  <h1>Windows: un solo permiso, y solo si hace falta</h1>
+  <p>En Windows no hay Accesibilidad. Esta pantalla aparece <b>solo si Windows tiene el micrófono bloqueado</b> (en casi todos los computadores está abierto y se la salta). Mismo diseño: la derecha muestra en vivo los dos interruptores que hay que encender en la Configuración de Windows.</p>
+</div>
+
+<div class="rotulo"><b>1</b><span>Antes de abrir la Configuración</span><em>el tutorial muestra los dos interruptores</em></div>
+<div class="ventana win" data-momento="antes"></div>
+<div class="rotulo"><b>2</b><span>Mientras está en la Configuración</span><em>te espera y sigue mostrando el gesto</em></div>
+<div class="ventana win" data-momento="esperando"></div>
+<div class="rotulo"><b>3</b><span>Listo</span><em>lo nota sola y sigue a la prueba</em></div>
+<div class="ventana win" data-momento="listo"></div>
+
+<template id="t-win">
+  <div class="titulo-win">CloseLabs Voice<div class="ctl"><span>—</span><span>☐</span><span>✕</span></div></div>
+  <div class="barra">
+    <div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#18141d" stroke-width="3"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M9 7.5 15 16.5"/></svg>CloseLabs</div>
+    <div class="etapas"><div class="etapa aqui">Cuenta</div><div class="etapa">Prueba</div><div class="etapa">Práctica</div></div>
+    <div class="ayuda">¿Necesitas ayuda?</div>
+  </div>
+  <div class="cuerpo">
+    <div class="col">
+      <h2>Un permiso y <em>listo</em>.</h2>
+      <p class="apoyo">Windows tiene el micrófono apagado. Se enciende una sola vez.</p>
+      <ul class="pasos">
+        <li class="paso-acc"><span class="n"></span>
+          <div><div class="nom">Micrófono</div><div class="fr">Para oír lo que dictas.</div></div><span class="extra"></span></li>
+      </ul>
+      <div class="boton"></div>
+      <div class="bajo"></div>
+    </div>
+    <div class="escena">
+      <div class="estado"><i></i><span></span></div>
+      <div class="cuadro">
+        <div class="conf">
+          <div class="nav"><span style="width:70px"></span><span style="width:52px"></span><span style="width:64px"></span><span class="sel" style="width:84px"></span><span style="width:58px"></span><span style="width:46px"></span></div>
+          <div class="pag">
+            <div class="ruta"><small>Privacidad y seguridad ›</small> Micrófono</div>
+            <div class="tarj t1"><div class="tx">Acceso al micrófono<small>Cualquiera que use este dispositivo puede elegir…</small></div><span class="tw-et">Desactivado</span><span class="tw"></span></div>
+            <div class="tarj gris"><div class="tx">Permitir que las aplicaciones accedan al micrófono</div><span class="tw"></span></div>
+            <div class="tarj t3"><div class="tx">Permitir que las aplicaciones de escritorio accedan al micrófono</div><span class="tw-et">Desactivado</span><span class="tw"></span></div>
+          </div>
+        </div>
+        <svg class="cursor" viewBox="0 0 24 24" style="left:400px;top:250px"><path d="M4 2l15 9-6.5 1.5L9 19z" fill="#fff" stroke="#18141d" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <div class="vuelve"><span class="ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Listo. Vuelve aquí.</b><span>CloseLabs Voice lo nota sola.</span></div>
+      </div>
+      <div class="leyenda"><b></b><span></span></div>
+      <div class="avance"><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+</template>
+
+<script>
+const CUADROS_WIN = [
+  { b:"Se abre la Configuración de Windows", s:"En Privacidad y seguridad › Micrófono. Nosotros te la abrimos." },
+  { b:"Enciende «Acceso al micrófono»", s:"El primer interruptor. Un clic." },
+  { b:"Y el de «aplicaciones de escritorio»", s:"Más abajo. Otro clic, y queda azul." },
+  { b:"Vuelve aquí", s:"No hay que reiniciar nada: la app lo nota sola." },
+];
+const VISTO = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+function montarWin(v) {
+  v.innerHTML = document.getElementById('t-win').innerHTML;
+  const m = v.dataset.momento, q = s => v.querySelector(s);
+  const paso = q('.paso-acc'), n = paso.querySelector('.n'), extra = paso.querySelector('.extra');
+  const boton = q('.boton'), bajo = q('.bajo'), estado = q('.estado');
+  if (m === 'listo') {
+    n.className = 'n ok'; n.innerHTML = VISTO; extra.className = 'listo'; extra.textContent = 'Listo';
+    boton.textContent = 'Seguir'; bajo.textContent = 'Sigue sola en 2 segundos.';
+    estado.classList.add('quieto'); estado.querySelector('i').style.background = 'var(--hecho)';
+    estado.querySelector('span').textContent = 'Micrófono encendido';
+    q('.vuelve').classList.add('ve'); q('.leyenda b').textContent = 'Listo el permiso';
+    q('.leyenda span').textContent = 'Ahora probamos tu micrófono.';
+    q('.avance').querySelectorAll('i').forEach(i => i.className = 'hecho'); q('.cursor').style.display = 'none';
+    return;
+  }
+  paso.classList.add('activo'); extra.className = 'ver'; extra.textContent = 'Mira cómo →';
+  if (m === 'antes') {
+    n.className = 'n ahora'; boton.textContent = 'Abrir la configuración de Windows'; bajo.textContent = 'Toma unos 15 segundos.';
+    estado.classList.add('quieto'); estado.querySelector('span').textContent = 'Así se hace';
+  } else {
+    n.className = 'n gira'; boton.className = 'boton sec'; boton.textContent = 'Abrir la configuración otra vez';
+    bajo.textContent = '¿La cerraste sin querer? Usa el botón.';
+    estado.querySelector('span').textContent = 'Te estamos esperando en la Configuración…';
+  }
+  const conf = q('.conf'), cur = q('.cursor'), t1 = q('.t1'), t3 = q('.t3');
+  const sw1 = t1.querySelector('.tw'), sw3 = t3.querySelector('.tw'), et1 = t1.querySelector('.tw-et'), et3 = t3.querySelector('.tw-et');
+  const rayas = [...q('.avance').children];
+  const fijar = (sw, et, on) => { sw.classList.toggle('on', on); et.textContent = on ? 'Activado' : 'Desactivado'; };
+  let k = m === 'esperando' ? 1 : 0;
+  function pon(i) {
+    q('.leyenda b').textContent = CUADROS_WIN[i].b; q('.leyenda span').textContent = CUADROS_WIN[i].s;
+    rayas.forEach((r, j) => r.className = j < i ? 'hecho' : j === i ? 'aqui' : '');
+    q('.vuelve').classList.toggle('ve', i === 3);
+    t1.classList.toggle('marcada', i === 1); t3.classList.toggle('marcada', i === 2);
+    cur.classList.remove('clic');
+    if (i === 0) { fijar(sw1, et1, false); fijar(sw3, et3, false); conf.style.opacity = 0; conf.style.transform = 'translateY(10px) scale(.98)';
+      cur.style.left = '400px'; cur.style.top = '250px'; setTimeout(() => { conf.style.opacity = 1; conf.style.transform = 'none'; }, 350); }
+    if (i === 1) { fijar(sw3, et3, false); fijar(sw1, et1, false); cur.style.left = '420px'; cur.style.top = '72px';
+      setTimeout(() => { cur.classList.add('clic'); fijar(sw1, et1, true); }, 950); setTimeout(() => cur.classList.remove('clic'), 1150); }
+    if (i === 2) { fijar(sw1, et1, true); cur.style.left = '420px'; cur.style.top = '178px';
+      setTimeout(() => { cur.classList.add('clic'); fijar(sw3, et3, true); }, 950); setTimeout(() => cur.classList.remove('clic'), 1150); }
+    if (i === 3) { fijar(sw1, et1, true); fijar(sw3, et3, true); cur.style.left = '470px'; cur.style.top = '300px'; }
+  }
+  pon(k);
+  setInterval(() => { k = (k + 1) % 4; if (m === 'esperando' && k === 0) k = 1; pon(k); }, 2800);
+}
+document.querySelectorAll('.ventana.win').forEach(montarWin);
 </script>
 </body>
 </html>

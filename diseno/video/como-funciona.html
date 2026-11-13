@@ -36,6 +36,11 @@
     box-shadow:0 1px 2px rgba(24,20,29,.06), 0 18px 44px rgba(24,20,29,.14); }
   #hc .tb { height:40px; background:#f1eef4; border-bottom:1px solid var(--linea); display:flex; align-items:center; gap:8px; padding:0 14px; }
   #hc .tb i { width:12px; height:12px; border-radius:50%; background:#d9d5de; }
+  /* Windows: barra de título de Windows (el nombre a la izquierda y — ☐ ✕ a la derecha), no los tres círculos de Mac */
+  #hc .tb.win { background:#fff; padding:0 0 0 14px; }
+  #hc .tb.win span { margin-left:0; font-family:"Segoe UI", system-ui, sans-serif; font-weight:400; font-size:13px; color:#444; }
+  #hc .tb.win b { margin-left:auto; display:flex; height:100%; }
+  #hc .tb.win b em { width:50px; display:grid; place-items:center; font:400 14px/1 "Segoe UI", system-ui, sans-serif; color:#333; font-style:normal; }
   #hc .tb span { margin-left:14px; font-size:14px; color:var(--tinta-3); font-weight:600; }
   #hc .cab { padding:22px 34px 0; display:flex; justify-content:space-between; align-items:baseline; }
   #hc .cab b { font-size:22px; }
@@ -190,7 +195,7 @@ function pintar(t) {
     const caret = enfocado && (Math.floor(t * 2) % 2 === 0 || (t > 22.6 && t < 24.6)) ? `<span id="caret"></span>` : "";
     const atenuar = (t > T.p2[0] && t < T.p4[1]) ? 0.35 : 1; // mientras graba, la atención va a teclas y voz
     h += `<div id="hc" style="opacity:${aH};transform:translateY(${(1 - aH) * 18}px) scale(${lerp(.98, 1, aH)})">
-      <div class="tb"><i></i><i></i><i></i><span>Historia clínica</span></div>
+      ${WIN ? `<div class="tb win"><span>Historia clínica</span><b><em>—</em><em>☐</em><em>✕</em></b></div>` : `<div class="tb"><i></i><i></i><i></i><span>Historia clínica</span></div>`}
       <div style="opacity:${atenuar}">
         <div class="cab"><b>Marta Rojas</b><span>58 años · Consulta externa</span></div>
         <label>Motivo de consulta</label>
