@@ -63,10 +63,10 @@ export const ListaPasos: React.FC<{ pasos: Paso[]; compacta?: boolean }> = ({
         <Marca estado={p.estado} />
         <div className="flex-1 min-w-0">
           <div
-            className={`font-serif text-[19px] leading-6 ${
+            className={`text-[17px] leading-6 ${
               p.estado === "pendiente"
-                ? "text-tinta-3 font-normal"
-                : "text-tinta font-medium"
+                ? "text-tinta-3 font-medium"
+                : "text-tinta font-semibold"
             }`}
           >
             {p.nombre}

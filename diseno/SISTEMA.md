@@ -19,10 +19,9 @@ serif con una palabra en cursiva y **el lila como color de CloseLabs, en dosis f
 
 1. **El lila tiene dosis** (regla completa en §3). Se siente la marca; no vuelve el "lila por todas
    partes".
-2. **Dos voces.** Newsreader (serif) en títulos, con UNA palabra en cursiva y en lila, y también en
-   BOTONES y MENÚ (500, dos puntos más grande que la sans). Schibsted Grotesk en todo lo demás
-   (campos, explicaciones, textos chicos, enlaces). Decidido por Nicolás el 2026-11-12 (opción D de
-   `maquetas/tipografias.html`): Plus Jakarta Sans salió por "muy redondita, muy AI". La cursiva serif en tinta, dentro de un campo, es "lo que se dice en voz
+2. **Dos voces.** Newsreader (serif) en títulos, con UNA palabra en cursiva y en lila. Plus Jakarta
+   Sans en todo lo demás. (2026-11-12: se probó la opción D de `maquetas/tipografias.html`
+   —Newsreader en botones y menú + Schibsted Grotesk— y Nicolás pidió volver a esta.) La cursiva serif en tinta, dentro de un campo, es "lo que se dice en voz
    alta"; la sans recta es "lo que queda escrito".
 3. **Una plantilla.** Barra superior, columna de texto a la izquierda, escenario a la derecha, botón
    abajo a la izquierda. El logo mide siempre 132 px. La ventana no cambia de tamaño ni de lugar.
@@ -104,7 +103,7 @@ Contraste: blanco sobre `#A439FF` da 4,56:1 (pasa AA). Lila como TEXTO pequeño 
 
   /* Tipografía */
   --font-serif: "Newsreader Variable", Georgia, serif;
-  --font-sans: "Schibsted Grotesk Variable", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
 
   /* Radios */
   --radius-tecla: 9px;  --radius-chico: 10px;  --radius-campo: 12px;  --radius-boton: 12px;
@@ -118,8 +117,8 @@ Contraste: blanco sobre `#A439FF` da 4,56:1 (pasa AA). Lila como TEXTO pequeño 
 ```
 
 **Fuentes** (empaquetadas, sin CDN): `@fontsource-variable/newsreader` (importar `opsz.css` y
-`opsz-italic.css`; licencia OFL) y `@fontsource-variable/schibsted-grotesk` (OFL). Inter y Plus
-Jakarta Sans dejan de usarse en la app. `font-optical-sizing: auto`.
+`opsz-italic.css`; licencia OFL) y `@fontsource-variable/plus-jakarta-sans` (ya instalada). Inter
+deja de usarse en la app. `font-optical-sizing: auto`.
 
 ### Escala tipográfica (única)
 

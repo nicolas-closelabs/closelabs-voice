@@ -7,7 +7,7 @@ import App from "./App";
 // óptico y su cursiva; Inter ya no se usa (diseno/SISTEMA.md §5).
 import "@fontsource-variable/newsreader/opsz.css";
 import "@fontsource-variable/newsreader/opsz-italic.css";
-import "@fontsource-variable/schibsted-grotesk";
+import "@fontsource-variable/plus-jakarta-sans";
 
 // Set platform before render so CSS can scope per-platform (e.g. scrollbar styles)
 document.documentElement.dataset.platform = platform();

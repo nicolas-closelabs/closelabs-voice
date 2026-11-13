@@ -64,7 +64,7 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
           </div>
           <button
             onClick={() => setAbierta(true)}
-            className="shrink-0 h-11 px-5 rounded-[12px] font-serif text-[18px] font-medium text-error border-[1.5px] border-error-borde bg-papel hover:bg-error-fondo transition-colors"
+            className="shrink-0 h-11 px-5 rounded-[12px] text-[16px] font-semibold text-error border-[1.5px] border-error-borde bg-papel hover:bg-error-fondo transition-colors"
           >
             Eliminar mi cuenta
           </button>
@@ -106,7 +106,7 @@ export const ZonaPeligrosa: React.FC<{ estado: EstadoCuenta }> = ({ estado }) =>
             <button
               onClick={() => void eliminar()}
               disabled={!coincide || borrando}
-              className="inline-flex items-center gap-2 h-11 px-5 rounded-[12px] font-serif text-[18px] font-medium bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-[12px] text-[16px] font-semibold bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {borrando && <Loader2 className="w-4 h-4 animate-spin" />}
               Eliminar mi cuenta para siempre

@@ -271,6 +271,7 @@ nos vemos muy AI". Esto es lo observado; qué aplicar se decide con él.
   voz solo movía unas pocas a la izquierda. Ahora cada barra es el volumen de un instante (corre de
   derecha a izquierda), con piso de ruido.
 - **Feedback:** zona de "Eliminar la cuenta" con fondo rojo suave; se quitó el aviso "¿No apareció?
-  Quedó copiado"; letra nueva (Newsreader en títulos, botones y menú + Schibsted Grotesk).
+  Quedó copiado"; se probó una letra nueva (Newsreader en botones y menú + Schibsted
+  Grotesk) y Nicolás pidió volver a la anterior mientras se terminan los otros cambios.
   Pendiente: video tutorial y que la guía de la derecha en Permisos se sienta parte del paso
   (maqueta antes de aplicar).

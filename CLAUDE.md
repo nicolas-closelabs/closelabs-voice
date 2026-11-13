@@ -17,8 +17,8 @@
 > Fable y elegida por Nicolás (la primera de tres rondas, con más lila). La especificación manda:
 > `diseno/SISTEMA.md` (tokens, plantilla, componentes, la "dosis de lila", lo que NUNCA va) y las
 > maquetas `diseno/maquetas/index.html`. Componentes en `src/components/tinta/` (plantilla del primer
-> uso, título con una palabra en cursiva, botones, campos, teclas, pasos). Newsreader (títulos, botones y
-> menú) + Schibsted Grotesk (lo demás); Inter y Plus Jakarta salen. Ventana 1120 × 680 (mínimo 960 × 600, con zoom en pantallas chicas). Primer uso:
+> uso, título con una palabra en cursiva, botones, campos, teclas, pasos). Newsreader + Plus Jakarta
+> Sans (Inter sale). Ventana 1120 × 680 (mínimo 960 × 600, con zoom en pantallas chicas). Primer uso:
 > Instalando (Mac) → bienvenida → cuenta → código → permisos (con la ventanita pegada a Ajustes,
 > `guia_ajustes.rs`) → prueba de micrófono y de atajo → 3 prácticas (historia, WhatsApp, fórmula)
 > con etiquetas que salen SOLO si una comprobación exacta lo confirma → recompensa. Píldora mínima
@@ -468,8 +468,7 @@ alucinar).
   - Texto: `#1A1620` (primario), `#6F677E` (secundario), `#A39AAA` (muted), `#F5EDFF` (invertido).
   - **Acento: `#A439FF`** (primario) / `#8B2FF3` (secundario); focus `#A439FF`.
   - Bordes: `#A39AAA` @70%, sutil `#D4CCE0` @30%.
-- **Tipografías (desde 2026-11-12):** **Newsreader** (títulos, botones, menú) + **Schibsted Grotesk**
-  (lo demás); ver `diseno/SISTEMA.md`. Antes: Inter + Plus Jakarta Sans. Empaquetadas local
+- **Tipografías:** **Newsreader** (títulos) + **Plus Jakarta Sans** (lo demás); ver `diseno/SISTEMA.md`. Empaquetadas local
   (`@fontsource/*`), sin CDN → funciona offline.
 - **Logo (regla crítica):** usar el **archivo provisto tal cual** — NUNCA recrear, redibujar
   ni vectorizar el isotipo hexagonal. Ícono de app = isotipo; wordmark completo en la UI.

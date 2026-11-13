@@ -66,14 +66,12 @@
   --brand-border: var(--linea);
   --brand-border-strong: var(--linea-fuerte);
 
-  /* ---- Tipografía (Nicolás, 2026-11-12, opción D de diseno/maquetas/tipografias.html):
-     Newsreader en títulos, frases, BOTONES y MENÚ; Schibsted Grotesk en todo lo demás (campos,
-     explicaciones, textos chicos). Plus Jakarta Sans sale: "muy redondita, muy AI". ---- */
+  /* ---- Tipografía: Newsreader (títulos) + Plus Jakarta Sans (todo lo demás). Inter sale. ---- */
   --font-serif: "Newsreader Variable", Georgia, serif;
   --font-heading:
-    "Schibsted Grotesk Variable", "Segoe UI", system-ui, sans-serif;
+    "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
   --font-body:
-    "Schibsted Grotesk Variable", "Segoe UI", system-ui, sans-serif;
+    "Plus Jakarta Sans Variable", "Segoe UI", system-ui, sans-serif;
 }
 
 /* CloseLabs Voice: se FUERZA light mode (el producto es blanco siempre, no sigue

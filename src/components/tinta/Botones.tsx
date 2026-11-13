@@ -7,9 +7,6 @@ import { Loader2 } from "lucide-react";
  *
  * ⚠️ Un solo botón principal (lila) por vista. Un segundo botón es siempre secundario (contorno).
  * Los enlaces son de tinta con subrayado, nunca lila.
- *
- * Letra (Nicolás, 2026-11-12, opción D): los BOTONES van en Newsreader, 500, dos puntos más grandes
- * que la sans de antes (la serif se lee más chica); los enlaces siguen en la sans (Schibsted).
  */
 
 const TRANSICION = "transition-colors duration-150 ease-[cubic-bezier(.2,.8,.2,1)]";
@@ -23,9 +20,9 @@ type BotonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 function medidas(medida: BotonProps["medida"]): string {
-  if (medida === "corto") return "h-11 px-5 text-[18px] rounded-[12px]";
-  if (medida === "normal") return "h-14 px-7 text-[19px] rounded-[12px]";
-  return "h-14 w-full px-7 text-[19px] rounded-[12px]";
+  if (medida === "corto") return "h-11 px-5 text-[16px] rounded-[12px]";
+  if (medida === "normal") return "h-14 px-7 text-[17px] rounded-[12px]";
+  return "h-14 w-full px-7 text-[17px] rounded-[12px]";
 }
 
 export const BotonPrincipal: React.FC<BotonProps> = ({
@@ -40,7 +37,7 @@ export const BotonPrincipal: React.FC<BotonProps> = ({
   <button
     type={type}
     disabled={disabled || ocupado}
-    className={`inline-flex items-center justify-center gap-2 font-serif font-medium bg-lila text-white hover:bg-lila-hover active:bg-lila-presion disabled:bg-linea disabled:text-tinta-3 disabled:cursor-not-allowed ${medidas(medida)} ${TRANSICION} ${FOCO} ${className}`}
+    className={`inline-flex items-center justify-center gap-2 font-semibold bg-lila text-white hover:bg-lila-hover active:bg-lila-presion disabled:bg-linea disabled:text-tinta-3 disabled:cursor-not-allowed ${medidas(medida)} ${TRANSICION} ${FOCO} ${className}`}
     {...resto}
   >
     {ocupado && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -63,7 +60,7 @@ export const BotonSecundario: React.FC<
   <button
     type={type}
     disabled={disabled || ocupado}
-    className={`inline-flex items-center justify-center gap-2 font-serif font-medium bg-papel border-[1.5px] hover:bg-lino disabled:opacity-50 disabled:cursor-not-allowed ${
+    className={`inline-flex items-center justify-center gap-2 font-semibold bg-papel border-[1.5px] hover:bg-lino disabled:opacity-50 disabled:cursor-not-allowed ${
       peligro ? "text-error border-error-borde" : "text-tinta border-linea-fuerte"
     } ${medidas(medida)} ${TRANSICION} ${FOCO} ${className}`}
     {...resto}
