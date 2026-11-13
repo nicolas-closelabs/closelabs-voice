@@ -1,0 +1,114 @@
+<!-- PROPUESTA (2026-11-13), todavía NO desplegada: el correo actual es supabase/templates/confirmacion.html.
+     Pedido de Nicolás: "está muy sencillo; no súper guau, pero con un poquito más de cariño".
+     Reglas que se mantienen del correo actual (ver sus comentarios):
+     - SIN mención de la prueba gratis (le llega igual a un médico de gMedic, que no tiene prueba).
+     - El CÓDIGO primero ({{ .Token }}, 6 números); el botón se queda para versiones viejas y celular.
+     - El enlace va a closelabs.co/voice/correo-confirmado con {{ .TokenHash }}.
+     - Tablas y estilos en línea: Outlook y otros ignoran flex y hojas de estilo externas.
+     Lo nuevo: saludo con el nombre ({{ .Data.full_name }}, que la app manda al registrarse), un título
+     en serif con una palabra en cursiva lila (como la app), qué sigue después del código, y WhatsApp
+     de una persona. Newsreader si el correo carga letras web (Apple Mail, iPhone); si no, Georgia. -->
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&display=swap" rel="stylesheet">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f1f8;padding:36px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+  <tr>
+    <td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:18px;border:1px solid #e6e2ea">
+        <tr>
+          <td style="height:6px;background:#a439ff;border-radius:18px 18px 0 0;font-size:0;line-height:0">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:34px 38px 8px">
+            <p style="margin:0 0 22px;font-size:13px;font-weight:700;letter-spacing:0.02em;color:#18141d">
+              CloseLabs <span style="font-weight:500;color:#6e6877">Voice</span>
+            </p>
+            <h1 style="margin:0 0 14px;font-family:'Newsreader',Georgia,'Times New Roman',serif;font-size:32px;line-height:38px;font-weight:500;color:#18141d;letter-spacing:-0.3px">
+              {{ if .Data.full_name }}{{ .Data.full_name }}, te damos la <em style="font-style:italic;color:#a439ff">bienvenida</em>.{{ else }}Te damos la <em style="font-style:italic;color:#a439ff">bienvenida</em>.{{ end }}
+            </h1>
+            <p style="margin:0 0 26px;font-size:16px;line-height:26px;color:#55505e">
+              Gracias por darle una oportunidad a CloseLabs Voice. Desde hoy, tus historias,
+              fórmulas y mensajes se escriben hablando.
+            </p>
+
+            <p style="margin:0 0 10px;font-size:15px;line-height:22px;font-weight:600;color:#18141d">
+              Para empezar, escribe este código en la app:
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">
+              <tr>
+                <td align="center" style="background:#f3e8ff;border-radius:14px;padding:20px 12px;font-size:38px;font-weight:700;letter-spacing:12px;color:#18141d;font-family:'SF Mono',Menlo,Consolas,monospace">
+                  {{ .Token }}
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 24px;font-size:13px;line-height:20px;color:#6e6877">
+              Sirve durante una hora.
+            </p>
+
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 30px">
+              <tr>
+                <td style="padding-right:12px;font-size:14px;line-height:20px;color:#55505e">¿Lo lees en el celular?</td>
+                <td style="background:#18141d;border-radius:10px">
+                  <a href="https://www.closelabs.co/voice/correo-confirmado?token_hash={{ .TokenHash }}&type=email"
+                     style="display:inline-block;padding:11px 20px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">
+                    Confirmar con un toque
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 26px;border-top:1px solid #e6e2ea">
+              <tr>
+                <td style="padding:20px 0 6px;font-family:'Newsreader',Georgia,'Times New Roman',serif;font-size:20px;line-height:26px;font-weight:500;color:#18141d">
+                  Lo que sigue, en cinco minutos
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;font-size:15px;line-height:22px;color:#55505e">
+                  <span style="display:inline-block;width:24px;font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:18px;color:#a439ff">1</span>Le das a la app los permisos que pide tu computador.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;font-size:15px;line-height:22px;color:#55505e">
+                  <span style="display:inline-block;width:24px;font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:18px;color:#a439ff">2</span>Pruebas tu micrófono y el atajo de teclado.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;font-size:15px;line-height:22px;color:#55505e">
+                  <span style="display:inline-block;width:24px;font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:18px;color:#a439ff">3</span>Haces tu primer dictado. Ahí entiendes por qué lo hicimos.
+                </td>
+              </tr>
+            </table>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;background:#f5f1f8;border-radius:12px">
+              <tr>
+                <td style="padding:16px 18px;font-size:15px;line-height:22px;color:#55505e">
+                  <strong style="color:#18141d">¿Te trabaste en algo?</strong> Escríbenos por WhatsApp al
+                  <a href="https://wa.me/573102991182" style="color:#18141d;font-weight:600">+57 310 299 1182</a>.
+                  Te responde una persona del equipo, no un robot.
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 30px;font-size:15px;line-height:22px;color:#55505e">
+              Un abrazo,<br>
+              <span style="font-family:'Newsreader',Georgia,'Times New Roman',serif;font-size:18px;color:#18141d">El equipo de CloseLabs</span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px 38px 26px;border-top:1px solid #eeecf1">
+            <p style="margin:0 0 6px;font-size:12px;line-height:18px;color:#8b8496">
+              Si el botón no funciona, copia esta dirección en tu navegador:
+              <span style="color:#a439ff;word-break:break-all">https://www.closelabs.co/voice/correo-confirmado?token_hash={{ .TokenHash }}&type=email</span>
+            </p>
+            <p style="margin:0;font-size:12px;line-height:18px;color:#8b8496">
+              Si no fuiste tú quien creó esta cuenta, ignora este mensaje: sin confirmar, no se activa nada.
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:18px 0 0;font-size:12px;color:#8b8496">
+        CloseLabs · Herramientas para que los médicos escriban menos y atiendan más
+      </p>
+    </td>
+  </tr>
+</table>
