@@ -524,6 +524,8 @@ giros; solo fundidos de 120 ms. El aviso "¿No pasa nada?" de las prácticas no 
 - El botón principal en otro lugar; el logo en otro tamaño; el logo en la píldora.
 - Tarjetas dentro de tarjetas; sombras fuera de las tres definidas; tarjetas en las páginas del uso
   diario (van renglones).
+  (Excepción decidida por Nicolás el 2026-11-14: las tres tarjetas de Ayuda › "Hablar con
+  nosotros", para que no se vea tanto texto.)
 - Píldora en reposo.
 - Texto de menos de 14 px; gris más claro que `tinta-3` para texto.
 - Etiquetas de corrección sin su comprobación exacta.

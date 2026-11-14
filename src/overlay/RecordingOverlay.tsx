@@ -15,11 +15,7 @@ import i18n, { syncLanguageFromSettings } from "@/i18n";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 import { shortcutKeys } from "@/lib/utils/shortcutLabels";
 
-type OverlayState =
-  | "recording"
-  | "streaming"
-  | "transcribing"
-  | "processing";
+type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
 
 /**
  * Aviso "Presiona ⌥ + Espacio para terminar" en la píldora, en vez del lema, durante los primeros
@@ -44,8 +40,7 @@ function enLosPrimerosDias(): boolean {
   }
 }
 
-// Barras de la onda. Los niveles llegan en 16 bandas; «Tinta y voz» pide 22 barras (SISTEMA.md §9),
-// así que se reparten las 16 en 22.
+// Barras de la onda («Tinta y voz» pide 22, SISTEMA.md §9): las últimas 22 lecturas de volumen.
 const WAVE_BARS = 22;
 
 const RecordingOverlay: React.FC = () => {
@@ -75,7 +70,7 @@ const RecordingOverlay: React.FC = () => {
   /** El aviso de cómo terminar, o `null` si ya pasaron los primeros días. */
   const [aviso, setAviso] = useState<string | null>(null);
 
-  const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
+  const volumenRef = useRef(0);
   // Live-text scroll-back: the text region "sticks" to the newest line while the
   // user is at the bottom; if they scroll up to read history, auto-follow pauses
   // until they scroll back down.
@@ -102,6 +97,9 @@ const RecordingOverlay: React.FC = () => {
         }
         const overlayState = event.payload as OverlayState;
         if (overlayState === "recording") {
+          // Cada dictado empieza con la onda en reposo, no con el final del anterior.
+          volumenRef.current = 0;
+          setLevels(Array(WAVE_BARS).fill(0));
           let texto: string | null = null;
           if (enLosPrimerosDias()) {
             try {
@@ -142,20 +140,21 @@ const RecordingOverlay: React.FC = () => {
       });
 
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
-        const newLevels = event.payload as number[];
-        // Exponential smoothing across the 16 buckets, then take the first N
-        // bars for the shared waveform.
-        const smoothed = smoothedLevelsRef.current.map((prev, i) => {
-          const target = newLevels[i] || 0;
-          return prev * 0.7 + target * 0.3;
-        });
-        smoothedLevelsRef.current = smoothed;
-        setLevels(
-          Array.from(
-            { length: WAVE_BARS },
-            (_, i) => smoothed[Math.floor((i / WAVE_BARS) * smoothed.length)] ?? 0,
-          ),
-        );
+        const v = event.payload as number[];
+        if (!v?.length) return;
+        // Cada barra es el VOLUMEN de un instante: entra por la derecha y corre a la izquierda.
+        // Antes cada barra era una banda de frecuencia (400-4000 Hz) y la voz cae casi toda en
+        // las bajas: solo se movían dos o tres puntos a la izquierda (Nicolás, recorrido 4,
+        // 2026-11-14: "que sea más por volumen, para que se vea que se mueve"). Es la misma
+        // cuenta que las barras de la prueba de micrófono (PrimerDictado.tsx), que ya aprobó.
+        const pico = Math.max(...v);
+        // Por debajo de esto es ruido de fondo: la barra se queda en reposo.
+        const crudo = pico < 0.04 ? 0 : Math.min(1, Math.pow(pico, 0.6) * 1.3);
+        // Sube rápido y baja despacio, como un vúmetro.
+        const antes = volumenRef.current;
+        const volumen = crudo > antes ? crudo : antes * 0.75 + crudo * 0.25;
+        volumenRef.current = volumen;
+        setLevels((previos) => [...previos.slice(1), volumen]);
       });
 
       const unlistenStream = await events.streamTextEvent.listen((event) => {

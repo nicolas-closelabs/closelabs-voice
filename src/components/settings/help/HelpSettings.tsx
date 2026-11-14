@@ -1,14 +1,13 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Flag, MessageCircle, PlayCircle } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { ReportProblem } from "./ReportProblem";
-import { BRANDING, supportWhatsappUrl } from "../../../branding";
+import { supportWhatsappUrl } from "../../../branding";
 import { useShortcutKeys } from "../../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../../lib/utils/shortcutLabels";
 import type { OSType } from "../../../lib/utils/keyboard";
 import { Titulo } from "../../tinta/Titulo";
-import { BotonPrincipal, BotonSecundario } from "../../tinta/Botones";
 import { IR_A_SECCION } from "../home/HomeSettings";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 
@@ -100,40 +99,40 @@ export const HelpSettings: React.FC = () => {
     <div>
       <Titulo>Ayuda</Titulo>
 
-      <SettingsGroup title="Hablar con nosotros">
-        <Renglon
-          nombre="Ver cómo funciona"
-          frase="Un video de 40 segundos: cómo dictar y cómo usar el Diccionario."
-        >
-          <BotonSecundario
-            medida="corto"
+      {/* Tres tarjetas y no tres renglones: Nicolás, recorrido 4 (2026-11-14), "que queden así tres
+          cuadros, para que no se vea tanto texto". Es la única excepción a "sin tarjetas en el uso
+          diario" (diseno/SISTEMA.md §14). WhatsApp es la del lila: la red de seguridad del médico. */}
+      <section className="mt-[18px]">
+        <h2 className="pb-2.5 font-sans text-[14px] leading-5 font-semibold text-tinta-3">
+          Hablar con nosotros
+        </h2>
+        <div className="grid grid-cols-3 gap-3">
+          <Tarjeta
+            icono={<PlayCircle className="w-5 h-5" />}
+            nombre="Ver cómo funciona"
+            frase="Un video de 40 segundos."
             onClick={() =>
-              window.dispatchEvent(new CustomEvent(IR_A_SECCION, { detail: "howto" }))
+              window.dispatchEvent(
+                new CustomEvent(IR_A_SECCION, { detail: "howto" }),
+              )
             }
-          >
-            Ver el video
-          </BotonSecundario>
-        </Renglon>
-        <Renglon
-          nombre="Escríbenos por WhatsApp"
-          frase={`Te responde una persona: ${BRANDING.supportWhatsappDisplay}`}
-        >
-          <BotonPrincipal
-            medida="corto"
+          />
+          <Tarjeta
+            lila
+            icono={<MessageCircle className="w-5 h-5" />}
+            nombre="Escríbenos por WhatsApp"
+            frase="Te responde una persona."
             onClick={() => void openUrl(supportWhatsappUrl())}
-          >
-            Abrir WhatsApp
-          </BotonPrincipal>
-        </Renglon>
-        <Renglon
-          nombre="Reportar un problema"
-          frase="Nos llega un informe de la app, sin el texto de tus dictados."
-        >
-          <BotonSecundario medida="corto" onClick={() => setReportando((v) => !v)}>
-            {reportando ? "Cerrar" : "Reportar"}
-          </BotonSecundario>
-        </Renglon>
-      </SettingsGroup>
+          />
+          <Tarjeta
+            icono={<Flag className="w-5 h-5" />}
+            nombre="Reportar un problema"
+            frase="Sin el texto de tus dictados."
+            activa={reportando}
+            onClick={() => setReportando((v) => !v)}
+          />
+        </div>
+      </section>
       {reportando && (
         <div className="mt-4">
           <ReportProblem />
@@ -156,6 +155,43 @@ export const HelpSettings: React.FC = () => {
   );
 };
 
+/** Una de las tres tarjetas de "Hablar con nosotros": toda la tarjeta es el botón. */
+const Tarjeta: React.FC<{
+  icono: React.ReactNode;
+  nombre: string;
+  frase: string;
+  onClick: () => void;
+  lila?: boolean;
+  activa?: boolean;
+}> = ({ icono, nombre, frase, onClick, lila, activa }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={activa}
+    className={`min-h-[132px] rounded-[16px] border p-[18px] flex flex-col items-start gap-3 text-left transition-colors duration-150 focus:outline-none focus-visible:shadow-[0_0_0_3px_var(--foco)] ${
+      lila
+        ? "bg-lila-suave border-transparent hover:border-lila-claro"
+        : activa
+          ? "bg-papel border-tinta"
+          : "bg-papel border-linea hover:border-linea-fuerte"
+    }`}
+  >
+    <span
+      className={`grid place-items-center w-10 h-10 rounded-full ${
+        lila ? "bg-lila text-white" : "bg-lino text-tinta"
+      }`}
+    >
+      {icono}
+    </span>
+    <span className="flex flex-col gap-0.5">
+      <span className="text-[16px] leading-[22px] font-semibold text-tinta">
+        {nombre}
+      </span>
+      <span className="text-[14px] leading-5 text-tinta-2">{frase}</span>
+    </span>
+  </button>
+);
+
 /** Renglón del uso diario: nombre y frase a la izquierda, un control a la derecha. */
 export const Renglon: React.FC<{
   nombre: React.ReactNode;
@@ -164,9 +200,15 @@ export const Renglon: React.FC<{
 }> = ({ nombre, frase, children }) => (
   <div className="min-h-[66px] py-2 flex items-center justify-between gap-6">
     <div className="min-w-0">
-      <div className="text-[17px] leading-6 font-semibold text-tinta">{nombre}</div>
-      {frase && <div className="text-[15px] leading-[22px] text-tinta-2">{frase}</div>}
+      <div className="text-[17px] leading-6 font-semibold text-tinta">
+        {nombre}
+      </div>
+      {frase && (
+        <div className="text-[15px] leading-[22px] text-tinta-2">{frase}</div>
+      )}
     </div>
-    {children && <div className="shrink-0 flex items-center gap-3.5">{children}</div>}
+    {children && (
+      <div className="shrink-0 flex items-center gap-3.5">{children}</div>
+    )}
   </div>
 );
