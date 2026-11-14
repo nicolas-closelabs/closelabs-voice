@@ -13,6 +13,10 @@
 > sigue en modo de prueba: una tarjeta real se rechaza; nadie puede pagar hasta pasar a modo real.
 > ⚠️ Antes de publicar con `--con-mac`, avisar a los médicos de Mac: tendrán que dar el permiso otra vez.
 
+> **2026-11-14 — STRIPE EN MODO REAL: SE COBRA DE VERDAD.** Llaves reales cargadas, cuentas de
+> prueba borradas y un pago real de punta a punta (webhook OK). Detalle en `STRIPE.md`. ⚠️ Ya no
+> aplica "una tarjeta real se rechaza": cualquier médico que se suscriba paga US$12 de verdad.
+
 > **2026-11-12 — REDISEÑO «TINTA Y VOZ» (sin publicar; versión 0.9.4).** Dirección visual hecha con
 > Fable y elegida por Nicolás (la primera de tres rondas, con más lila). La especificación manda:
 > `diseno/SISTEMA.md` (tokens, plantilla, componentes, la "dosis de lila", lo que NUNCA va) y las

@@ -1,7 +1,16 @@
 # STRIPE — el cobro de CloseLabs Voice
 
 > Cómo está conectado el cobro, cómo se prueba y qué falta para cobrar de verdad.
-> **Última actualización: 2026-10-06.** Estado: servidor listo, en **modo de prueba**.
+> **Última actualización: 2026-11-14.** Estado: **MODO REAL — se cobra de verdad.**
+>
+> **2026-11-14 — paso a modo real.** Producto y precio de US$12 mensual creados en modo real, llave
+> restringida `rk_live_…` con los seis permisos de abajo, webhook con los seis eventos, portal y
+> correos de recibo/cobro fallido. Los tres secretos se cambiaron juntos (12:56 UTC). Se borraron las
+> dos cuentas de prueba y se limpiaron los IDs de modo de prueba de nicolas@closelabs.co (con la
+> llave real, un `cus_` de prueba hace fallar el botón de pagar). Prueba real: Nicolás pagó US$12
+> desde la app (prueba vencida → cobro inmediato); llegaron `customer.subscription.created`,
+> `invoice.paid` y `checkout.session.completed`, los tres "escrita", y la cuenta quedó activa hasta
+> el 2026-12-14. ⚠️ La llave restringida NO puede reembolsar: los reembolsos se hacen en el panel.
 
 ## Lo decidido (ver ROADMAP, Fase 2)
 
@@ -181,7 +190,7 @@ Cuentas de prueba en producción (datos inventados, `nicolas+prueba-stripe@` y
 `nicolas+prueba-stripe2@closelabs.co`): se usan para probar las pantallas de la app y se borran
 antes de pasar a pagos reales.
 
-## Para cobrar de verdad (cuando la LLC tenga EIN)
+## Para cobrar de verdad — ✅ HECHO 2026-11-14 (ver arriba). Se deja como referencia
 
 1. Activar la cuenta de Stripe (datos de la LLC, EIN, cuenta bancaria, descriptor `CLOSELABS`).
 2. Crear en modo real el mismo producto/precio, la llave restringida, el webhook y el portal.
