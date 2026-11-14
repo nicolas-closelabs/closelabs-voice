@@ -4,7 +4,15 @@
 > las decisiones y el **porqué** de cada una, para que cualquier ajuste futuro tenga todo
 > el contexto. Actualízala cuando cambien decisiones o arquitectura.
 
-## Estado actual (v0.9.3 publicada, 2026-10-16)
+## Estado actual (v0.9.4 publicada, 2026-11-14)
+
+> **v0.9.4 — PUBLICADA PARA TODOS (2026-11-14, run 43601894699).** El rediseño «Tinta y voz», el
+> primer uso guiado (prácticas «arriba tu pantalla, abajo tu voz»), "Cómo funciona", la onda de la
+> píldora por volumen y el computador reconocido por la huella del hardware (`equipo.rs`, migración
+> 20261114000001: sin filas repetidas en Mi cuenta ni tutorial repetido). Mac FIRMADA por Apple y con
+> actualización automática (`--con-mac`): los médicos de Mac dan el permiso de Accesibilidad una vez
+> más. Se borró el pre-release viejo "0.9.4 (prueba)" para usar el nombre. Las tres frases de práctica
+> pasaron el banco 90/90.
 
 > **v0.9.3 — PUBLICADA PARA TODOS (2026-10-16).** La web descarga la 0.9.3 y las 0.9.x se actualizan
 > solas, también en Mac (`version_automatica` con archivos de Mac): sin firma de Apple, cada versión
