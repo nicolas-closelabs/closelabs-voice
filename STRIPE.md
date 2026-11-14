@@ -93,7 +93,25 @@ extiende o se corta en **closelabs.co/voice/admin → Pruebas gratis** (o con
 Solo cuentas que ya existen y **sin suscripción en Stripe**: a quien puso tarjeta lo maneja Stripe.
 Al extender, los correos de fin de prueba vuelven a contar desde la fecha nueva; al cortar se dan
 por enviados (no llega "tu prueba terminó, suscríbete"). Historial en `prueba_cambios`.
-La cuenta **demo@closelabs.co** tiene prueba hasta el 31 de diciembre de 2026 (la usa un médico).
+## Cuentas internas del equipo (desde 2026-11-14)
+
+Dictan siempre, sin pagar ni vencer, y no cuentan en el panel: `status = 'active'`,
+`current_period_end` y `trial_ends_at` en nulo y sin IDs de Stripe (`authorize_device_v2` deja
+dictar a una cuenta activa sin fin de período, y `recordatorios_pendientes` solo mira las que están
+en prueba), más una fila en `cuentas_internas`. Hoy: nicolas@closelabs.co, santiago@closelabs.co,
+luciaduransr@gmail.com y demo@closelabs.co. El médico que usaba demo@ se va a crear su propia
+cuenta. Para sumar a alguien:
+
+```sql
+update subscriptions set status = 'active', current_period_end = null, trial_ends_at = null,
+       cancel_at_period_end = false, stripe_customer_id = null, stripe_subscription_id = null
+ where user_id = (select id from auth.users where email = 'x@y.com');
+insert into cuentas_internas (email, nota) values ('x@y.com', 'equipo');
+```
+
+⚠️ Si la cuenta tenía suscripción en Stripe, cancelarla allá PRIMERO y esperar el aviso
+`customer.subscription.deleted`: si se marca antes, el aviso la deja cancelada. En "Mi cuenta"
+ven "Suscripción activa" con "Administrar pago", que da error (no tienen nada en Stripe).
 
 ## Panel de uso (desde 2026-10-17)
 
