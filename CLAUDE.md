@@ -12,7 +12,9 @@
 > 20261114000001: sin filas repetidas en Mi cuenta ni tutorial repetido). Mac FIRMADA por Apple y con
 > actualización automática (`--con-mac`): los médicos de Mac dan el permiso de Accesibilidad una vez
 > más. Se borró el pre-release viejo "0.9.4 (prueba)" para usar el nombre. Las tres frases de práctica
-> pasaron el banco 90/90.
+> pasaron el banco 90/90. El mismo día: rescate a las 24 h desplegado (migraciones 20261111000001 y
+> 20261112000001 aplicadas a mano, una por una, y la función `recordatorios`) y la web con la página
+> «Tu descarga empezó» (PR #6 de nicolas-closelabs/closelabs).
 
 > **v0.9.3 — PUBLICADA PARA TODOS (2026-10-16).** La web descarga la 0.9.3 y las 0.9.x se actualizan
 > solas, también en Mac (`version_automatica` con archivos de Mac): sin firma de Apple, cada versión
