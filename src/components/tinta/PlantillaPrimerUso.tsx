@@ -85,14 +85,6 @@ export const PlantillaPrimerUso: React.FC<{
   clave,
   mensajeAyuda = "Hola, necesito ayuda para empezar con CloseLabs Voice.",
 }) => {
-  const etapas = useEtapas();
-  const indice =
-    etapa === "todas"
-      ? etapas.length
-      : etapa
-        ? etapas.indexOf(etapa)
-        : -1;
-
   return (
     <div
       className={`h-screen w-screen flex items-center justify-center select-none cursor-default ${
@@ -100,56 +92,11 @@ export const PlantillaPrimerUso: React.FC<{
       }`}
     >
       <div className="w-full h-full max-w-[1280px] max-h-[760px] flex flex-col">
-        {/* ---- Barra superior ---- */}
-        <header
-          className={`h-16 shrink-0 grid grid-cols-[1fr_auto_1fr] items-center pl-6 pr-8 border-b ${
-            oscura ? "border-white/12" : "border-linea"
-          }`}
-        >
-          <Logo width={132} blanco={oscura} />
-          <nav aria-label="Etapas" className="flex gap-3">
-            {indice >= 0 &&
-              etapas.map((e, i) => {
-                const hecha = i < indice;
-                const actual = i === indice;
-                return (
-                  <div key={e} className="w-[104px] flex flex-col gap-2">
-                    <span
-                      className={`text-[14px] leading-[20px] font-semibold ${
-                        oscura
-                          ? "text-white"
-                          : hecha || actual
-                            ? "text-tinta"
-                            : "text-tinta-3"
-                      }`}
-                    >
-                      {NOMBRES[e]}
-                    </span>
-                    <span
-                      className={`h-[3px] rounded-[2px] ${
-                        oscura
-                          ? "bg-white"
-                          : actual
-                            ? "bg-lila origin-left animate-[crecer_240ms_cubic-bezier(.2,.8,.2,1)]"
-                            : hecha
-                              ? "bg-tinta"
-                              : "bg-linea"
-                      }`}
-                    />
-                  </div>
-                );
-              })}
-          </nav>
-          <div className="justify-self-end">
-            <Enlace
-              chico
-              oscuro={oscura}
-              onClick={() => void openUrl(supportWhatsappUrl(mensajeAyuda))}
-            >
-              ¿Necesitas ayuda?
-            </Enlace>
-          </div>
-        </header>
+        <BarraPrimerUso
+          etapa={etapa}
+          oscura={oscura}
+          mensajeAyuda={mensajeAyuda}
+        />
 
         {/* ---- Cuerpo: columna + escenario ---- */}
         <div className="flex-1 min-h-0 grid grid-cols-[440px_1fr] min-[1120px]:grid-cols-[500px_1fr]">
@@ -242,28 +189,73 @@ export const PlantillaPrimerUso: React.FC<{
   );
 };
 
-/** Tarjeta del escenario (468 de ancho): cabecera de 52 con nombre y contexto, y cuerpo. */
-export const TarjetaEscenario: React.FC<{
-  nombre: React.ReactNode;
-  contexto?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}> = ({ nombre, contexto, children, className = "" }) => (
-  <div
-    className={`w-[468px] max-w-full bg-papel border border-linea rounded-[16px] shadow-2 overflow-hidden text-left ${className}`}
-  >
-    <div className="h-[52px] px-5 flex items-center justify-between gap-3 bg-tarjeta-cab border-b border-linea">
-      <span className="text-[15px] font-semibold text-tinta truncate">
-        {nombre}
-      </span>
-      {contexto && (
-        <span className="text-[15px] font-medium text-tinta-2 truncate">
-          {contexto}
-        </span>
-      )}
-    </div>
-    {children}
-  </div>
-);
+/**
+ * La barra superior del primer uso (§6): logo, etapas y "¿Necesitas ayuda?". Aparte para que la
+ * plantilla de las prácticas (`PlantillaPractica`) use exactamente la misma.
+ */
+export const BarraPrimerUso: React.FC<{
+  etapa?: Etapa | "todas";
+  oscura?: boolean;
+  mensajeAyuda?: string;
+}> = ({
+  etapa,
+  oscura,
+  mensajeAyuda = "Hola, necesito ayuda para empezar con CloseLabs Voice.",
+}) => {
+  const etapas = useEtapas();
+  const indice =
+    etapa === "todas" ? etapas.length : etapa ? etapas.indexOf(etapa) : -1;
+  return (
+    <header
+      className={`h-16 shrink-0 grid grid-cols-[1fr_auto_1fr] items-center pl-6 pr-8 border-b ${
+        oscura ? "border-white/12" : "border-linea"
+      }`}
+    >
+      <Logo width={132} blanco={oscura} />
+      <nav aria-label="Etapas" className="flex gap-3">
+        {indice >= 0 &&
+          etapas.map((e, i) => {
+            const hecha = i < indice;
+            const actual = i === indice;
+            return (
+              <div key={e} className="w-[104px] flex flex-col gap-2">
+                <span
+                  className={`text-[14px] leading-[20px] font-semibold ${
+                    oscura
+                      ? "text-white"
+                      : hecha || actual
+                        ? "text-tinta"
+                        : "text-tinta-3"
+                  }`}
+                >
+                  {NOMBRES[e]}
+                </span>
+                <span
+                  className={`h-[3px] rounded-[2px] ${
+                    oscura
+                      ? "bg-white"
+                      : actual
+                        ? "bg-lila origin-left animate-[crecer_240ms_cubic-bezier(.2,.8,.2,1)]"
+                        : hecha
+                          ? "bg-tinta"
+                          : "bg-linea"
+                  }`}
+                />
+              </div>
+            );
+          })}
+      </nav>
+      <div className="justify-self-end">
+        <Enlace
+          chico
+          oscuro={oscura}
+          onClick={() => void openUrl(supportWhatsappUrl(mensajeAyuda))}
+        >
+          ¿Necesitas ayuda?
+        </Enlace>
+      </div>
+    </header>
+  );
+};
 
 export default PlantillaPrimerUso;

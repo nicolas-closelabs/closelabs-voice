@@ -5,7 +5,16 @@ import { commands, type AudioDevice } from "@/bindings";
 import { useSettings } from "../../hooks/useSettings";
 import { useShortcutKeys } from "../../hooks/useShortcutKeys";
 import { pasteShortcut } from "../../lib/utils/shortcutLabels";
-import PlantillaPrimerUso, { TarjetaEscenario } from "../tinta/PlantillaPrimerUso";
+import PlantillaPrimerUso from "../tinta/PlantillaPrimerUso";
+import { conCursiva } from "../tinta/Titulo";
+import PlantillaPractica from "./practica/PlantillaPractica";
+import {
+  Chat,
+  Formula,
+  HistoriaClinica,
+  SenalClic,
+  type EstadoCampo,
+} from "./practica/Programas";
 import { Teclas } from "../tinta/Teclas";
 import { Aviso } from "../tinta/Campos";
 import { Enlace } from "../tinta/Botones";
@@ -18,8 +27,10 @@ import { Enlace } from "../tinta/Botones";
  * Por qué así (revisión del 2026-11-11 y referente Wispr Flow, decisiones de Nicolás):
  * - Antes la segunda práctica abría TextEdit, que tapaba nuestras instrucciones justo cuando el
  *   médico las necesitaba. Ahora todo pasa dentro de la app, en tarjetas que se parecen a su trabajo.
- * - La frase a decir está DENTRO del campo donde cae el texto, con una muletilla y una autocorrección
- *   a propósito, para que vea en la primera vez que la app las limpia.
+ * - 2026-11-13 (diseño de Fable, `diseno/maquetas/practicas-v2.html`): «arriba tu pantalla, abajo tu
+ *   voz». Arriba, un programa que se parece al suyo (historia clínica, chat, fórmula); abajo, un solo
+ *   renglón que dice qué hacer ahora. La frase, con una muletilla y una autocorrección a propósito,
+ *   aparece ANTES de grabar para leerla con calma, y en el resultado se ve tachado lo que se quitó.
  * - Las etiquetas de lo que arregló ("Corrigió izquierda → derecha") salen SOLO si una comprobación
  *   exacta sobre el texto final lo confirma (regla del proyecto: en producción, solo comprobaciones
  *   exactas). Si una no se cumple, esa etiqueta no sale.
@@ -63,10 +74,7 @@ function marcarHecho(cuenta: string) {
 
 /** Minúsculas y sin tildes, para comparar ("Izquierda" y "izquierda" cuentan igual). */
 const normal = (t: string) =>
-  t
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 const palabra = (t: string, p: string) =>
   new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`).test(normal(t));
@@ -76,28 +84,54 @@ interface Etiqueta {
   cumple: (final: string) => boolean;
 }
 
+/** Un pedazo de la frase. `quita`: la etiqueta que, si se cumple, lo muestra tachado en el resultado. */
+interface Tramo {
+  t: string;
+  quita?: number;
+}
+
 interface Practica {
-  titulo: string;
-  apoyo: string;
+  programa: "historia" | "chat" | "formula";
+  /** Momento 1, falta el clic: el renglón de guía y su apoyo. */
+  clic: string;
+  clicApoyo: string;
+  /** Momento 2: "Presiona [teclas] y {verbo}:" */
+  verbo: string;
+  nota: string;
+  /** Momento 3, grabando. */
+  escucho: string;
+  /** Momento 4, el resultado. */
   tituloHecho: string;
-  apoyoHecho: string;
-  frase: string;
+  tramos: Tramo[];
+  /**
+   * Palabras que tienen que estar para afirmar que leyó ESTA frase. Sin esto, las comprobaciones
+   * ("no hay «eh»") se cumplían con cualquier texto: quien dijera otra cosa veía "Quitó «eh»"
+   * (lo notó Fable al rediseñar, 2026-11-13). Son palabras que la limpieza no quita.
+   */
+  ancla: string[];
   etiquetas: Etiqueta[];
-  tarjeta: "historia" | "whatsapp" | "formula";
 }
 
 const termina = (t: string) => t.trim().endsWith(".");
+const fraseDe = (p: Practica) => p.tramos.map((x) => x.t).join("");
 
 const PRACTICAS: Practica[] = [
   {
-    tarjeta: "historia",
-    titulo: "Dicta el *motivo* de consulta.",
-    apoyo:
-      "Haz clic en el campo y lee la frase tal como está, con el «eh» y la equivocación.",
+    programa: "historia",
+    clic: "Haz clic en *Motivo de consulta*.",
+    clicApoyo: "Lo que dictes aparece siempre donde hayas hecho clic.",
+    verbo: "*lee* esto",
+    nota: "En voz alta y tal como está, con el «eh» y la equivocación.",
+    escucho: "Te *escucho*. Léela con calma.",
     tituloHecho: "Te corregiste al hablar. Quedó *limpio*.",
-    apoyoHecho: "Así puedes dictar siempre: sin cuidarte de hablar perfecto.",
-    frase:
-      "Paciente de 58 años que consulta por, eh, dolor en la rodilla izquierda, no, perdón, en la rodilla derecha, desde hace tres días.",
+    tramos: [
+      { t: "Paciente de 58 años que consulta por, " },
+      { t: "eh,", quita: 0 },
+      { t: " dolor en la rodilla " },
+      { t: "izquierda, no, perdón, en la rodilla", quita: 1 },
+      { t: " derecha, desde hace tres días." },
+    ],
+    ancla: ["paciente", "rodilla", "dolor"],
     etiquetas: [
       { texto: "Quitó «eh»", cumple: (f) => !palabra(f, "eh") },
       {
@@ -108,13 +142,21 @@ const PRACTICAS: Practica[] = [
     ],
   },
   {
-    tarjeta: "whatsapp",
-    titulo: "Ahora, respóndele a un *paciente*.",
-    apoyo: "Igual que antes: clic en el campo, las dos teclas y hablas.",
+    programa: "chat",
+    clic: "Haz clic en el *mensaje*.",
+    clicApoyo: "Ahí, donde escribirías la respuesta a don Jaime.",
+    verbo: "*respóndele*",
+    nota: "Tal como está, con el «este» y la corrección.",
+    escucho: "Te *escucho*. Respóndele a don Jaime.",
     tituloHecho: "Lo que retiraste no *llegó*.",
-    apoyoHecho: "El paciente solo lee lo que quisiste decir.",
-    frase:
-      "Hola, don Jaime. Tómela, este, después del almuerzo, no, perdón, después del desayuno, con un vaso de agua.",
+    tramos: [
+      { t: "Hola, don Jaime. Tómela, " },
+      { t: "este,", quita: 0 },
+      { t: " " },
+      { t: "después del almuerzo, no, perdón,", quita: 1 },
+      { t: " después del desayuno, con un vaso de agua." },
+    ],
+    ancla: ["jaime", "vaso", "agua"],
     etiquetas: [
       { texto: "Quitó «este»", cumple: (f) => !palabra(f, "este") },
       {
@@ -125,13 +167,19 @@ const PRACTICAS: Practica[] = [
     ],
   },
   {
-    tarjeta: "formula",
-    titulo: "Por último, una *fórmula*.",
-    apoyo: "Aquí te vas a corregir en la dosis.",
+    programa: "formula",
+    clic: "Haz clic junto a *Rp.*",
+    clicApoyo: "Aquí te vas a corregir en la dosis.",
+    verbo: "*lee* la fórmula",
+    nota: "Tal como está, con la corrección de la dosis.",
+    escucho: "Te *escucho*. Léela con calma.",
     tituloHecho: "La dosis quedó como la *corregiste*.",
-    apoyoHecho: "Lo que retiras al hablar no llega al texto.",
-    frase:
-      "Losartán de 50 miligramos, una tableta cada 12 horas, no, mentira, cada 24 horas, por 30 días.",
+    tramos: [
+      { t: "Losartán de 50 miligramos, una tableta " },
+      { t: "cada 12 horas, no, mentira,", quita: 0 },
+      { t: " cada 24 horas, por 30 días." },
+    ],
+    ancla: ["losartan", "tableta", "dias"],
     etiquetas: [
       {
         texto: "Corrigió cada 12 → cada 24 horas",
@@ -386,7 +434,9 @@ function presionada(etiqueta: string, e: KeyboardEvent): boolean {
     case "Espacio":
       return e.code === "Space" && e.type === "keydown";
     default:
-      return e.type === "keydown" && e.key.toLowerCase() === etiqueta.toLowerCase();
+      return (
+        e.type === "keydown" && e.key.toLowerCase() === etiqueta.toLowerCase()
+      );
   }
 }
 
@@ -403,7 +453,9 @@ const PruebaAtajo: React.FC<{ atras: () => void; onSi: () => void }> = ({
     const alPresionar = (e: KeyboardEvent) =>
       setEncendidas(keys.map((k) => presionada(k, e)));
     const alSoltar = (e: KeyboardEvent) =>
-      setEncendidas(keys.map((k) => (k === "Espacio" ? false : presionada(k, e))));
+      setEncendidas(
+        keys.map((k) => (k === "Espacio" ? false : presionada(k, e))),
+      );
     window.addEventListener("keydown", alPresionar);
     window.addEventListener("keyup", alSoltar);
     // El atajo de verdad empezó a grabar: funciona. Se cancela esa grabación (no es un dictado).
@@ -444,18 +496,40 @@ const PruebaAtajo: React.FC<{ atras: () => void; onSi: () => void }> = ({
           ? { texto: "Continuar de todos modos", onClick: onSi }
           : { texto: "No se encienden", onClick: () => setNoSeEncienden(true) }
       }
-      escenario={<Teclas keys={keys} medida="grande" presionadas={encendidas} />}
-      notaEscenario={funciono ? "Funciona. Así empiezas cada dictado." : instruccion}
+      escenario={
+        <Teclas keys={keys} medida="grande" presionadas={encendidas} />
+      }
+      notaEscenario={
+        funciono ? "Funciona. Así empiezas cada dictado." : instruccion
+      }
       mensajeAyuda="Hola, el atajo de CloseLabs Voice no me funciona."
     />
   );
 };
 
 // ---------------------------------------------------------------------------------------------
-// Pantallas 7 a 9: las prácticas
+// Pantallas 7 a 9: las prácticas («arriba tu pantalla, abajo tu voz», ver PlantillaPractica)
 // ---------------------------------------------------------------------------------------------
 
-type Fase = "esperando" | "grabando" | "procesando" | "listo";
+/**
+ * Los momentos de una práctica. `sin-clic` es nuevo (2026-11-13): el campo ya NO toma el foco
+ * solo, porque hacer clic donde va el texto es lo primero que hay que aprender. Si el médico
+ * presiona el atajo sin hacer clic, se avanza igual: el texto cae en `data-dictado-destino`.
+ */
+type Fase = "sin-clic" | "esperando" | "grabando" | "procesando" | "listo";
+
+/** El renglón de guía: serif 30/44, una palabra en cursiva lila, teclas dentro de la oración. */
+const Guia: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <p className="font-serif font-medium text-[30px] leading-[44px] tracking-[-0.012em] text-tinta">
+    {children}
+  </p>
+);
+
+const Frase: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <p className="mt-3 font-serif italic text-[25px] leading-[36px] text-tinta">
+    «{children}»
+  </p>
+);
 
 const PracticaDictado: React.FC<{
   indice: number;
@@ -464,14 +538,22 @@ const PracticaDictado: React.FC<{
   onSaltar: () => void;
 }> = ({ indice, atras, onContinuar, onSaltar }) => {
   const practica = PRACTICAS[indice];
+  const ultima = indice === PRACTICAS.length - 1;
   const { keys, os } = useShortcutKeys();
   const mantener = useSettings().getSetting("push_to_talk") === true;
   const [texto, setTexto] = useState("");
-  const [fase, setFase] = useState<Fase>("esperando");
+  const [fase, setFase] = useState<Fase>("sin-clic");
   const [pista, setPista] = useState<string | null>(null);
-  const faseRef = useRef<Fase>("esperando");
+  const [medico, setMedico] = useState("");
+  const faseRef = useRef<Fase>("sin-clic");
   faseRef.current = fase;
   const campo = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    void commands.accountState().then((r) => {
+      if (r.status === "ok" && r.data.full_name) setMedico(r.data.full_name);
+    });
+  }, []);
 
   // Éxito: llegó texto de verdad al campo.
   useEffect(() => {
@@ -482,11 +564,13 @@ const PracticaDictado: React.FC<{
   }, [texto, fase]);
 
   // "¿No pasa nada?" SOLO tras un intento (una tecla sin que empiece la grabación), nunca a
-  // ciegas mientras el médico todavía lee (revisión del 2026-11-11).
+  // ciegas mientras el médico todavía lee (revisión del 2026-11-11). El respaldo de 60 s, solo
+  // cuando ya hizo clic: antes de eso lo que falta es el clic, y eso ya lo dice el renglón.
   useEffect(() => {
-    if (fase !== "esperando") return;
+    if (fase !== "esperando" && fase !== "sin-clic") return;
     const mostrar = () => {
-      if (faseRef.current === "esperando") {
+      const f = faseRef.current;
+      if (f === "esperando" || f === "sin-clic") {
         setPista(
           keys.length > 1
             ? "¿No pasa nada? Las teclas van al mismo tiempo, no una después de la otra."
@@ -500,7 +584,10 @@ const PracticaDictado: React.FC<{
       trasIntento = setTimeout(mostrar, PISTA_TRAS_INTENTO_MS);
     };
     window.addEventListener("keydown", alPresionar);
-    const respaldo = setTimeout(mostrar, PISTA_SIN_GRABAR_MS);
+    const respaldo =
+      fase === "esperando"
+        ? setTimeout(mostrar, PISTA_SIN_GRABAR_MS)
+        : undefined;
     return () => {
       window.removeEventListener("keydown", alPresionar);
       clearTimeout(trasIntento);
@@ -539,13 +626,19 @@ const PracticaDictado: React.FC<{
       }),
       listen("transcription-error", () => {
         setFase("esperando");
-        setPista("Sin internet no pudimos limpiar el texto. Revisa tu conexión y vuelve a intentarlo.");
+        setPista(
+          "Sin internet no pudimos limpiar el texto. Revisa tu conexión y vuelve a intentarlo.",
+        );
       }),
       listen("paste-needs-manual", () =>
-        setPista(`Tu texto quedó copiado. Haz clic en el campo y presiona ${pasteShortcut(os)}.`),
+        setPista(
+          `Tu texto quedó copiado. Haz clic en el campo y presiona ${pasteShortcut(os)}.`,
+        ),
       ),
       listen("paste-error", () =>
-        setPista(`Tu texto quedó copiado. Haz clic en el campo y presiona ${pasteShortcut(os)}.`),
+        setPista(
+          `Tu texto quedó copiado. Haz clic en el campo y presiona ${pasteShortcut(os)}.`,
+        ),
       ),
     ];
     return () => {
@@ -554,20 +647,25 @@ const PracticaDictado: React.FC<{
     };
   }, [os]);
 
-  // El cursor en el campo al volver a la ventana.
+  // Al volver a la ventana, el cursor vuelve al campo… solo si ya había hecho clic una vez.
   useEffect(() => {
-    campo.current?.focus();
     const alVolver = () => {
-      if (faseRef.current !== "listo") campo.current?.focus();
+      const f = faseRef.current;
+      if (f !== "listo" && f !== "sin-clic") campo.current?.focus();
     };
     window.addEventListener("focus", alVolver);
     return () => window.removeEventListener("focus", alVolver);
   }, []);
 
   const listo = fase === "listo";
-  const etiquetas = useMemo(
-    () => (listo ? practica.etiquetas.filter((e) => e.cumple(texto)) : []),
-    [listo, texto, practica],
+  // Las etiquetas y los tachados, solo si el texto es ESTA frase y su comprobación exacta se cumple.
+  const leyoLaFrase = listo && practica.ancla.every((a) => palabra(texto, a));
+  const cumplidas = useMemo(
+    () =>
+      leyoLaFrase
+        ? practica.etiquetas.map((e) => e.cumple(texto))
+        : practica.etiquetas.map(() => false),
+    [leyoLaFrase, texto, practica],
   );
 
   const repetir = () => {
@@ -577,190 +675,176 @@ const PracticaDictado: React.FC<{
     setTimeout(() => campo.current?.focus(), 0);
   };
 
-  const guiaInicio = (
-    <span className="inline-flex flex-wrap items-center gap-1.5 text-[15px] leading-[22px] text-tinta-2">
-      {fase === "grabando" ? (
-        <span className="font-semibold text-lila-hover">Te escucho…</span>
-      ) : (
-        <>
-          {mantener ? "Mantén presionadas" : "Presiona"} <Teclas keys={keys} />
-          {mantener ? " mientras dices:" : " y di:"}
-        </>
-      )}
-    </span>
-  );
-  const guiaFin = (
-    <span className="inline-flex flex-wrap items-center gap-1.5 text-[15px] leading-[22px] text-tinta-2">
-      {mantener ? (
-        "Suelta las teclas para terminar."
-      ) : (
-        <>
-          Presiona <Teclas keys={keys} />
-          {fase === "grabando" ? " para terminar." : " otra vez para terminar."}
-        </>
-      )}
-    </span>
-  );
-
+  const estadoCampo: EstadoCampo =
+    fase === "sin-clic" ? "toca" : listo ? "hecho" : "foco";
   const campoPractica = (
     <div
-      className={`relative rounded-[10px] border-[1.5px] border-tinta px-4 py-3.5 text-left ${
-        listo ? "" : "cursor-text"
-      } focus-within:shadow-[0_0_0_3px_var(--foco)]`}
+      className={`pp-campo ${estadoCampo}`}
       onClick={() => campo.current?.focus()}
     >
-      {!listo && (
-        <div aria-hidden className="flex flex-col">
-          {guiaInicio}
-          <p className="font-serif italic text-[20px] leading-[29px] text-tinta mt-2 mb-2.5">
-            «{practica.frase}»
-          </p>
-          {guiaFin}
-        </div>
-      )}
       <textarea
         ref={campo}
         data-dictado-destino
         aria-label="Campo de práctica"
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
+        onFocus={() => {
+          if (faseRef.current === "sin-clic") setFase("esperando");
+        }}
         readOnly={listo}
-        rows={listo ? 3 : 1}
-        className={
-          listo
-            ? "w-full resize-none bg-transparent text-[16px] leading-[25px] text-tinta focus:outline-none select-text"
-            : "absolute inset-0 w-full h-full opacity-0 resize-none cursor-text"
-        }
       />
+      {fase === "sin-clic" && <SenalClic />}
     </div>
   );
 
+  const windows = os === "windows";
+  const Programa =
+    practica.programa === "chat"
+      ? Chat
+      : practica.programa === "formula"
+        ? Formula
+        : HistoriaClinica;
+
+  const teclas = <Teclas keys={keys} medida="inicio" />;
+  const teclasLinea = <Teclas keys={keys} />;
+  const frase = fraseDe(practica);
+
+  let guia: React.ReactNode;
+  if (fase === "sin-clic") {
+    guia = (
+      <>
+        <Guia>{conCursiva(practica.clic)}</Guia>
+        <p className="mt-2.5 text-[18px] leading-[28px] text-tinta-2">
+          {practica.clicApoyo}
+        </p>
+      </>
+    );
+  } else if (fase === "esperando") {
+    guia = (
+      <>
+        <Guia>
+          {mantener ? "Mantén presionadas" : "Presiona"}{" "}
+          <span className="inline-block align-[3px]">{teclas}</span> y{" "}
+          {conCursiva(practica.verbo)}:
+        </Guia>
+        <Frase>{frase}</Frase>
+        <p className="mt-3.5 text-[16px] leading-[24px] text-tinta-2">
+          {practica.nota}
+        </p>
+      </>
+    );
+  } else if (fase === "grabando" || fase === "procesando") {
+    guia = (
+      <>
+        <Guia>
+          {conCursiva(
+            fase === "grabando"
+              ? practica.escucho
+              : "Ya casi: lo estoy *escribiendo*.",
+          )}
+        </Guia>
+        <Frase>{frase}</Frase>
+        {fase === "grabando" && (
+          <p className="mt-3.5 inline-flex flex-wrap items-center gap-1.5 text-[17px] leading-9 font-semibold text-tinta">
+            {mantener ? (
+              "Al terminar, suelta las teclas."
+            ) : (
+              <>Al terminar, presiona {teclasLinea} otra vez.</>
+            )}
+          </p>
+        )}
+      </>
+    );
+  } else if (leyoLaFrase) {
+    guia = (
+      <>
+        <Guia>{conCursiva(practica.tituloHecho)}</Guia>
+        <p className="mt-3 font-serif italic text-[19px] leading-[28px] text-tinta-2">
+          <span className="not-italic font-sans font-semibold text-[14px] text-tinta-3 mr-2">
+            Leíste
+          </span>
+          «
+          {practica.tramos.map((x, i) =>
+            x.quita !== undefined && cumplidas[x.quita] ? (
+              <s key={i} className="text-tinta-3 decoration-lila decoration-2">
+                {x.t}
+              </s>
+            ) : (
+              <React.Fragment key={i}>{x.t}</React.Fragment>
+            ),
+          )}
+          »
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {practica.etiquetas.map((e, i) =>
+            cumplidas[i] ? (
+              <span
+                key={e.texto}
+                className="h-[34px] inline-flex items-center gap-2 rounded-[17px] pl-2.5 pr-3.5 bg-lila-suave text-lila-tinta text-[15px] font-semibold whitespace-nowrap opacity-0 animate-[etiqueta_200ms_cubic-bezier(.2,.8,.2,1)_forwards]"
+                style={{ animationDelay: `${i * 120}ms` }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M5 12.5l4.5 4.5L19 7.5"
+                    stroke="var(--lila-hover)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {e.texto}
+              </span>
+            ) : null,
+          )}
+        </div>
+      </>
+    );
+  } else {
+    // Dijo otra cosa: quedó escrito, pero no se afirma nada sobre lo que limpió.
+    guia = (
+      <>
+        <Guia>{conCursiva("Quedó *escrito*.")}</Guia>
+        <p className="mt-2.5 text-[18px] leading-[28px] text-tinta-2">
+          Para ver cómo quita las muletillas y respeta tus correcciones, repite
+          leyendo la frase tal como está.
+        </p>
+      </>
+    );
+  }
+
   return (
-    <PlantillaPrimerUso
-      clave={`practica-${indice}-${listo ? "hecha" : "dictar"}`}
-      etapa="practica"
+    <PlantillaPractica
+      numero={indice + 1}
+      total={PRACTICAS.length}
       atras={atras}
-      titulo={listo ? practica.tituloHecho : practica.titulo}
-      apoyo={listo ? practica.apoyoHecho : practica.apoyo}
-      principal={{ texto: "Continuar", onClick: onContinuar, disabled: !listo }}
+      clave={`${indice}-${fase === "procesando" ? "grabando" : fase}`}
+      programa={
+        <Programa campo={campoPractica} medico={medico} windows={windows} />
+      }
       enlace={
         listo
           ? { texto: "Repetir", onClick: repetir }
           : { texto: "Saltar la práctica", onClick: onSaltar }
       }
-      escenario={
-        <div className="flex flex-col items-center gap-5">
-          <Tarjeta tipo={practica.tarjeta}>{campoPractica}</Tarjeta>
-          {listo && etiquetas.length > 0 && (
-            // Pueden partirse en dos renglones: en una sola línea, tres etiquetas se salían de la ventana
-            // y aparecía una barra para desplazarse de lado (Nicolás, 2026-11-13).
-            <div className="flex flex-wrap justify-center gap-2 max-w-[468px]">
-              {etiquetas.map((e, i) => (
-                <span
-                  key={e.texto}
-                  className="h-[34px] inline-flex items-center gap-2 rounded-[17px] pl-2.5 pr-3.5 bg-lila-suave text-lila-tinta text-[15px] font-semibold whitespace-nowrap opacity-0 animate-[etiqueta_200ms_cubic-bezier(.2,.8,.2,1)_forwards]"
-                  style={{ animationDelay: `${i * 120}ms` }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M5 12.5l4.5 4.5L19 7.5"
-                      stroke="var(--lila-hover)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  {e.texto}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+      boton={
+        listo
+          ? {
+              texto: ultima ? "Ver cuánto tiempo ahorras" : "Continuar",
+              onClick: onContinuar,
+            }
+          : undefined
       }
       mensajeAyuda="Hola, estoy haciendo mi primer dictado en CloseLabs Voice y necesito ayuda."
     >
-      {pista && <Aviso>{pista}</Aviso>}
-    </PlantillaPrimerUso>
-  );
-};
-
-/** Las tres tarjetas del escenario: historia clínica, WhatsApp y fórmula médica. */
-const Tarjeta: React.FC<{
-  tipo: Practica["tarjeta"];
-  children: React.ReactNode;
-}> = ({ tipo, children }) => {
-  const [medico, setMedico] = useState<string>("");
-  useEffect(() => {
-    if (tipo !== "formula") return;
-    void commands.accountState().then((r) => {
-      if (r.status === "ok" && r.data.full_name) setMedico(r.data.full_name);
-    });
-  }, [tipo]);
-
-  if (tipo === "whatsapp") {
-    return (
-      <TarjetaEscenario
-        nombre={
-          <span className="inline-flex items-center gap-2.5">
-            <span className="grid place-items-center w-8 h-8 rounded-full bg-lino-2 text-[13px] font-semibold text-tinta-2">
-              JP
-            </span>
-            Jaime Pardo
-          </span>
-        }
-        contexto="WhatsApp"
-      >
-        <div className="bg-[#EEEAF1] px-4 py-4">
-          <div className="max-w-[330px] bg-papel rounded-[4px_14px_14px_14px] px-3.5 py-2.5 text-[16px] leading-6 text-tinta">
-            Buenas tardes. ¿La pastilla de la presión me la tomo antes o después
-            de comer?
-            <span className="block text-right text-[13px] text-tinta-3 mt-1">
-              3:42 p. m.
-            </span>
-          </div>
-        </div>
-        <div className="px-4 pt-3.5 pb-4">{children}</div>
-      </TarjetaEscenario>
-    );
-  }
-
-  if (tipo === "formula") {
-    const hoy = new Date().toLocaleDateString("es", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    return (
-      <TarjetaEscenario nombre={medico || "Tu fórmula"} contexto="Fórmula médica">
-        <div className="p-5 flex flex-col gap-3">
-          <div className="flex items-baseline justify-between pb-2.5 border-b border-linea text-[15px] text-tinta-2">
-            <span>
-              Paciente: <strong className="text-tinta font-semibold">Marta Rojas</strong>
-            </span>
-            <span>{hoy}</span>
-          </div>
-          <span className="font-serif text-[30px] leading-none font-medium text-tinta">
-            Rp.
-          </span>
-          {children}
-        </div>
-      </TarjetaEscenario>
-    );
-  }
-
-  return (
-    <TarjetaEscenario nombre="Historia clínica" contexto="Marta Rojas · 58 años">
-      <div className="p-5 flex flex-col gap-2">
-        <span className="text-[14px] font-semibold text-tinta-2">
-          Motivo de consulta
-        </span>
-        {children}
-        <span className="text-[14px] font-semibold text-tinta-2 mt-3">
-          Examen físico
-        </span>
-        <div className="h-[52px] rounded-[10px] border-[1.5px] border-linea bg-tarjeta-cab" />
-      </div>
-    </TarjetaEscenario>
+      {guia}
+      {pista && <Aviso className="mt-4">{pista}</Aviso>}
+    </PlantillaPractica>
   );
 };
 
@@ -840,8 +924,8 @@ const Recompensa: React.FC<{
             {minutos > 0 && (
               <div className="w-[440px] border-t border-white/16 pt-[18px]">
                 <p className="text-[17px] leading-[26px] text-white">
-                  En 20 historias al día, son unos {minutos} minutos menos frente
-                  al teclado.
+                  En 20 historias al día, son unos {minutos} minutos menos
+                  frente al teclado.
                 </p>
                 <p className="text-[14px] leading-5 text-white/60">
                   Calculado con historias de 120 palabras.

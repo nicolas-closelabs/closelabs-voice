@@ -187,6 +187,16 @@ Mac: Cuenta · Permisos · Prueba · Práctica. Windows: Cuenta · Prueba · Pr�
 `closelabs-white.png`, borde de la barra `rgba(255,255,255,.12)`, etapas todas en blanco, apoyo en
 blanco al 72 %, botón principal lila igual.
 
+**Excepción: las prácticas (pantallas 7 a 9).** Desde el 2026-11-13 no usan columna + escenario sino
+«arriba tu pantalla, abajo tu voz» (`src/components/onboarding/practica/PlantillaPractica.tsx`,
+maqueta `diseno/maquetas/practicas-v2.html`, diseño de Fable aprobado por Nicolás). Barra igual;
+franja de lino de 316 con "← Atrás · Práctica n de 3" y el programa del médico (historia clínica,
+chat, fórmula: se parecen a los reales, sin marcas, y lo que no es el campo va al 82 %); debajo, en
+papel y en una columna de 760, UN renglón de guía (serif 30/44) y, cuando toca, la frase (serif
+cursiva 25/36). Pie: enlace a la izquierda y el botón (mín. 260) a la derecha, que solo aparece en
+el resultado. Momentos: falta el clic (aro lila y "clic aquí") → teclas y frase → grabando ("Al
+terminar, presiona … otra vez") → escribiendo → resultado, con lo que se quitó tachado en lila.
+
 ## 7. Secuencia de pantallas
 
 | # | Pantalla | Etapa | Título (cursiva = *…*) | Apoyo | Botón · enlace | Escenario |
@@ -225,7 +235,11 @@ blanco al 72 %, botón principal lila igual.
 ### Las tres prácticas
 
 Cada etiqueta se muestra SOLO si su comprobación exacta sobre el texto final se cumple (comparar en
-minúsculas y sin tildes). Si una no se cumple, esa etiqueta no sale; las demás sí.
+minúsculas y sin tildes). Si una no se cumple, esa etiqueta no sale; las demás sí. Y antes que eso, el
+texto tiene que contener las palabras ancla de la frase (`ancla` en `PrimerDictado.tsx`): sin ellas
+el médico dijo otra cosa, no sale ninguna etiqueta ni tachado y el resultado dice "Quedó *escrito*."
+Los títulos y apoyos de las filas 7 a 9 de la tabla de arriba quedaron reemplazados por el renglón de
+guía de cada momento (ver la excepción en §6).
 
 | | Frase que se dice | Etiqueta → comprobación |
 |---|---|---|
