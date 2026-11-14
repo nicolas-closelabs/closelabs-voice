@@ -72,28 +72,78 @@
   .puntero { position:absolute; left:74px; top:30px; filter:drop-shadow(0 2px 3px rgba(24,20,29,.25)); }
   .clic { position:absolute; left:108px; top:31px; font:italic 400 20px/29px var(--serif); color:var(--tinta-2); }
 
-  /* WhatsApp */
-  .chat { background:#EEEAF1; padding:12px 20px; }
-  .globo { display:inline-block; max-width:520px; background:var(--papel); border-radius:4px 14px 14px 14px; padding:9px 14px; font-size:16px; line-height:24px; }
-  .globo small { font-size:13px; color:var(--tinta-3); margin-left:14px; }
-  .escribe { padding:12px 20px; }
-  .escribe .campo { height:68px; border-radius:14px; }
-  /* Fórmula */
-  .paciente { display:flex; justify-content:space-between; font-size:15px; line-height:22px; color:var(--tinta-2); padding-bottom:10px; border-bottom:1px solid var(--linea); }
-  .paciente strong { color:var(--tinta); font-weight:600; }
-  .rp { display:grid; grid-template-columns:56px 1fr; align-items:start; margin-top:14px; }
-  .rp > span { font:500 30px/40px var(--serif); }
+  /* ---- Los programas del médico: se ven como SUS programas, no como nuestro sistema ---- */
+  .prog { font-family:"Helvetica Neue", Arial, sans-serif; font-size:12.5px; line-height:18px; color:#1F2A37; border-radius:8px; border-color:#C5CAD1; }
+  .prog.w { font-family:"Segoe UI", Tahoma, Arial, sans-serif; border-radius:4px; }
+  .prog .m { opacity:.82; }
+  .prog .campo { font-family:inherit; font-size:15px; line-height:21px; color:#111; }
 
-  /* Programa de Windows */
-  .tarjeta.w { border-radius:6px; border-color:#C9C6CE; font-family:"Segoe UI", Tahoma, Arial, sans-serif; }
-  .tarjeta.w .cab { height:36px; background:#fff; padding:0 0 0 12px; font-size:13px; font-weight:400; }
-  .tarjeta.w .cab .ctl { display:flex; color:#333; }
-  .tarjeta.w .cab .ctl i { width:42px; text-align:center; font-style:normal; font-size:14px; }
-  .tarjeta.w .cuerpo { background:#F4F3F5; height:202px; padding-top:14px; }
-  .tarjeta.w .etq { font-size:14px; font-weight:400; color:#222; }
-  .tarjeta.w .campo { border-radius:3px; border:1px solid #8D8A93; font-family:inherit; font-size:16px; height:84px; }
-  .tarjeta.w .campo.foco { border-color:#18141D; box-shadow:0 0 0 3px var(--foco); }
-  .tarjeta.w .campo.mudo { border-color:#C9C6CE; background:#fff; height:60px; }
+  /* Historia clínica electrónica */
+  .hc-top { height:30px; background:#1D5C87; color:#fff; display:flex; align-items:center; padding:0 12px; }
+  .hc-top .logo { width:18px; height:18px; border-radius:3px; background:#fff; color:#1D5C87; font-weight:700; font-size:10px; display:grid; place-items:center; margin-right:8px; }
+  .hc-top b { font-weight:600; font-size:13px; }
+  .hc-top nav { margin-left:22px; display:flex; gap:16px; opacity:.85; }
+  .hc-top nav .on { opacity:1; font-weight:600; border-bottom:2px solid #fff; line-height:16px; }
+  .hc-top .usr { margin-left:auto; }
+  .hc-top .ctl { display:flex; margin:0 -12px 0 14px; }
+  .hc-top .ctl i { width:38px; text-align:center; font-style:normal; font-size:13px; }
+  .hc-pac { height:34px; background:#EAF1F6; border-bottom:1px solid #C9D5DE; display:flex; align-items:center; gap:16px; padding:0 12px; }
+  .hc-pac b { font-size:13.5px; }
+  .hc-pac .alg { margin-left:auto; background:#FDE8E7; color:#A1241C; border:1px solid #F0B8B4; border-radius:3px; padding:0 7px; font-weight:600; }
+  .hc-tabs { height:28px; display:flex; align-items:flex-end; padding:0 12px; border-bottom:1px solid #C5CAD1; background:#F4F5F7; gap:2px; }
+  .hc-tabs span { padding:4px 12px; border:1px solid transparent; border-bottom:0; color:#4B5563; }
+  .hc-tabs .on { background:#fff; border-color:#C5CAD1; border-radius:3px 3px 0 0; color:#1D5C87; font-weight:600; margin-bottom:-1px; }
+  .hc-tabs .guardar { margin-left:auto; align-self:center; background:#2E7D4F; color:#fff; border-radius:3px; padding:1px 14px; font-weight:600; }
+  .hc-body { display:grid; grid-template-columns:1fr 168px; gap:14px; padding:8px 14px 0; background:#fff; height:146px; }
+  .hc-body .lb { display:block; font-weight:700; color:#374151; margin-bottom:3px; }
+  .hc-body .lb i { color:#B3261E; font-style:normal; }
+  .hc-body .campo { height:62px; border-radius:3px; border:1px solid #9AA5B1; padding:8px 10px; }
+  .hc-body .campo.mudo { height:40px; border-color:#C5CAD1; background:#fff; }
+  .hc-body .puntero { left:64px; top:15px; } .hc-body .clic { left:98px; top:16px; }
+  .sv { border:1px solid #C5CAD1; border-radius:3px; align-self:start; }
+  .sv h6 { margin:0; font-size:12px; font-weight:700; background:#F4F5F7; border-bottom:1px solid #C5CAD1; padding:2px 8px; }
+  .sv div { display:flex; justify-content:space-between; padding:1px 8px; border-bottom:1px solid #ECEEF1; font-size:12px; }
+  .sv div:last-child { border:0; }
+
+  /* Chat */
+  .wa { font-family:"Helvetica Neue", "Segoe UI", Arial, sans-serif; }
+  .wa-cab { height:46px; background:#F0F2F5; display:flex; align-items:center; gap:11px; padding:0 16px; border-bottom:1px solid #E1E4E8; }
+  .wa-cab .av { width:30px; height:30px; border-radius:50%; background:#C9D1D6; color:#fff; display:grid; place-items:center; font-weight:600; font-size:12px; }
+  .wa-cab .n { font-size:14.5px; font-weight:600; color:#111B21; line-height:17px; }
+  .wa-cab .n small { display:block; font-size:12px; font-weight:400; color:#667781; line-height:14px; }
+  .wa-cab .ic { margin-left:auto; display:flex; gap:20px; }
+  .wa-chat { height:138px; overflow:hidden; padding:8px 56px; display:flex; flex-direction:column; gap:5px; background-color:#EFEAE2;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88' fill='none' stroke='%23D9D1C5' stroke-width='1.3' stroke-linecap='round'%3E%3Ccircle cx='14' cy='16' r='6'/%3E%3Cpath d='M40 10l8 8M48 10l-8 8M66 22c4-8 12-8 14 0M10 52h14M17 45v14M44 44c0 8 12 8 12 0s-12-8-12 0M70 60l8-10 6 10zM30 76c4-6 10-6 14 0M60 80h10'/%3E%3C/svg%3E"); }
+  .wa-chat .dia { align-self:center; background:#fff; color:#54656F; font-size:11.5px; line-height:20px; padding:0 10px; border-radius:6px; box-shadow:0 1px .5px rgba(11,20,26,.13); }
+  .wa-chat .b { max-width:430px; padding:5px 8px 5px 9px; border-radius:7.5px; font-size:14px; line-height:19px; color:#111B21; box-shadow:0 1px .5px rgba(11,20,26,.13); }
+  .wa-chat .in { background:#fff; align-self:flex-start; border-top-left-radius:0; }
+  .wa-chat .out { background:#D9FDD3; align-self:flex-end; border-top-right-radius:0; }
+  .wa-chat small { float:right; font-size:11px; color:#667781; margin:3px 0 0 12px; display:flex; align-items:center; gap:3px; }
+  .wa-bar { height:54px; background:#F0F2F5; display:flex; align-items:center; gap:14px; padding:0 16px; }
+  .wa-bar .campo { flex:1; height:40px; border-radius:20px; border:1.5px solid #fff; padding:8px 16px; }
+  .wa-bar .puntero { left:44px; top:6px; } .wa-bar .clic { left:78px; top:5px; }
+
+  /* Fórmula */
+  .rx { background:#fff; padding:9px 18px 0; height:238px; }
+  .rx-cab { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #1F2A37; padding-bottom:5px; }
+  .rx-cab b { font-size:15px; display:block; line-height:19px; }
+  .rx-cab .der { text-align:right; }
+  .rx-cab .der b { font-size:12.5px; letter-spacing:.06em; }
+  .rx-pac { display:flex; gap:18px; padding:4px 0; border-bottom:1px solid #C5CAD1; }
+  .rx-pac span:last-child { margin-left:auto; }
+  .rx table { width:100%; border-collapse:collapse; margin-top:7px; font-size:12px; }
+  .rx th, .rx td { border:1px solid #C5CAD1; padding:1px 8px; text-align:left; }
+  .rx th { background:#EEF1F4; font-weight:700; }
+  .rx-rp { display:grid; grid-template-columns:44px 1fr; margin-top:7px; }
+  .rx-rp > span { font:500 26px/30px var(--serif); }
+  .rx-rp .campo { height:54px; border-radius:3px; border:1px solid #9AA5B1; padding:7px 10px; }
+  .rx-rp .puntero { left:64px; top:11px; } .rx-rp .clic { left:98px; top:12px; }
+  .rx-firma { margin:16px 0 0 auto; width:190px; border-top:1px solid #1F2A37; text-align:center; font-size:11.5px; line-height:16px; }
+
+  /* El campo que toca, dentro de un programa cargado: mismo aro, mismo foco */
+  .prog .campo.toca { border:1.5px solid var(--lila); box-shadow:0 0 0 4px var(--foco), 0 0 0 11px rgba(164,57,255,.09); }
+  .prog .campo.foco { border:1.5px solid var(--tinta); box-shadow:0 0 0 3px var(--foco); }
+  .prog .campo.hecho { border:1.5px solid var(--tinta); }
 
   /* Abajo: tu voz */
   .voz { flex:1; padding-top:28px; position:relative; }
@@ -159,25 +209,46 @@ function barra(os) {
     <span class="ayuda">¿Necesitas ayuda?</span></div>`;
 }
 
-/* Los tres programas. `campo` es lo que va dentro del campo de práctica; `clase` su estado. */
+/* Los tres programas, dibujados para que se parezcan a los que el médico usa (sin marcas reales).
+   `campo` es lo que va dentro del campo de práctica; `clase` su estado. Lo marcado con .m va atenuado. */
+const ico = (d, w = 20) => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="#54656F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const palomitas = '<svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#53BDEB" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6l3 3 6-7.5M6.5 8.2l.8.8 6-7.5"/></svg>';
 function historia(clase, campo, os) {
-  if (os === "win") return `<div class="tarjeta w">
-    <div class="cab"><span>Historia clínica · Marta Rojas, 58 años</span><span class="ctl"><i>─</i><i>☐</i><i>✕</i></span></div>
-    <div class="cuerpo"><div class="etq">Motivo de consulta</div><div class="campo ${clase}">${campo}</div>
-      <div class="etq" style="margin-top:12px">Examen físico</div><div class="campo mudo"></div></div></div>`;
-  return `<div class="tarjeta"><div class="cab"><span>Historia clínica</span><span class="ctx">Marta Rojas · 58 años</span></div>
-    <div class="cuerpo"><div class="etq">Motivo de consulta</div><div class="campo ${clase}">${campo}</div>
-      <div class="etq" style="margin-top:12px">Examen físico</div><div class="campo mudo"></div></div></div>`;
+  const win = os === "win";
+  return `<div class="tarjeta prog${win ? " w" : ""}">
+    <div class="hc-top m"><span class="logo">HC</span><b>Historia Clínica Electrónica</b>
+      <nav><span>Agenda</span><span>Pacientes</span><span class="on">Consulta</span><span>Reportes</span></nav>
+      <span class="usr">Dra. Laura Méndez ▾</span>${win ? '<span class="ctl"><i>─</i><i>☐</i><i>✕</i></span>' : ""}</div>
+    <div class="hc-pac m"><b>ROJAS PÉREZ, MARTA</b><span>58 años · F</span><span>CC 41.782.305</span><span>Consulta externa · 13/11/2026</span><span class="alg">Alergias: penicilina</span></div>
+    <div class="hc-tabs m"><span class="on">Anamnesis</span><span>Examen físico</span><span>Diagnóstico</span><span>Plan</span><span>Fórmulas</span><span class="guardar">Guardar</span></div>
+    <div class="hc-body">
+      <div><span class="lb">Motivo de consulta <i>*</i></span><div class="campo ${clase}">${campo}</div>
+        <span class="lb m" style="margin-top:7px">Enfermedad actual</span><div class="campo mudo m"></div></div>
+      <div class="sv m"><h6>Signos vitales</h6><div><span>T. arterial</span><span>138/86</span></div><div><span>F. cardíaca</span><span>76 lpm</span></div>
+        <div><span>Temperatura</span><span>36,5 °C</span></div><div><span>Peso</span><span>68 kg</span></div><div><span>Talla</span><span>1,58 m</span></div></div>
+    </div></div>`;
 }
 function whatsapp(clase, campo) {
-  return `<div class="tarjeta"><div class="cab"><span class="izq"><span class="avatar">JP</span>Jaime Pardo</span><span class="ctx">WhatsApp</span></div>
-    <div class="chat"><span class="globo">Buenas tardes. ¿La pastilla de la presión me la tomo antes o después de comer?<small>3:42 p. m.</small></span></div>
-    <div class="escribe"><div class="campo ${clase}">${campo}</div></div></div>`;
+  return `<div class="tarjeta prog wa">
+    <div class="wa-cab m"><span class="av">JP</span><span class="n">Jaime Pardo<small>en línea</small></span>
+      <span class="ic">${ico('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>')}${ico('<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>')}</span></div>
+    <div class="wa-chat"><span class="dia m">HOY</span>
+      <div class="b out m">Don Jaime, ya le dejé la fórmula del losartán en la recepción.<small>3:40 p. m. ${palomitas}</small></div>
+      <div class="b in m">Gracias, doctora. ¿La pastilla de la presión me la tomo antes o después de comer?<small>3:42 p. m.</small></div></div>
+    <div class="wa-bar"><span class="m" style="display:flex;gap:14px">${ico('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2.2 5.2 2.2 7 0"/><path d="M9 9.8v.4M15 9.8v.4"/>', 24)}${ico('<path d="M12 5v14M5 12h14"/>', 24)}</span>
+      <div class="campo ${clase}">${campo}</div>
+      <span class="m">${ico('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0013 0M12 18v3"/>', 24)}</span></div></div>`;
 }
 function formula(clase, campo) {
-  return `<div class="tarjeta"><div class="cab"><span>Dra. Laura Méndez</span><span class="ctx">Fórmula médica</span></div>
-    <div class="cuerpo"><div class="paciente"><span>Paciente: <strong>Marta Rojas</strong></span><span>13 de noviembre de 2026</span></div>
-      <div class="rp"><span>Rp.</span><div class="campo ${clase}">${campo}</div></div></div></div>`;
+  return `<div class="tarjeta prog"><div class="rx">
+    <div class="rx-cab m"><div><b>Dra. Laura Méndez</b>Medicina interna · Registro médico 52.418.776</div>
+      <div class="der"><b>FÓRMULA MÉDICA</b>N.º 004182 · 13 de noviembre de 2026</div></div>
+    <div class="rx-pac m"><span>Paciente: <b>Marta Rojas Pérez</b></span><span>CC 41.782.305</span><span>58 años</span><span>Dx: I10 Hipertensión esencial</span></div>
+    <table class="m"><tr><th style="width:40%">Medicamento</th><th>Dosis</th><th>Frecuencia</th><th>Duración</th></tr>
+      <tr><td>Hidroclorotiazida 25 mg, tabletas</td><td>1 tableta</td><td>Cada 24 horas</td><td>30 días</td></tr></table>
+    <div class="rx-rp"><span>Rp.</span><div class="campo ${clase}">${campo}</div></div>
+    <div class="rx-firma m">Firma y sello</div>
+  </div></div>`;
 }
 
 const F1 = "«Paciente de 58 años que consulta por, eh, dolor en la rodilla izquierda, no, perdón, en la rodilla derecha, desde hace tres días.»";
@@ -190,7 +261,7 @@ const hecho = (boton) => `<span class="enlace">Repetir</span><span class="boton"
 
 const cuadros = [
   { seccion: "Práctica 1 · Historia clínica, de principio a fin (Mac)" },
-  { rotulo: "1 · Dónde", por: "Solo el campo está vivo. El renglón de abajo dice lo mismo que señala el cursor dibujado, y de paso enseña la regla de todo el producto.",
+  { rotulo: "1 · Dónde", por: "Solo el campo está vivo; el resto del programa va atenuado. El renglón de abajo dice lo mismo que señala el cursor dibujado, y de paso enseña la regla de todo el producto.",
     n: 1, programa: historia("toca", puntero + '<span class="clic">clic aquí</span>'),
     voz: `<p class="guia">Haz clic en <em>Motivo de consulta</em>.</p><p class="apoyo">Lo que dictes aparece siempre donde hayas hecho clic.</p>`, pie: saltar },
   { rotulo: "2 · Las teclas y la frase", por: "La frase aparece ANTES de grabar, para que la lea con calma; las teclas van dentro de la misma oración, en el orden en que se hace.",
@@ -216,7 +287,7 @@ const cuadros = [
       ${etiquetas(["Corrigió cada 12 → cada 24 horas", "Puso la puntuación"])}`, pie: hecho("Ver cuánto tiempo ahorras") },
 
   { seccion: "Windows · Mismas pantallas, sus teclas y un programa que se parece a los suyos" },
-  { rotulo: "Windows · Las teclas y la frase", por: "Ctrl + Espacio (salen de useShortcutKeys), tres etapas en vez de cuatro y un campo cuadrado, como los de su software.",
+  { rotulo: "Windows · Las teclas y la frase", por: "Ctrl + Espacio (salen de useShortcutKeys), tres etapas en vez de cuatro y la misma historia clínica con sus controles de ventana.",
     os: "win", n: 1, programa: historia("foco", cursor, "win"),
     voz: `<p class="guia">Presiona ${teclas("win")} y <em>lee</em> esto:</p><p class="frase">${F1}</p><p class="nota">En voz alta y tal como está, con el «eh» y la equivocación.</p>`, pie: saltar },
 ];
