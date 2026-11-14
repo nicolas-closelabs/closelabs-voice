@@ -99,7 +99,7 @@ cambia la URL.
   cada 15 min y avisa a `admin@closelabs.co` cuando hay algo accionable. Resend configurado y
   probado con correos reales.
 
-### Fase 2 — Usuarios y suscripción · ✅ CONSTRUIDA (v0.9.0) — Stripe en modo de prueba hasta tener el EIN
+### Fase 2 — Usuarios y suscripción · ✅ COMPLETA — Stripe en MODO REAL desde 2026-11-14
 
 > **Decidido con el cliente el 2026-09-20:** Stripe · **$11/mes** · **30 días de prueba** ·
 > tarjeta al registrarse sin cobro · **3 dispositivos** por cuenta · teléfono obligatorio (además
@@ -129,7 +129,8 @@ cambia la URL.
   dicta: un cobro rechazado suele ser una tarjeta vencida, no alguien que se va.
 - [x] **Pantallas**: bienvenida, registro con teléfono y consentimiento fechado, recuperar
   contraseña, y "Mi cuenta" con suscripción y equipos.
-- [ ] **Stripe** — lo único grande que falta. 🔨 Arrancado el 2026-09-30, en MODO DE PRUEBA.
+- [x] **Stripe — EN MODO REAL desde 2026-11-14** (pago real de punta a punta, ver `STRIPE.md`).
+  Historia: arrancado el 2026-09-30 en modo de prueba.
   ✅ **2026-10-06: servidor listo** (cuenta de Stripe de CLOSELABS GROUP LLC en modo de prueba,
   `account` con checkout/portal/resume/sync, `stripe-webhook`, correo de cancelación, 58 pruebas).
   ✅ Probado de punta a punta con tarjetas de prueba (dos caminos de pago, cancelar, reanudar).
@@ -302,7 +303,7 @@ cambia la URL.
 **Para la próxima versión de la app (se juntan en un solo build):**
 - [x] **Cerrar sesión solo en ESTE computador** (`?scope=local`) — en la 0.9.0. Ítem 18 del BACKLOG.
 - [ ] Avisar al médico cuando la red de seguridad actúe (si algún día pasa a `enforce`).
-- [ ] **Repartir la 0.9.x** cuando Stripe pase a pagos reales (no antes: en modo de prueba cualquiera
+- [ ] **Repartir la 0.9.x** — ✅ DESBLOQUEADO el 2026-11-14 (Stripe en modo real). (Antes: no, en modo de prueba cualquiera
   se suscribe gratis con la tarjeta 4242). Es la ÚLTIMA que se instala a mano: de ahí en adelante
   Windows se actualiza solo. Subir entonces `latest_version` (sigue en 0.6.0).
 
