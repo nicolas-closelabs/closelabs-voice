@@ -1,6 +1,7 @@
 /* eslint-disable i18next/no-literal-string */
 import React, { useEffect, useRef, useState } from "react";
 import { commands } from "@/bindings";
+import { marcarPrimerDictadoHecho } from "../onboarding/PrimerDictado";
 import Bienvenida from "./Bienvenida";
 import PlantillaPrimerUso from "../tinta/PlantillaPrimerUso";
 import { Aviso, Campo, CampoClave, Casilla } from "../tinta/Campos";
@@ -106,7 +107,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
     setError(null);
     const r = await commands.authSignIn(correo, clave);
     setOcupado(false);
-    if (r.status === "ok") entro();
+    if (r.status === "ok") {
+      if (r.data.equipo_conocido) marcarPrimerDictadoHecho(correo);
+      entro();
+    }
     // Se registró antes y no confirmó: en vez de solo un aviso, la pantalla donde se escribe el
     // código (y desde donde se pide uno nuevo si el primero ya venció).
     else if (r.error === "sin_confirmar") setModo("revisa-correo");
@@ -184,9 +188,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
         titulo="Revisa tu *correo*."
         apoyo={
           <>
-            Si existe una cuenta con <strong className="text-tinta">{correo}</strong>, ahí
-            llegará el enlace para elegir una contraseña nueva. Si no lo ves, revisa el correo no
-            deseado.
+            Si existe una cuenta con{" "}
+            <strong className="text-tinta">{correo}</strong>, ahí llegará el
+            enlace para elegir una contraseña nueva. Si no lo ves, revisa el
+            correo no deseado.
           </>
         }
         principal={{
@@ -263,11 +268,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSignedIn }) => {
       atras={
         creando
           ? volverABienvenida
-          : volverABienvenida ??
+          : (volverABienvenida ??
             (() => {
               setModo("crear");
               setError(null);
-            })
+            }))
       }
       titulo={creando ? "Crea tu *cuenta*." : "Inicia *sesión*."}
       principal={{
@@ -483,6 +488,7 @@ const EsperandoConfirmacion: React.FC<{
     setComprobando(false);
 
     if (r.status === "ok") {
+      if (r.data.equipo_conocido) marcarPrimerDictadoHecho(correo);
       entrarUnaVez();
       return;
     }
@@ -576,8 +582,10 @@ const EsperandoConfirmacion: React.FC<{
     }
     const r = await commands.authSignIn(correo, clave);
     setVerificando(false);
-    if (r.status === "ok") entrarUnaVez();
-    else setAviso(explicar(r.error));
+    if (r.status === "ok") {
+      if (r.data.equipo_conocido) marcarPrimerDictadoHecho(correo);
+      entrarUnaVez();
+    } else setAviso(explicar(r.error));
   };
 
   // ⚠️ UNA sola cosa en movimiento a la vez. Antes había un "Esperando tu confirmación…" girando
@@ -609,7 +617,11 @@ const EsperandoConfirmacion: React.FC<{
       }}
       enlace={
         reenvio === "enviado"
-          ? { texto: "Listo, te lo enviamos otra vez", onClick: () => {}, disabled: true }
+          ? {
+              texto: "Listo, te lo enviamos otra vez",
+              onClick: () => {},
+              disabled: true,
+            }
           : {
               texto:
                 reenvio === "enviando"

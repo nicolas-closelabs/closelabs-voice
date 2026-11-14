@@ -48,6 +48,8 @@ interface Equipo {
   app_version: string | null;
   last_seen_at: string | null;
   linked_at: string | null;
+  /** Hash del hardware (migración 20261114000001): la app reconoce cuál fila es ella. */
+  equipo: string | null;
 }
 
 /**
@@ -81,7 +83,7 @@ async function estado(userId: string): Promise<Response> {
     ),
     select<Equipo>(
       "devices",
-      `select=id,label,nombre,platform,app_version,last_seen_at,linked_at&user_id=eq.${userId}&revoked=eq.false&order=linked_at.asc`,
+      `select=id,label,nombre,platform,app_version,last_seen_at,linked_at,equipo&user_id=eq.${userId}&revoked=eq.false&order=linked_at.asc`,
     ),
   ]);
 
@@ -148,6 +150,7 @@ Deno.serve(async (req) => {
   let body: {
     action?: unknown;
     device_token?: unknown;
+    equipo?: unknown;
     device_id?: unknown;
     label?: unknown;
     nombre?: unknown;
@@ -164,13 +167,20 @@ Deno.serve(async (req) => {
       return fail("bad_request", 400);
     }
     const label = typeof body.label === "string" ? body.label.slice(0, 64) : null;
+    // Hash del hardware (32 hex, ver `equipo.rs` en la app). Las versiones viejas no lo mandan.
+    const equipo = typeof body.equipo === "string" && /^[0-9a-f]{32}$/.test(body.equipo)
+      ? body.equipo
+      : null;
     try {
-      const r = await rpc<{ ok: boolean; motivo: string; usados: number; tope: number }>(
+      const r = await rpc<
+        { ok: boolean; motivo: string; usados: number; tope: number; conocido: boolean }
+      >(
         "link_device",
         {
           p_token_hash: await hashToken(body.device_token),
           p_user_id: userId,
           p_label: label,
+          p_equipo: equipo,
         },
       );
       if (!r) return fail("provider_error", 500);

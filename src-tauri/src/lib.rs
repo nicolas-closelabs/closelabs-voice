@@ -8,6 +8,7 @@ mod catalog;
 pub mod cli;
 mod clipboard;
 mod commands;
+mod equipo;
 mod groq_transcribe;
 mod helpers;
 mod input;

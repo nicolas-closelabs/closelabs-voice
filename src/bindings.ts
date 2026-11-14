@@ -1222,7 +1222,12 @@ dictados: number | null; minutos_dictados: number | null; devices: Equipo[]; max
  * Hay sesión guardada pero no se pudo hablar con el servidor. La app sigue dentro: lo que
  * no sabe es el estado exacto de la suscripción.
  */
-offline: boolean }
+offline: boolean; 
+/**
+ * Solo al entrar: esta cuenta ya había usado este computador (lo reconoce el servidor por la
+ * huella del hardware, `equipo.rs`). La interfaz no repite el tutorial en ese caso.
+ */
+equipo_conocido: boolean }
 export type GpuDeviceOption = { id: number; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }

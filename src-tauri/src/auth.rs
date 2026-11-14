@@ -255,6 +255,9 @@ pub struct EstadoCuenta {
     /// Hay sesión guardada pero no se pudo hablar con el servidor. La app sigue dentro: lo que
     /// no sabe es el estado exacto de la suscripción.
     pub offline: bool,
+    /// Solo al entrar: esta cuenta ya había usado este computador (lo reconoce el servidor por la
+    /// huella del hardware, `equipo.rs`). La interfaz no repite el tutorial en ese caso.
+    pub equipo_conocido: bool,
 }
 
 impl EstadoCuenta {
@@ -274,6 +277,7 @@ impl EstadoCuenta {
             devices: Vec::new(),
             max_devices: 0,
             offline: false,
+            equipo_conocido: false,
         }
     }
 
@@ -324,6 +328,9 @@ struct EquipoResp {
     platform: Option<String>,
     app_version: Option<String>,
     last_seen_at: Option<String>,
+    // `default`: el servidor viejo (antes de la migración 20261114000001) no lo manda.
+    #[serde(default)]
+    equipo: Option<String>,
 }
 #[derive(Deserialize)]
 struct UsoResp {
@@ -333,10 +340,18 @@ struct UsoResp {
 
 impl RespuestaCuenta {
     fn en_estado(self, email: String) -> EstadoCuenta {
-        // Cuál de los equipos es este. Se compara por etiqueta y plataforma porque la app no
-        // conoce su propio id en la base — nunca se lo devolvemos, y no hace falta para nada más.
+        // Cuál de los equipos es este. Primero por la huella del hardware: es exacta. Solo si
+        // ninguna fila la tiene (filas de antes de la migración 20261114000001) se compara por
+        // nombre de red y plataforma — y entonces dos filas del mismo computador decían las dos
+        // "Este computador" (Nicolás, 2026-11-14).
         let esta_etiqueta = gethostname::gethostname().to_string_lossy().to_string();
         let esta_plataforma = std::env::consts::OS;
+        let mi_huella = crate::equipo::huella();
+        let por_huella = mi_huella.is_some()
+            && self
+                .devices
+                .iter()
+                .any(|d| d.equipo.is_some() && d.equipo == mi_huella);
         let sub = self.subscription;
         EstadoCuenta {
             signed_in: true,
@@ -358,8 +373,12 @@ impl RespuestaCuenta {
                 .devices
                 .into_iter()
                 .map(|d| Equipo {
-                    is_this_device: d.label.as_deref() == Some(esta_etiqueta.as_str())
-                        && d.platform.as_deref() == Some(esta_plataforma),
+                    is_this_device: if por_huella {
+                        d.equipo.is_some() && d.equipo == mi_huella
+                    } else {
+                        d.label.as_deref() == Some(esta_etiqueta.as_str())
+                            && d.platform.as_deref() == Some(esta_plataforma)
+                    },
                     id: d.id,
                     label: d.label,
                     nombre: d.nombre,
@@ -369,6 +388,7 @@ impl RespuestaCuenta {
                 })
                 .collect(),
             max_devices: self.max_devices,
+            equipo_conocido: false,
         }
     }
 }
@@ -505,11 +525,17 @@ pub async fn auth_sign_in(
 
     // Vincular este equipo. Si rebota por el tope, la sesión SE QUEDA abierta a propósito: el
     // médico tiene que poder ver sus equipos y soltar uno, y para eso necesita estar dentro.
-    if let Err(e) = vincular_este_equipo(&app).await {
-        warn!("No se pudo vincular este equipo: {e}");
-    }
+    let conocido = match vincular_este_equipo(&app).await {
+        Ok(c) => c,
+        Err(e) => {
+            warn!("No se pudo vincular este equipo: {e}");
+            false
+        }
+    };
 
-    account_state(app).await
+    let mut estado = account_state(app).await?;
+    estado.equipo_conocido = conocido;
+    Ok(estado)
 }
 
 /// Vincula el dispositivo actual a la sesión abierta.
@@ -521,7 +547,9 @@ pub async fn auth_sign_in(
 /// aunque estuviera usando la app, y peor: los dictados se le cobraban a la cuenta vieja, que es
 /// la dueña del token. Por eso, cuando el equipo es de otra cuenta, esta instalación se registra
 /// DE NUEVO (token nuevo, fila nueva) y se vincula con él. La cuenta anterior conserva el suyo.
-async fn vincular_este_equipo(app: &AppHandle) -> Result<(), String> {
+///
+/// Devuelve si esta cuenta ya había usado este computador (`conocido`, ver `equipo.rs`).
+async fn vincular_este_equipo(app: &AppHandle) -> Result<bool, String> {
     match intentar_vincular(app).await {
         Err(e) if e == "de_otra_cuenta" => {
             warn!("Este equipo era de otra cuenta: se registra de nuevo para la actual");
@@ -533,7 +561,7 @@ async fn vincular_este_equipo(app: &AppHandle) -> Result<(), String> {
 }
 
 /// Un intento de vincular. El motivo que devuelve el servidor viaja tal cual en el error.
-async fn intentar_vincular(app: &AppHandle) -> Result<(), String> {
+async fn intentar_vincular(app: &AppHandle) -> Result<bool, String> {
     let token_dispositivo = crate::proxy::ensure_device_token(app)
         .await
         .ok_or_else(|| "sin_token_de_dispositivo".to_string())?;
@@ -555,6 +583,9 @@ async fn intentar_vincular(app: &AppHandle) -> Result<(), String> {
             "action": "link",
             "device_token": token_dispositivo,
             "label": etiqueta,
+            // Huella del hardware: con ella el servidor reconoce este computador aunque el
+            // token sea nuevo (cambio de cuenta, reinstalación). `null` si no se pudo leer.
+            "equipo": crate::equipo::huella(),
         }))
         .send()
         .await
@@ -582,8 +613,23 @@ async fn intentar_vincular(app: &AppHandle) -> Result<(), String> {
     if !res.status().is_success() {
         return Err(format!("http_{}", res.status().as_u16()));
     }
-    debug!("Este equipo quedó vinculado a la cuenta");
-    Ok(())
+    #[derive(Deserialize)]
+    struct Vinculo {
+        #[serde(default)]
+        motivo: String,
+        // El servidor viejo (antes de la migración 20261114000001) no lo manda.
+        #[serde(default)]
+        conocido: bool,
+    }
+    let v = res.json::<Vinculo>().await.unwrap_or(Vinculo {
+        motivo: String::new(),
+        conocido: false,
+    });
+    debug!(
+        "Este equipo quedó vinculado a la cuenta ({}; ya lo conocía: {})",
+        v.motivo, v.conocido
+    );
+    Ok(v.conocido)
 }
 
 /// Estado de la cuenta. Devuelve "desconectado" en vez de error cuando no hay sesión: para la

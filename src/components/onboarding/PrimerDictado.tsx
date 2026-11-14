@@ -60,6 +60,16 @@ export function primerDictadoHecho(cuenta: string): boolean {
   }
 }
 
+/**
+ * También lo usa la pantalla de entrar: si el servidor reconoce que esta cuenta ya había usado este
+ * computador (`equipo_conocido`, huella del hardware), no se repite el tutorial aunque la marca
+ * local se haya perdido (cambio de cuenta, datos de la app borrados). Nicolás, 2026-11-14: "eso solo
+ * debe pasar si es un computador nuevo".
+ */
+export function marcarPrimerDictadoHecho(cuenta: string) {
+  marcarHecho(cuenta);
+}
+
 function marcarHecho(cuenta: string) {
   try {
     localStorage.setItem(clave(cuenta), "hecho");
